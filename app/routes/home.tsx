@@ -78,7 +78,7 @@ export default function LandingPage() {
         <section className="mx-auto max-w-5xl px-4 py-12">
           <h2 className="text-lg font-semibold">熟成の段階</h2>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            看板は進捗管理ではなく、時間を与える棚です。デスクトップで俯瞻し、モバイルでは足しません。
+            看板は進捗管理ではなく、時間を与える棚です。デスクトップで俯瞳し、モバイルでは足しません。
           </p>
           <ol className="mt-6 grid gap-2 sm:grid-cols-5">
             {STAGES.map((stage, index) => (
