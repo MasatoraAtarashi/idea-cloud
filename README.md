@@ -30,7 +30,7 @@ http://localhost:5173 が LP。`はじめる` からモック画面に入れま�
 
 `MasatoraAtarashi/app-template` は GitHub の Template Repository ではないため、`gh repo create --template` は使っていません。squat の **`personal-fullstack`** を strict ティア・Cloudflare Access 認証ありで複製しています。
 
-**ビジュアルについて（正直）：** スタックはテンプレート由来。最初のダーク＋ゴールド画面は LiteLLM UI を踏襲していませんでした。いまの作業画面は LiteLLM ダッシュボードの既定ライトモード（白パネル、薄いグレーボーダー、紬の主ボタン、デスクトップはサイドバー）に寄せています。
+**ビジュアルについて（正直）：** スタックはテンプレート由来。最初のダーク＋ゴールド画面は LiteLLM UI を踏襲していませんでした。いまの作業画面は LiteLLM ダッシュボードの既定ライトモード（白パネル、薄いグレーボーダー、ネイビーの主ボタン、デスクトップはサイドバー）に寄せています。
 
 積まれているもの:
 

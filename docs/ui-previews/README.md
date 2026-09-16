@@ -1,5 +1,6 @@
 # UI previews（画面認識用）
 
+LiteLLM 寄りのライトコンソール（白パネル / グレーボーダー / ネイビーボタン）。
 Local `pnpm dev` captures. Desktop ~1280px / mobile ~390px originals as PNG.
 GitHub-renderable SVG wrappers (JPEG preview) are linked below so the PR can show direction immediately.
 
