@@ -6,30 +6,29 @@ export function meta() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141821] p-8">
-        <p className="text-xs tracking-[0.2em] text-[#d4a574]">SECURE ACCESS</p>
-        <h1 className="mt-3 font-serif text-3xl">ログイン</h1>
-        <p className="mt-3 text-sm leading-relaxed text-[#9a958c]">
-          本番は Cloudflare Access の Google IdP
-          と、メールの許可リストで閉じます。いまは画面確認用のスタブです。
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="ui-panel w-full max-w-md p-7">
+        <p className="ui-kicker">Cloudflare Access</p>
+        <h1 className="mt-2 text-2xl font-semibold">ログイン</h1>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          初期の入り口は Cloudflare Access（Zero Trust）です。アプリ内 Google OAuth
+          はまだありません。いまは画面確認用のスタブです。
         </p>
-        <Link
-          to="/app"
-          className="mt-8 flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-[#0c0e12] no-underline"
-        >
-          Google でログイン（モック）
+        <Link to="/app" className="ui-btn mt-7 w-full py-2.5">
+          続けて画面を見る（モック）
         </Link>
-        <p className="mt-4 text-xs leading-relaxed text-[#9a958c]">
-          許可リスト外のアカウントは 403 を返す想定（
-          <code className="text-[#7eb8a8]">ACCESS_ALLOWED_EMAILS</code>
-          ）。クライアントシークレットはリポジトリに置きません。
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          Access 通過後の追加制限は
+          <code className="mx-1 rounded-sm bg-muted px-1 py-0.5 text-[11px]">
+            ACCESS_ALLOWED_EMAILS
+          </code>
+          。クライアントシークレットはリポジトリに置きません。
         </p>
-        <div className="mt-8 flex justify-between text-sm">
-          <Link to="/" className="text-[#9a958c] no-underline hover:text-[#e8e6e1]">
+        <div className="mt-7 flex justify-between text-sm">
+          <Link to="/" className="text-muted-foreground no-underline hover:text-foreground">
             LP に戻る
           </Link>
-          <Link to="/app" className="text-[#d4a574] no-underline hover:underline">
+          <Link to="/app" className="text-foreground no-underline hover:underline">
             ログインせず画面を見る
           </Link>
         </div>

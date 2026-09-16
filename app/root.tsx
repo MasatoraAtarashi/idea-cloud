@@ -19,7 +19,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+JP:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap",
   },
 ];
 
@@ -60,10 +60,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="mx-auto max-w-xl px-4 py-16">
-      <h1 className="font-serif text-3xl">{message}</h1>
-      <p className="mt-3 text-sm text-[#9a958c]">{details}</p>
+      <h1 className="text-2xl font-semibold">{message}</h1>
+      <p className="mt-3 text-sm text-muted-foreground">{details}</p>
       {stack && (
-        <pre className="mt-6 overflow-x-auto rounded-lg border border-white/10 bg-[#141821] p-4 text-xs">
+        <pre className="ui-panel mt-6 overflow-x-auto p-4 text-xs">
           <code>{stack}</code>
         </pre>
       )}
