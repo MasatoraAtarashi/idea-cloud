@@ -1,42 +1,71 @@
 @import "tailwindcss" source(".");
 
 /*
- * Light console tokens modeled on LiteLLM dashboard globals.css (BerriAI/litellm).
- * Default LiteLLM UI is light: white canvas, cool gray-blue borders, navy primary.
- * app-template only contributed the stack (React Router + Tailwind), not this palette.
+ * Light console tokens copied from LiteLLM dashboard globals.css (BerriAI/litellm).
+ * Default LiteLLM Admin UI is light: white panels, cool gray borders, navy primary.
+ * app-template only contributed the stack, not this palette.
+ * Rejected: #0c0e12 / #d4a574 dark-gold experiment.
  */
 :root {
-  --background: oklch(0.985 0.002 264);
+  --radius: 0.5rem;
+  --background: oklch(1 0 0);
   --foreground: oklch(0.13 0.028 261.692);
   --card: oklch(1 0 0);
-  --muted: oklch(0.967 0.003 264.542);
-  --muted-foreground: oklch(0.551 0.027 264.364);
+  --card-foreground: oklch(0.13 0.028 261.692);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.028 261.692);
   --primary: oklch(0.21 0.034 264.665);
   --primary-foreground: oklch(0.985 0.002 247.839);
+  --secondary: oklch(0.967 0.003 264.542);
+  --secondary-foreground: oklch(0.21 0.034 264.665);
+  --muted: oklch(0.967 0.003 264.542);
+  --muted-foreground: oklch(0.551 0.027 264.364);
+  --accent: oklch(0.967 0.003 264.542);
+  --accent-foreground: oklch(0.21 0.034 264.665);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.928 0.006 264.531);
+  --input: oklch(0.928 0.006 264.531);
   --ring: oklch(0.707 0.022 261.325);
   --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.13 0.028 261.692);
+  --sidebar-primary: oklch(0.21 0.034 264.665);
+  --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
+  --sidebar-accent: oklch(0.967 0.003 264.542);
+  --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
+  --sidebar-border: oklch(0.928 0.006 264.531);
+  --sidebar-ring: oklch(0.707 0.022 261.325);
   --neutral-border: #dcddeb;
-  --radius: 0.5rem;
 }
 
-@theme {
+@theme inline {
   --font-sans:
     "Inter", "IBM Plex Sans JP", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji";
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-border: var(--border);
-  --color-ring: var(--ring);
-  --color-sidebar: var(--sidebar);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
 }
 
 html,
@@ -67,8 +96,12 @@ a {
     @apply inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground no-underline;
   }
 
+  .ui-btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground no-underline;
+  }
+
   .ui-input {
-    @apply w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none;
+    @apply w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground outline-none;
     box-shadow: none;
   }
 
@@ -82,5 +115,21 @@ a {
 
   .ui-kicker {
     @apply text-[11px] font-medium tracking-wide text-muted-foreground uppercase;
+  }
+
+  .ui-table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .ui-table th {
+    @apply border-b border-border bg-secondary px-3 py-2 text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase;
+  }
+
+  .ui-table td {
+    @apply border-b border-border px-3 py-2.5 align-middle text-foreground;
+  }
+
+  .ui-table tr:last-child td {
+    @apply border-b-0;
   }
 }
