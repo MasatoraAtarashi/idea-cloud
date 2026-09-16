@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { IconPlus } from "../../components/icons";
+import { PageHeader } from "../../components/ui";
 
 export function meta() {
-  return [{ title: "クイックキャプチャ — アイデアクラウド" }];
+  return [{ title: "キャプチャ — アイデアクラウド" }];
 }
 
 export default function CapturePage() {
@@ -16,16 +18,17 @@ export default function CapturePage() {
     if (!trimmed) return;
     setCaught((current) => [trimmed, ...current]);
     setDraft("");
-    setNotice("着想レーンへ置きました（モックのため保存していません）");
+    setNotice("この画面の一覧に置きました。まだ保存していません。");
   }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-xl font-semibold">クイックキャプチャ</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        分類もタグも後回し。一文で置いて、忘れる。モバイル向けの入口です。
-      </p>
-      <form onSubmit={onSubmit} className="mt-6">
+      <PageHeader
+        icon={<IconPlus className="h-5 w-5" />}
+        title="キャプチャ"
+        description="分類もタグも後回し。一文で置いて、忘れる。"
+      />
+      <form onSubmit={onSubmit}>
         <label htmlFor="idea" className="text-xs text-muted-foreground">
           いまの着想
         </label>
@@ -35,7 +38,7 @@ export default function CapturePage() {
           onChange={(event) => setDraft(event.target.value)}
           rows={5}
           placeholder="歩きながら浮かんだことを、そのまま。"
-          className="ui-input mt-2 resize-none py-3"
+          className="ui-input mt-2 h-auto resize-none py-3"
         />
         <div className="mt-3 flex items-center justify-between">
           <button type="submit" disabled={!draft.trim()} className="ui-btn">
@@ -45,7 +48,7 @@ export default function CapturePage() {
             to="/app"
             className="text-sm text-muted-foreground no-underline hover:text-foreground"
           >
-            ボードを見る
+            一覧を見る
           </Link>
         </div>
       </form>

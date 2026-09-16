@@ -1,6 +1,6 @@
 # Product requirements
 
-Inspired by Toyama Shigehiko’s *The Science of Thought Organization* (思考の整理学): ideas get better when they are captured quickly, left alone, and reviewed only after time has passed.
+Inspired by Toyama Shigehiko’s _The Science of Thought Organization_ (思考の整理学): ideas get better when they are captured quickly, left alone, and reviewed only after time has passed.
 
 **Audience:** Masatora Atarashi and a small closed team (Atarashi Lab). Solo-usable, team-default.
 
@@ -8,25 +8,25 @@ Inspired by Toyama Shigehiko’s *The Science of Thought Organization* (思考�
 
 ## Problem
 
-Most note apps optimize for capture *and* immediate polishing. That kills the forgetting period the book treats as the real work. Idea Cloud is a shelf for time, not a progress tracker.
+Most note apps optimize for capture _and_ immediate polishing. That kills the forgetting period the book treats as the real work. Idea Cloud is a shelf for time, not a progress tracker.
 
 ## Goals (this first pass)
 
-1. Public Japanese landing page that states the thesis: capture, age, review, evolve.
-2. Clickable UI shell for the six working screens (not a full product).
-3. Visual direction: quiet LiteLLM-like **light** console (see [ui-ia.md](./ui-ia.md)).
-4. Security stubs that match the intended posture: Cloudflare Access as the early gate, allowlist, AES-GCM helper (see [security.md](./security.md)).
+1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
+2. Clickable UI shell for the working screens (not a full product). Empty states — no dummy ideas or invented teammates.
+3. Visual direction: LiteLLM Admin **light** chrome + Relic in-app list IA (see [ui-ia.md](./ui-ia.md)). Not Relic’s blue marketing LP.
+4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app`.
 5. Keep the template CI (typecheck, lint, test, gitleaks, zizmor, audit, ASH).
 
 ## Idea stages
 
-| Id | Japanese label | Meaning |
-| --- | --- | --- |
-| `spark` | 着想 | Just captured. Do not polish. |
-| `aging` | 熟成中 | Resting. Forgetting is allowed. |
-| `ripe` | 熟した | Time to review: advance, merge, or discard. |
-| `selected` | 採用 | Only these get research / prototype work. |
-| `archived` | アーカイブ | Kept as a record, off the board. |
+| Id         | Japanese label | Meaning                                     |
+| ---------- | -------------- | ------------------------------------------- |
+| `spark`    | 着想           | Just captured. Do not polish.               |
+| `aging`    | 熟成中         | Resting. Forgetting is allowed.             |
+| `ripe`     | 熟した         | Time to review: advance, merge, or discard. |
+| `selected` | 採用           | Only these get research / prototype work.   |
+| `archived` | アーカイブ     | Kept as a record, off the board.            |
 
 Rules that the UI must teach:
 
@@ -36,7 +36,7 @@ Rules that the UI must teach:
 
 ## Screens in scope
 
-See [ui-ia.md](./ui-ia.md). Paths: `/`, `/login`, `/app/capture`, `/app`, `/app/ideas/:id`, `/app/merge`, `/app/research`, `/app/team`.
+See [ui-ia.md](./ui-ia.md). Paths: `/` (login), `/login`, `/app/capture`, `/app` (idea list), `/app/ideas/:id`, `/app/merge`, `/app/research`, `/app/team`.
 
 ## Out of scope (this pass)
 
@@ -49,4 +49,4 @@ See [ui-ia.md](./ui-ia.md). Paths: `/`, `/login`, `/app/capture`, `/app`, `/app/
 
 ## Success for this pass
 
-A reviewer can open the LP and click through every working screen on ~390px and ~1280px, read Japanese copy, and confirm the light console. Backend, crypto wiring, and live Cloudflare URL can follow after visual sign-off.
+A reviewer opens `/` and sees only a quiet Google login, signs in (mock) to `/app`, and finds an empty table/board with LiteLLM chrome + Relic list IA. Backend, crypto wiring, and real OAuth can follow after visual sign-off.

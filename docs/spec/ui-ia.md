@@ -2,78 +2,57 @@
 
 Product UI copy is **Japanese**. This spec is English.
 
-Working screens for this pass: **landing page**, **quick capture**, **maturation kanban**, **merge**, **research / prototype**, plus login, idea detail, and team settings as shell.
+Working screens: **login gate**, **idea list** (default), **kanban view**, **quick capture**, **merge**, **research / prototype**, idea detail, team settings.
+
+There is **no landing page**. `/` is the login gate.
 
 ## Visual language
 
-LiteLLM dashboard default is **light**. Not the first dark+gold experiment, and not the template gray-50 / blue-600 todos.
+Chrome follows **LiteLLM Admin light**: gray sidebar, white main, thin `#E5E7EB` borders, charcoal primary button, almost no shadow. Idea list IA follows **Relic IDEATION Cloud** in-app (left filter + dense table + pastel pills). Do **not** copy Relic’s blue marketing LP.
 
-| Token | Intent |
-| --- | --- |
-| Canvas | Off-white |
-| Panels | White, cool gray-blue border (`#dcddeb`) |
-| Primary | Near-navy, white label |
-| Sidebar | White; active item = muted fill + left navy bar |
-| Type | Inter + IBM Plex Sans JP |
-| Density | Quiet console |
+| Token          | Intent                                                  |
+| -------------- | ------------------------------------------------------- |
+| Sidebar        | Light gray (`#F3F4F6`)                                  |
+| Main           | White                                                   |
+| Panels / table | White, `#E5E7EB` border, no shadow                      |
+| Primary        | Charcoal, white label                                   |
+| Type           | Inter + IBM Plex Sans JP                                |
+| Pills          | Pastel chips for stage/tags only. No fake S/A/B scores. |
 
-Desktop (~1280px): left sidebar. Mobile (~390px): bottom nav, **取る (capture) first**. LP and `/login` have no app shell.
+Desktop (~1280px): left grouped sidebar. Mobile (~390px): bottom nav, **取る (capture) first**. Login has no app shell.
 
-## Landing page (`/`)
+## Login (`/` and `/login`)
 
-Public Japanese LP. Thesis: capture quickly, do not polish in the moment, review after time.
+Quiet Google-looking mock. Button continues to `/app` for screen review. Real in-app Google OAuth is later. No philosophy essay, screen map, mock banners, or “skip login” links.
 
-- Hero + four steps (catch → age → review → evolve).
-- Stage strip (着想 → アーカイブ).
-- Screen map links into the mock app.
-- **Must stay Cloudflare Access bypass** so marketing is public.
+## Idea list (`/app`)
 
-Route: `app/routes/home.tsx`.
+Primary view: Relic-style console — left filter (keyword, stage, tags) + table columns (title, stage, tags, age). Empty until real data exists. Kanban is a secondary view, not the default.
+
+| Stage      | Japanese   | Role              |
+| ---------- | ---------- | ----------------- |
+| `spark`    | 着想       | Just caught       |
+| `aging`    | 熟成中     | Resting           |
+| `ripe`     | 熟した     | Review now        |
+| `selected` | 採用       | May be researched |
+| `archived` | アーカイブ | Off the board     |
+
+Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId` (empty/not-found until data exists).
 
 ## Quick capture (`/app/capture`)
 
-Mobile-first inbox. One textarea, no tags, no stage picker.
-
-- Submit is disabled until there is text (navy button looks muted when empty).
-- Copy tells the user to put the thought down and forget it.
-- Does not persist (mock list in memory only).
-
-Route: `app/routes/app/capture.tsx`.
-
-## Maturation kanban (`/app`)
-
-Shelf for time, not a sprint board. Five columns:
-
-| Stage | Japanese | Role |
-| --- | --- |
-| `spark` | 着想 | Just caught |
-| `aging` | 熟成中 | Resting |
-| `ripe` | 熟した | Review now |
-| `selected` | 採用 | May be researched |
-| `archived` | アーカイブ | Off the board |
-
-Cards show title, age in days, and a couple of tags. Default habit: do not open young cards. Desktop is for this view.
-
-Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId`.
+Mobile-first inbox. One textarea. Submit disabled until there is text. Session-local list only; no preloaded ideas.
 
 ## Merge (`/app/merge`)
 
-Stack two related ripe ideas into one. Mock picker + “overlap” copy. No writes.
-
-Route: `app/routes/app/merge.tsx`.
+Pick related ideas and stack them. Empty state when there are no ideas.
 
 ## Research / prototype (`/app/research`)
 
-Only **selected** ideas. Tabs for research notes vs a tiny prototype plan. Workers AI is copy-only; no binding.
+Only **selected** ideas. Empty until something is adopted. Workers AI is copy-only; no binding.
 
-Route: `app/routes/app/research.tsx`.
+## Team (`/app/team`)
 
-## Other shell screens
+Do not invent teammates. Session placeholder (“ログイン中”) only. Disabled allowlist; crypto stub.
 
-| Path | Job |
-| --- | --- |
-| `/login` | Access is the early gate; mock CTA into `/app` |
-| `/app/ideas/:id` | Body, tags, next actions (mock) |
-| `/app/team` | Members, Access vs OAuth, disabled allowlist, crypto stub |
-
-Mock data: `app/data/mock.ts`. Previews: [../ui-previews/](../ui-previews/).
+Data: `app/data/mock.ts` (empty arrays). Previews: [../ui-previews/](../ui-previews/).

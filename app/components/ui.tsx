@@ -1,0 +1,58 @@
+import type { ReactNode } from "react";
+import { STAGE_LABEL, STAGE_PILL_CLASS, tagPillClass, type Stage } from "../data/mock";
+
+export function PageHeader({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="flex min-w-0 items-start gap-3">
+        {icon ? <div className="mt-1 text-muted-foreground">{icon}</div> : null}
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+          {description ? (
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+export function EmptyState({ title, body }: { title: string; body?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      {body ? <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{body}</p> : null}
+    </div>
+  );
+}
+
+export function StagePill({ stage }: { stage: Stage }) {
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_PILL_CLASS[stage]}`}
+    >
+      {STAGE_LABEL[stage]}
+    </span>
+  );
+}
+
+export function TagPill({ label }: { label: string }) {
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${tagPillClass(label)}`}
+    >
+      {label}
+    </span>
+  );
+}
