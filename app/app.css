@@ -1,0 +1,30 @@
+@import "tailwindcss" source(".");
+
+@theme {
+  --font-sans:
+    "IBM Plex Sans JP", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-serif: "Newsreader", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --color-ink: #e8e6e1;
+  --color-muted: #9a958c;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-gold: #d4a574;
+  --color-teal: #7eb8a8;
+  --color-bg: #0c0e12;
+  --color-panel: #141821;
+}
+
+html,
+body {
+  @apply min-h-full bg-[#0c0e12] text-[#e8e6e1] antialiased;
+  font-family: var(--font-sans);
+  color-scheme: dark;
+}
+
+a {
+  @apply underline-offset-4;
+}
+
+::selection {
+  background: rgb(212 165 116 / 0.35);
+}
