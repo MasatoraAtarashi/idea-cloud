@@ -1,69 +1,85 @@
-# アイデアクラウド (Idea Cloud)
+# Idea Cloud (アイデアクラウド)
 
-アイデアをつかまえて寝かせ、熟してから見返すチームワークスペース。外山滋比古『思考の整理学』に着想しています。
+A team workspace for capturing ideas, leaving them alone, and reviewing them only after they have matured. Inspired by Toyama Shigehiko’s *The Science of Thought Organization* (思考の整理学).
 
-このリポジトリは **画面認識用のファーストパス** です。LP と主要画面の骨格まで。保存・本認証・AI はスタブです。
+**Product UI copy is Japanese.** Engineering docs (this README, `docs/spec/`, design notes) are English.
 
-## ローカルで動かす
+This repository is a **screen-alignment first pass**: public landing page plus a clickable UI shell. Persistence, production auth, and AI are stubs.
+
+## Specs
+
+| Doc | What it covers |
+| --- | --- |
+| [docs/spec/product-requirements.md](docs/spec/product-requirements.md) | Product goals, stages, out of scope |
+| [docs/spec/architecture.md](docs/spec/architecture.md) | Stack, bindings, what came from the template |
+| [docs/spec/ui-ia.md](docs/spec/ui-ia.md) | Screens, IA, visual language |
+| [docs/spec/security.md](docs/spec/security.md) | Access vs in-app OAuth, allowlist, field crypto |
+| [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md) | First deploy, D1, Cloudflare Access checklist |
+
+UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previews/).
+
+## Run locally
 
 ```bash
 pnpm install
-cp .dev.vars.example .dev.vars   # LOCAL_DEV_USER_EMAIL を自分のメールに
-pnpm db:migrate:local            # テンプレート由来の todos サンプル用
+cp .dev.vars.example .dev.vars   # set LOCAL_DEV_USER_EMAIL to your address
+pnpm db:migrate:local            # template sample `todos` table
 pnpm dev
 ```
 
-http://localhost:5173 が LP。`はじめる` からモック画面に入れます。
+http://localhost:5173 is the public LP. **はじめる** opens the mock app.
 
-| パス             | 画面                      |
-| ---------------- | ------------------------- |
-| `/`              | 公開 LP                   |
-| `/login`         | ログイン（Access スタブ） |
-| `/app/capture`   | クイックキャプチャ        |
-| `/app`           | 熟成ボード（看板）        |
-| `/app/ideas/:id` | アイデア詳細              |
-| `/app/merge`     | 融合 / 関連               |
-| `/app/research`  | リサーチ / プロトタイプ   |
-| `/app/team`      | チーム設定                |
+| Path | Screen (Japanese UI) |
+| --- | --- |
+| `/` | Public landing page |
+| `/login` | Login (Access stub) |
+| `/app/capture` | Quick capture |
+| `/app` | Aging board (kanban) |
+| `/app/ideas/:id` | Idea detail |
+| `/app/merge` | Merge / related |
+| `/app/research` | Research / prototype |
+| `/app/team` | Team settings |
 
-## テンプレートから何をコピーしたか
+## What was copied from the template
 
-`MasatoraAtarashi/app-template` は GitHub の Template Repository ではないため、`gh repo create --template` は使っていません。squat の **`personal-fullstack`** を strict ティア・Cloudflare Access 認証ありで複製しています。
+`MasatoraAtarashi/app-template` is not a GitHub Template Repository, so `gh repo create --template` was not used. This app was copied from squat’s **`personal-fullstack`** template (strict tier, Cloudflare Access auth).
 
-**ビジュアルについて（正直）：** スタックはテンプレート由来。最初のダーク＋ゴールド画面は LiteLLM UI を踏襲していませんでした。いまの作業画面は LiteLLM ダッシュボードの既定ライトモード（白パネル、薄いグレーボーダー、ネイビーの主ボタン、デスクトップはサイドバー）に寄せています。
+**Visual language (honest):** the *stack* is from the template. The first dark + gold UI was **not** LiteLLM. Working screens now follow the LiteLLM dashboard **default light** mode: white panels, cool gray borders, navy primary, desktop sidebar.
 
-積まれているもの:
+Included:
 
-- React Router v7（SSR）+ Tailwind CSS 4 + Hono on Cloudflare Workers
-- D1 + Drizzle（サンプル `todos` API は残置。UI からは外した）
-- Cloudflare Access ミドルウェア（`Cf-Access-Authenticated-User-Email`）
-- CI: typecheck / lint / test + gitleaks / zizmor / pnpm audit / ASH（`.github/workflows/pr.yml`）
-- lefthook、Dependabot、observability 既定 ON
+- React Router v7 (SSR) + Tailwind CSS 4 + Hono on Cloudflare Workers
+- D1 + Drizzle (sample `todos` API kept; not used by the product UI)
+- Cloudflare Access middleware (`Cf-Access-Authenticated-User-Email`)
+- CI: typecheck / lint / test + gitleaks / zizmor / pnpm audit / ASH (`.github/workflows/pr.yml`)
+- lefthook, Dependabot, observability on by default
 
-## スタブ / 未配線
+## Stubs / not wired
 
-- **ログイン**: LP のボタンは `/app` へ進むだけ。初期ゲートは **Cloudflare Access**。アプリ内 Google OAuth は後続
-- **許可リスト**: `ACCESS_ALLOWED_EMAILS`（カンマ区切り）。API は見る。UI のテキストエリアは無効
-- **フィールド暗号化**: `server/security/field-crypto.ts` の AES-GCM。D1 のアイデア表は未作成
-- **Workers AI**: タグ付け・関係抽出・進化案はコピーのみ。`wrangler.jsonc` に未使用の AI バインディングは置いていない
-- **D1 database_id**: プレースホルダ。初回は `squat deploy` または `wrangler d1 create idea-cloud-db`
-- サンプル `/api/todos` はテンプレート検証用に残している
+- **Login:** LP buttons go to `/app`. Early gate is **Cloudflare Access**. In-app Google OAuth comes later.
+- **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). APIs enforce it. The team-settings textarea is disabled.
+- **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. No idea table in D1 yet.
+- **Workers AI:** tagging / relation / evolution copy only. No unused AI binding in `wrangler.jsonc`.
+- **D1 `database_id`:** placeholder. Create with `wrangler d1 create idea-cloud-db` before first deploy.
+- Sample `/api/todos` remains for template verification.
 
-環境変数の手本は `.dev.vars.example`。secret の実体はコミットしません。本番は `wrangler secret put`。
+Env template: `.dev.vars.example`. Do not commit secret values. Production: `wrangler secret put`.
 
-## テンプレート側で未検証・ギャップだったこと
+## Known template gaps
 
-- `app-template` 自体は squat CLI + 複数テンプレートのモノレポ。アプリ単体ではない
-- GitHub 上は **template フラグが false**（2026-09 時点）
-- チーム向け purpose（`team-admin`）は coming soon。今回は `personal-fullstack` が最も近い ready テンプレート
-- 認証はアプリ内 Google OAuth ではなく **Cloudflare Access**（コード不要）。許可リストは今回追加した薄い層
-- Cloudflare の GitHub OIDC は未提供のため、デプロイ CI は API トークン方式（`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`）
-- 生成直後の `wrangler.jsonc` の D1 ID はダミー。デプロイ前に実 ID が必要
-- ASH / zizmor は生成アプリ CI に含まれる。ローカル pre-commit の gitleaks / zizmor は開発者マシンのツールに依存
+- `app-template` is a squat CLI + multi-template monorepo, not a single app
+- GitHub **template flag is false** (as of 2026-09)
+- Team purpose (`team-admin`) is coming soon; `personal-fullstack` is the closest ready template
+- Auth in code is **Cloudflare Access**, not in-app Google OAuth. The allowlist is a thin extra layer added here
+- Cloudflare GitHub OIDC for wrangler deploy is not available; deploy CI uses `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
+- Generated `wrangler.jsonc` D1 id is a dummy until first create
+- ASH / zizmor run in app CI; local pre-commit gitleaks / zizmor depend on tools on the developer machine
 
-## デプロイ
+## Deploy
 
-1. Cloudflare API トークン（Workers Scripts: Edit）と Account ID を GitHub secrets へ
-2. D1 を作成して `wrangler.jsonc` の `database_id` を更新
-3. Zero Trust で Application を追加し、Google + 許可メールのポリシーを付ける。**LP（`/`）は Access のバイパス対象にする**（アプリ配下だけ守る）
-4. `main` push で `deploy.yml` がデプロイ。PR は `preview.yml` がプレビュー URL をコメント
+See [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md). Short version:
+
+1. Put a Cloudflare API token (Workers Scripts: Edit) and Account ID in GitHub secrets
+2. Create D1 and patch `wrangler.jsonc` `database_id`
+3. Add a Zero Trust application with Google + allowed emails. **Bypass Access on `/`** so the LP stays public; protect `/app` and APIs
+4. Push to `main` runs `deploy.yml`. PRs get a preview URL from `preview.yml` when secrets exist

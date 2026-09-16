@@ -1,8 +1,11 @@
-# UI previews（画面認識用）
+# UI previews
 
-LiteLLM 寄りのライトコンソール（白パネル / グレーボーダー / ネイビーボタン）。
-Local `pnpm dev` captures. Desktop ~1280px / mobile ~390px originals as PNG.
-GitHub-renderable SVG wrappers (JPEG preview) are linked below so the PR can show direction immediately.
+Light LiteLLM-like console (white panels, gray borders, navy buttons) for **screen alignment**.
+
+- PNG: live `pnpm dev` captures. Desktop ~1280px / mobile ~390px.
+- SVG: compact GitHub-renderable sketches of the same light direction (binary PNG upload from this agent path corrupts files).
+
+Product UI copy in the captures is Japanese. This index is English.
 
 | Screen | Desktop | Mobile |
 | --- | --- | --- |
