@@ -9,10 +9,10 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare credentials.**
 
 ## GitHub secrets required
 
-| Secret | Purpose |
-| --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Wrangler deploy. Workers Scripts: Edit, plus D1 edit if migrations run in CI |
-| `CLOUDFLARE_ACCOUNT_ID` | Account for that token |
+| Secret                  | Purpose                                                                      |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Wrangler deploy. Workers Scripts: Edit, plus D1 edit if migrations run in CI |
+| `CLOUDFLARE_ACCOUNT_ID` | Account for that token                                                       |
 
 Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production).
 
@@ -29,11 +29,11 @@ Intended steps (run only with a real token; do not commit the token):
 
 ## Workflows
 
-| Workflow | Trigger today | Notes |
-| --- | --- | --- |
-| `.github/workflows/deploy.yml` | Push to `main` | Production Worker. No `workflow_dispatch` yet. |
-| `.github/workflows/preview.yml` | Pull requests | Uploads a Worker version / preview URL when secrets exist |
-| `.github/workflows/pr.yml` | PRs | typecheck / lint / test / gitleaks / zizmor / audit / ASH |
+| Workflow                        | Trigger today  | Notes                                                     |
+| ------------------------------- | -------------- | --------------------------------------------------------- |
+| `.github/workflows/deploy.yml`  | Push to `main` | Production Worker. No `workflow_dispatch` yet.            |
+| `.github/workflows/preview.yml` | Pull requests  | Uploads a Worker version / preview URL when secrets exist |
+| `.github/workflows/pr.yml`      | PRs            | typecheck / lint / test / gitleaks / zizmor / audit / ASH |
 
 `workflow_dispatch` on deploy is a follow-up so first-deploy can run without merging placeholder D1.
 
@@ -43,7 +43,7 @@ Intended steps (run only with a real token; do not commit the token):
 2. Include the production hostname.
 3. Identity: Google.
 4. Policy: allow listed emails only (Atarashi Lab).
-5. **Path policy:** bypass Access for `/` (public LP). Require Access for `/app`, `/login` if you want it gated, and `/api`.
+5. **Path policy:** `/` redirects to `/login` (no public marketing page). Require Access for `/app` and `/api` if Access is still in front. `/login` stays reachable for the in-app Google mock.
 6. After Access, optional app-level `ACCESS_ALLOWED_EMAILS` matches the same set.
 
 ## First successful URL

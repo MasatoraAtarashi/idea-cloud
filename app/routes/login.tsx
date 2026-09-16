@@ -32,11 +32,23 @@ function GoogleMark() {
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="ui-panel w-full max-w-[400px] px-8 py-10">
-        <p className="text-center text-lg font-semibold tracking-tight">アイデアクラウド</p>
+      <div className="w-full max-w-[400px] rounded-lg border border-border bg-card px-8 py-10">
+        <div className="flex flex-col items-center">
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-md text-white"
+            style={{ background: "linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)" }}
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+              <path d="M6.5 19a4.5 4.5 0 0 1-.4-9 6 6 0 0 1 11.6-1.5A4.5 4.5 0 1 1 17.5 19h-11z" />
+            </svg>
+          </span>
+          <p className="mt-4 text-center text-[15px] font-semibold tracking-tight">
+            アイデアクラウド
+          </p>
+        </div>
         <h1 className="mt-8 text-center text-[22px] font-medium">ログイン</h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">{GOOGLE_LOGIN_HINT}</p>
-        {/* Mock wiring: real OAuth is a follow-up. Click-through is for screen review. */}
         <Link
           to="/app"
           className="mt-8 flex h-10 w-full items-center justify-center gap-3 rounded border border-[#747775] bg-white text-sm font-medium text-[#1f1f1f] no-underline hover:bg-[#f8f9fa]"
@@ -45,18 +57,10 @@ export default function LoginPage() {
           {GOOGLE_LOGIN_CTA}
         </Link>
         <p className="mt-5 text-center text-xs leading-relaxed text-muted-foreground">
-          画面確認用です。本番の入り口はアプリ内 Google OAuth。許可リスト（
+          許可リスト（
           <code className="rounded-sm bg-muted px-1 py-0.5 text-[11px]">ACCESS_ALLOWED_EMAILS</code>
           ）が第二層です。
         </p>
-        <div className="mt-8 flex justify-between text-sm">
-          <Link to="/" className="text-muted-foreground no-underline hover:text-foreground">
-            トップに戻る
-          </Link>
-          <Link to="/app" className="text-foreground no-underline hover:underline">
-            ログインせず画面を見る
-          </Link>
-        </div>
       </div>
     </div>
   );

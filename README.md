@@ -7,7 +7,7 @@ Team workspace for capturing ideas, leaving them alone, and reviewing them after
 - **Documentation** (this README, `docs/spec/`, design notes): English.
 - **Product UI copy**: Japanese.
 
-This repo is a **screen-alignment first pass**: public landing page plus a clickable UI shell. Persistence, production auth, and AI are stubs.
+This repo is a **screen-alignment first pass**: login plus a clickable UI shell. Persistence, production auth, and AI are stubs. There is no public landing page.
 
 ## Specs
 
@@ -31,14 +31,14 @@ pnpm db:migrate:local            # template sample `todos` table
 pnpm dev
 ```
 
-http://localhost:5173 is the public LP. **はじめる** opens the mock app.
+http://localhost:5173 redirects to `/login`. Google mock opens `/app` with an empty idea list.
 
 | Path             | Screen (Japanese UI)      |
 | ---------------- | ------------------------- |
-| `/`              | Public landing page       |
+| `/`              | Redirect → `/login`       |
 | `/login`         | Login (Google OAuth mock) |
 | `/app/capture`   | Quick capture             |
-| `/app`           | Aging board (kanban)      |
+| `/app`           | Idea list (table)         |
 | `/app/ideas/:id` | Idea detail               |
 | `/app/merge`     | Merge / related           |
 | `/app/research`  | Research / prototype      |
@@ -48,7 +48,7 @@ http://localhost:5173 is the public LP. **はじめる** opens the mock app.
 
 `MasatoraAtarashi/app-template` is not a GitHub Template Repository, so `gh repo create --template` was not used. This app was copied from squat’s **`personal-fullstack`** template (strict tier, Cloudflare Access auth).
 
-**Visual language (honest):** the _stack_ is from the template. The first dark + gold UI was **not** LiteLLM. Working screens now follow the LiteLLM dashboard **default light** mode: white panels, cool gray borders, navy primary, desktop sidebar.
+**Visual language (honest):** the _stack_ is from the template. Working screens follow a LiteLLM Admin **light** shell (sidebar, thin borders, near-black primary) and a Relic-like idea **table** (filters, pastel stage chips). Relic blue gradient is brand-mark accent only.
 
 Included:
 

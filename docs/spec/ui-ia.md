@@ -2,47 +2,47 @@
 
 Product UI copy is **Japanese**. This spec is English.
 
-Working screens for this pass: **landing page**, **quick capture**, **maturation kanban**, **merge**, **research / prototype**, plus login, idea detail, and team settings as shell.
+Working screens: **login**, **idea list**, **quick capture**, **merge**, **research / prototype**, plus idea detail and team settings. There is **no public landing page**.
 
 ## Visual language
 
-LiteLLM dashboard default is **light**. Not the first dark+gold experiment, and not the template gray-50 / blue-600 todos.
+Two references, split on purpose:
 
-| Token | Intent |
-| --- | --- |
-| Canvas | Off-white |
-| Panels | White, cool gray-blue border (`#dcddeb`) |
-| Primary | Near-navy, white label |
-| Sidebar | White; active item = muted fill + left navy bar |
-| Type | Inter + IBM Plex Sans JP |
-| Density | Quiet console |
+| Layer          | Reference             | What to copy                                                                                                     |
+| -------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Shell / chrome | LiteLLM Admin (light) | Left sidebar with grouped nav, white canvas, thin gray borders, near-black primary, breadcrumbs, table quietness |
+| Idea list      | Relic IDEATION Cloud  | Left filter panel + dense table, pastel stage chips, tag pills, Japanese density                                 |
+| Accent only    | Relic blue gradient   | Brand mark on the sidebar / login. Never the whole app chrome                                                    |
+| Mode           | Light only            | No dark theme                                                                                                    |
 
-Desktop (~1280px): left sidebar. Mobile (~390px): bottom nav, **取る (capture) first**. LP and `/login` have no app shell.
+LiteLLM glass / Relic marketing gradients are **not** the app background.
 
-## Landing page (`/`)
+| Token   | Intent                                        |
+| ------- | --------------------------------------------- |
+| Canvas  | Off-white (`#f7f8fa`)                         |
+| Panels  | White, thin gray border (`#e4e4e7`)           |
+| Primary | Near-black, white label                       |
+| Sidebar | White; active item = muted fill (no navy bar) |
+| Type    | Inter + IBM Plex Sans JP                      |
+| Density | Quiet console + Relic table                   |
 
-Public Japanese LP. Thesis: capture quickly, do not polish in the moment, review after time.
+Desktop (~1280px): left sidebar. Mobile (~390px): bottom nav, **取る (capture) first**. `/login` has no app shell.
 
-- Hero + four steps (catch → age → review → evolve).
-- Stage strip (着想 → アーカイブ).
-- Screen map links into the mock app.
-- **Must stay Cloudflare Access bypass** so marketing is public.
+## Root (`/`)
+
+Redirects to `/login`. No marketing copy, stage map, or screen map.
 
 Route: `app/routes/home.tsx`.
 
-## Quick capture (`/app/capture`)
+## Login (`/login`)
 
-Mobile-first inbox. One textarea, no tags, no stage picker.
+Quiet Sign in with Google mock. Button look stays the official Google CTA. Click-through goes to `/app` with an **empty** idea list.
 
-- Submit is disabled until there is text (navy button looks muted when empty).
-- Copy tells the user to put the thought down and forget it.
-- Does not persist (mock list in memory only).
+Route: `app/routes/login.tsx`.
 
-Route: `app/routes/app/capture.tsx`.
+## Idea list (`/app`)
 
-## Maturation kanban (`/app`)
-
-Shelf for time, not a sprint board. Five columns:
+Home of the signed-in app. Relic-like **filters + table**, not a five-column kanban of cards.
 
 | Stage | Japanese | Role |
 | --- | --- |
@@ -50,30 +50,40 @@ Shelf for time, not a sprint board. Five columns:
 | `aging` | 熟成中 | Resting |
 | `ripe` | 熟した | Review now |
 | `selected` | 採用 | May be researched |
-| `archived` | アーカイブ | Off the board |
+| `archived` | アーカイブ | Off the list by default habit |
 
-Cards show title, age in days, and a couple of tags. Default habit: do not open young cards. Desktop is for this view.
+Until D1 persistence exists, the table is an **empty state** (no fixture titles, authors, tags, or ages).
 
 Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId`.
 
+## Quick capture (`/app/capture`)
+
+Mobile-first inbox. One textarea, no tags, no stage picker.
+
+- Submit is disabled until there is text.
+- Copy tells the user to put the thought down and forget it.
+- Does not persist (session list on this page only).
+
+Route: `app/routes/app/capture.tsx`.
+
 ## Merge (`/app/merge`)
 
-Stack two related ripe ideas into one. Mock picker + “overlap” copy. No writes.
+Stack two related ideas into one. Empty until real ideas exist. No writes.
 
 Route: `app/routes/app/merge.tsx`.
 
 ## Research / prototype (`/app/research`)
 
-Only **selected** ideas. Tabs for research notes vs a tiny prototype plan. Workers AI is copy-only; no binding.
+Only **selected** ideas. Tabs (LiteLLM audit-log style) for research notes vs a tiny prototype plan. Empty until something is selected. Workers AI is unwired.
 
 Route: `app/routes/app/research.tsx`.
 
 ## Other shell screens
 
-| Path | Job |
-| --- | --- |
-| `/login` | Access is the early gate; mock CTA into `/app` |
-| `/app/ideas/:id` | Body, tags, next actions (mock) |
-| `/app/team` | Members, Access vs OAuth, disabled allowlist, crypto stub |
+| Path             | Job                                                                  |
+| ---------------- | -------------------------------------------------------------------- |
+| `/login`         | Google mock CTA into `/app`                                          |
+| `/app/ideas/:id` | Body, tags, next actions — empty/not found without real rows         |
+| `/app/team`      | Members (empty), OAuth vs allowlist, disabled allowlist, crypto stub |
 
-Mock data: `app/data/mock.ts`. Previews: [../ui-previews/](../ui-previews/).
+Idea fixtures: `app/data/mock.ts` (empty arrays). Previews: [../ui-previews/](../ui-previews/).

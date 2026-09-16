@@ -1,22 +1,21 @@
 @import "tailwindcss" source(".");
 
 /*
- * Light console tokens modeled on LiteLLM dashboard globals.css (BerriAI/litellm).
- * Default LiteLLM UI is light: white canvas, cool gray-blue borders, navy primary.
- * app-template only contributed the stack (React Router + Tailwind), not this palette.
+ * Shell: LiteLLM admin light console (white canvas, thin gray borders, near-black primary).
+ * Idea list: Relic IDEATION Cloud information design (filters + dense table + pastel chips).
+ * Relic blue gradient is accent-only (brand mark), never the app chrome.
  */
 :root {
-  --background: oklch(0.985 0.002 264);
-  --foreground: oklch(0.13 0.028 261.692);
-  --card: oklch(1 0 0);
-  --muted: oklch(0.967 0.003 264.542);
-  --muted-foreground: oklch(0.551 0.027 264.364);
-  --primary: oklch(0.21 0.034 264.665);
-  --primary-foreground: oklch(0.985 0.002 247.839);
-  --border: oklch(0.928 0.006 264.531);
-  --ring: oklch(0.707 0.022 261.325);
-  --sidebar: oklch(1 0 0);
-  --neutral-border: #dcddeb;
+  --background: #f7f8fa;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --primary: #0a0a0a;
+  --primary-foreground: #fafafa;
+  --border: #e4e4e7;
+  --ring: #a1a1aa;
+  --sidebar: #ffffff;
   --radius: 0.5rem;
 }
 
@@ -51,7 +50,7 @@ a {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--primary) 18%, transparent);
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
 }
 
 @layer components {
@@ -60,7 +59,7 @@ a {
   }
 
   .ui-btn {
-    @apply inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground no-underline disabled:opacity-40;
+    @apply inline-flex cursor-pointer items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground no-underline disabled:cursor-not-allowed disabled:opacity-40;
   }
 
   .ui-btn-ghost {
@@ -76,8 +75,22 @@ a {
     border-color: var(--ring);
   }
 
-  .ui-link {
-    @apply text-sm text-foreground no-underline hover:underline;
+  .ui-table {
+    @apply w-full border-collapse text-[13px];
+  }
+
+  .ui-table th {
+    @apply whitespace-nowrap px-3 py-2 text-left text-[12px] font-medium text-muted-foreground;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ui-table td {
+    @apply px-3 py-2.5 align-middle;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ui-table tbody tr:hover td {
+    background: #fafafa;
   }
 
   .ui-kicker {

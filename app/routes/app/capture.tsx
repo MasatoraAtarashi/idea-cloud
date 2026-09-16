@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { PageHeader } from "../../components/ui";
 
 export function meta() {
   return [{ title: "クイックキャプチャ — アイデアクラウド" }];
@@ -16,17 +17,17 @@ export default function CapturePage() {
     if (!trimmed) return;
     setCaught((current) => [trimmed, ...current]);
     setDraft("");
-    setNotice("着想レーンへ置きました（モックのため保存していません）");
+    setNotice("この画面のあいだだけ保持しています。");
   }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-xl font-semibold">クイックキャプチャ</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        分類もタグも後回し。一文で置いて、忘れる。モバイル向けの入口です。
-      </p>
-      <form onSubmit={onSubmit} className="mt-6">
-        <label htmlFor="idea" className="text-xs text-muted-foreground">
+      <PageHeader
+        title="クイックキャプチャ"
+        description="分類もタグも後回し。一文で置いて、忘れる。"
+      />
+      <form onSubmit={onSubmit} className="ui-panel p-4">
+        <label htmlFor="idea" className="text-xs font-medium text-foreground">
           いまの着想
         </label>
         <textarea
@@ -45,23 +46,20 @@ export default function CapturePage() {
             to="/app"
             className="text-sm text-muted-foreground no-underline hover:text-foreground"
           >
-            ボードを見る
+            一覧を見る
           </Link>
         </div>
       </form>
-      {notice && <p className="mt-3 text-xs text-muted-foreground">{notice}</p>}
-      {caught.length > 0 && (
-        <ul className="mt-6 space-y-2">
+      {notice ? <p className="mt-3 text-xs text-muted-foreground">{notice}</p> : null}
+      {caught.length > 0 ? (
+        <ul className="mt-4 space-y-2">
           {caught.map((item) => (
-            <li
-              key={item}
-              className="rounded-md border border-dashed border-border bg-muted px-3 py-2.5 text-sm"
-            >
+            <li key={item} className="ui-panel px-3 py-2.5 text-sm">
               {item}
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </div>
   );
 }
