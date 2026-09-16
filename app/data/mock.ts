@@ -47,7 +47,7 @@ export const MEMBERS: MockMember[] = [
 export const IDEAS: MockIdea[] = [
   {
     id: "i-voice-struct",
-    title: "通勤の音声メモを、翌朝に構造化する",
+    title: "通勤の音声メモを、明朝に構造化する",
     body: "歩きながら話した断片を、寝かせたあと見出しと次アクションに分ける。その場で整理しないのがポイント。",
     stage: "spark",
     tags: ["モバイル", "キャプチャ"],
@@ -120,7 +120,7 @@ export const IDEAS: MockIdea[] = [
   {
     id: "i-litellm-ui",
     title: "作業画面は LiteLLM のように静かに",
-    body: "装飾より密度。看板・詳細・融合を同じトーンで。モバイルは入力、デスクトップは判断。",
+    body: "LiteLLM ダッシュボードの既定はライトモード。白パネル、薄いグレーボーダー、紬の主ボタン。看板・詳細・融合を同じトーンで。モバイルは入力、デスクトップは判断。",
     stage: "selected",
     tags: ["UI"],
     author: "田中 海",

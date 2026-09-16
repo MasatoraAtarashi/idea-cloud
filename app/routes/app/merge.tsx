@@ -27,29 +27,29 @@ export default function MergePage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="font-serif text-3xl">融合 / 関連</h1>
-      <p className="mt-2 text-sm text-[#9a958c]">
+      <h1 className="text-xl font-semibold">融合 / 関連</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">
         LiteLLM
-        のコンソールのように、余白を残して選ぶ。近い着想を重ね、新しい一枚にする（結果はモック）。
+        のライトコンソールのように、余白を残して選ぶ。近い着想を重ね、新しい一枚にする（結果はモック）。
       </p>
-      <div className="mt-8 grid gap-6 md:grid-cols-[1fr_20rem]">
-        <ul className="space-y-2">
+      <div className="mt-6 grid gap-4 md:grid-cols-[1fr_18rem]">
+        <ul className="space-y-1.5">
           {IDEAS.filter((idea) => idea.stage !== "archived").map((idea) => {
             const on = selected.includes(idea.id);
             return (
               <li key={idea.id}>
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-[#141821] px-4 py-3">
+                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card px-3 py-2.5">
                   <input
                     type="checkbox"
                     checked={on}
                     onChange={() => toggle(idea.id)}
-                    className="mt-1 accent-[#d4a574]"
+                    className="mt-1 accent-primary"
                   />
                   <span>
                     <span className="block text-sm">{idea.title}</span>
                     <Link
                       to={`/app/ideas/${idea.id}`}
-                      className="text-[11px] text-[#7eb8a8] no-underline hover:underline"
+                      className="text-[11px] text-muted-foreground no-underline hover:text-foreground"
                       onClick={(event) => event.stopPropagation()}
                     >
                       詳細
@@ -60,20 +60,20 @@ export default function MergePage() {
             );
           })}
         </ul>
-        <aside className="rounded-2xl border border-white/10 bg-[#10141c] p-5">
-          <p className="text-xs text-[#9a958c]">選択中 {chosen.length} 件</p>
+        <aside className="ui-panel h-fit p-4">
+          <p className="text-xs text-muted-foreground">選択中 {chosen.length} 件</p>
           <button
             type="button"
             onClick={merge}
             disabled={chosen.length < 2}
-            className="mt-4 w-full rounded-full bg-[#d4a574] py-2 text-sm text-[#0c0e12] disabled:opacity-40"
+            className="ui-btn mt-3 w-full"
           >
             融合する
           </button>
           {merged ? (
-            <p className="mt-4 text-sm leading-relaxed text-[#e8e6e1]">{merged}</p>
+            <p className="mt-3 text-sm leading-relaxed text-foreground">{merged}</p>
           ) : (
-            <p className="mt-4 text-xs leading-relaxed text-[#9a958c]">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               2 件以上選ぶと、重ねた一文がここに出ます。Workers AI の関係抽出は未配線です。
             </p>
           )}

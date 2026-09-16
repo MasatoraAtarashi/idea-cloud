@@ -17,8 +17,8 @@ const NOTES: Record<string, { research: string[]; proto: string }> = {
   },
   "i-litellm-ui": {
     research: [
-      "LiteLLM UI はサイドバー・テーブル・静かな配色。装飾より操作の予測可能性。",
-      "モバイルはボトムナビ、デスクトップはレーン。同じ情報でも密度を変える。",
+      "LiteLLM ダッシュボードの既定はライト。白パネル、薄いグレーボーダー、紬の主ボタン。",
+      "サイドバー＋トップバーのシェル。装飾より操作の予測可能性。ダークは後から実験的。",
     ],
     proto: "看板は横スクロールの列。カードはタイトルと日数だけ。詳細は別ページ。",
   },
@@ -36,19 +36,19 @@ export default function ResearchPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="font-serif text-3xl">リサーチ / プロトタイプ</h1>
-      <p className="mt-2 text-sm text-[#9a958c]">
+      <h1 className="text-xl font-semibold">リサーチ / プロトタイプ</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">
         選ばれたアイデアにだけ、調べる権利がある。安い Cloudflare Workers AI
         を後から接続する枠です。
       </p>
-      <label className="mt-8 block text-xs text-[#9a958c]" htmlFor="idea-select">
+      <label className="mt-6 block text-xs text-muted-foreground" htmlFor="idea-select">
         採用中のアイデア
       </label>
       <select
         id="idea-select"
         value={id}
         onChange={(event) => setId(event.target.value)}
-        className="mt-2 w-full rounded-xl border border-white/10 bg-[#141821] px-3 py-2 text-sm"
+        className="ui-input mt-2"
       >
         {selected.map((item) => (
           <option key={item.id} value={item.id}>
@@ -59,17 +59,17 @@ export default function ResearchPage() {
       {idea && (
         <Link
           to={`/app/ideas/${idea.id}`}
-          className="mt-2 inline-block text-xs text-[#7eb8a8] no-underline hover:underline"
+          className="mt-2 inline-block text-xs text-muted-foreground no-underline hover:text-foreground"
         >
           詳細を開く
         </Link>
       )}
-      <div className="mt-8 flex gap-2">
+      <div className="mt-6 flex gap-1 rounded-md border border-border bg-muted p-0.5">
         <button
           type="button"
           onClick={() => setTab("research")}
-          className={`rounded-full px-4 py-1.5 text-sm ${
-            tab === "research" ? "bg-white/10 text-[#e8e6e1]" : "text-[#9a958c]"
+          className={`rounded-sm px-3 py-1.5 text-sm ${
+            tab === "research" ? "bg-card font-medium text-foreground" : "text-muted-foreground"
           }`}
         >
           リサーチ
@@ -77,16 +77,16 @@ export default function ResearchPage() {
         <button
           type="button"
           onClick={() => setTab("proto")}
-          className={`rounded-full px-4 py-1.5 text-sm ${
-            tab === "proto" ? "bg-white/10 text-[#e8e6e1]" : "text-[#9a958c]"
+          className={`rounded-sm px-3 py-1.5 text-sm ${
+            tab === "proto" ? "bg-card font-medium text-foreground" : "text-muted-foreground"
           }`}
         >
           プロトタイプ
         </button>
       </div>
-      <div className="mt-4 rounded-2xl border border-white/10 bg-[#141821] p-5">
+      <div className="ui-panel mt-3 p-4">
         {tab === "research" ? (
-          <ul className="space-y-3 text-sm leading-relaxed">
+          <ul className="space-y-2.5 text-sm leading-relaxed">
             {notes.research.map((line) => (
               <li key={line} className="pl-1">
                 {line}

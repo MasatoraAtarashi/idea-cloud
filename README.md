@@ -18,7 +18,7 @@ http://localhost:5173 が LP。`はじめる` からモック画面に入れま�
 | パス             | 画面                      |
 | ---------------- | ------------------------- |
 | `/`              | 公開 LP                   |
-| `/login`         | ログイン（Google モック） |
+| `/login`         | ログイン（Access スタブ） |
 | `/app/capture`   | クイックキャプチャ        |
 | `/app`           | 熟成ボード（看板）        |
 | `/app/ideas/:id` | アイデア詳細              |
@@ -30,6 +30,8 @@ http://localhost:5173 が LP。`はじめる` からモック画面に入れま�
 
 `MasatoraAtarashi/app-template` は GitHub の Template Repository ではないため、`gh repo create --template` は使っていません。squat の **`personal-fullstack`** を strict ティア・Cloudflare Access 認証ありで複製しています。
 
+**ビジュアルについて（正直）：** スタックはテンプレート由来。最初のダーク＋ゴールド画面は LiteLLM UI を踏襲していませんでした。いまの作業画面は LiteLLM ダッシュボードの既定ライトモード（白パネル、薄いグレーボーダー、紬の主ボタン、デスクトップはサイドバー）に寄せています。
+
 積まれているもの:
 
 - React Router v7（SSR）+ Tailwind CSS 4 + Hono on Cloudflare Workers
@@ -40,7 +42,7 @@ http://localhost:5173 が LP。`はじめる` からモック画面に入れま�
 
 ## スタブ / 未配線
 
-- **Google ログイン**: LP のボタンは `/app` へ進むだけ。本番は Cloudflare Access の Google IdP を想定
+- **ログイン**: LP のボタンは `/app` へ進むだけ。初期ゲートは **Cloudflare Access**。アプリ内 Google OAuth は後続
 - **許可リスト**: `ACCESS_ALLOWED_EMAILS`（カンマ区切り）。API は見る。UI のテキストエリアは無効
 - **フィールド暗号化**: `server/security/field-crypto.ts` の AES-GCM。D1 のアイデア表は未作成
 - **Workers AI**: タグ付け・関係抽出・進化案はコピーのみ。`wrangler.jsonc` に未使用の AI バインディングは置いていない
