@@ -54,8 +54,8 @@ export default function LandingPage() {
             </Link>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            いまは画面認識用のモックです。初期の入り口は Cloudflare Access。アプリ内 Google OAuth
-            は後から載せます。
+            いまは画面認識用のモックです。本番の入り口はアプリ内 Google
+            OAuth。許可リストが第二層です。
           </p>
         </section>
 
@@ -78,7 +78,7 @@ export default function LandingPage() {
         <section className="mx-auto max-w-5xl px-4 py-12">
           <h2 className="text-lg font-semibold">熟成の段階</h2>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            看板は進捗管理ではなく、時間を与える棚です。デスクトップで俯瞰し、モバイルでは足しません。
+            看板は進捗管理ではなく、時間を与える棚です。デスクトップで俯瞻し、モバイルでは足しません。
           </p>
           <ol className="mt-6 grid gap-2 sm:grid-cols-5">
             {STAGES.map((stage, index) => (
@@ -122,8 +122,8 @@ export default function LandingPage() {
             <div>
               <h2 className="text-lg font-semibold">閉じたチームから始める</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                いまの入り口は Cloudflare Access（Zero Trust）。アプリ内 Google OAuth
-                は製品認証として後続。DB の本文は暗号化して保持する前提（現在はスタブ）。
+                本番の入り口はアプリ内 Google OAuth。許可リストが第二層。DB
+                の本文は暗号化して保持する前提（現在はスタブ）。
               </p>
             </div>
           </div>
