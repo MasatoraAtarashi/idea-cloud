@@ -1,17 +1,15 @@
 # UI previews（画面認識用）
 
-ローカル `pnpm dev` を Chrome headless で撮ったキャプチャです。
-デスクトップ **1280px** / モバイル **390px**。
+Local `pnpm dev` captures. Desktop ~1280px / mobile ~390px originals as PNG.
+GitHub-renderable SVG wrappers are linked below so the PR can show direction immediately.
 
-PNG はリポジトリ本体にあります（ローカル clone）。GitHub 上では同再の SVG ラッパーを掲げます。
-
-| 画面 | Desktop 1280 | Mobile 390 |
+| Screen | Desktop | Mobile |
 | --- | --- | --- |
-| LP `/` | [desktop-lp](./desktop-lp.svg) | [mobile-lp](./mobile-lp.svg) |
-| ログイン `/login` | [desktop-login](./desktop-login.svg) | [mobile-login](./mobile-login.svg) |
-| キャプチャ `/app/capture` | [desktop-capture](./desktop-capture.svg) | [mobile-capture](./mobile-capture.svg) |
-| 熟成ボード `/app` | [desktop-board](./desktop-board.svg) | [mobile-board](./mobile-board.svg) |
-| アイデア詳細 `/app/ideas/:id` | [desktop-idea-detail](./desktop-idea-detail.svg) | [mobile-idea-detail](./mobile-idea-detail.svg) |
-| 融合 `/app/merge` | [desktop-merge](./desktop-merge.svg) | [mobile-merge](./mobile-merge.svg) |
-| リサーチ `/app/research` | [desktop-research](./desktop-research.svg) | [mobile-research](./mobile-research.svg) |
-| チーム `/app/team` | [desktop-team](./desktop-team.svg) | [mobile-team](./mobile-team.svg) |
+| LP `/` | [desktop-lp.svg](./desktop-lp.svg) | [mobile-lp.svg](./mobile-lp.svg) |
+| Login `/login` | [desktop-login.svg](./desktop-login.svg) | [mobile-login.svg](./mobile-login.svg) |
+| Capture `/app/capture` | [desktop-capture.svg](./desktop-capture.svg) | [mobile-capture.svg](./mobile-capture.svg) |
+| Board `/app` | [desktop-board.svg](./desktop-board.svg) | [mobile-board.svg](./mobile-board.svg) |
+| Idea detail `/app/ideas/:id` | [desktop-idea-detail.svg](./desktop-idea-detail.svg) | [mobile-idea-detail.svg](./mobile-idea-detail.svg) |
+| Merge `/app/merge` | [desktop-merge.svg](./desktop-merge.svg) | [mobile-merge.svg](./mobile-merge.svg) |
+| Research `/app/research` | [desktop-research.svg](./desktop-research.svg) | [mobile-research.svg](./mobile-research.svg) |
+| Team `/app/team` | [desktop-team.svg](./desktop-team.svg) | [mobile-team.svg](./mobile-team.svg) |
