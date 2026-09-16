@@ -1,13 +1,13 @@
-# Specs
+# Specs (English)
 
-English product and engineering specs for Idea Cloud. Product UI copy remains Japanese.
+Canonical engineering docs for Idea Cloud. Product UI copy stays Japanese.
 
-| Doc | Audience |
+| File | Covers |
 | --- | --- |
-| [product-requirements.md](./product-requirements.md) | What we are building and what this pass is not |
-| [architecture.md](./architecture.md) | Runtime, storage, template provenance |
-| [ui-ia.md](./ui-ia.md) | Screens, navigation, visual language |
-| [security.md](./security.md) | Access vs OAuth, allowlist, field encryption |
-| [deploy-and-access.md](./deploy-and-access.md) | First Cloudflare deploy and Zero Trust checklist |
+| [product-requirements.md](./product-requirements.md) | Product goals, idea stages, this-pass scope |
+| [architecture.md](./architecture.md) | Cloudflare Workers + D1 |
+| [ui-ia.md](./ui-ia.md) | LP, quick capture, maturation kanban, merge, research/prototype |
+| [security.md](./security.md) | Google via Access + allowlist, field encryption, CI security |
+| [deploy-and-access.md](./deploy-and-access.md) | First deploy and Zero Trust checklist |
 
-UI screenshots: [../ui-previews/](../ui-previews/).
+UI previews (not specs): [../ui-previews/](../ui-previews/).
