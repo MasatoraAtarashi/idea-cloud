@@ -1,8 +1,9 @@
 # Local-only env (this file is gitignored).
-# Bypass Cloudflare Access on localhost with your own email.
+# Until in-app Google OAuth is wired, APIs still use the template Access middleware.
+# On localhost, this email stands in for the signed-in user.
 LOCAL_DEV_USER_EMAIL=you@example.com
 
-# Extra app-level allowlist (comma-separated). Empty = Access policy only.
+# Second layer after Google identity (comma-separated). Empty = identity only.
 # ACCESS_ALLOWED_EMAILS=you@example.com
 
 # Field encryption stub (not wired to D1 yet). 32-byte hex. Production: wrangler secret.
