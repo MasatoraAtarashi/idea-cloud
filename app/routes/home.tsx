@@ -13,24 +13,21 @@ export function meta() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0c0e12]">
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-[#0c0e12]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <span className="font-serif text-lg">アイデアクラウド</span>
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-10 border-b border-border bg-card/90 backdrop-blur">
+        <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
+          <span className="text-sm font-semibold">アイデアクラウド</span>
           <nav className="flex items-center gap-3 text-sm">
             <a
               href="#screens"
-              className="hidden text-[#9a958c] no-underline hover:text-[#e8e6e1] sm:inline"
+              className="hidden text-muted-foreground no-underline hover:text-foreground sm:inline"
             >
               画面マップ
             </a>
-            <Link to="/login" className="text-[#e8e6e1] no-underline hover:text-[#d4a574]">
+            <Link to="/login" className="text-foreground no-underline hover:underline">
               ログイン
             </Link>
-            <Link
-              to="/app"
-              className="rounded-full bg-[#d4a574] px-4 py-1.5 text-[#0c0e12] no-underline hover:bg-[#e0b78a]"
-            >
+            <Link to="/app" className="ui-btn">
               はじめる
             </Link>
           </nav>
@@ -38,38 +35,32 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <section className="mx-auto max-w-5xl px-4 pb-20 pt-16 md:pt-24">
-          <p className="text-xs tracking-[0.25em] text-[#d4a574]">IDEA CLOUD</p>
-          <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-tight md:text-6xl">
+        <section className="mx-auto max-w-5xl px-4 pb-16 pt-12 md:pt-16">
+          <p className="ui-kicker">Idea Cloud</p>
+          <h1 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
             アイデアは、
             <br />
             寝かせて熟す。
           </h1>
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-[#9a958c] md:text-lg">
+          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
             外山滋比古『思考の整理学』に着想した、チームのためのワークスペース。思いつきはすぐに捕まえる。その場では磨かない。忘れた頃に見返し、進める・融合する・捨てる。
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/app"
-              className="rounded-full bg-[#d4a574] px-6 py-3 text-sm font-medium text-[#0c0e12] no-underline"
-            >
+          <div className="mt-7 flex flex-wrap gap-2">
+            <Link to="/app" className="ui-btn px-4 py-2">
               はじめる（画面を見る）
             </Link>
-            <Link
-              to="/login"
-              className="rounded-full border border-white/15 px-6 py-3 text-sm text-[#e8e6e1] no-underline"
-            >
+            <Link to="/login" className="ui-btn-ghost px-4 py-2">
               ログイン
             </Link>
           </div>
-          <p className="mt-4 text-xs text-[#9a958c]">
-            いまは画面認識用のモックです。Google 認証と許可リストは本番で Cloudflare Access
-            に載せる想定。
+          <p className="mt-4 text-xs text-muted-foreground">
+            いまは画面認識用のモックです。初期の入り口は Cloudflare Access。アプリ内 Google OAuth
+            は後から載せます。
           </p>
         </section>
 
-        <section className="border-y border-white/10 bg-[#141821]">
-          <div className="mx-auto grid max-w-5xl gap-10 px-4 py-16 md:grid-cols-4">
+        <section className="border-y border-border bg-muted">
+          <div className="mx-auto grid max-w-5xl gap-8 px-4 py-12 md:grid-cols-4">
             {[
               ["1. つかまえる", "モバイルで、整理せず置く。"],
               ["2. 寝かせる", "熟成レーンに入れ、触れない。"],
@@ -77,68 +68,70 @@ export default function LandingPage() {
               ["4. 進化させる", "融合し、選ばれたら調べる。"],
             ].map(([title, body]) => (
               <article key={title}>
-                <h2 className="font-serif text-xl">{title}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-[#9a958c]">{body}</p>
+                <h2 className="text-sm font-semibold">{title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-4 py-16">
-          <h2 className="font-serif text-2xl">熟成の段階</h2>
-          <p className="mt-2 max-w-xl text-sm text-[#9a958c]">
-            看板は進捗管理ではなく、時間を与える棚です。デスクトップで俯瞰し、モバイルでは足しません。
+        <section className="mx-auto max-w-5xl px-4 py-12">
+          <h2 className="text-lg font-semibold">熟成の段階</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            看板は進捗管理ではなく、時間を与える棚です。デスクトップで俯瞻し、モバイルでは足しません。
           </p>
-          <ol className="mt-8 grid gap-3 sm:grid-cols-5">
+          <ol className="mt-6 grid gap-2 sm:grid-cols-5">
             {STAGES.map((stage, index) => (
-              <li key={stage} className="rounded-xl border border-white/10 bg-[#141821] px-4 py-4">
-                <span className="text-[11px] text-[#7eb8a8]">0{index + 1}</span>
-                <p className="mt-2 font-medium">{STAGE_LABEL[stage]}</p>
+              <li key={stage} className="ui-panel px-3 py-3">
+                <span className="font-mono text-[10px] text-muted-foreground">0{index + 1}</span>
+                <p className="mt-1.5 text-sm font-medium">{STAGE_LABEL[stage]}</p>
               </li>
             ))}
           </ol>
         </section>
 
-        <section id="screens" className="mx-auto max-w-5xl px-4 pb-20">
-          <h2 className="font-serif text-2xl">画面マップ</h2>
-          <p className="mt-2 text-sm text-[#9a958c]">クリックして、主要画面の骨格を辿れます。</p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section id="screens" className="mx-auto max-w-5xl px-4 pb-16">
+          <h2 className="text-lg font-semibold">画面マップ</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            クリックして、主要画面の骨格を辿れます。
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {APP_SCREENS.map((screen) => (
               <Link
                 key={screen.path}
                 to={screen.path}
-                className="rounded-2xl border border-white/10 bg-[#141821] p-5 no-underline transition hover:border-[#d4a574]/40"
+                className="ui-panel p-4 no-underline transition hover:bg-muted"
               >
-                <h3 className="text-base font-medium text-[#e8e6e1]">{screen.title}</h3>
-                <p className="mt-2 text-sm text-[#9a958c]">{screen.blurb}</p>
-                <p className="mt-4 text-xs text-[#7eb8a8]">{screen.path}</p>
+                <h3 className="text-sm font-medium text-foreground">{screen.title}</h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">{screen.blurb}</p>
+                <p className="mt-3 font-mono text-[11px] text-muted-foreground">{screen.path}</p>
               </Link>
             ))}
           </div>
         </section>
 
-        <section className="border-t border-white/10 bg-[#141821]">
-          <div className="mx-auto grid max-w-5xl gap-10 px-4 py-16 md:grid-cols-2">
+        <section className="border-t border-border bg-muted">
+          <div className="mx-auto grid max-w-5xl gap-8 px-4 py-12 md:grid-cols-2">
             <div>
-              <h2 className="font-serif text-2xl">モバイルは捕獲、デスクトップは判断</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[#9a958c]">
+              <h2 className="text-lg font-semibold">モバイルは捕獲、デスクトップは判断</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 外出先ではクイックキャプチャだけ。机の前で看板を開き、熟したカードを融合したり、採用したもののリサーチに進みます。ネイティブアプリは後から。まずは
                 Web。
               </p>
             </div>
             <div>
-              <h2 className="font-serif text-2xl">閉じたチームから始める</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[#9a958c]">
-                Google アカウント + 許可リスト。DB
-                の本文は暗号化して保持する前提（現在はスタブ）。オペレータが平文を覗きにくい形を、最初から設計に入れます。
+              <h2 className="text-lg font-semibold">閉じたチームから始める</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                いまの入り口は Cloudflare Access（Zero Trust）。アプリ内 Google OAuth
+                は製品認証として後続。DB の本文は暗号化して保持する前提（現在はスタブ）。
               </p>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-white/10">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-8 text-xs text-[#9a958c] sm:flex-row sm:justify-between">
+      <footer className="border-t border-border bg-card">
+        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>アイデアクラウド / Idea Cloud</span>
           <span>Masatora Atarashi · 画面認識用ファーストパス</span>
         </div>

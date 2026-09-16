@@ -21,12 +21,12 @@ export default function CapturePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="font-serif text-3xl">クイックキャプチャ</h1>
-      <p className="mt-2 text-sm text-[#9a958c]">
+      <h1 className="text-xl font-semibold">クイックキャプチャ</h1>
+      <p className="mt-1.5 text-sm text-muted-foreground">
         分類もタグも後回し。一文で置いて、忘れる。モバイル向けの入口です。
       </p>
-      <form onSubmit={onSubmit} className="mt-8">
-        <label htmlFor="idea" className="text-xs text-[#9a958c]">
+      <form onSubmit={onSubmit} className="mt-6">
+        <label htmlFor="idea" className="text-xs text-muted-foreground">
           いまの着想
         </label>
         <textarea
@@ -35,28 +35,27 @@ export default function CapturePage() {
           onChange={(event) => setDraft(event.target.value)}
           rows={5}
           placeholder="歩きながら浮かんだことを、そのまま。"
-          className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-[#141821] px-4 py-3 text-sm outline-none focus:border-[#d4a574]/60"
+          className="ui-input mt-2 resize-none py-3"
         />
         <div className="mt-3 flex items-center justify-between">
-          <button
-            type="submit"
-            disabled={!draft.trim()}
-            className="rounded-full bg-[#d4a574] px-5 py-2 text-sm text-[#0c0e12] disabled:opacity-40"
-          >
+          <button type="submit" disabled={!draft.trim()} className="ui-btn">
             置いて寝かせる
           </button>
-          <Link to="/app" className="text-sm text-[#7eb8a8] no-underline hover:underline">
+          <Link
+            to="/app"
+            className="text-sm text-muted-foreground no-underline hover:text-foreground"
+          >
             ボードを見る
           </Link>
         </div>
       </form>
-      {notice && <p className="mt-4 text-xs text-[#7eb8a8]">{notice}</p>}
+      {notice && <p className="mt-3 text-xs text-muted-foreground">{notice}</p>}
       {caught.length > 0 && (
-        <ul className="mt-8 space-y-2">
+        <ul className="mt-6 space-y-2">
           {caught.map((item) => (
             <li
               key={item}
-              className="rounded-xl border border-dashed border-white/15 bg-[#10141c] px-4 py-3 text-sm"
+              className="rounded-md border border-dashed border-border bg-muted px-3 py-2.5 text-sm"
             >
               {item}
             </li>
