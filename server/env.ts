@@ -16,4 +16,4 @@ declare global {
     /** 32 バイト hex。未配線（フィールド暗号化スタブ用） */
     FIELD_ENCRYPTION_KEY?: string;
   }
-};
+}
