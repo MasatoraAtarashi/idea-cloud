@@ -1,10 +1,13 @@
-# Idea Cloud (アイデアクラウド)
+# Idea Cloud
 
-A team workspace for capturing ideas, leaving them alone, and reviewing them only after they have matured. Inspired by Toyama Shigehiko’s *The Science of Thought Organization* (思考の整理学).
+Team workspace for capturing ideas, leaving them alone, and reviewing them after they have matured. Inspired by Toyama Shigehiko’s *The Science of Thought Organization* (思考の整理学). Japanese product name: アイデアクラウド.
 
-**Product UI copy is Japanese.** Engineering docs (this README, `docs/spec/`, design notes) are English.
+## Language
 
-This repository is a **screen-alignment first pass**: public landing page plus a clickable UI shell. Persistence, production auth, and AI are stubs.
+- **Documentation** (this README, `docs/spec/`, design notes): English.
+- **Product UI copy**: Japanese.
+
+This repo is a **screen-alignment first pass**: public landing page plus a clickable UI shell. Persistence, production auth, and AI are stubs.
 
 ## Specs
 
