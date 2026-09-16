@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   preview:
-    # fork からの PR には secrets が渡らないためスキップ
+    # Fork PRs do not receive secrets; skip preview upload
     if: github.event.pull_request.head.repo.full_name == github.repository
     name: Upload Worker version & comment preview URL
     runs-on: ubuntu-latest

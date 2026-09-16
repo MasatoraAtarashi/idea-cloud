@@ -1,9 +1,9 @@
-# ローカル開発用の環境変数（このファイルはコミットされない）
-# Cloudflare Access をローカルでバイパスするための自分のメールアドレス
+# Local-only env (this file is gitignored).
+# Bypass Cloudflare Access on localhost with your own email.
 LOCAL_DEV_USER_EMAIL=you@example.com
 
-# アプリ側の追加許可リスト（カンマ区切り）。空なら Access のポリシーのみ
+# Extra app-level allowlist (comma-separated). Empty = Access policy only.
 # ACCESS_ALLOWED_EMAILS=you@example.com
 
-# フィールド暗号化（未配線スタブ）。32 バイトの hex。値は wrangler secret で設定する
+# Field encryption stub (not wired to D1 yet). 32-byte hex. Production: wrangler secret.
 # FIELD_ENCRYPTION_KEY=

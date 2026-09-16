@@ -1,7 +1,7 @@
 /**
- * Cloudflare Access 通過後の追加制限。
- * 未設定（空）のときは Access のポリシーだけに委譲する。
- * カンマ区切りのメールを小文字比較する。
+ * Extra restriction after Cloudflare Access.
+ * Empty allowlist defers entirely to the Access policy.
+ * Comma-separated emails, compared lowercase.
  */
 export function parseAllowlist(allowlistCsv: string | undefined): string[] {
   if (!allowlistCsv) return [];

@@ -13,7 +13,7 @@ async function api(path: string, init?: RequestInit) {
 }
 
 describe("todos API", () => {
-  it("POST /api/todos で作成した Todo が GET で取得できる", async () => {
+  it("creates a todo via POST and lists it via GET", async () => {
     const create = await api("/todos", {
       method: "POST",
       body: JSON.stringify({ title: "牛乳を買う" }),
@@ -28,7 +28,7 @@ describe("todos API", () => {
     expect(body.items.some((item) => item.title === "牛乳を買う")).toBe(true);
   });
 
-  it("POST のタイトルが空なら 400 を返す（zod バリデーション）", async () => {
+  it("returns 400 when POST title is empty (zod)", async () => {
     const res = await api("/todos", {
       method: "POST",
       body: JSON.stringify({ title: "   " }),
@@ -36,7 +36,7 @@ describe("todos API", () => {
     expect(res.status).toBe(400);
   });
 
-  it("PATCH /api/todos/:id で完了状態が反転する", async () => {
+  it("toggles done via PATCH /api/todos/:id", async () => {
     const create = await api("/todos", {
       method: "POST",
       body: JSON.stringify({ title: "反転テスト" }),
@@ -50,7 +50,7 @@ describe("todos API", () => {
     expect(patched.item.done).toBe(true);
   });
 
-  it("DELETE /api/todos/:id で削除され、2 回目は 404", async () => {
+  it("deletes via DELETE and returns 404 the second time", async () => {
     const create = await api("/todos", {
       method: "POST",
       body: JSON.stringify({ title: "削除テスト" }),

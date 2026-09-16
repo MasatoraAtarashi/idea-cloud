@@ -1,6 +1,6 @@
 /**
- * D1 に書く機密フィールド向けの AES-GCM ヘルパ。
- * アイデア本文などへ配線するのは次フェーズ。鍵は wrangler secret / .dev.vars のみ。
+ * AES-GCM helper for sensitive fields written to D1.
+ * Wiring into idea bodies is a later phase. Key lives in wrangler secret / .dev.vars only.
  */
 const IV_BYTES = 12;
 
@@ -15,7 +15,7 @@ export function parseKeyHex(keyHex: string | undefined): Uint8Array {
   const trimmed = keyHex?.trim() ?? "";
   if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
     throw new FieldCryptoError(
-      "FIELD_ENCRYPTION_KEY は 32 バイトの hex（64 文字）で指定してください",
+      "FIELD_ENCRYPTION_KEY must be 32-byte hex (64 characters)",
     );
   }
   const bytes = new Uint8Array(32);
@@ -38,7 +38,7 @@ function base64ToBytes(value: string): Uint8Array {
   return bytes;
 }
 
-/** Workers / TS 6 の BufferSource は ArrayBuffer 固定。SharedArrayBuffer を除外するためにコピーする。 */
+/** Workers / TS 6 BufferSource is ArrayBuffer. Copy to drop SharedArrayBuffer. */
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(copy).set(bytes);
@@ -62,7 +62,7 @@ export async function encryptField(plaintext: string, keyHex: string | undefined
 export async function decryptField(payload: string, keyHex: string | undefined): Promise<string> {
   const [ivPart, dataPart] = payload.split(".");
   if (!ivPart || !dataPart) {
-    throw new FieldCryptoError("暗号文の形式が不正です");
+    throw new FieldCryptoError("Invalid ciphertext format");
   }
   const key = await importAesKey(parseKeyHex(keyHex), ["decrypt"]);
   const iv = base64ToBytes(ivPart);

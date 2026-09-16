@@ -1,8 +1,8 @@
 import { exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 
-describe("request-id ミドルウェア", () => {
-  it("レスポンスに x-request-id ヘッダが付与される", async () => {
+describe("request-id middleware", () => {
+  it("sets an x-request-id response header", async () => {
     const res = await exports.default.fetch("https://example.com/api/todos", {
       headers: { "cf-access-authenticated-user-email": "user@example.com" },
     });
@@ -11,7 +11,7 @@ describe("request-id ミドルウェア", () => {
     );
   });
 
-  it("送信した x-request-id がそのまま使われる", async () => {
+  it("echoes a client-supplied x-request-id", async () => {
     const res = await exports.default.fetch("https://example.com/api/todos", {
       headers: {
         "cf-access-authenticated-user-email": "user@example.com",
@@ -23,7 +23,7 @@ describe("request-id ミドルウェア", () => {
 });
 
 describe("security headers", () => {
-  it("API 応答に基礎セキュリティヘッダが付く", async () => {
+  it("adds baseline security headers on API responses", async () => {
     const res = await exports.default.fetch("https://example.com/api/todos", {
       headers: { "cf-access-authenticated-user-email": "user@example.com" },
     });

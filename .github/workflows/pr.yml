@@ -70,7 +70,7 @@ jobs:
           cache: pnpm
 
       - name: zizmor (GitHub Actions audit)
-        # オフラインでローカルファイルのみ監査（zizmor は npm に無いので cargo で導入）
+        # Offline audit of local workflow files (zizmor is not on npm; install via cargo)
         run: |
           cargo install zizmor --locked
           "$HOME/.cargo/bin/zizmor" --min-severity low .github

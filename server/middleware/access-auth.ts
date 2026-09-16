@@ -3,12 +3,12 @@ import type { AppEnv } from "../env";
 import { isEmailAllowed } from "../security/allowlist";
 
 /**
- * Cloudflare Access 認証ミドルウェア。
- * Access が付与するヘッダからユーザー ID（メール）を読むだけなので、アプリ側に認証コードは不要。
- * ローカル開発時は localhost に限り .dev.vars の LOCAL_DEV_USER_EMAIL でバイパスできる。
- * ACCESS_ALLOWED_EMAILS があれば、Access 通過後にアプリ側でも許可リストを見る（Google ログイン + 制限）。
+ * Cloudflare Access auth middleware.
+ * Reads identity from the Access email header — no in-app OAuth in this pass.
+ * Localhost / 127.0.0.1 may use LOCAL_DEV_USER_EMAIL from .dev.vars.
+ * If ACCESS_ALLOWED_EMAILS is set, it is applied after Access (extra allowlist).
  *
- * 認証を無効化して scaffold した場合、このファイルは配線から外れます（squat-auth マーカー参照）。
+ * If the scaffold was generated with auth off, this file is unwired (see squat-auth markers).
  */
 export const accessAuth = createMiddleware<AppEnv>(async (c, next) => {
   // squat-auth: begin

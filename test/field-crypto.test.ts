@@ -9,7 +9,7 @@ import {
 const TEST_KEY = "a".repeat(64);
 
 describe("field-crypto", () => {
-  it("同じ平文を暗号化しても IV が変わる", async () => {
+  it("uses a new IV for the same plaintext", async () => {
     const a = await encryptField("熟成させたいメモ", TEST_KEY);
     const b = await encryptField("熟成させたいメモ", TEST_KEY);
     expect(a).not.toBe(b);
@@ -17,7 +17,7 @@ describe("field-crypto", () => {
     expect(await decryptField(b, TEST_KEY)).toBe("熟成させたいメモ");
   });
 
-  it("鍵が 32 バイト hex でなければ失敗する", () => {
+  it("rejects a key that is not 32-byte hex", () => {
     expect(() => parseKeyHex("short")).toThrow(FieldCryptoError);
     expect(() => parseKeyHex(undefined)).toThrow(FieldCryptoError);
   });
