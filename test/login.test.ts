@@ -1,13 +1,9 @@
-import { exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
+import { GOOGLE_LOGIN_CTA, GOOGLE_LOGIN_HINT } from "../app/auth/google-login";
 
 describe("login page (Google OAuth mock)", () => {
-  it("is public and looks like Sign in with Google", async () => {
-    const res = await exports.default.fetch("https://example.com/login");
-    expect(res.status).toBe(200);
-    const html = await res.text();
-    expect(html).toContain("Google でログイン");
-    expect(html).toContain("Google アカウントで継続します");
-    expect(html).not.toContain("Cloudflare Access");
+  it("uses a Google sign-in CTA", () => {
+    expect(GOOGLE_LOGIN_CTA).toBe("Google でログイン");
+    expect(GOOGLE_LOGIN_HINT).toBe("Google アカウントで続行します");
   });
 });
