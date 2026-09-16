@@ -1,52 +1,62 @@
-# Architecture
+# Architecture (Cloudflare Workers / D1)
 
-Cloudflare Workers app. Personal-fullstack shape: SSR UI + Hono API on one Worker, D1 for SQL.
+Idea Cloud runs as **one Cloudflare Worker**: React Router v7 SSR for the UI and Hono for `/api/*`, same isolate. Relational data is **D1** (SQLite at the edge) via Drizzle.
+
+This pass ships the Worker + D1 *shape*. Product idea rows are not created yet.
+
+## Cloudflare Workers
+
+| Piece | Path / setting |
+| --- | --- |
+| Worker entry | `workers/app.ts` |
+| Config | `wrangler.jsonc` (not `wrangler.toml`) |
+| Compat | `"compatibility_flags": ["nodejs_compat"]` |
+| Observability | `observability.enabled`, `head_sampling_rate: 1` |
+| Source maps | `upload_source_maps: true` |
+| UI routes | `app/routes.ts` → `app/routes/*` |
+| API | `server/api/` (template `todos` still mounted) |
+| Auth on APIs | `server/middleware/access-auth.ts` |
+
+Bindings declared only if used. Today that is **D1 `DB`**. No unused Workers AI, KV, R2, Queue, or Durable Object bindings.
+
+```
+Browser
+  → Worker (SSR pages + Hono)
+      → D1 binding `DB` (idea-cloud-db)
+      → secrets from wrangler / `.dev.vars` (never in git)
+```
+
+Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` on push to `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`).
+
+## D1
+
+| Item | Today |
+| --- | --- |
+| Database name | `idea-cloud-db` |
+| Binding | `DB` |
+| `database_id` | Placeholder `00000000-0000-0000-0000-000000000000` until `wrangler d1 create` |
+| Migrations | Template `todos` table only (`migrations/`) |
+| Idea / member tables | **Not created** |
+| Field encryption | Helper exists; not applied to D1 rows |
+
+Intended later: idea bodies and similar sensitive columns encrypted with AES-GCM *before* insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
 
 ## Provenance
 
 | Layer | Source |
 | --- | --- |
-| Runtime / CI / Access middleware / sample todos | squat `personal-fullstack` from `MasatoraAtarashi/app-template` |
-| Product routes, mock data, Japanese UI copy | This repo |
-| Visual tokens | LiteLLM dashboard **default light** (`globals.css`), not the template todo UI |
+| Worker, CI, Access middleware, sample todos | squat `personal-fullstack` from `MasatoraAtarashi/app-template` |
+| Product routes, mock data, Japanese UI | This repo |
+| Visual tokens | LiteLLM dashboard **default light**, not the template todo UI |
 
-`app-template` is a squat monorepo (`isTemplate: false` on GitHub). This app was copied out; the template repo was not modified.
+`app-template` is a squat monorepo (`isTemplate: false`). Copied out; template repo not modified.
 
-## Runtime
-
-```
-Browser
-  → Worker (React Router v7 SSR + Hono)
-      → D1 (`DB`) — sample `todos` only today
-      → secrets via wrangler / `.dev.vars` (never committed)
-```
-
-- **Entry:** `workers/app.ts`
-- **UI:** `app/` (React Router routes in `app/routes.ts`)
-- **API:** `server/api/` (template `/api/todos` still mounted)
-- **Auth middleware:** `server/middleware/access-auth.ts` on API routes
-- **Config:** `wrangler.jsonc` (not toml)
-
-Bindings actually used: **D1 `DB`**. No unused AI / KV / R2 / Queue bindings.
-
-## Storage choice (intended, not all wired)
+## Storage map (product, mostly future)
 
 | Need | Service |
 | --- | --- |
-| Idea records, members (relational) | D1 |
-| Settings / allowlist-as-config if we stop using env | Workers KV (not added yet) |
-| Uploads / AI assets | R2 (not added yet) |
-| Agent / realtime | Durable Objects (not this pass) |
+| Ideas, members (SQL) | **D1** |
+| Profile / flags | Workers KV (not added) |
+| Uploads | R2 (not added) |
+| Multiplayer / agents | Durable Objects (not this pass) |
 | Background jobs | Queues + DLQ (not this pass) |
-
-Field bodies should be encrypted at rest with AES-GCM before they hit D1. Helper exists; idea schema does not. See [security.md](./security.md).
-
-## Local vs production auth
-
-- Production: Cloudflare Access injects `Cf-Access-Authenticated-User-Email`.
-- Local: `LOCAL_DEV_USER_EMAIL` on localhost / 127.0.0.1 only.
-- Optional extra gate: `ACCESS_ALLOWED_EMAILS` (empty = defer to Access policy).
-
-## Observability
-
-`wrangler.jsonc`: `observability.enabled`, `head_sampling_rate: 1`, `upload_source_maps: true`, `compatibility_flags: ["nodejs_compat"]`.
