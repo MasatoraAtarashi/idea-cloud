@@ -1,0 +1,30 @@
+/**
+ * Wrangler 設定の詳細: https://developers.cloudflare.com/workers/wrangler/configuration/
+ * squat により生成: アプリ名は scaffold 時、D1 database_id は初回の `squat deploy`（または `squat new --d1`）で置換されます。
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "idea-cloud",
+  "compatibility_date": "2025-10-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./workers/app.ts",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "idea-cloud-db",
+      // 初回デプロイ（squat deploy）時の `wrangler d1 create` の結果で置換されます
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+      "migrations_table": "d1_migrations",
+    },
+  ],
+  /**
+   * Static Assets / Service Bindings などが必要な場合はこちらを参照:
+   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+   */
+}
