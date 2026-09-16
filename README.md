@@ -7,7 +7,7 @@ Team workspace for capturing ideas, leaving them alone, and reviewing them after
 - **Documentation** (this README, `docs/spec/`, design notes): English.
 - **Product UI copy**: Japanese.
 
-This repo is a **screen-alignment first pass**: public landing page plus a clickable UI shell. Persistence, production auth, and AI are stubs.
+This repo is a **screen-alignment first pass**: quiet login gate plus a clickable UI shell. No landing page. Persistence, production auth, and AI are stubs. Workspace data starts empty.
 
 ## Specs
 
@@ -31,24 +31,24 @@ pnpm db:migrate:local            # template sample `todos` table
 pnpm dev
 ```
 
-http://localhost:5173 is the public LP. **はじめる** opens the mock app.
+http://localhost:5173 is the login gate. Google でログイン opens `/app`.
 
-| Path             | Screen (Japanese UI)      |
-| ---------------- | ------------------------- |
-| `/`              | Public landing page       |
-| `/login`         | Login (Google OAuth mock) |
-| `/app/capture`   | Quick capture             |
-| `/app`           | Aging board (kanban)      |
-| `/app/ideas/:id` | Idea detail               |
-| `/app/merge`     | Merge / related           |
-| `/app/research`  | Research / prototype      |
-| `/app/team`      | Team settings             |
+| Path             | Screen (Japanese UI)           |
+| ---------------- | ------------------------------ |
+| `/`              | Login gate (same as `/login`)  |
+| `/login`         | Login (Google OAuth mock)      |
+| `/app/capture`   | Quick capture                  |
+| `/app`           | Idea list (table; kanban view) |
+| `/app/ideas/:id` | Idea detail                    |
+| `/app/merge`     | Merge / related                |
+| `/app/research`  | Research / prototype           |
+| `/app/team`      | Team settings                  |
 
 ## What was copied from the template
 
 `MasatoraAtarashi/app-template` is not a GitHub Template Repository, so `gh repo create --template` was not used. This app was copied from squat’s **`personal-fullstack`** template (strict tier, Cloudflare Access auth).
 
-**Visual language (honest):** the _stack_ is from the template. The first dark + gold UI was **not** LiteLLM. Working screens now follow the LiteLLM dashboard **default light** mode: white panels, cool gray borders, navy primary, desktop sidebar.
+**Visual language (honest):** the _stack_ is from the template. In-app chrome follows LiteLLM Admin **light** (gray sidebar, white main, `#E5E7EB` borders, charcoal primary). The idea list follows Relic IDEATION Cloud’s in-app table + filter rail. Relic’s blue marketing LP is not used.
 
 Included:
 

@@ -14,9 +14,7 @@ export class FieldCryptoError extends Error {
 export function parseKeyHex(keyHex: string | undefined): Uint8Array {
   const trimmed = keyHex?.trim() ?? "";
   if (!/^[0-9a-fA-F]{64}$/.test(trimmed)) {
-    throw new FieldCryptoError(
-      "FIELD_ENCRYPTION_KEY must be 32-byte hex (64 characters)",
-    );
+    throw new FieldCryptoError("FIELD_ENCRYPTION_KEY must be 32-byte hex (64 characters)");
   }
   const bytes = new Uint8Array(32);
   for (let i = 0; i < 32; i += 1) {
