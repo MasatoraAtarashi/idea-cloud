@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { IDEAS, ideasByStage } from "../../data/mock";
+import { PageHeader } from "../../components/shell";
 
 export function meta() {
   return [{ title: "リサーチ / プロトタイプ — アイデアクラウド" }];
@@ -36,12 +37,11 @@ export default function ResearchPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-xl font-semibold">リサーチ / プロトタイプ</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        選ばれたアイデアにだけ、調べる権利がある。安い Cloudflare Workers AI
-        を後から接続する枠です。
-      </p>
-      <label className="mt-6 block text-xs text-muted-foreground" htmlFor="idea-select">
+      <PageHeader
+        title="リサーチ / プロトタイプ"
+        description="選ばれたアイデアにだけ、調べる権利がある。安い Cloudflare Workers AI を後から接続する枠です。"
+      />
+      <label className="block text-xs text-muted-foreground" htmlFor="idea-select">
         採用中のアイデア
       </label>
       <select
@@ -64,7 +64,7 @@ export default function ResearchPage() {
           詳細を開く
         </Link>
       )}
-      <div className="mt-6 flex gap-1 rounded-md border border-border bg-muted p-0.5">
+      <div className="mt-6 flex gap-1 rounded-md border border-border bg-secondary p-0.5">
         <button
           type="button"
           onClick={() => setTab("research")}
@@ -84,17 +84,24 @@ export default function ResearchPage() {
           プロトタイプ
         </button>
       </div>
-      <div className="ui-panel mt-3 p-4">
+      <div className="ui-panel mt-3 overflow-hidden">
         {tab === "research" ? (
-          <ul className="space-y-2.5 text-sm leading-relaxed">
-            {notes.research.map((line) => (
-              <li key={line} className="pl-1">
-                {line}
-              </li>
-            ))}
-          </ul>
+          <table className="ui-table">
+            <thead>
+              <tr>
+                <th>メモ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {notes.research.map((line) => (
+                <tr key={line}>
+                  <td className="text-sm leading-relaxed">{line}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : (
-          <p className="text-sm leading-relaxed">{notes.proto}</p>
+          <p className="p-4 text-sm leading-relaxed">{notes.proto}</p>
         )}
       </div>
     </div>
