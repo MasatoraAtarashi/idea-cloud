@@ -30,7 +30,7 @@ export default function BoardPage() {
   }, [query, stages]);
 
   return (
-    <div>
+    <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
         title="アイデア"
         description="寝かせた着想を、表で見返す。"
@@ -40,7 +40,7 @@ export default function BoardPage() {
           </Link>
         }
       />
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <div className="flex min-h-[28rem] flex-1 flex-col gap-4 lg:flex-row lg:items-stretch">
         <aside className="ui-panel w-full shrink-0 p-4 lg:w-[260px]">
           <h2 className="text-sm font-semibold">絞り込み</h2>
           <label className="mt-4 block text-xs font-medium text-foreground" htmlFor="idea-search">
@@ -74,13 +74,13 @@ export default function BoardPage() {
           </ul>
         </aside>
 
-        <section className="ui-panel min-w-0 flex-1 overflow-hidden">
+        <section className="ui-panel flex min-w-0 flex-1 flex-col overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2.5">
             <p className="text-xs text-muted-foreground">
               {rows.length === 0 ? "0 件" : `${rows.length} 件を表示`}
             </p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="min-h-0 flex-1 overflow-x-auto">
             <table className="ui-table">
               <thead>
                 <tr>
@@ -94,8 +94,10 @@ export default function BoardPage() {
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>
-                      <EmptyState title={EMPTY_IDEAS_TITLE} body={EMPTY_IDEAS_BODY} />
+                    <td colSpan={5} className="!border-b-0">
+                      <div className="flex min-h-[18rem] items-center justify-center">
+                        <EmptyState title={EMPTY_IDEAS_TITLE} body={EMPTY_IDEAS_BODY} />
+                      </div>
                     </td>
                   </tr>
                 ) : (

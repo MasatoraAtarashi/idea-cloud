@@ -37,7 +37,7 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-4 flex shrink-0 flex-wrap items-start justify-between gap-3">
       <div>
         <h1 className="text-[22px] font-semibold tracking-tight text-foreground">{title}</h1>
         {description ? (
@@ -51,7 +51,7 @@ export function PageHeader({
 
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="px-4 py-14 text-center">
+    <div className="px-4 py-10 text-center">
       <p className="text-sm font-medium text-foreground">{title}</p>
       <p className="mt-1 text-sm text-muted-foreground">{body}</p>
     </div>

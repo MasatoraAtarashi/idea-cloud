@@ -212,7 +212,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="text-foreground">{current}</span>
             </nav>
           </header>
-          <div className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</div>
+          <div className="flex flex-1 flex-col px-4 py-5 md:px-6 md:py-6">{children}</div>
         </div>
       </div>
       <nav className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-border bg-card md:hidden">
