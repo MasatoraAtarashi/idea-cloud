@@ -9,8 +9,8 @@ export default function TeamPage() {
     <div className="mx-auto max-w-3xl">
       <h1 className="text-xl font-semibold">チーム設定</h1>
       <p className="mt-1.5 text-sm text-muted-foreground">
-        ソロでも使えるが、既定はチーム。初期の入り口は Cloudflare Access。アプリ内 Google OAuth
-        は後続です。
+        ソロでも使えるが、既定はチーム。本番の入り口はアプリ内 Google
+        OAuth。許可リストが第二層です。
       </p>
 
       <section className="ui-panel mt-6 p-4">
@@ -31,11 +31,11 @@ export default function TeamPage() {
       </section>
 
       <section className="ui-panel mt-4 p-4">
-        <h2 className="text-sm font-medium">Access（初期ゲート）とアプリ内 OAuth</h2>
+        <h2 className="text-sm font-medium">Google OAuth と許可リスト</h2>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          いま守るのは Cloudflare Access（Zero Trust）です。アプリ内 Google OAuth
-          は製品認証として後から載せます。Access 通過後の追加許可リストは
-          ACCESS_ALLOWED_EMAILS。値は .dev.vars / wrangler secret のみ。この画面の入力は無効です。
+          本番の第一層はアプリ内 Google OAuth。第二層は ACCESS_ALLOWED_EMAILS（カンマ区切り）。値は
+          .dev.vars / wrangler secret のみ。テンプレートの Access
+          ミドルウェアは後続で外します。この画面の入力は無効です。
         </p>
         <textarea
           disabled

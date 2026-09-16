@@ -1,7 +1,8 @@
 /**
- * Extra restriction after Cloudflare Access.
- * Empty allowlist defers entirely to the Access policy.
- * Comma-separated emails, compared lowercase.
+ * Second layer after Google identity.
+ * Production primary gate is in-app Google OAuth (mock on /login this pass).
+ * Template Access middleware still sits in front of APIs until the OAuth swap.
+ * Empty allowlist = identity provider only. Comma-separated emails, lowercase.
  */
 export function parseAllowlist(allowlistCsv: string | undefined): string[] {
   if (!allowlistCsv) return [];
