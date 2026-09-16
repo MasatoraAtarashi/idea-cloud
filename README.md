@@ -7,7 +7,7 @@ Team workspace for capturing ideas, leaving them alone, and reviewing them after
 - **Documentation** (this README, `docs/spec/`, design notes): English.
 - **Product UI copy**: Japanese.
 
-This repo is a **screen-alignment first pass**: public landing page plus a clickable UI shell. Persistence, production auth, and AI are stubs.
+This repo is a **login-first console**: `/` opens login, `/app` is an empty idea table until someone captures. Persistence, production auth, and AI are stubs.
 
 ## Specs
 
@@ -15,7 +15,7 @@ This repo is a **screen-alignment first pass**: public landing page plus a click
 | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
 | [docs/spec/product-requirements.md](docs/spec/product-requirements.md) | Product goals, stages, out of scope                         |
 | [docs/spec/architecture.md](docs/spec/architecture.md)                 | Stack, bindings, what came from the template                |
-| [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Screens, IA, visual language                                |
+| [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Login first, empty table console, visual language           |
 | [docs/spec/security.md](docs/spec/security.md)                         | In-app Google OAuth + allowlist, field crypto               |
 | [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, D1 checklist                                  |
 | [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Follow-up: replace Access middleware with real Google OAuth |
@@ -31,14 +31,14 @@ pnpm db:migrate:local            # template sample `todos` table
 pnpm dev
 ```
 
-http://localhost:5173 is the public LP. **はじめる** opens the mock app.
+http://localhost:5173 redirects to `/login`. **Google でログイン** opens the empty console.
 
 | Path             | Screen (Japanese UI)      |
 | ---------------- | ------------------------- |
-| `/`              | Public landing page       |
+| `/`              | Redirects to `/login`     |
 | `/login`         | Login (Google OAuth mock) |
 | `/app/capture`   | Quick capture             |
-| `/app`           | Aging board (kanban)      |
+| `/app`           | Idea table (empty)        |
 | `/app/ideas/:id` | Idea detail               |
 | `/app/merge`     | Merge / related           |
 | `/app/research`  | Research / prototype      |

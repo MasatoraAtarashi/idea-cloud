@@ -44,4 +44,4 @@ Also: Dependabot, lefthook (local), security headers middleware (`x-content-type
 
 ## Headers / CORS
 
-Same-origin UI. No wide CORS on APIs. Public LP is the only unauthenticated document we intend to ship until IA says otherwise.
+Same-origin UI. No wide CORS on APIs. `/` redirects to `/login`; there is no public marketing document.

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { PageHeader } from "../../components/shell";
 
 export function meta() {
-  return [{ title: "クイックキャプチャ — アイデアクラウド" }];
+  return [{ title: "キャプチャ — アイデアクラウド" }];
 }
 
 export default function CapturePage() {
@@ -16,16 +17,13 @@ export default function CapturePage() {
     if (!trimmed) return;
     setCaught((current) => [trimmed, ...current]);
     setDraft("");
-    setNotice("着想レーンへ置きました（モックのため保存していません）");
+    setNotice("置いて寝かせました（まだ保存していません）");
   }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-xl font-semibold">クイックキャプチャ</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        分類もタグも後回し。一文で置いて、忘れる。モバイル向けの入口です。
-      </p>
-      <form onSubmit={onSubmit} className="mt-6">
+      <PageHeader title="キャプチャ" description="分類もタグも後回し。一文で置いて、忘れる。" />
+      <form onSubmit={onSubmit}>
         <label htmlFor="idea" className="text-xs text-muted-foreground">
           いまの着想
         </label>
@@ -45,7 +43,7 @@ export default function CapturePage() {
             to="/app"
             className="text-sm text-muted-foreground no-underline hover:text-foreground"
           >
-            ボードを見る
+            一覧を見る
           </Link>
         </div>
       </form>

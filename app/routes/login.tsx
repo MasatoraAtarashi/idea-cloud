@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { GOOGLE_LOGIN_CTA, GOOGLE_LOGIN_HINT } from "../auth/google-login";
+import { GOOGLE_LOGIN_CTA } from "../auth/google-login";
 
 export function meta() {
   return [{ title: "ログイン — アイデアクラウド" }];
@@ -34,9 +34,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="ui-panel w-full max-w-[400px] px-8 py-10">
         <p className="text-center text-lg font-semibold tracking-tight">アイデアクラウド</p>
-        <h1 className="mt-8 text-center text-[22px] font-medium">ログイン</h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">{GOOGLE_LOGIN_HINT}</p>
-        {/* Mock wiring: real OAuth is a follow-up. Click-through is for screen review. */}
+        {/* Mock wiring: real OAuth is a follow-up. The control is the only way into /app. */}
         <Link
           to="/app"
           className="mt-8 flex h-10 w-full items-center justify-center gap-3 rounded border border-[#747775] bg-white text-sm font-medium text-[#1f1f1f] no-underline hover:bg-[#f8f9fa]"
@@ -44,19 +42,6 @@ export default function LoginPage() {
           <GoogleMark />
           {GOOGLE_LOGIN_CTA}
         </Link>
-        <p className="mt-5 text-center text-xs leading-relaxed text-muted-foreground">
-          画面確認用です。本番の入り口はアプリ内 Google OAuth。許可リスト（
-          <code className="rounded-sm bg-muted px-1 py-0.5 text-[11px]">ACCESS_ALLOWED_EMAILS</code>
-          ）が第二層です。
-        </p>
-        <div className="mt-8 flex justify-between text-sm">
-          <Link to="/" className="text-muted-foreground no-underline hover:text-foreground">
-            トップに戻る
-          </Link>
-          <Link to="/app" className="text-foreground no-underline hover:underline">
-            ログインせず画面を見る
-          </Link>
-        </div>
       </div>
     </div>
   );

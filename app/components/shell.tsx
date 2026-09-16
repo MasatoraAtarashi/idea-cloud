@@ -1,27 +1,53 @@
-import { NavLink } from "react-router";
+import { Link, NavLink } from "react-router";
 import type { ReactNode } from "react";
+import { NAV, NAV_GROUPS } from "../data/nav";
 
-export const NAV = [
-  { to: "/app/capture", label: "キャプチャ", short: "取る" },
-  { to: "/app", label: "熟成ボード", short: "看板", end: true },
-  { to: "/app/merge", label: "融合", short: "融合" },
-  { to: "/app/research", label: "リサーチ", short: "研究" },
-  { to: "/app/team", label: "チーム", short: "設定" },
-] as const;
-
-export function MockBanner() {
-  return (
-    <div className="border-b border-border bg-muted px-4 py-1.5 text-center text-[11px] text-muted-foreground">
-      画面認識用の静的モックです。保存・認証・AI はまだ動きません。
-    </div>
-  );
-}
+export { NAV, NAV_GROUPS };
 
 export function StagePill({ label }: { label: string }) {
   return (
     <span className="inline-flex rounded-md border border-border bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
       {label}
     </span>
+  );
+}
+
+export function PageHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 className="text-xl font-semibold">{title}</h1>
+        <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">{description}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+export function EmptyState({
+  title = "まだアイデアはない",
+  actionTo = "/app/capture",
+  actionLabel = "キャプチャする",
+}: {
+  title?: string;
+  actionTo?: string;
+  actionLabel?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+      <p className="text-sm text-muted-foreground">{title}</p>
+      <Link to={actionTo} className="ui-btn">
+        {actionLabel}
+      </Link>
+    </div>
   );
 }
 
@@ -37,37 +63,39 @@ function navClass(isActive: boolean) {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
-      <MockBanner />
-      <div className="flex min-h-[calc(100vh-32px)]">
+      <div className="flex min-h-screen">
         <aside className="hidden w-56 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
-          <a href="/" className="px-4 py-4 text-sm font-semibold text-foreground no-underline">
+          <Link to="/app" className="px-4 py-4 text-sm font-semibold text-foreground no-underline">
             アイデアクラウド
-          </a>
-          <nav className="flex flex-1 flex-col gap-0.5 px-2">
-            {NAV.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={"end" in item ? item.end : false}
-                className={({ isActive }) => navClass(isActive)}
-              >
-                {item.label}
-              </NavLink>
+          </Link>
+          <nav className="flex flex-1 flex-col gap-5 px-2">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="px-3 pb-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                  {group.label}
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {group.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      className={({ isActive }) => navClass(isActive)}
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
-          <p className="px-4 py-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
-            LiteLLM 型のライトコンソール · モバイルは取る
+          <p className="px-4 py-3 text-[10px] leading-relaxed text-muted-foreground">
+            閉じたワークスペース
           </p>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col bg-background">
-          <header className="flex h-11 items-center justify-between border-b border-border px-4 md:px-6">
-            <p className="text-xs text-muted-foreground">Atarashi Lab · モックセッション</p>
-            <a
-              href="/login"
-              className="text-xs text-muted-foreground no-underline hover:text-foreground"
-            >
-              ログイン（スタブ）
-            </a>
+          <header className="flex h-11 items-center justify-end border-b border-border px-4 md:px-6">
+            <span className="text-xs text-muted-foreground">アカウント</span>
           </header>
           <div className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</div>
         </div>
@@ -77,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavLink
             key={item.to}
             to={item.to}
-            end={"end" in item ? item.end : false}
+            end={item.end}
             className={({ isActive }) =>
               `py-2.5 text-center text-[11px] no-underline ${
                 isActive ? "font-medium text-foreground" : "text-muted-foreground"
