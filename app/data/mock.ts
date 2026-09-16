@@ -10,7 +10,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
 };
 
 export const STAGE_HINT: Record<Stage, string> = {
-  spark: "捉まえたばかり。まだ触らない。",
+  spark: "捕まえたばかり。まだ触らない。",
   aging: "寝かせている。忘れてよい。",
   ripe: "見返す頃合い。進めるか、捨てる。",
   selected: "リサーチ / プロトタイプの対象。",
@@ -47,7 +47,7 @@ export const MEMBERS: MockMember[] = [
 export const IDEAS: MockIdea[] = [
   {
     id: "i-voice-struct",
-    title: "通勤の音声メモを、明朝に構造化する",
+    title: "通勤の音声メモを、翌朝に構造化する",
     body: "歩きながら話した断片を、寝かせたあと見出しと次アクションに分ける。その場で整理しないのがポイント。",
     stage: "spark",
     tags: ["モバイル", "キャプチャ"],

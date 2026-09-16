@@ -46,7 +46,7 @@ export default function LandingPage() {
             寝かせて熟す。
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-[#9a958c] md:text-lg">
-            外山滋比古『思考の整理学』に着想した、チームのためのワークスペース。思いつきはすぐに捉まえる。その場では磨かない。忘れた頃に見返し、進める・融合する・捨てる。
+            外山滋比古『思考の整理学』に着想した、チームのためのワークスペース。思いつきはすぐに捕まえる。その場では磨かない。忘れた頃に見返し、進める・融合する・捨てる。
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -101,7 +101,7 @@ export default function LandingPage() {
 
         <section id="screens" className="mx-auto max-w-5xl px-4 pb-20">
           <h2 className="font-serif text-2xl">画面マップ</h2>
-          <p className="mt-2 text-sm text-[#9a958c]">クリックして、主要画面の骨格を迏れます。</p>
+          <p className="mt-2 text-sm text-[#9a958c]">クリックして、主要画面の骨格を辿れます。</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {APP_SCREENS.map((screen) => (
               <Link
@@ -130,7 +130,7 @@ export default function LandingPage() {
               <h2 className="font-serif text-2xl">閉じたチームから始める</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#9a958c]">
                 Google アカウント + 許可リスト。DB
-                の本文は暗号化して保持する前提（現在はスタブ）。オペレータが平文を覚きにくい形を、最初から設計に入れます。
+                の本文は暗号化して保持する前提（現在はスタブ）。オペレータが平文を覗きにくい形を、最初から設計に入れます。
               </p>
             </div>
           </div>

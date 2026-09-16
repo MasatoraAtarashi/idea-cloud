@@ -1,6 +1,6 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  // squat 共通ハーネス: 全エージェントに同じルール・MCPーhooks を配布する
+  // squat 共通ハーネス: 全エージェントに同じルール・MCP・hooks を配布する
   "targets": ["*"],
   "features": ["rules", "mcp", "hooks", "permissions", "commands", "skills"],
   "outputRoots": ["."],
