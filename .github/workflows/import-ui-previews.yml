@@ -1,0 +1,40 @@
+name: Import UI preview screenshots
+
+on:
+  push:
+    paths:
+      - ".github/workflows/import-ui-previews.yml"
+      - "docs/ui-previews/IMPORT_URL.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch PNG archive and commit
+        run: |
+          set -euo pipefail
+          URL=$(tr -d '\r\n' < docs/ui-previews/IMPORT_URL.txt)
+          curl -L --fail --retry 3 -o /tmp/ui-previews.tgz "$URL"
+          echo "d80227374dfdd90d513468809b2ada28b083f94bf3038286dba310e6bcc04bf8  /tmp/ui-previews.tgz" | sha256sum -c
+          tar -xzf /tmp/ui-previews.tgz -C docs/ui-previews
+          rm -f docs/ui-previews/IMPORT_URL.txt docs/ui-previews/_exact-test.txt docs/ui-previews/_exact-1k.txt
+          git add docs/ui-previews/*.png
+          git add -u docs/ui-previews
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+            exit 0
+          fi
+          git commit -m "docs: add UI preview screenshots for visual review"
+          git push
