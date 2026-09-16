@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { PageHeader } from "../../components/shell";
 
 export function meta() {
   return [{ title: "クイックキャプチャ — アイデアクラウド" }];
@@ -21,11 +22,11 @@ export default function CapturePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-xl font-semibold">クイックキャプチャ</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        分類もタグも後回し。一文で置いて、忘れる。モバイル向けの入口です。
-      </p>
-      <form onSubmit={onSubmit} className="mt-6">
+      <PageHeader
+        title="クイックキャプチャ"
+        description="分類もタグも後回し。一文で置いて、忘れる。モバイル向けの入口です。"
+      />
+      <form onSubmit={onSubmit} className="ui-panel p-4">
         <label htmlFor="idea" className="text-xs text-muted-foreground">
           いまの着想
         </label>
@@ -51,12 +52,9 @@ export default function CapturePage() {
       </form>
       {notice && <p className="mt-3 text-xs text-muted-foreground">{notice}</p>}
       {caught.length > 0 && (
-        <ul className="mt-6 space-y-2">
+        <ul className="ui-panel mt-4 divide-y divide-border overflow-hidden">
           {caught.map((item) => (
-            <li
-              key={item}
-              className="rounded-md border border-dashed border-border bg-muted px-3 py-2.5 text-sm"
-            >
+            <li key={item} className="bg-card px-3 py-2.5 text-sm">
               {item}
             </li>
           ))}

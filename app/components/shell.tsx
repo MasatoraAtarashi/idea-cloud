@@ -1,6 +1,28 @@
 import { NavLink } from "react-router";
 import type { ReactNode } from "react";
 
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+        {description ? (
+          <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+    </div>
+  );
+}
+
 export const NAV = [
   { to: "/app/capture", label: "キャプチャ", short: "取る" },
   { to: "/app", label: "熟成ボード", short: "看板", end: true },
@@ -29,18 +51,21 @@ function navClass(isActive: boolean) {
   return [
     "relative rounded-md px-3 py-1.5 text-sm no-underline",
     isActive
-      ? "bg-muted font-medium text-foreground before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:rounded-full before:bg-primary"
-      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      ? "bg-sidebar-accent font-medium text-sidebar-foreground before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:rounded-full before:bg-sidebar-primary"
+      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
   ].join(" ");
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <MockBanner />
       <div className="flex min-h-[calc(100vh-32px)]">
-        <aside className="hidden w-56 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
-          <a href="/" className="px-4 py-4 text-sm font-semibold text-foreground no-underline">
+        <aside className="hidden w-56 shrink-0 border-r border-sidebar-border bg-sidebar md:flex md:flex-col">
+          <a
+            href="/"
+            className="px-4 py-4 text-sm font-semibold text-sidebar-foreground no-underline"
+          >
             アイデアクラウド
           </a>
           <nav className="flex flex-1 flex-col gap-0.5 px-2">
@@ -60,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </p>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col bg-background">
-          <header className="flex h-11 items-center justify-between border-b border-border px-4 md:px-6">
+          <header className="flex h-11 items-center justify-between border-b border-border bg-card px-4 md:px-6">
             <p className="text-xs text-muted-foreground">Atarashi Lab · モックセッション</p>
             <a
               href="/login"
