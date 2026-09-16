@@ -18,8 +18,8 @@
     {
       "binding": "DB",
       "database_name": "idea-cloud-db",
-      // Replaced with the id from `wrangler d1 create` on first deploy
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Created 2026-09-16 via Cloudflare bindings (APAC)
+      "database_id": "c49e0fd3-b7e4-422e-b3fc-019bf0264dab",
       "migrations_dir": "migrations",
       "migrations_table": "d1_migrations",
     },
