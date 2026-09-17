@@ -13,9 +13,9 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 ## Goals (this first pass)
 
 1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
-2. Clickable UI shell for the working screens (not a full product). Empty states — no dummy ideas or invented teammates.
+2. Clickable UI shell plus **minimal D1 idea persistence** so capture/list/detail use real rows. Empty state **まだありません** when the table is empty. No dummy seed data.
 3. Visual direction: LiteLLM Admin **light** chrome + Relic in-app list IA (see [ui-ia.md](./ui-ia.md)). Not Relic’s blue marketing LP.
-4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app`.
+4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app`. Auth is still mock — no Google OAuth / allowlist / Access work this pass.
 5. Keep the template CI (typecheck, lint, test, gitleaks, zizmor, audit, ASH).
 
 ## Idea stages
@@ -40,8 +40,10 @@ See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile capture home; desktop → `/ap
 
 ## Out of scope (this pass)
 
-- Persisting ideas to D1 (no idea table yet)
-- In-app Google OAuth (Access first)
+- In-app Google OAuth / sessions / allowlist / Access (login stays a mock continue into `/app`)
+- Merge / research / team features beyond empty shells
+- Per-user ownership (single shared workspace)
+- Field encryption on idea rows
 - Workers AI tagging, relation extraction, evolution suggestions (copy-only)
 - Native apps
 - Public multi-tenant signup
@@ -49,4 +51,4 @@ See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile capture home; desktop → `/ap
 
 ## Success for this pass
 
-A reviewer enters `/app` and lands on **capture** on mobile and **list** (`/app/list`) on desktop. No dummy ideas. LiteLLM chrome; Relic list IA only when rows exist. Backend, crypto wiring, and real OAuth can follow after visual sign-off.
+A reviewer signs in via the mock Google button, places an idea with **置く**, and sees it on `/app/list` after reload. Empty DB still shows **まだありません**. Auth stays mocked.

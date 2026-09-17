@@ -7,7 +7,7 @@ Team workspace for capturing ideas, leaving them alone, and reviewing them after
 - **Documentation** (this README, `docs/spec/`, design notes): English.
 - **Product UI copy**: Japanese.
 
-This repo is a **screen-alignment first pass**: quiet login gate plus a clickable UI shell. No landing page. Persistence, production auth, and AI are stubs. Workspace data starts empty.
+Quiet login gate plus a working capture/list/detail loop. Ideas persist to D1. Login is still a Google-looking **mock** (no OAuth). No landing page. No dummy seed data.
 
 ## Specs
 
@@ -27,7 +27,7 @@ UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previ
 ```bash
 pnpm install
 cp .dev.vars.example .dev.vars   # set LOCAL_DEV_USER_EMAIL to your address
-pnpm db:migrate:local            # template sample `todos` table
+pnpm db:migrate:local            # D1 `todos` + `ideas`
 pnpm dev
 ```
 
@@ -52,7 +52,7 @@ http://localhost:5173/app is capture on a phone. Desktop `/app` replaces to `/ap
 Included:
 
 - React Router v7 (SSR) + Tailwind CSS 4 + Hono on Cloudflare Workers
-- D1 + Drizzle (sample `todos` API kept; not used by the product UI)
+- D1 + Drizzle (`ideas` for the product UI; sample `todos` API kept)
 - Cloudflare Access middleware (`Cf-Access-Authenticated-User-Email`) — leftover; product auth is in-app Google OAuth
 - CI: typecheck / lint / test + gitleaks / zizmor / pnpm audit / ASH (`.github/workflows/pr.yml`)
 - lefthook, Dependabot, observability on by default
@@ -61,10 +61,10 @@ Included:
 
 - **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). `/app` is capture; desktop replaces to `/app/list`. Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
 - **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. The team-settings textarea is disabled.
-- **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. No idea table in D1 yet.
+- **Ideas:** D1 `ideas` table. Capture **置く** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption.
+- **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. Not applied to idea rows.
 - **Workers AI:** tagging / relation / evolution copy only. No unused AI binding in `wrangler.jsonc`.
-- **D1 `database_id`:** placeholder. Create with `wrangler d1 create idea-cloud-db` before first deploy.
-- Sample `/api/todos` remains for template verification.
+- Sample `/api/todos` remains for template verification. `/api/ideas` mirrors that CRUD style (Access middleware still on `/api`).
 
 Env template: `.dev.vars.example`. Do not commit secret values. Production: `wrangler secret put`.
 
@@ -84,5 +84,6 @@ See [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md). Short vers
 
 1. Put a Cloudflare API token (Workers Scripts: Edit) and Account ID in GitHub secrets
 2. Create D1 and patch `wrangler.jsonc` `database_id`
-3. After visual sign-off, wire in-app Google OAuth (do not invent client secrets). Access middleware comes out in that swap.
-4. Push to `main` runs `deploy.yml`. PRs get a preview URL from `preview.yml` when secrets exist
+3. `pnpm db:migrate:remote` (also runs in `deploy.yml` before `wrangler deploy`)
+4. After visual sign-off, wire in-app Google OAuth (do not invent client secrets). Access middleware comes out in that swap.
+5. Push to `main` runs `deploy.yml`. PRs get a preview URL from `preview.yml` when secrets exist

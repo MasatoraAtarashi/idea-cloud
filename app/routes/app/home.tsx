@@ -1,7 +1,10 @@
 import { useLayoutEffect } from "react";
 import { useNavigate } from "react-router";
 import { CaptureView } from "../../components/capture-view";
+import { createIdeaAction } from "../../lib/idea-action";
 import { isDesktopViewport, LIST_PATH } from "../../lib/home-path";
+
+export { createIdeaAction as action };
 
 export function meta() {
   return [{ title: "キャプチャ — アイデアクラウド" }];

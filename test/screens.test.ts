@@ -49,6 +49,15 @@ describe("empty workspace data", () => {
     expect(src).toContain("いま思いついたこと");
     expect(src).toContain("置く");
     expect(src).toContain("IconBack");
+    expect(src).toContain('method="post"');
+    expect(src).not.toContain("まだ保存していません");
+  });
+
+  it("loads list and detail from D1 instead of the empty mock array", () => {
+    const src = Object.values(appSources).join("\n");
+    expect(src).toContain("listIdeaViews");
+    expect(src).toContain("getIdeaView");
+    expect(src).toContain("createIdeaAction");
   });
 
   it("keeps Japanese aging stages for filters and empty board columns", () => {

@@ -50,11 +50,13 @@ Empty: title + **まだありません**. Filters / table / kanban appear only w
 | `selected` | 採用       | May be researched |
 | `archived` | アーカイブ | Off the board     |
 
-Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId` (empty until data exists).
+Route: `app/routes/app/board.tsx` (loader reads D1 `ideas`). Detail: `/app/ideas/:ideaId` (loader reads the saved row). Empty **まだありません** when the table has no rows.
 
 ## Quick capture (`/app` and `/app/capture`, mobile home)
 
 X-like compose on mobile (light console, not X dark): back chevron left, 「置く」 pill right, avatar + autofocus textarea, placeholder 「いま思いついたこと」, thin disabled media stubs under the composer. No bottom nav on this screen — back opens 一覧. Desktop: quiet console panel.
+
+**置く** INSERTs into D1 and redirects to `/app/list`. Auth is still mock; there is no per-user ownership.
 
 ## Merge (`/app/merge`)
 
@@ -68,4 +70,4 @@ Only **selected** ideas. Empty until something is adopted. Workers AI is copy-on
 
 Do not invent teammates. Session placeholder (“ログイン中”) only.
 
-Data: `app/data/mock.ts` (empty arrays). Previews: [../ui-previews/](../ui-previews/).
+List/detail data: D1 `ideas`. Stage labels and empty merge/research/team shells still use `app/data/mock.ts` (no seed rows). Previews: [../ui-previews/](../ui-previews/).

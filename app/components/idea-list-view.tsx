@@ -6,11 +6,11 @@ import { CAPTURE_ALIAS } from "../lib/home-path";
 import {
   allTags,
   filterIdeas,
-  IDEAS,
   ideasByStage,
   STAGE_HINT,
   STAGE_LABEL,
   STAGES,
+  type MockIdea,
   type Stage,
 } from "../data/mock";
 
@@ -36,19 +36,19 @@ function StageFilters({ stages, onToggle }: { stages: Stage[]; onToggle: (stage:
   );
 }
 
-export function IdeaListView() {
+export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
   const [view, setView] = useState<View>("table");
   const [query, setQuery] = useState("");
   const [stages, setStages] = useState<Stage[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const availableTags = allTags(IDEAS);
+  const availableTags = allTags(ideas);
   const filtered = useMemo(
-    () => filterIdeas(IDEAS, { query, stages, tags }),
-    [query, stages, tags],
+    () => filterIdeas(ideas, { query, stages, tags }),
+    [ideas, query, stages, tags],
   );
-  const emptyWorkspace = IDEAS.length === 0;
+  const emptyWorkspace = ideas.length === 0;
 
   function toggleStage(stage: Stage) {
     setStages((current) =>

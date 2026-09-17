@@ -1,15 +1,22 @@
-import { Link, useParams } from "react-router";
+import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
-import { getIdea, STAGE_LABEL } from "../../data/mock";
+import { STAGE_LABEL } from "../../data/mock";
 import { LIST_PATH } from "../../lib/home-path";
+import { createDb } from "../../../db/client";
+import { getIdeaView } from "../../../db/ideas";
 
 export function meta() {
   return [{ title: "アイデア — アイデアクラウド" }];
 }
 
+export async function loader({ params, context }: LoaderFunctionArgs) {
+  const db = createDb(context.cloudflare.env.DB);
+  const idea = await getIdeaView(db, params.ideaId);
+  return { idea };
+}
+
 export default function IdeaPage() {
-  const { ideaId } = useParams();
-  const idea = getIdea(ideaId);
+  const { idea } = useLoaderData<typeof loader>();
 
   if (!idea) {
     return (
@@ -49,7 +56,9 @@ export default function IdeaPage() {
           <TagPill key={tag} label={tag} />
         ))}
       </div>
-      <p className="mt-6 text-sm leading-relaxed text-foreground">{idea.body}</p>
+      <p className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+        {idea.body}
+      </p>
       <section className="mt-8 grid gap-2 sm:grid-cols-4">
         {[
           ["進める", "/app/research"],

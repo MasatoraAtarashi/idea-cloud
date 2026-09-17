@@ -20,4 +20,5 @@ beforeAll(async () => {
   }
   // テスト間の干渉を防ぐため、データを空にしてから始める
   await env.DB.exec("DELETE FROM todos;");
+  await env.DB.exec("DELETE FROM ideas;");
 });

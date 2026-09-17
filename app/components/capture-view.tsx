@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from "react";
-import { Link } from "react-router";
-import { IconBack, IconClock, IconGif, IconImage, IconPin, IconPoll, IconUsers } from "./icons";
+import { useState } from "react";
+import { Form, Link, useActionData, useNavigation } from "react-router";
+import type { CreateIdeaActionData } from "../lib/idea-action";
 import { LIST_PATH } from "../lib/home-path";
+import { IconBack, IconClock, IconGif, IconImage, IconPin, IconPoll, IconUsers } from "./icons";
 
 const STUB_TOOLS = [
   { label: "画像（未配線）", Icon: IconImage },
@@ -12,22 +13,16 @@ const STUB_TOOLS = [
 ] as const;
 
 export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
-  const [draft, setDraft] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
-  const canSubmit = Boolean(draft.trim());
-
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmed = draft.trim();
-    if (!trimmed) return;
-    setDraft("");
-    setNotice("置きました。まだ保存していません。");
-  }
+  const actionData = useActionData() as CreateIdeaActionData | undefined;
+  const navigation = useNavigation();
+  const submitting = navigation.state !== "idle";
+  const [draft, setDraft] = useState(actionData?.body ?? "");
+  const canSubmit = Boolean(draft.trim()) && !submitting;
 
   return (
     <>
       <div className="flex min-h-[100dvh] flex-col bg-background px-4 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
-        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+        <Form method="post" className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-center justify-between gap-3">
             <Link
               to={LIST_PATH}
@@ -54,6 +49,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             </label>
             <textarea
               id="idea-mobile"
+              name="body"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               autoFocus={autofocus}
@@ -75,18 +71,21 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
               </button>
             ))}
           </div>
-          {notice ? <p className="pb-4 text-xs text-muted-foreground">{notice}</p> : null}
-        </form>
+          {actionData?.error ? (
+            <p className="pb-4 text-xs text-muted-foreground">{actionData.error}</p>
+          ) : null}
+        </Form>
       </div>
 
       <div className="mx-auto hidden max-w-2xl md:block">
         <h1 className="text-lg font-semibold tracking-tight">キャプチャ</h1>
-        <form onSubmit={onSubmit} className="ui-panel mt-4 p-4">
+        <Form method="post" className="ui-panel mt-4 p-4">
           <label htmlFor="idea-desktop" className="text-xs text-muted-foreground">
             着想
           </label>
           <textarea
             id="idea-desktop"
+            name="body"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             rows={6}
@@ -104,8 +103,10 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
               一覧
             </Link>
           </div>
-        </form>
-        {notice ? <p className="mt-3 text-xs text-muted-foreground">{notice}</p> : null}
+        </Form>
+        {actionData?.error ? (
+          <p className="mt-3 text-xs text-muted-foreground">{actionData.error}</p>
+        ) : null}
       </div>
     </>
   );
