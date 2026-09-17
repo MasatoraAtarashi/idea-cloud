@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ACCESS_NAV, MOBILE_NAV, WORKSPACE_NAV } from "../app/nav";
-import { homePath, isDesktopViewport, CAPTURE_PATH, LIST_PATH } from "../app/lib/home-path";
+import { MOBILE_NAV, SETTINGS_NAV, WORKSPACE_NAV } from "../app/nav";
+import { homePath, isDesktopViewport, NEW_IDEA_PATH, LIST_PATH } from "../app/lib/home-path";
+import { isNewIdeaShortcut, isSubmitShortcut } from "../app/lib/shortcuts";
 import {
   allTags,
   filterIdeas,
@@ -12,7 +13,7 @@ import {
   type MockIdea,
 } from "../app/data/mock";
 
-const appSources = import.meta.glob("../app/**/*.{ts,tsx}", {
+const appSources = import.meta.glob(["../app/**/*.{ts,tsx}", "../app/app.css"], {
   query: "?raw",
   import: "default",
   eager: true,
@@ -44,12 +45,16 @@ describe("empty workspace data", () => {
     }
   });
 
-  it("uses an X-like compose placeholder and submit on capture", () => {
+  it("uses new-idea compose copy instead of キャプチャ", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("いま思いついたこと");
-    expect(src).toContain("置く");
+    expect(src).toContain("新規アイデア");
+    expect(src).toContain("作成");
     expect(src).toContain("IconBack");
     expect(src).toContain('method="post"');
+    expect(src).not.toContain("キャプチャ");
+    expect(src).not.toContain("置く");
+    expect(src).not.toContain('label: "取る"');
     expect(src).not.toContain("まだ保存していません");
   });
 
@@ -91,21 +96,62 @@ describe("empty workspace data", () => {
 });
 
 describe("responsive home and nav", () => {
-  it("sends mobile to capture and desktop to list", () => {
-    expect(homePath(false)).toBe(CAPTURE_PATH);
+  it("sends mobile to compose and desktop to list", () => {
+    expect(homePath(false)).toBe(NEW_IDEA_PATH);
     expect(homePath(true)).toBe(LIST_PATH);
-    expect(CAPTURE_PATH).toBe("/app");
+    expect(NEW_IDEA_PATH).toBe("/app");
     expect(LIST_PATH).toBe("/app/list");
     expect(isDesktopViewport(() => ({ matches: false }))).toBe(false);
     expect(isDesktopViewport(() => ({ matches: true }))).toBe(true);
   });
 
-  it("puts capture first on mobile nav and list first on desktop nav", () => {
-    expect(MOBILE_NAV[0]?.to).toBe("/app");
-    expect(MOBILE_NAV[0]?.primary).toBe(true);
-    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["取る", "一覧", "融合", "研究", "設定"]);
-    expect(MOBILE_NAV[1]?.to).toBe("/app/list");
+  it("keeps list + new + settings on mobile and list-only workspace on desktop", () => {
+    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "新規", "設定"]);
+    expect(MOBILE_NAV[1]?.to).toBe("/app");
+    expect(MOBILE_NAV[1]?.primary).toBe(true);
+    expect(WORKSPACE_NAV.map((item) => item.label)).toEqual(["アイデア"]);
     expect(WORKSPACE_NAV[0]?.to).toBe("/app/list");
-    expect(ACCESS_NAV[0]?.to).toBe("/app/team");
+    expect(SETTINGS_NAV[0]?.to).toBe("/app/settings");
+    expect(WORKSPACE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
+    expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
+    expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
+    expect(MOBILE_NAV.some((item) => item.to.includes("research"))).toBe(false);
+  });
+
+  it("keeps empty list chrome instead of hiding the table", () => {
+    const src = appSources["../app/components/idea-list-view.tsx"];
+    expect(src).toContain("ui-table");
+    expect(src).toContain("フィルタ");
+    expect(src).toContain("まだありません");
+    expect(src).not.toContain("emptyWorkspace");
+  });
+
+  it("surfaces merge and research as per-idea actions", () => {
+    const src = Object.values(appSources).join("\n");
+    expect(src).toContain("IdeaActionsMenu");
+    expect(src).toContain("/app/merge?from=");
+    expect(src).toContain("/app/research?from=");
+  });
+});
+
+describe("desktop compose shortcuts and brand", () => {
+  it("treats mod+N as new idea and mod+Enter as submit", () => {
+    expect(isNewIdeaShortcut({ key: "n", metaKey: true, ctrlKey: false })).toBe(true);
+    expect(isNewIdeaShortcut({ key: "n", metaKey: false, ctrlKey: true })).toBe(true);
+    expect(isNewIdeaShortcut({ key: "n", metaKey: true, ctrlKey: false, isComposing: true })).toBe(
+      false,
+    );
+    expect(isSubmitShortcut({ key: "Enter", metaKey: true, ctrlKey: false })).toBe(true);
+    expect(isSubmitShortcut({ key: "Enter", metaKey: false, ctrlKey: true })).toBe(true);
+    expect(isSubmitShortcut({ key: "Enter", metaKey: false, ctrlKey: false })).toBe(false);
+  });
+
+  it("ships an original brand mark and quiet JP/Latin stack", () => {
+    const src = Object.values(appSources).join("\n");
+    expect(src).toContain("BrandMark");
+    expect(src).toContain("--brand-spark");
+    expect(src).toContain("Noto+Sans+JP");
+    expect(src).toContain("Hiragino Sans");
+    expect(src).not.toContain("IBM Plex");
   });
 });

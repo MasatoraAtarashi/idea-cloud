@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { Form, Link, useActionData, useNavigation } from "react-router";
+import { COMPOSE_PLACEHOLDER, COMPOSE_SUBMIT, COMPOSE_TITLE } from "../lib/compose";
 import type { CreateIdeaActionData } from "../lib/idea-action";
 import { LIST_PATH } from "../lib/home-path";
+import { isSubmitShortcut } from "../lib/shortcuts";
 import { IconBack, IconClock, IconGif, IconImage, IconPin, IconPoll, IconUsers } from "./icons";
 
 const STUB_TOOLS = [
@@ -19,6 +21,13 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
   const [draft, setDraft] = useState(actionData?.body ?? "");
   const canSubmit = Boolean(draft.trim()) && !submitting;
 
+  function onComposeKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (!isSubmitShortcut(event)) return;
+    event.preventDefault();
+    if (!canSubmit) return;
+    event.currentTarget.form?.requestSubmit();
+  }
+
   return (
     <>
       <div className="flex min-h-[100dvh] flex-col bg-background px-4 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
@@ -31,12 +40,13 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             >
               <IconBack className="h-6 w-6" />
             </Link>
+            <p className="text-[13px] font-medium tracking-tight">{COMPOSE_TITLE}</p>
             <button
               type="submit"
               disabled={!canSubmit}
-              className="ui-btn h-8 rounded-full px-4 text-sm disabled:opacity-40"
+              className="ui-btn h-8 rounded-full px-4 text-[13px] disabled:opacity-40"
             >
-              置く
+              {COMPOSE_SUBMIT}
             </button>
           </div>
 
@@ -45,16 +55,17 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
               <IconUsers className="h-4 w-4" />
             </span>
             <label htmlFor="idea-mobile" className="sr-only">
-              いま思いついたこと
+              {COMPOSE_PLACEHOLDER}
             </label>
             <textarea
               id="idea-mobile"
               name="body"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={onComposeKeyDown}
               autoFocus={autofocus}
-              placeholder="いま思いついたこと"
-              className="min-h-[8.5rem] w-full resize-none border-0 bg-transparent pt-1.5 text-[22px] leading-snug text-foreground outline-none placeholder:text-muted-foreground"
+              placeholder={COMPOSE_PLACEHOLDER}
+              className="min-h-[8.5rem] w-full resize-none border-0 bg-transparent pt-1.5 text-[20px] leading-snug text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
 
@@ -78,27 +89,28 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
       </div>
 
       <div className="mx-auto hidden max-w-2xl md:block">
-        <h1 className="text-lg font-semibold tracking-tight">キャプチャ</h1>
+        <h1 className="text-[15px] font-medium tracking-tight">{COMPOSE_TITLE}</h1>
         <Form method="post" className="ui-panel mt-4 p-4">
           <label htmlFor="idea-desktop" className="text-xs text-muted-foreground">
-            着想
+            {COMPOSE_TITLE}
           </label>
           <textarea
             id="idea-desktop"
             name="body"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={onComposeKeyDown}
             rows={6}
-            placeholder="いま思いついたこと"
+            placeholder={COMPOSE_PLACEHOLDER}
             className="ui-input mt-2 h-auto resize-none py-3"
           />
           <div className="mt-3 flex items-center justify-between">
-            <button type="submit" disabled={!canSubmit} className="ui-btn rounded-full px-4">
-              置く
+            <button type="submit" disabled={!canSubmit} className="ui-btn px-4">
+              {COMPOSE_SUBMIT}
             </button>
             <Link
               to={LIST_PATH}
-              className="text-sm text-muted-foreground no-underline hover:text-foreground"
+              className="text-[13px] text-muted-foreground no-underline hover:text-foreground"
             >
               一覧
             </Link>

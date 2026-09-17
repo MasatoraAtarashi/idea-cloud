@@ -21,19 +21,21 @@ export default function IdeaPage() {
   if (!idea) {
     return (
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
+        <h1 className="text-[15px] font-medium tracking-tight">アイデア</h1>
         <div className="ui-panel mt-4">
           <EmptyState title="まだありません" />
         </div>
         <Link
           to={LIST_PATH}
-          className="mt-4 inline-block text-sm text-muted-foreground no-underline hover:text-foreground"
+          className="mt-4 inline-block text-[13px] text-muted-foreground no-underline hover:text-foreground"
         >
           一覧
         </Link>
       </div>
     );
   }
+
+  const researchReady = idea.stage === "selected";
 
   return (
     <article className="mx-auto max-w-3xl">
@@ -44,7 +46,7 @@ export default function IdeaPage() {
         <span className="mx-2">/</span>
         {STAGE_LABEL[idea.stage]}
       </p>
-      <h1 className="mt-2 text-xl font-semibold leading-snug">{idea.title}</h1>
+      <h1 className="mt-2 text-lg font-medium leading-snug">{idea.title}</h1>
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>{idea.agedDays}日</span>
         <span>·</span>
@@ -56,20 +58,37 @@ export default function IdeaPage() {
           <TagPill key={tag} label={tag} />
         ))}
       </div>
-      <p className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+      <p className="mt-6 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
         {idea.body}
       </p>
       <section className="mt-8 grid gap-2 sm:grid-cols-4">
-        {[
-          ["進める", "/app/research"],
-          ["融合する", "/app/merge"],
-          ["アーカイブ", LIST_PATH],
-          ["捨てる", LIST_PATH],
-        ].map(([label, href]) => (
-          <Link key={label} to={href} className="ui-btn-ghost px-3 py-2 text-center text-sm">
-            {label}
+        <Link
+          to={`/app/merge?from=${idea.id}`}
+          className="ui-btn-ghost px-3 py-2 text-center text-[13px]"
+        >
+          融合
+        </Link>
+        {researchReady ? (
+          <Link
+            to={`/app/research?from=${idea.id}`}
+            className="ui-btn-ghost px-3 py-2 text-center text-[13px]"
+          >
+            リサーチ
           </Link>
-        ))}
+        ) : (
+          <span
+            className="ui-btn-ghost cursor-not-allowed px-3 py-2 text-center text-[13px] opacity-40"
+            title="採用してから"
+          >
+            リサーチ
+          </span>
+        )}
+        <Link to={LIST_PATH} className="ui-btn-ghost px-3 py-2 text-center text-[13px]">
+          アーカイブ
+        </Link>
+        <Link to={LIST_PATH} className="ui-btn-ghost px-3 py-2 text-center text-[13px]">
+          捨てる
+        </Link>
       </section>
     </article>
   );

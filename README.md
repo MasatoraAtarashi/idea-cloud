@@ -7,7 +7,7 @@ Team workspace for capturing ideas, leaving them alone, and reviewing them after
 - **Documentation** (this README, `docs/spec/`, design notes): English.
 - **Product UI copy**: Japanese.
 
-Quiet login gate plus a working capture/list/detail loop. Ideas persist to D1. Login is still a Google-looking **mock** (no OAuth). No landing page. No dummy seed data.
+Quiet login gate plus a working create/list/detail loop. Ideas persist to D1. Login is still a Google-looking **mock** (no OAuth). No landing page. No dummy seed data.
 
 ## Specs
 
@@ -31,23 +31,24 @@ pnpm db:migrate:local            # D1 `todos` + `ideas`
 pnpm dev
 ```
 
-http://localhost:5173/app is capture on a phone. Desktop `/app` replaces to `/app/list`.
+http://localhost:5173/app is new-idea compose on a phone. Desktop `/app` replaces to `/app/list`.
 
-| Path             | Screen (Japanese UI)                        |
-| ---------------- | ------------------------------------------- |
-| `/app`           | Mobile home: capture. Desktop → `/app/list` |
-| `/app/capture`   | Capture alias (desktop sidebar)             |
-| `/app/list`      | Idea list (desktop home; mobile 一覧)       |
-| `/app/ideas/:id` | Idea detail                                 |
-| `/app/merge`     | Merge / related                             |
-| `/app/research`  | Research / prototype                        |
-| `/app/team`      | Team settings                               |
+| Path             | Screen (Japanese UI)                              |
+| ---------------- | ------------------------------------------------- |
+| `/app`           | Mobile home: 新規アイデア. Desktop → `/app/list`  |
+| `/app/capture`   | Compose alias (desktop opens the list modal)      |
+| `/app/list`      | Idea list (desktop home; mobile 一覧)             |
+| `/app/ideas/:id` | Idea detail (融合 / リサーチ as per-idea actions) |
+| `/app/merge`     | Merge deep link (not in primary nav)              |
+| `/app/research`  | Research deep link (not in primary nav)           |
+| `/app/settings`  | Settings (team / access)                          |
+| `/app/team`      | Redirects to settings                             |
 
 ## What was copied from the template
 
 `MasatoraAtarashi/app-template` is not a GitHub Template Repository, so `gh repo create --template` was not used. This app was copied from squat’s **`personal-fullstack`** template (strict tier, Cloudflare Access auth).
 
-**Visual language (honest):** the _stack_ is from the template. In-app chrome follows LiteLLM Admin **light** (gray sidebar, white main, `#E5E7EB` borders, charcoal primary). The idea list follows Relic IDEATION Cloud’s in-app table + filter rail. Relic’s blue marketing LP is not used.
+**Visual language (honest):** the _stack_ is from the template. In-app chrome is Linear-quiet (dense sidebar, plus-to-compose) with Relic IDEATION Cloud **in-app** color density (cool canvas, pastel pills, table hierarchy). Relic’s blue marketing LP is not used.
 
 Included:
 
@@ -59,9 +60,9 @@ Included:
 
 ## Stubs / not wired
 
-- **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). `/app` is capture; desktop replaces to `/app/list`. Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
-- **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. The team-settings textarea is disabled.
-- **Ideas:** D1 `ideas` table. Capture **置く** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption.
+- **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). `/app` is new-idea compose; desktop replaces to `/app/list`. Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
+- **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. Settings shows a stub, not a working Access editor.
+- **Ideas:** D1 `ideas` table. **作成** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption.
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. Not applied to idea rows.
 - **Workers AI:** tagging / relation / evolution copy only. No unused AI binding in `wrangler.jsonc`.
 - Sample `/api/todos` remains for template verification. `/api/ideas` mirrors that CRUD style (Access middleware still on `/api`).

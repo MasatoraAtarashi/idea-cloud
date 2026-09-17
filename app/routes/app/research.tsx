@@ -15,7 +15,7 @@ export default function ResearchPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-lg font-semibold tracking-tight">リサーチ</h1>
+      <h1 className="text-[15px] font-medium tracking-tight">リサーチ</h1>
       {selected.length === 0 ? (
         <div className="ui-panel mt-4">
           <EmptyState title="まだありません" />

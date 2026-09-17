@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Inter, IBM Plex Sans JP, sans-serif">
-  <rect width="1280" height="720" fill="#F3F4F6"/>
-  <rect x="0" y="0" width="208" height="720" fill="#F3F4F6" stroke="#E5E7EB"/>
-  <text x="20" y="30" font-size="13" fill="#111827" font-weight="600">アイデアクラウド</text>
-  <rect x="10" y="72" width="188" height="30" rx="6" fill="#ffffff"/>
-  <text x="32" y="92" font-size="13" fill="#111827" font-weight="500">アイデア</text>
-  <circle cx="28" cy="688" r="10" fill="#ffffff" stroke="#E5E7EB"/>
-  <text x="46" y="692" font-size="12" fill="#111827">ログイン中</text>
-  <rect x="208" y="0" width="1072" height="720" fill="#ffffff"/>
-  <text x="232" y="48" font-size="18" fill="#111827" font-weight="600">アイデア</text>
-  <rect x="232" y="72" width="760" height="200" rx="6" fill="#ffffff" stroke="#E5E7EB"/>
-  <text x="612" y="178" font-size="14" fill="#6B7280" text-anchor="middle">まだありません</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Inter, Hiragino Sans, Noto Sans JP, sans-serif">
+  <rect width="1280" height="720" fill="#E8EEF6"/>
+  <rect x="0" y="0" width="224" height="720" fill="#E8EEF6" stroke="#D9E1EE"/>
+  <text x="48" y="28" font-size="13" fill="#1C2433" font-weight="500">アイデアクラウド</text>
+  <rect x="10" y="56" width="204" height="30" rx="6" fill="#ffffff" stroke="#D9E1EE"/>
+  <text x="32" y="76" font-size="13" fill="#1C2433" font-weight="500">アイデア</text>
+  <text x="32" y="660" font-size="13" fill="#5C677A">設定</text>
+  <rect x="224" y="0" width="1056" height="720" fill="#F5F7FB"/>
+  <text x="248" y="44" font-size="13" fill="#5C677A">アイデア / 着想</text>
+  <text x="248" y="78" font-size="18" fill="#1C2433" font-weight="500">アイデア</text>
+  <rect x="248" y="100" width="72" height="22" rx="11" fill="#FEF3C7" stroke="#FDE68A"/>
+  <text x="284" y="115" font-size="11" fill="#78350F" text-anchor="middle">着想</text>
+  <text x="248" y="160" font-size="13" fill="#5C677A">まだありません</text>
+  <rect x="248" y="200" width="120" height="32" rx="6" fill="#ffffff" stroke="#D9E1EE"/>
+  <text x="308" y="221" font-size="13" fill="#1C2433" text-anchor="middle">融合</text>
+  <rect x="380" y="200" width="120" height="32" rx="6" fill="#ffffff" stroke="#D9E1EE"/>
+  <text x="440" y="221" font-size="13" fill="#9AA3B5" text-anchor="middle">リサーチ</text>
 </svg>

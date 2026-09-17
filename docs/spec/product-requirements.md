@@ -13,8 +13,8 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 ## Goals (this first pass)
 
 1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
-2. Clickable UI shell plus **minimal D1 idea persistence** so capture/list/detail use real rows. Empty state **まだありません** when the table is empty. No dummy seed data.
-3. Visual direction: LiteLLM Admin **light** chrome + Relic in-app list IA (see [ui-ia.md](./ui-ia.md)). Not Relic’s blue marketing LP.
+2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; row copy is **まだありません**. No dummy seed data.
+3. Visual direction: Linear-quiet chrome + Relic in-app color density (see [ui-ia.md](./ui-ia.md)). Not Relic’s blue marketing LP.
 4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app`. Auth is still mock — no Google OAuth / allowlist / Access work this pass.
 5. Keep the template CI (typecheck, lint, test, gitleaks, zizmor, audit, ASH).
 
@@ -30,13 +30,13 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 
 Rules that the UI must teach:
 
-- Mobile is for capture. Desktop is for judgment.
+- Mobile is for composing a new idea. Desktop is for judgment.
 - Do not research an idea until it is **selected**.
 - Discarding is a first-class ritual, not a silent delete.
 
 ## Screens in scope
 
-See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile capture home; desktop → `/app/list`), `/app/capture` (capture alias), `/app/list` (desktop list home / mobile 一覧), `/app/ideas/:id`, `/app/merge`, `/app/research`, `/app/team`.
+See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧), `/app/ideas/:id`, `/app/merge` and `/app/research` (per-idea deep links), `/app/settings` (team / access; `/app/team` redirects).
 
 ## Out of scope (this pass)
 
@@ -51,4 +51,4 @@ See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile capture home; desktop → `/ap
 
 ## Success for this pass
 
-A reviewer signs in via the mock Google button, places an idea with **置く**, and sees it on `/app/list` after reload. Empty DB still shows **まだありません**. Auth stays mocked.
+A reviewer signs in via the mock Google button, creates an idea with **作成**, and sees it on `/app/list` after reload. Empty DB still shows list chrome with **まだありません**. Auth stays mocked.

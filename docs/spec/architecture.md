@@ -39,7 +39,7 @@ Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` 
 | Members table    | **Not created**                                                                         |
 | Field encryption | Helper exists; **not** applied to idea rows                                             |
 
-Capture **置く** is a React Router action (`insert` into `ideas`). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. Hono `GET/POST /api/ideas` follows the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
+**作成** is a React Router action (`insert` into `ideas`). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. Hono `GET/POST /api/ideas` follows the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
 
 Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
 
