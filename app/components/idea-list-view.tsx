@@ -1,18 +1,19 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { IconPlus, IconSearch } from "./icons";
-import { EmptyState, StagePill, TagPill } from "./ui";
-import { CAPTURE_ALIAS } from "../lib/home-path";
 import {
   allTags,
   filterIdeas,
   ideasByStage,
+  STAGE_COLUMN_CLASS,
   STAGE_HINT,
   STAGE_LABEL,
   STAGES,
   type MockIdea,
   type Stage,
 } from "../data/mock";
+import { IconSearch } from "./icons";
+import { IdeaActionsMenu } from "./idea-actions";
+import { StagePill, TagPill } from "./ui";
 
 type View = "table" | "board";
 
@@ -21,7 +22,7 @@ function StageFilters({ stages, onToggle }: { stages: Stage[]; onToggle: (stage:
     <ul className="mt-1.5 space-y-1">
       {STAGES.map((stage) => (
         <li key={stage}>
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <label className="flex cursor-pointer items-center gap-2 text-[13px]">
             <input
               type="checkbox"
               checked={stages.includes(stage)}
@@ -48,7 +49,6 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
     () => filterIdeas(ideas, { query, stages, tags }),
     [ideas, query, stages, tags],
   );
-  const emptyWorkspace = ideas.length === 0;
 
   function toggleStage(stage: Stage) {
     setStages((current) =>
@@ -62,47 +62,17 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
     );
   }
 
-  const composeFab = (
-    <Link
-      to={CAPTURE_ALIAS}
-      className="fixed bottom-[4.75rem] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline md:hidden"
-      aria-label="キャプチャ"
-    >
-      <IconPlus className="h-6 w-6" />
-    </Link>
-  );
-
-  if (emptyWorkspace) {
-    return (
-      <>
-        <div className="md:hidden">
-          <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
-          <p className="mt-8 text-sm text-muted-foreground">まだありません</p>
-          {composeFab}
-        </div>
-        <div className="hidden md:block">
-          <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
-          <p className="mt-8 text-sm text-muted-foreground">まだありません</p>
-        </div>
-      </>
-    );
-  }
-
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
-        <Link to={CAPTURE_ALIAS} className="ui-btn hidden gap-1.5 md:inline-flex">
-          <IconPlus className="h-4 w-4" />
-          キャプチャ
-        </Link>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-[15px] font-medium tracking-tight">アイデア</h1>
       </div>
 
       <div className="mb-3 md:hidden">
         <button
           type="button"
           onClick={() => setMobileFiltersOpen((open) => !open)}
-          className="text-sm text-muted-foreground"
+          className="text-[13px] text-muted-foreground"
         >
           {mobileFiltersOpen ? "フィルタを閉じる" : "フィルタ"}
         </button>
@@ -114,13 +84,13 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
         ) : null}
       </div>
 
-      <div className="mb-4 hidden flex-wrap items-center gap-2 md:flex">
-        <div className="flex rounded-md border border-border p-0.5">
+      <div className="mb-3 hidden flex-wrap items-center gap-2 md:flex">
+        <div className="flex rounded-md border border-border bg-card p-0.5">
           <button
             type="button"
             onClick={() => setView("table")}
-            className={`rounded-sm px-3 py-1 text-sm ${
-              view === "table" ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
+            className={`rounded-sm px-2.5 py-1 text-[13px] ${
+              view === "table" ? "bg-accent font-medium text-foreground" : "text-muted-foreground"
             }`}
           >
             一覧
@@ -128,15 +98,15 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
           <button
             type="button"
             onClick={() => setView("board")}
-            className={`rounded-sm px-3 py-1 text-sm ${
-              view === "board" ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
+            className={`rounded-sm px-2.5 py-1 text-[13px] ${
+              view === "board" ? "bg-accent font-medium text-foreground" : "text-muted-foreground"
             }`}
           >
             看板
           </button>
         </div>
         <label className="relative min-w-[12rem] flex-1">
-          <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             value={query}
@@ -149,37 +119,45 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
 
       <div className="md:hidden">
         {filtered.length === 0 ? (
-          <p className="mt-8 text-sm text-muted-foreground">まだありません</p>
+          <p className="border-t border-border py-8 text-[13px] text-muted-foreground">
+            まだありません
+          </p>
         ) : (
           <ul className="divide-y divide-border border-t border-border">
             {filtered.map((idea) => (
-              <li key={idea.id}>
-                <Link to={`/app/ideas/${idea.id}`} className="block py-3 no-underline">
-                  <p className="text-sm text-foreground">{idea.title}</p>
+              <li key={idea.id} className="flex items-center gap-2">
+                <Link to={`/app/ideas/${idea.id}`} className="min-w-0 flex-1 py-3 no-underline">
+                  <p className="text-[13px] text-foreground">{idea.title}</p>
                   <p className="mt-1 text-[11px] text-muted-foreground">{idea.agedDays}日</p>
                 </Link>
+                <IdeaActionsMenu idea={idea} />
               </li>
             ))}
           </ul>
         )}
-        {composeFab}
       </div>
 
       <div className="hidden md:block">
         {view === "table" ? (
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-            <aside className="ui-panel w-full shrink-0 p-4 lg:w-56">
-              <h2 className="text-sm font-medium">フィルタ</h2>
-              <p className="mt-4 text-xs text-muted-foreground">段階</p>
+            <aside className="ui-panel w-full shrink-0 bg-card p-3.5 lg:w-56">
+              <h2 className="text-[13px] font-medium">フィルタ</h2>
+              <p className="mt-3 text-[11px] text-muted-foreground">段階</p>
               <StageFilters stages={stages} onToggle={toggleStage} />
-              <p className="mt-4 text-xs text-muted-foreground">タグ</p>
+              <p className="mt-3 text-[11px] text-muted-foreground">タグ</p>
               {availableTags.length === 0 ? (
-                <p className="mt-1.5 text-sm text-muted-foreground">まだありません</p>
+                <p className="mt-1.5 text-[13px] text-muted-foreground">まだありません</p>
               ) : (
                 <ul className="mt-1.5 flex flex-wrap gap-1.5">
                   {availableTags.map((tag) => (
                     <li key={tag}>
-                      <button type="button" onClick={() => toggleTag(tag)} className="align-middle">
+                      <button
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`align-middle rounded-full ${
+                          tags.includes(tag) ? "ring-2 ring-ring/50" : ""
+                        }`}
+                      >
                         <TagPill label={tag} />
                       </button>
                     </li>
@@ -196,13 +174,16 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                     <th>段階</th>
                     <th>タグ</th>
                     <th>経過</th>
+                    <th className="w-10">
+                      <span className="sr-only">操作</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={4}>
-                        <EmptyState title="まだありません" />
+                      <td colSpan={5} className="py-14 text-center text-muted-foreground">
+                        まだありません
                       </td>
                     </tr>
                   ) : (
@@ -224,6 +205,9 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                           </div>
                         </td>
                         <td className="text-muted-foreground">{idea.agedDays}日</td>
+                        <td className="text-right">
+                          <IdeaActionsMenu idea={idea} />
+                        </td>
                       </tr>
                     ))
                   )}
@@ -236,9 +220,12 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
             {STAGES.map((stage) => {
               const cards = ideasByStage(stage, filtered);
               return (
-                <section key={stage} className="ui-panel w-56 shrink-0 bg-muted/80 p-2.5">
+                <section
+                  key={stage}
+                  className={`ui-panel w-56 shrink-0 p-2.5 ${STAGE_COLUMN_CLASS[stage]}`}
+                >
                   <header className="mb-2 flex items-center justify-between">
-                    <h2 className="text-sm font-medium">{STAGE_LABEL[stage]}</h2>
+                    <h2 className="text-[13px] font-medium">{STAGE_LABEL[stage]}</h2>
                     <span className="font-mono text-[11px] text-muted-foreground">
                       {cards.length}
                     </span>
@@ -247,22 +234,31 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                     {STAGE_HINT[stage]}
                   </p>
                   {cards.length === 0 ? (
-                    <p className="rounded-md border border-dashed border-border bg-card px-2 py-6 text-center text-[11px] text-muted-foreground">
+                    <p className="rounded-md border border-dashed border-border bg-card/80 px-2 py-6 text-center text-[11px] text-muted-foreground">
                       まだありません
                     </p>
                   ) : (
                     <div className="flex flex-col gap-2">
                       {cards.map((idea) => (
-                        <Link
+                        <div
                           key={idea.id}
-                          to={`/app/ideas/${idea.id}`}
-                          className="rounded-md border border-border bg-card p-2.5 no-underline hover:bg-muted"
+                          className="rounded-md border border-border bg-card p-2.5 hover:bg-row-hover"
                         >
-                          <p className="text-sm leading-snug text-foreground">{idea.title}</p>
-                          <p className="mt-1.5 text-[11px] text-muted-foreground">
-                            {idea.agedDays}日
-                          </p>
-                        </Link>
+                          <div className="flex items-start justify-between gap-2">
+                            <Link
+                              to={`/app/ideas/${idea.id}`}
+                              className="min-w-0 flex-1 no-underline"
+                            >
+                              <p className="text-[13px] leading-snug text-foreground">
+                                {idea.title}
+                              </p>
+                              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                                {idea.agedDays}日
+                              </p>
+                            </Link>
+                            <IdeaActionsMenu idea={idea} />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}

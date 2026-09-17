@@ -17,7 +17,7 @@ export function PageHeader({
       <div className="flex min-w-0 items-start gap-3">
         {icon ? <div className="mt-1 text-muted-foreground">{icon}</div> : null}
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-[15px] font-medium tracking-tight">{title}</h1>
           {description ? (
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
           ) : null}
@@ -31,7 +31,7 @@ export function PageHeader({
 export function EmptyState({ title, body }: { title: string; body?: string }) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-      <p className="text-sm text-muted-foreground">{title}</p>
+      <p className="text-[13px] text-muted-foreground">{title}</p>
       {body ? <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{body}</p> : null}
     </div>
   );

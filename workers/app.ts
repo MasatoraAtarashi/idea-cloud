@@ -11,7 +11,7 @@ app.use("*", securityHeaders);
 // API ルート（Hono）。ルートの追加は server/api/ 側で行う
 app.route("/api", api);
 
-// Pages and resource-route actions (POST 置く). /api is registered first.
+// Pages and resource-route actions (POST 作成). /api is registered first.
 app.all("*", (c) => {
   const requestHandler = createRequestHandler(
     () => import("virtual:react-router/server-build"),
