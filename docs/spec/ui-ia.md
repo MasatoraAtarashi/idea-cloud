@@ -54,7 +54,7 @@ Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId` (empty until dat
 
 ## Quick capture (`/app` and `/app/capture`, mobile home)
 
-X-like compose on mobile: close (一覧) left, 「置く」 pill right, autofocus textarea, placeholder 「いま思いついたこと」, thin disabled media stub. Light theme (not X dark). Desktop: quiet console panel. Session-local list only; no preloaded ideas.
+X-like compose on mobile (light console, not X dark): back chevron left, 「置く」 pill right, avatar + autofocus textarea, placeholder 「いま思いついたこと」, thin disabled media stubs under the composer. No bottom nav on this screen — back opens 一覧. Desktop: quiet console panel.
 
 ## Merge (`/app/merge`)
 

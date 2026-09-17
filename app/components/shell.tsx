@@ -90,7 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div
             className={
               composeChrome
-                ? "flex-1 px-4 pt-3 md:px-6 md:py-6"
+                ? "flex-1 px-0 pt-0 md:px-6 md:py-6"
                 : "flex-1 px-4 py-4 md:px-6 md:py-6"
             }
           >
@@ -98,47 +98,53 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </div>
-      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-5 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] md:hidden">
-        {MOBILE_NAV.map((item) => {
-          const Icon = ICONS[item.icon];
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => {
-                const on = item.primary ? isCapturePath(location.pathname) : isActive;
-                return `flex flex-col items-center gap-0.5 py-1.5 no-underline ${
-                  on ? "text-foreground" : "text-muted-foreground"
-                }`;
-              }}
-            >
-              {({ isActive }) => {
-                const on = item.primary ? isCapturePath(location.pathname) : isActive;
-                return (
-                  <>
-                    {item.primary ? (
-                      <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                          on
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-primary/90 text-primary-foreground"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                    ) : (
-                      <Icon className="h-5 w-5" />
-                    )}
-                    <span className={`text-[10px] ${on ? "font-medium" : ""}`}>{item.label}</span>
-                  </>
-                );
-              }}
-            </NavLink>
-          );
-        })}
-      </nav>
-      <div className="h-16 md:hidden" />
+      {composeChrome ? null : (
+        <>
+          <nav className="fixed inset-x-0 bottom-0 grid grid-cols-5 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] md:hidden">
+            {MOBILE_NAV.map((item) => {
+              const Icon = ICONS[item.icon];
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => {
+                    const on = item.primary ? isCapturePath(location.pathname) : isActive;
+                    return `flex flex-col items-center gap-0.5 py-1.5 no-underline ${
+                      on ? "text-foreground" : "text-muted-foreground"
+                    }`;
+                  }}
+                >
+                  {({ isActive }) => {
+                    const on = item.primary ? isCapturePath(location.pathname) : isActive;
+                    return (
+                      <>
+                        {item.primary ? (
+                          <span
+                            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                              on
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-primary/90 text-primary-foreground"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </span>
+                        ) : (
+                          <Icon className="h-5 w-5" />
+                        )}
+                        <span className={`text-[10px] ${on ? "font-medium" : ""}`}>
+                          {item.label}
+                        </span>
+                      </>
+                    );
+                  }}
+                </NavLink>
+              );
+            })}
+          </nav>
+          <div className="h-16 md:hidden" />
+        </>
+      )}
     </div>
   );
 }

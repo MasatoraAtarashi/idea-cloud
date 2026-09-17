@@ -1,11 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
-import { IconClose, IconImage } from "./icons";
+import { IconBack, IconClock, IconGif, IconImage, IconPin, IconPoll, IconUsers } from "./icons";
 import { LIST_PATH } from "../lib/home-path";
+
+const STUB_TOOLS = [
+  { label: "画像（未配線）", Icon: IconImage },
+  { label: "GIF（未配線）", Icon: IconGif },
+  { label: "投票（未配線）", Icon: IconPoll },
+  { label: "予約（未配線）", Icon: IconClock },
+  { label: "位置（未配線）", Icon: IconPin },
+] as const;
 
 export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
   const [draft, setDraft] = useState("");
-  const [caught, setCaught] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const canSubmit = Boolean(draft.trim());
 
@@ -13,63 +20,63 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
     event.preventDefault();
     const trimmed = draft.trim();
     if (!trimmed) return;
-    setCaught((current) => [trimmed, ...current]);
     setDraft("");
     setNotice("置きました。まだ保存していません。");
   }
 
   return (
     <>
-      <div className="-mx-4 -mt-3 flex min-h-[calc(100dvh-7.25rem)] flex-col px-4 md:hidden">
+      <div className="flex min-h-[100dvh] flex-col bg-background px-4 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="flex items-center justify-between gap-3 py-1">
+          <div className="flex items-center justify-between gap-3">
             <Link
               to={LIST_PATH}
-              aria-label="閉じる"
-              className="flex h-9 w-9 items-center justify-center text-foreground no-underline"
+              aria-label="戻る"
+              className="flex h-10 w-10 items-center justify-center text-foreground no-underline"
             >
-              <IconClose className="h-5 w-5" />
+              <IconBack className="h-6 w-6" />
             </Link>
             <button
               type="submit"
               disabled={!canSubmit}
-              className="ui-btn h-8 rounded-full px-4 disabled:opacity-50"
+              className="ui-btn h-8 rounded-full px-4 text-sm disabled:opacity-40"
             >
               置く
             </button>
           </div>
-          <label htmlFor="idea-mobile" className="sr-only">
-            いま思いついたこと
-          </label>
-          <textarea
-            id="idea-mobile"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            autoFocus={autofocus}
-            placeholder="いま思いついたこと"
-            className="mt-2 min-h-[10rem] flex-1 resize-none border-0 bg-transparent text-[20px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
-          />
-          <div className="flex items-center gap-1 border-t border-border py-2">
-            <button
-              type="button"
-              disabled
-              aria-label="画像（未配線）"
-              className="flex h-9 w-9 items-center justify-center text-muted-foreground disabled:opacity-40"
-            >
-              <IconImage className="h-5 w-5" />
-            </button>
+
+          <div className="mt-3 flex min-h-[8.5rem] gap-3">
+            <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <IconUsers className="h-4 w-4" />
+            </span>
+            <label htmlFor="idea-mobile" className="sr-only">
+              いま思いついたこと
+            </label>
+            <textarea
+              id="idea-mobile"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              autoFocus={autofocus}
+              placeholder="いま思いついたこと"
+              className="min-h-[8.5rem] w-full resize-none border-0 bg-transparent pt-1.5 text-[22px] leading-snug text-foreground outline-none placeholder:text-muted-foreground"
+            />
           </div>
-        </form>
-        {notice ? <p className="pb-2 text-xs text-muted-foreground">{notice}</p> : null}
-        {caught.length > 0 ? (
-          <ul className="space-y-0">
-            {caught.map((item) => (
-              <li key={item} className="border-t border-border py-3 text-sm">
-                {item}
-              </li>
+
+          <div className="mt-4 flex items-center gap-0.5 border-t border-border py-2">
+            {STUB_TOOLS.map(({ label, Icon }) => (
+              <button
+                key={label}
+                type="button"
+                disabled
+                aria-label={label}
+                className="flex h-10 w-10 items-center justify-center text-muted-foreground disabled:opacity-50"
+              >
+                <Icon className="h-5 w-5" />
+              </button>
             ))}
-          </ul>
-        ) : null}
+          </div>
+          {notice ? <p className="pb-4 text-xs text-muted-foreground">{notice}</p> : null}
+        </form>
       </div>
 
       <div className="mx-auto hidden max-w-2xl md:block">
@@ -87,7 +94,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             className="ui-input mt-2 h-auto resize-none py-3"
           />
           <div className="mt-3 flex items-center justify-between">
-            <button type="submit" disabled={!canSubmit} className="ui-btn">
+            <button type="submit" disabled={!canSubmit} className="ui-btn rounded-full px-4">
               置く
             </button>
             <Link
@@ -99,18 +106,6 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
           </div>
         </form>
         {notice ? <p className="mt-3 text-xs text-muted-foreground">{notice}</p> : null}
-        {caught.length > 0 ? (
-          <ul className="mt-4 space-y-2">
-            {caught.map((item) => (
-              <li
-                key={item}
-                className="rounded-md border border-border bg-muted px-3 py-2.5 text-sm"
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
-        ) : null}
       </div>
     </>
   );

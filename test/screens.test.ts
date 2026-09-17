@@ -44,6 +44,13 @@ describe("empty workspace data", () => {
     }
   });
 
+  it("uses an X-like compose placeholder and submit on capture", () => {
+    const src = Object.values(appSources).join("\n");
+    expect(src).toContain("いま思いついたこと");
+    expect(src).toContain("置く");
+    expect(src).toContain("IconBack");
+  });
+
   it("keeps Japanese aging stages for filters and empty board columns", () => {
     expect([...STAGES]).toEqual(["spark", "aging", "ripe", "selected", "archived"]);
     expect(STAGE_LABEL.spark).toBe("着想");
