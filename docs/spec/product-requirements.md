@@ -36,7 +36,7 @@ Rules that the UI must teach:
 
 ## Screens in scope
 
-See [ui-ia.md](./ui-ia.md). Paths: `/` (login), `/login`, `/app` (desktop list home; mobile redirects to capture), `/app/capture` (mobile home), `/app/list` (mobile 一覧), `/app/ideas/:id`, `/app/merge`, `/app/research`, `/app/team`.
+See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile capture home; desktop → `/app/list`), `/app/capture` (capture alias), `/app/list` (desktop list home / mobile 一覧), `/app/ideas/:id`, `/app/merge`, `/app/research`, `/app/team`.
 
 ## Out of scope (this pass)
 
@@ -49,4 +49,4 @@ See [ui-ia.md](./ui-ia.md). Paths: `/` (login), `/login`, `/app` (desktop list h
 
 ## Success for this pass
 
-A reviewer signs in (mock) and lands on **capture** on mobile and **list** (`/app`) on desktop. No dummy ideas. LiteLLM chrome; Relic list IA only when rows exist. Backend, crypto wiring, and real OAuth can follow after visual sign-off.
+A reviewer enters `/app` and lands on **capture** on mobile and **list** (`/app/list`) on desktop. No dummy ideas. LiteLLM chrome; Relic list IA only when rows exist. Backend, crypto wiring, and real OAuth can follow after visual sign-off.

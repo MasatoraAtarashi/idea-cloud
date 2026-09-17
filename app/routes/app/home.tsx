@@ -1,34 +1,24 @@
 import { useLayoutEffect } from "react";
 import { useNavigate } from "react-router";
 import { CaptureView } from "../../components/capture-view";
-import { IdeaListView } from "../../components/idea-list-view";
-import { CAPTURE_PATH, isDesktopViewport } from "../../lib/home-path";
+import { isDesktopViewport, LIST_PATH } from "../../lib/home-path";
 
 export function meta() {
-  return [{ title: "アイデアクラウド" }];
+  return [{ title: "キャプチャ — アイデアクラウド" }];
 }
 
 /**
- * `/app` is desktop list home. On mobile it paints capture immediately, then
- * replaces to `/app/capture` so the 取る tab is active. Mobile 一覧 is `/app/list`.
+ * `/app` is capture-only (mobile home). Desktop replaces to `/app/list`
+ * so a phone never gets the shrunk list/filter chrome.
  */
 export default function AppHome() {
   const navigate = useNavigate();
 
   useLayoutEffect(() => {
-    if (!isDesktopViewport()) {
-      navigate(CAPTURE_PATH, { replace: true });
+    if (isDesktopViewport()) {
+      navigate(LIST_PATH, { replace: true });
     }
   }, [navigate]);
 
-  return (
-    <>
-      <div className="md:hidden">
-        <CaptureView />
-      </div>
-      <div className="hidden md:block">
-        <IdeaListView />
-      </div>
-    </>
-  );
+  return <CaptureView autofocus />;
 }

@@ -77,17 +77,19 @@ describe("empty workspace data", () => {
 describe("responsive home and nav", () => {
   it("sends mobile to capture and desktop to list", () => {
     expect(homePath(false)).toBe(CAPTURE_PATH);
-    expect(homePath(true)).toBe("/app");
+    expect(homePath(true)).toBe(LIST_PATH);
+    expect(CAPTURE_PATH).toBe("/app");
+    expect(LIST_PATH).toBe("/app/list");
     expect(isDesktopViewport(() => ({ matches: false }))).toBe(false);
     expect(isDesktopViewport(() => ({ matches: true }))).toBe(true);
   });
 
   it("puts capture first on mobile nav and list first on desktop nav", () => {
-    expect(MOBILE_NAV[0]?.to).toBe(CAPTURE_PATH);
+    expect(MOBILE_NAV[0]?.to).toBe("/app");
     expect(MOBILE_NAV[0]?.primary).toBe(true);
     expect(MOBILE_NAV.map((item) => item.label)).toEqual(["取る", "一覧", "融合", "研究", "設定"]);
     expect(MOBILE_NAV[1]?.to).toBe("/app/list");
-    expect(WORKSPACE_NAV[0]?.to).toBe(LIST_PATH);
+    expect(WORKSPACE_NAV[0]?.to).toBe("/app/list");
     expect(ACCESS_NAV[0]?.to).toBe("/app/team");
   });
 });

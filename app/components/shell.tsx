@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router";
 import type { ReactNode } from "react";
 import { ACCESS_NAV, MOBILE_NAV, WORKSPACE_NAV } from "../nav";
 import { SESSION_USER } from "../data/mock";
-import { CAPTURE_PATH } from "../lib/home-path";
+import { isCapturePath } from "../lib/home-path";
 import { IconList, IconMerge, IconPlus, IconSearch, IconUsers } from "./icons";
 
 const ICONS = {
@@ -56,10 +56,7 @@ function NavGroup({
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const composeChrome =
-    location.pathname === CAPTURE_PATH ||
-    location.pathname === "/app" ||
-    location.pathname === "/app/";
+  const composeChrome = isCapturePath(location.pathname);
 
   return (
     <div className="min-h-screen bg-sidebar">
@@ -109,32 +106,34 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.to}
               to={item.to}
               end={item.end}
-              className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-1.5 no-underline ${
-                  isActive ? "text-foreground" : "text-muted-foreground"
-                }`
-              }
+              className={({ isActive }) => {
+                const on = item.primary ? isCapturePath(location.pathname) : isActive;
+                return `flex flex-col items-center gap-0.5 py-1.5 no-underline ${
+                  on ? "text-foreground" : "text-muted-foreground"
+                }`;
+              }}
             >
-              {({ isActive }) => (
-                <>
-                  {item.primary ? (
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-primary/90 text-primary-foreground"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                  ) : (
-                    <Icon className="h-5 w-5" />
-                  )}
-                  <span className={`text-[10px] ${isActive ? "font-medium" : ""}`}>
-                    {item.label}
-                  </span>
-                </>
-              )}
+              {({ isActive }) => {
+                const on = item.primary ? isCapturePath(location.pathname) : isActive;
+                return (
+                  <>
+                    {item.primary ? (
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                          on
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-primary/90 text-primary-foreground"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                    ) : (
+                      <Icon className="h-5 w-5" />
+                    )}
+                    <span className={`text-[10px] ${on ? "font-medium" : ""}`}>{item.label}</span>
+                  </>
+                );
+              }}
             </NavLink>
           );
         })}

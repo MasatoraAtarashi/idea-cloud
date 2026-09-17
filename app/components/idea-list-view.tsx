@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { IconPlus, IconSearch } from "./icons";
 import { EmptyState, StagePill, TagPill } from "./ui";
-import { CAPTURE_PATH } from "../lib/home-path";
+import { CAPTURE_ALIAS } from "../lib/home-path";
 import {
   allTags,
   filterIdeas,
@@ -16,11 +16,32 @@ import {
 
 type View = "table" | "board";
 
+function StageFilters({ stages, onToggle }: { stages: Stage[]; onToggle: (stage: Stage) => void }) {
+  return (
+    <ul className="mt-1.5 space-y-1">
+      {STAGES.map((stage) => (
+        <li key={stage}>
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={stages.includes(stage)}
+              onChange={() => onToggle(stage)}
+              className="accent-primary"
+            />
+            {STAGE_LABEL[stage]}
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function IdeaListView() {
   const [view, setView] = useState<View>("table");
   const [query, setQuery] = useState("");
   const [stages, setStages] = useState<Stage[]>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const availableTags = allTags(IDEAS);
   const filtered = useMemo(
@@ -41,26 +62,27 @@ export function IdeaListView() {
     );
   }
 
+  const composeFab = (
+    <Link
+      to={CAPTURE_ALIAS}
+      className="fixed bottom-[4.75rem] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline md:hidden"
+      aria-label="キャプチャ"
+    >
+      <IconPlus className="h-6 w-6" />
+    </Link>
+  );
+
   if (emptyWorkspace) {
     return (
       <>
         <div className="md:hidden">
           <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
-          <p className="mt-10 text-sm text-muted-foreground">まだありません</p>
-          <Link
-            to={CAPTURE_PATH}
-            className="fixed bottom-[4.75rem] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline md:hidden"
-            aria-label="キャプチャ"
-          >
-            <IconPlus className="h-6 w-6" />
-          </Link>
+          <p className="mt-8 text-sm text-muted-foreground">まだありません</p>
+          {composeFab}
         </div>
-
         <div className="hidden md:block">
           <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
-          <div className="ui-panel mt-4">
-            <EmptyState title="まだありません" />
-          </div>
+          <p className="mt-8 text-sm text-muted-foreground">まだありません</p>
         </div>
       </>
     );
@@ -70,10 +92,26 @@ export function IdeaListView() {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
-        <Link to={CAPTURE_PATH} className="ui-btn hidden gap-1.5 md:inline-flex">
+        <Link to={CAPTURE_ALIAS} className="ui-btn hidden gap-1.5 md:inline-flex">
           <IconPlus className="h-4 w-4" />
           キャプチャ
         </Link>
+      </div>
+
+      <div className="mb-3 md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileFiltersOpen((open) => !open)}
+          className="text-sm text-muted-foreground"
+        >
+          {mobileFiltersOpen ? "フィルタを閉じる" : "フィルタ"}
+        </button>
+        {mobileFiltersOpen ? (
+          <div className="mt-3 border-t border-border pt-3">
+            <p className="text-xs text-muted-foreground">段階</p>
+            <StageFilters stages={stages} onToggle={toggleStage} />
+          </div>
+        ) : null}
       </div>
 
       <div className="mb-4 hidden flex-wrap items-center gap-2 md:flex">
@@ -124,13 +162,7 @@ export function IdeaListView() {
             ))}
           </ul>
         )}
-        <Link
-          to={CAPTURE_PATH}
-          className="fixed bottom-[4.75rem] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline"
-          aria-label="キャプチャ"
-        >
-          <IconPlus className="h-6 w-6" />
-        </Link>
+        {composeFab}
       </div>
 
       <div className="hidden md:block">
@@ -139,21 +171,7 @@ export function IdeaListView() {
             <aside className="ui-panel w-full shrink-0 p-4 lg:w-56">
               <h2 className="text-sm font-medium">フィルタ</h2>
               <p className="mt-4 text-xs text-muted-foreground">段階</p>
-              <ul className="mt-1.5 space-y-1">
-                {STAGES.map((stage) => (
-                  <li key={stage}>
-                    <label className="flex cursor-pointer items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={stages.includes(stage)}
-                        onChange={() => toggleStage(stage)}
-                        className="accent-primary"
-                      />
-                      {STAGE_LABEL[stage]}
-                    </label>
-                  </li>
-                ))}
-              </ul>
+              <StageFilters stages={stages} onToggle={toggleStage} />
               <p className="mt-4 text-xs text-muted-foreground">タグ</p>
               {availableTags.length === 0 ? (
                 <p className="mt-1.5 text-sm text-muted-foreground">まだありません</p>

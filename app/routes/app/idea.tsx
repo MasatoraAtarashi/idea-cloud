@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
 import { getIdea, STAGE_LABEL } from "../../data/mock";
-import { MOBILE_LIST_PATH } from "../../lib/home-path";
+import { LIST_PATH } from "../../lib/home-path";
 
 export function meta() {
   return [{ title: "アイデア — アイデアクラウド" }];
@@ -19,7 +19,7 @@ export default function IdeaPage() {
           <EmptyState title="まだありません" />
         </div>
         <Link
-          to={MOBILE_LIST_PATH}
+          to={LIST_PATH}
           className="mt-4 inline-block text-sm text-muted-foreground no-underline hover:text-foreground"
         >
           一覧
@@ -31,7 +31,7 @@ export default function IdeaPage() {
   return (
     <article className="mx-auto max-w-3xl">
       <p className="text-xs text-muted-foreground">
-        <Link to={MOBILE_LIST_PATH} className="text-foreground no-underline hover:underline">
+        <Link to={LIST_PATH} className="text-foreground no-underline hover:underline">
           アイデア
         </Link>
         <span className="mx-2">/</span>
@@ -54,8 +54,8 @@ export default function IdeaPage() {
         {[
           ["進める", "/app/research"],
           ["融合する", "/app/merge"],
-          ["アーカイブ", MOBILE_LIST_PATH],
-          ["捨てる", MOBILE_LIST_PATH],
+          ["アーカイブ", LIST_PATH],
+          ["捨てる", LIST_PATH],
         ].map(([label, href]) => (
           <Link key={label} to={href} className="ui-btn-ghost px-3 py-2 text-center text-sm">
             {label}

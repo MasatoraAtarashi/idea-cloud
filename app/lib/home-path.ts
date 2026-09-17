@@ -1,13 +1,17 @@
-/** Tailwind `md` — desktop list home vs mobile capture home. */
+/** Tailwind `md` — desktop list vs mobile capture. */
 export const MD_QUERY = "(min-width: 768px)";
 
-/** Desktop list home. `/app/list` is the same list for mobile 一覧. */
-export const LIST_PATH = "/app";
-export const MOBILE_LIST_PATH = "/app/list";
-export const CAPTURE_PATH = "/app/capture";
+/** `/app` is capture (mobile home). Desktop `/app` replaces to the list. */
+export const CAPTURE_PATH = "/app";
+export const CAPTURE_ALIAS = "/app/capture";
+export const LIST_PATH = "/app/list";
 
 export function homePath(isDesktop: boolean): typeof LIST_PATH | typeof CAPTURE_PATH {
   return isDesktop ? LIST_PATH : CAPTURE_PATH;
+}
+
+export function isCapturePath(pathname: string): boolean {
+  return pathname === "/app" || pathname === "/app/" || pathname === "/app/capture";
 }
 
 export function isDesktopViewport(

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { IconClose, IconImage } from "./icons";
-import { LIST_PATH, MOBILE_LIST_PATH } from "../lib/home-path";
+import { LIST_PATH } from "../lib/home-path";
 
 export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
   const [draft, setDraft] = useState("");
@@ -24,7 +24,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-center justify-between gap-3 py-1">
             <Link
-              to={MOBILE_LIST_PATH}
+              to={LIST_PATH}
               aria-label="閉じる"
               className="flex h-9 w-9 items-center justify-center text-foreground no-underline"
             >

@@ -2,7 +2,7 @@
 
 Product UI copy is **Japanese**. This spec is English.
 
-Working screens: **login gate**, **idea list** (desktop home at `/app`), **kanban view**, **quick capture** (mobile home at `/app/capture`), **merge**, **research / prototype**, idea detail, team settings.
+Working screens: **login gate**, **idea list** (desktop home at `/app/list`), **kanban view**, **quick capture** (mobile home at `/app`), **merge**, **research / prototype**, idea detail, team settings.
 
 There is **no landing page**. `/` is the login gate.
 
@@ -25,12 +25,12 @@ Empty workspace: no dummy cards, no filter chrome. Copy is **まだありませ�
 
 X mobile web is login-walled; after auth, Idea Cloud still uses X’s IA split: compose-first on the phone, timeline/list on desktop.
 
-| Viewport               | After mock login           | Primary nav                        |
-| ---------------------- | -------------------------- | ---------------------------------- |
-| Mobile (`< md`, 768px) | **Capture** `/app/capture` | Bottom nav; 取る first (compose)   |
-| Desktop (`md` and up)  | **List** `/app`            | Quiet left sidebar; アイデア first |
+| Viewport               | After entering `/app` | Primary nav                        |
+| ---------------------- | --------------------- | ---------------------------------- |
+| Mobile (`< md`, 768px) | **Capture** `/app`    | Bottom nav; 取る first (compose)   |
+| Desktop (`md` and up)  | **List** `/app/list`  | Quiet left sidebar; アイデア first |
 
-`/app` is the desktop list. On a small viewport it paints capture immediately, then client-replaces to `/app/capture` so the 取る tab is active. Mobile 一覧 is `/app/list` (same list, no filter aside by default).
+`/app` is capture-only (mobile home). Desktop client-replaces to `/app/list`. Mobile 一覧 is `/app/list` with フィルタ collapsed.
 
 Login has no app shell. Do not treat the gate as the product.
 
@@ -38,9 +38,9 @@ Login has no app shell. Do not treat the gate as the product.
 
 Minimal card: app name, 「ログイン」, one Google-looking button. Continues to `/app`. No hint line, product pitch, allowlist essay, or skip-login links.
 
-## Idea list (`/app` desktop home; `/app/list` mobile 一覧)
+## Idea list (`/app/list`, desktop home)
 
-Empty: title + **まだありません**. Filters / table / kanban appear only when ideas exist, and only from `md` up (Relic-style left filter + table). Mobile list is a simple stack plus a compose FAB.
+Empty: title + **まだありません**. Filters / table / kanban appear only when ideas exist, and only from `md` up (Relic-style left filter + table). Mobile list is a stack; フィルタ stays closed until tapped.
 
 | Stage      | Japanese   | Role              |
 | ---------- | ---------- | ----------------- |
@@ -52,7 +52,7 @@ Empty: title + **まだありません**. Filters / table / kanban appear only w
 
 Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId` (empty until data exists).
 
-## Quick capture (`/app/capture`, mobile home)
+## Quick capture (`/app` and `/app/capture`, mobile home)
 
 X-like compose on mobile: close (一覧) left, 「置く」 pill right, autofocus textarea, placeholder 「いま思いついたこと」, thin disabled media stub. Light theme (not X dark). Desktop: quiet console panel. Session-local list only; no preloaded ideas.
 

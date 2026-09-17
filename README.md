@@ -31,19 +31,17 @@ pnpm db:migrate:local            # template sample `todos` table
 pnpm dev
 ```
 
-http://localhost:5173 is the login gate. Google でログイン opens `/app` (list on desktop). Mobile `/app` becomes capture at `/app/capture`.
+http://localhost:5173/app is capture on a phone. Desktop `/app` replaces to `/app/list`.
 
-| Path             | Screen (Japanese UI)                      |
-| ---------------- | ----------------------------------------- |
-| `/`              | Login gate (same as `/login`)             |
-| `/login`         | Login (Google OAuth mock)                 |
-| `/app`           | Desktop home: idea list. Mobile → capture |
-| `/app/capture`   | Quick capture (mobile default)            |
-| `/app/list`      | Idea list (mobile 一覧; same board)       |
-| `/app/ideas/:id` | Idea detail                               |
-| `/app/merge`     | Merge / related                           |
-| `/app/research`  | Research / prototype                      |
-| `/app/team`      | Team settings                             |
+| Path             | Screen (Japanese UI)                        |
+| ---------------- | ------------------------------------------- |
+| `/app`           | Mobile home: capture. Desktop → `/app/list` |
+| `/app/capture`   | Capture alias (desktop sidebar)             |
+| `/app/list`      | Idea list (desktop home; mobile 一覧)       |
+| `/app/ideas/:id` | Idea detail                                 |
+| `/app/merge`     | Merge / related                             |
+| `/app/research`  | Research / prototype                        |
+| `/app/team`      | Team settings                               |
 
 ## What was copied from the template
 
@@ -61,7 +59,7 @@ Included:
 
 ## Stubs / not wired
 
-- **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). Mobile `/app` opens capture; desktop `/app` is the list. Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
+- **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). `/app` is capture; desktop replaces to `/app/list`. Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
 - **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. The team-settings textarea is disabled.
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. No idea table in D1 yet.
 - **Workers AI:** tagging / relation / evolution copy only. No unused AI binding in `wrangler.jsonc`.
