@@ -84,3 +84,21 @@ export function IconKey(props: IconProps) {
     </Svg>
   );
 }
+
+export function IconClose(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 6 18 18M18 6 6 18" />
+    </Svg>
+  );
+}
+
+export function IconImage(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
+      <circle cx="9" cy="10.5" r="1.5" />
+      <path d="M3.8 16.5 8.5 12l3.2 3.2 2.3-2.3 6.2 5.1" />
+    </Svg>
+  );
+}

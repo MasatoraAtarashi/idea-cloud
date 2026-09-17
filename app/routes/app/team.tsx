@@ -8,7 +8,6 @@ export default function TeamPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="text-lg font-semibold tracking-tight">チーム</h1>
-
       <section className="ui-panel mt-4 p-4">
         <h2 className="text-sm font-medium">メンバー</h2>
         {MEMBERS.length === 0 ? (
@@ -33,17 +32,6 @@ export default function TeamPage() {
             ))}
           </ul>
         )}
-      </section>
-
-      <section className="ui-panel mt-4 p-4">
-        <h2 className="text-sm font-medium">許可リスト</h2>
-        <textarea
-          disabled
-          rows={2}
-          className="ui-input mt-3 h-auto bg-muted text-muted-foreground"
-          placeholder="未設定"
-          value=""
-        />
       </section>
     </div>
   );

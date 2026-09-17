@@ -5,5 +5,5 @@ export function meta() {
 }
 
 export default function CapturePage() {
-  return <CaptureView />;
+  return <CaptureView autofocus />;
 }

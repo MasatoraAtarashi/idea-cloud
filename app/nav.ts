@@ -1,5 +1,5 @@
 export const WORKSPACE_NAV = [
-  { to: "/app/list", label: "アイデア", end: true, icon: "list" },
+  { to: "/app", label: "アイデア", end: true, icon: "list" },
   { to: "/app/capture", label: "キャプチャ", icon: "plus" },
   { to: "/app/merge", label: "融合", icon: "merge" },
   { to: "/app/research", label: "リサーチ", icon: "search" },

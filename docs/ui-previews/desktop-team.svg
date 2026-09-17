@@ -14,7 +14,4 @@
   <text x="248" y="104" font-size="13" fill="#111827" font-weight="500">メンバー</text>
   <text x="248" y="132" font-size="13" fill="#111827">ログイン中</text>
   <text x="800" y="132" font-size="12" fill="#6B7280">オーナー</text>
-  <rect x="232" y="176" width="640" height="88" rx="6" fill="#ffffff" stroke="#E5E7EB"/>
-  <text x="248" y="208" font-size="13" fill="#111827" font-weight="500">許可リスト</text>
-  <text x="248" y="236" font-size="12" fill="#6B7280">未設定</text>
 </svg>

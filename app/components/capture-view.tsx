@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
-import { LIST_PATH } from "../lib/home-path";
+import { IconClose, IconImage } from "./icons";
+import { LIST_PATH, MOBILE_LIST_PATH } from "../lib/home-path";
 
-export function CaptureView() {
+export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
   const [draft, setDraft] = useState("");
   const [caught, setCaught] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
@@ -19,30 +20,51 @@ export function CaptureView() {
 
   return (
     <>
-      <div className="flex min-h-[calc(100dvh-7.5rem)] flex-col md:hidden">
+      <div className="-mx-4 -mt-3 flex min-h-[calc(100dvh-7.25rem)] flex-col px-4 md:hidden">
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold">着想</p>
-            <button type="submit" disabled={!canSubmit} className="ui-btn h-8 rounded-full px-4">
+          <div className="flex items-center justify-between gap-3 py-1">
+            <Link
+              to={MOBILE_LIST_PATH}
+              aria-label="閉じる"
+              className="flex h-9 w-9 items-center justify-center text-foreground no-underline"
+            >
+              <IconClose className="h-5 w-5" />
+            </Link>
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="ui-btn h-8 rounded-full px-4 disabled:opacity-50"
+            >
               置く
             </button>
           </div>
           <label htmlFor="idea-mobile" className="sr-only">
-            いまの着想
+            いま思いついたこと
           </label>
           <textarea
             id="idea-mobile"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="いま浮かんだこと"
-            className="mt-3 min-h-[12rem] flex-1 resize-none border-0 bg-transparent text-[17px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+            autoFocus={autofocus}
+            placeholder="いま思いついたこと"
+            className="mt-2 min-h-[10rem] flex-1 resize-none border-0 bg-transparent text-[20px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
           />
+          <div className="flex items-center gap-1 border-t border-border py-2">
+            <button
+              type="button"
+              disabled
+              aria-label="画像（未配線）"
+              className="flex h-9 w-9 items-center justify-center text-muted-foreground disabled:opacity-40"
+            >
+              <IconImage className="h-5 w-5" />
+            </button>
+          </div>
         </form>
-        {notice ? <p className="mt-2 text-xs text-muted-foreground">{notice}</p> : null}
+        {notice ? <p className="pb-2 text-xs text-muted-foreground">{notice}</p> : null}
         {caught.length > 0 ? (
-          <ul className="mt-4 space-y-2">
+          <ul className="space-y-0">
             {caught.map((item) => (
-              <li key={item} className="border-t border-border py-2.5 text-sm">
+              <li key={item} className="border-t border-border py-3 text-sm">
                 {item}
               </li>
             ))}
@@ -61,12 +83,12 @@ export function CaptureView() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             rows={6}
-            placeholder="着想を置く"
+            placeholder="いま思いついたこと"
             className="ui-input mt-2 h-auto resize-none py-3"
           />
           <div className="mt-3 flex items-center justify-between">
             <button type="submit" disabled={!canSubmit} className="ui-btn">
-              置いて寝かせる
+              置く
             </button>
             <Link
               to={LIST_PATH}

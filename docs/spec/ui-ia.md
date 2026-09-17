@@ -2,7 +2,7 @@
 
 Product UI copy is **Japanese**. This spec is English.
 
-Working screens: **login gate**, **idea list** (desktop home), **kanban view**, **quick capture** (mobile home), **merge**, **research / prototype**, idea detail, team settings.
+Working screens: **login gate**, **idea list** (desktop home at `/app`), **kanban view**, **quick capture** (mobile home at `/app/capture`), **merge**, **research / prototype**, idea detail, team settings.
 
 There is **no landing page**. `/` is the login gate.
 
@@ -23,24 +23,24 @@ Empty workspace: no dummy cards, no filter chrome. Copy is **まだありませ�
 
 ## Responsive homes (X-like split)
 
-Same product, different default surface — like X mobile compose vs desktop timeline.
+X mobile web is login-walled; after auth, Idea Cloud still uses X’s IA split: compose-first on the phone, timeline/list on desktop.
 
-| Viewport               | After mock login (`/app`)  | Primary nav                        |
+| Viewport               | After mock login           | Primary nav                        |
 | ---------------------- | -------------------------- | ---------------------------------- |
 | Mobile (`< md`, 768px) | **Capture** `/app/capture` | Bottom nav; 取る first (compose)   |
-| Desktop (`md` and up)  | **List** `/app/list`       | Quiet left sidebar; アイデア first |
+| Desktop (`md` and up)  | **List** `/app`            | Quiet left sidebar; アイデア first |
 
-`/app` paints the right surface with CSS, then client-replaces to `/app/capture` or `/app/list` so the URL matches nav.
+`/app` is the desktop list. On a small viewport it paints capture immediately, then client-replaces to `/app/capture` so the 取る tab is active. Mobile 一覧 is `/app/list` (same list, no filter aside by default).
 
-Login has no app shell.
+Login has no app shell. Do not treat the gate as the product.
 
 ## Login (`/` and `/login`)
 
 Minimal card: app name, 「ログイン」, one Google-looking button. Continues to `/app`. No hint line, product pitch, allowlist essay, or skip-login links.
 
-## Idea list (`/app/list`, desktop home)
+## Idea list (`/app` desktop home; `/app/list` mobile 一覧)
 
-Empty: title + **まだありません**. Filters / table / kanban appear only when ideas exist (Relic-style left filter + table). Mobile list is a simple stack plus a compose FAB.
+Empty: title + **まだありません**. Filters / table / kanban appear only when ideas exist, and only from `md` up (Relic-style left filter + table). Mobile list is a simple stack plus a compose FAB.
 
 | Stage      | Japanese   | Role              |
 | ---------- | ---------- | ----------------- |
@@ -54,7 +54,7 @@ Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId` (empty until dat
 
 ## Quick capture (`/app/capture`, mobile home)
 
-Mobile: compose-first (X-like). Large textarea, top-right 「置く」, bottom nav with a primary compose control. Desktop: quiet console panel. Session-local list only; no preloaded ideas.
+X-like compose on mobile: close (一覧) left, 「置く」 pill right, autofocus textarea, placeholder 「いま思いついたこと」, thin disabled media stub. Light theme (not X dark). Desktop: quiet console panel. Session-local list only; no preloaded ideas.
 
 ## Merge (`/app/merge`)
 
@@ -66,6 +66,6 @@ Only **selected** ideas. Empty until something is adopted. Workers AI is copy-on
 
 ## Team (`/app/team`)
 
-Do not invent teammates. Session placeholder (“ログイン中”) only. Disabled allowlist stub.
+Do not invent teammates. Session placeholder (“ログイン中”) only.
 
 Data: `app/data/mock.ts` (empty arrays). Previews: [../ui-previews/](../ui-previews/).
