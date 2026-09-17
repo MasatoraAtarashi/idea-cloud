@@ -24,14 +24,14 @@ Intended steps (run only with a real token; do not commit the token):
 
 1. `wrangler d1 create idea-cloud-db` (or `wrangler d1 list` if it already exists)
 2. Patch `database_id` in `wrangler.jsonc`
-3. `wrangler d1 migrations apply idea-cloud-db --remote` for the template `todos` migration
-4. Idea tables are **not** in migrations yet
+3. `wrangler d1 migrations apply DB --remote` (or `pnpm db:migrate:remote`) applies `todos` + `ideas`
+4. Production `deploy.yml` runs the same `d1 migrations apply DB --remote` before `wrangler deploy`. Local: `pnpm db:migrate:local`
 
 ## Workflows
 
 | Workflow                        | Trigger today  | Notes                                                     |
 | ------------------------------- | -------------- | --------------------------------------------------------- |
-| `.github/workflows/deploy.yml`  | Push to `main` | Production Worker. No `workflow_dispatch` yet.            |
+| `.github/workflows/deploy.yml`  | Push to `main` | D1 migrations (`ideas` + `todos`) then production Worker. |
 | `.github/workflows/preview.yml` | Pull requests  | Uploads a Worker version / preview URL when secrets exist |
 | `.github/workflows/pr.yml`      | PRs            | typecheck / lint / test / gitleaks / zizmor / audit / ASH |
 

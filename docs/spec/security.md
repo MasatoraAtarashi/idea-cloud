@@ -25,7 +25,7 @@ Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secre
 `server/security/field-crypto.ts`: AES-GCM, 12-byte IV, `base64(iv).base64(ciphertext)`.
 
 - Key: `FIELD_ENCRYPTION_KEY` — 32-byte hex (64 chars), wrangler secret / `.dev.vars` only.
-- **Not wired to D1.** No idea table yet. Tests cover round-trip + bad key.
+- **Not wired to D1.** The `ideas` table stores plaintext `title` / `body`. Tests cover round-trip + bad key.
 - Do not log plaintext bodies. Do not put the key in `wrangler.jsonc`.
 
 ## CI security

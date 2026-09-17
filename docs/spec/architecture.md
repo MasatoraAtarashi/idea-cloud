@@ -2,7 +2,7 @@
 
 Idea Cloud runs as **one Cloudflare Worker**: React Router v7 SSR for the UI and Hono for `/api/*`, same isolate. Relational data is **D1** (SQLite at the edge) via Drizzle.
 
-This pass ships the Worker + D1 _shape_. Product idea rows are not created yet.
+Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app`; `/api/*` still has template Access middleware).
 
 ## Cloudflare Workers
 
@@ -14,7 +14,7 @@ This pass ships the Worker + D1 _shape_. Product idea rows are not created yet.
 | Observability | `observability.enabled`, `head_sampling_rate: 1` |
 | Source maps   | `upload_source_maps: true`                       |
 | UI routes     | `app/routes.ts` → `app/routes/*`                 |
-| API           | `server/api/` (template `todos` still mounted)   |
+| API           | `server/api/` (`ideas` + template `todos`)       |
 | Auth on APIs  | `server/middleware/access-auth.ts`               |
 
 Bindings declared only if used. Today that is **D1 `DB`**. No unused Workers AI, KV, R2, Queue, or Durable Object bindings.
@@ -30,16 +30,18 @@ Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` 
 
 ## D1
 
-| Item                 | Today                                                                         |
-| -------------------- | ----------------------------------------------------------------------------- |
-| Database name        | `idea-cloud-db`                                                               |
-| Binding              | `DB`                                                                          |
-| `database_id`        | Placeholder `00000000-0000-0000-0000-000000000000` until `wrangler d1 create` |
-| Migrations           | Template `todos` table only (`migrations/`)                                   |
-| Idea / member tables | **Not created**                                                               |
-| Field encryption     | Helper exists; not applied to D1 rows                                         |
+| Item             | Today                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| Database name    | `idea-cloud-db`                                                                         |
+| Binding          | `DB`                                                                                    |
+| Migrations       | `todos` (template) + `ideas` (`migrations/`)                                            |
+| `ideas` columns  | `id`, `title`, `body`, `stage` (default `spark`), `tags` (JSON text `[]`), `created_at` |
+| Members table    | **Not created**                                                                         |
+| Field encryption | Helper exists; **not** applied to idea rows                                             |
 
-Intended later: idea bodies and similar sensitive columns encrypted with AES-GCM _before_ insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
+Capture **置く** is a React Router action (`insert` into `ideas`). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. Hono `GET/POST /api/ideas` follows the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
+
+Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
 
 ## Provenance
 
@@ -55,7 +57,8 @@ Intended later: idea bodies and similar sensitive columns encrypted with AES-GCM
 
 | Need                 | Service                         |
 | -------------------- | ------------------------------- |
-| Ideas, members (SQL) | **D1**                          |
+| Ideas (SQL)          | **D1** `ideas` (plaintext)      |
+| Members              | Not created                     |
 | Profile / flags      | Workers KV (not added)          |
 | Uploads              | R2 (not added)                  |
 | Multiplayer / agents | Durable Objects (not this pass) |

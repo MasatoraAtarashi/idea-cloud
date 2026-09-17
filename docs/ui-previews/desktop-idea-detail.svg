@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Inter, IBM Plex Sans JP, sans-serif">
   <rect width="1280" height="720" fill="#F3F4F6"/>
-  <rect x="0" y="0" width="224" height="720" fill="#F3F4F6" stroke="#E5E7EB"/>
-  <text x="20" y="32" font-size="14" fill="#111827" font-weight="600">アイデアクラウド</text>
-  <rect x="12" y="74" width="200" height="32" rx="6" fill="#ffffff"/>
-  <text x="36" y="94" font-size="13" fill="#111827" font-weight="500">アイデア</text>
-  <circle cx="32" cy="688" r="12" fill="#ffffff" stroke="#E5E7EB"/>
-  <text x="52" y="692" font-size="12" fill="#111827">ログイン中</text>
-  <rect x="224" y="0" width="1056" height="720" fill="#ffffff"/>
-  <text x="248" y="48" font-size="20" fill="#111827" font-weight="600">アイデア詳細</text>
-  <text x="248" y="72" font-size="13" fill="#6B7280">指定された着想はありません。</text>
-  <rect x="248" y="100" width="760" height="200" rx="6" fill="#ffffff" stroke="#E5E7EB"/>
-  <text x="628" y="190" font-size="14" fill="#111827" font-weight="500" text-anchor="middle">見つかりません</text>
-  <text x="628" y="214" font-size="13" fill="#6B7280" text-anchor="middle">アイデアはまだありません。</text>
+  <rect x="0" y="0" width="208" height="720" fill="#F3F4F6" stroke="#E5E7EB"/>
+  <text x="20" y="30" font-size="13" fill="#111827" font-weight="600">アイデアクラウド</text>
+  <rect x="10" y="72" width="188" height="30" rx="6" fill="#ffffff"/>
+  <text x="32" y="92" font-size="13" fill="#111827" font-weight="500">アイデア</text>
+  <circle cx="28" cy="688" r="10" fill="#ffffff" stroke="#E5E7EB"/>
+  <text x="46" y="692" font-size="12" fill="#111827">ログイン中</text>
+  <rect x="208" y="0" width="1072" height="720" fill="#ffffff"/>
+  <text x="232" y="48" font-size="18" fill="#111827" font-weight="600">アイデア</text>
+  <rect x="232" y="72" width="760" height="200" rx="6" fill="#ffffff" stroke="#E5E7EB"/>
+  <text x="612" y="178" font-size="14" fill="#6B7280" text-anchor="middle">まだありません</text>
 </svg>

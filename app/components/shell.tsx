@@ -1,7 +1,8 @@
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import type { ReactNode } from "react";
 import { ACCESS_NAV, MOBILE_NAV, WORKSPACE_NAV } from "../nav";
 import { SESSION_USER } from "../data/mock";
+import { isCapturePath } from "../lib/home-path";
 import { IconList, IconMerge, IconPlus, IconSearch, IconUsers } from "./icons";
 
 const ICONS = {
@@ -54,11 +55,14 @@ function NavGroup({
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const composeChrome = isCapturePath(location.pathname);
+
   return (
     <div className="min-h-screen bg-sidebar">
       <div className="flex min-h-screen">
-        <aside className="hidden w-56 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
-          <div className="flex h-12 items-center border-b border-border px-4">
+        <aside className="hidden w-52 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
+          <div className="flex h-11 items-center border-b border-border px-4">
             <span className="text-sm font-semibold tracking-tight">アイデアクラウド</span>
           </div>
           <nav className="flex-1 pb-4">
@@ -67,11 +71,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="border-t border-border px-3 py-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted-foreground">
-                <IconUsers className="h-4 w-4" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-muted-foreground">
+                <IconUsers className="h-3.5 w-3.5" />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{SESSION_USER.label}</p>
+                <p className="truncate text-sm">{SESSION_USER.label}</p>
                 <a
                   href="/login"
                   className="text-[11px] text-muted-foreground no-underline hover:text-foreground"
@@ -83,26 +87,64 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col bg-background">
-          <div className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</div>
-        </div>
-      </div>
-      <nav className="fixed inset-x-0 bottom-0 grid grid-cols-5 border-t border-border bg-background md:hidden">
-        {MOBILE_NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) =>
-              `py-2.5 text-center text-[11px] no-underline ${
-                isActive ? "font-medium text-foreground" : "text-muted-foreground"
-              }`
+          <div
+            className={
+              composeChrome
+                ? "flex-1 px-0 pt-0 md:px-6 md:py-6"
+                : "flex-1 px-4 py-4 md:px-6 md:py-6"
             }
           >
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="h-12 md:hidden" />
+            {children}
+          </div>
+        </div>
+      </div>
+      {composeChrome ? null : (
+        <>
+          <nav className="fixed inset-x-0 bottom-0 grid grid-cols-5 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] md:hidden">
+            {MOBILE_NAV.map((item) => {
+              const Icon = ICONS[item.icon];
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => {
+                    const on = item.primary ? isCapturePath(location.pathname) : isActive;
+                    return `flex flex-col items-center gap-0.5 py-1.5 no-underline ${
+                      on ? "text-foreground" : "text-muted-foreground"
+                    }`;
+                  }}
+                >
+                  {({ isActive }) => {
+                    const on = item.primary ? isCapturePath(location.pathname) : isActive;
+                    return (
+                      <>
+                        {item.primary ? (
+                          <span
+                            className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                              on
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-primary/90 text-primary-foreground"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </span>
+                        ) : (
+                          <Icon className="h-5 w-5" />
+                        )}
+                        <span className={`text-[10px] ${on ? "font-medium" : ""}`}>
+                          {item.label}
+                        </span>
+                      </>
+                    );
+                  }}
+                </NavLink>
+              );
+            })}
+          </nav>
+          <div className="h-16 md:hidden" />
+        </>
+      )}
     </div>
   );
 }

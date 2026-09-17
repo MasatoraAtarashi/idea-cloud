@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { GOOGLE_LOGIN_CTA, GOOGLE_LOGIN_HINT } from "../auth/google-login";
+import { GOOGLE_LOGIN_CTA } from "../auth/google-login";
 
 /** Official four-color G mark. Visual mock only — this is not a Google SDK. */
 function GoogleMark() {
@@ -19,7 +19,7 @@ function GoogleMark() {
       />
       <path
         fill="#34A853"
-        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0 11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
     </svg>
   );
@@ -28,13 +28,12 @@ function GoogleMark() {
 export function LoginGate() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar px-4">
-      <div className="ui-panel w-full max-w-[400px] px-8 py-10">
-        <p className="text-center text-lg font-semibold tracking-tight">アイデアクラウド</p>
-        <h1 className="mt-8 text-center text-[22px] font-medium">ログイン</h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">{GOOGLE_LOGIN_HINT}</p>
+      <div className="ui-panel w-full max-w-[22rem] px-8 py-8">
+        <p className="text-center text-base font-semibold tracking-tight">アイデアクラウド</p>
+        <h1 className="mt-6 text-center text-lg font-medium">ログイン</h1>
         <Link
           to="/app"
-          className="mt-8 flex h-10 w-full items-center justify-center gap-3 rounded border border-[#747775] bg-white text-sm font-medium text-[#1f1f1f] no-underline hover:bg-[#f8f9fa]"
+          className="mt-6 flex h-10 w-full items-center justify-center gap-3 rounded border border-[#747775] bg-white text-sm font-medium text-[#1f1f1f] no-underline hover:bg-[#f8f9fa]"
         >
           <GoogleMark />
           {GOOGLE_LOGIN_CTA}

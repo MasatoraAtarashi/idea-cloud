@@ -39,7 +39,14 @@ jobs:
         run: pnpm build
 
       # API token auth (Cloudflare has no wrangler-deploy OIDC as of 2026-08).
-      # Token should be least-privilege: Workers Scripts Edit.
+      # Token should be least-privilege: Workers Scripts Edit + D1 edit (migrations).
+      - name: Apply D1 migrations
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply DB --remote
+
       - name: Deploy
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

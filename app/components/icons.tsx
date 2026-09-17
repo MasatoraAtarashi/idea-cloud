@@ -84,3 +84,64 @@ export function IconKey(props: IconProps) {
     </Svg>
   );
 }
+
+export function IconClose(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 6 18 18M18 6 6 18" />
+    </Svg>
+  );
+}
+
+export function IconImage(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
+      <circle cx="9" cy="10.5" r="1.5" />
+      <path d="M3.8 16.5 8.5 12l3.2 3.2 2.3-2.3 6.2 5.1" />
+    </Svg>
+  );
+}
+
+export function IconBack(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M15 5 8 12l7 7" />
+    </Svg>
+  );
+}
+
+export function IconGif(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3.5" y="6.5" width="17" height="11" rx="1.5" />
+      <path d="M8 14.5v-4h2.2M8 12.5h1.6M13 10.5h2.5v4H13v-1.6h1.5" />
+    </Svg>
+  );
+}
+
+export function IconPoll(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M8 17V11M12 17V7M16 17v-4" />
+    </Svg>
+  );
+}
+
+export function IconClock(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="7.5" />
+      <path d="M12 8.5V12l2.5 1.8" />
+    </Svg>
+  );
+}
+
+export function IconPin(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z" />
+      <circle cx="12" cy="11" r="1.8" />
+    </Svg>
+  );
+}
