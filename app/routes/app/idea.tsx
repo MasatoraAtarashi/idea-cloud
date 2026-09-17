@@ -1,10 +1,10 @@
 import { Link, useParams } from "react-router";
-import { IconList } from "../../components/icons";
-import { EmptyState, PageHeader, StagePill, TagPill } from "../../components/ui";
+import { EmptyState, StagePill, TagPill } from "../../components/ui";
 import { getIdea, STAGE_LABEL } from "../../data/mock";
+import { LIST_PATH } from "../../lib/home-path";
 
 export function meta() {
-  return [{ title: "アイデア詳細 — アイデアクラウド" }];
+  return [{ title: "アイデア — アイデアクラウド" }];
 }
 
 export default function IdeaPage() {
@@ -14,22 +14,15 @@ export default function IdeaPage() {
   if (!idea) {
     return (
       <div>
-        <PageHeader
-          icon={<IconList className="h-5 w-5" />}
-          title="アイデア詳細"
-          description="指定された着想はありません。"
-        />
-        <div className="ui-panel">
-          <EmptyState
-            title="見つかりません"
-            body="アイデアはまだありません。一覧に戻ってキャプチャから置いてください。"
-          />
+        <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
+        <div className="ui-panel mt-4">
+          <EmptyState title="まだありません" />
         </div>
         <Link
-          to="/app"
+          to={LIST_PATH}
           className="mt-4 inline-block text-sm text-muted-foreground no-underline hover:text-foreground"
         >
-          一覧に戻る
+          一覧
         </Link>
       </div>
     );
@@ -38,15 +31,15 @@ export default function IdeaPage() {
   return (
     <article className="mx-auto max-w-3xl">
       <p className="text-xs text-muted-foreground">
-        <Link to="/app" className="text-foreground no-underline hover:underline">
-          アイデア一覧
+        <Link to={LIST_PATH} className="text-foreground no-underline hover:underline">
+          アイデア
         </Link>
         <span className="mx-2">/</span>
         {STAGE_LABEL[idea.stage]}
       </p>
-      <h1 className="mt-2 text-2xl font-semibold leading-snug">{idea.title}</h1>
+      <h1 className="mt-2 text-xl font-semibold leading-snug">{idea.title}</h1>
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span>{idea.agedDays}日寝かせた</span>
+        <span>{idea.agedDays}日</span>
         <span>·</span>
         <span>{idea.createdAt}</span>
       </div>
@@ -61,8 +54,8 @@ export default function IdeaPage() {
         {[
           ["進める", "/app/research"],
           ["融合する", "/app/merge"],
-          ["アーカイブ", "/app"],
-          ["捨てる", "/app"],
+          ["アーカイブ", LIST_PATH],
+          ["捨てる", LIST_PATH],
         ].map(([label, href]) => (
           <Link key={label} to={href} className="ui-btn-ghost px-3 py-2 text-center text-sm">
             {label}

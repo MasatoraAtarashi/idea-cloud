@@ -31,18 +31,19 @@ pnpm db:migrate:local            # template sample `todos` table
 pnpm dev
 ```
 
-http://localhost:5173 is the login gate. Google でログイン opens `/app`.
+http://localhost:5173 is the login gate. Google でログイン opens `/app`, which becomes capture on mobile and the idea list on desktop.
 
-| Path             | Screen (Japanese UI)           |
-| ---------------- | ------------------------------ |
-| `/`              | Login gate (same as `/login`)  |
-| `/login`         | Login (Google OAuth mock)      |
-| `/app/capture`   | Quick capture                  |
-| `/app`           | Idea list (table; kanban view) |
-| `/app/ideas/:id` | Idea detail                    |
-| `/app/merge`     | Merge / related                |
-| `/app/research`  | Research / prototype           |
-| `/app/team`      | Team settings                  |
+| Path             | Screen (Japanese UI)                        |
+| ---------------- | ------------------------------------------- |
+| `/`              | Login gate (same as `/login`)               |
+| `/login`         | Login (Google OAuth mock)                   |
+| `/app`           | Home: capture on mobile, list on desktop    |
+| `/app/capture`   | Quick capture (mobile default)              |
+| `/app/list`      | Idea list (desktop default; table / kanban) |
+| `/app/ideas/:id` | Idea detail                                 |
+| `/app/merge`     | Merge / related                             |
+| `/app/research`  | Research / prototype                        |
+| `/app/team`      | Team settings                               |
 
 ## What was copied from the template
 
@@ -60,7 +61,7 @@ Included:
 
 ## Stubs / not wired
 
-- **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
+- **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). `/app` then opens capture on mobile and the list on desktop. Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
 - **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. The team-settings textarea is disabled.
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. No idea table in D1 yet.
 - **Workers AI:** tagging / relation / evolution copy only. No unused AI binding in `wrangler.jsonc`.

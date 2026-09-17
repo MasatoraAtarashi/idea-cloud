@@ -2,13 +2,13 @@
 
 Product UI copy is **Japanese**. This spec is English.
 
-Working screens: **login gate**, **idea list** (default), **kanban view**, **quick capture**, **merge**, **research / prototype**, idea detail, team settings.
+Working screens: **login gate**, **idea list** (desktop home), **kanban view**, **quick capture** (mobile home), **merge**, **research / prototype**, idea detail, team settings.
 
 There is **no landing page**. `/` is the login gate.
 
 ## Visual language
 
-Chrome follows **LiteLLM Admin light**: gray sidebar, white main, thin `#E5E7EB` borders, charcoal primary button, almost no shadow. Idea list IA follows **Relic IDEATION Cloud** in-app (left filter + dense table + pastel pills). Do **not** copy Relic’s blue marketing LP.
+Chrome follows **LiteLLM Admin light**: gray sidebar, white main, thin `#E5E7EB` borders, charcoal primary button, almost no shadow. Idea list IA follows **Relic IDEATION Cloud** in-app (left filter + dense table + pastel pills) **when rows exist**. Do **not** copy Relic’s blue marketing LP.
 
 | Token          | Intent                                                  |
 | -------------- | ------------------------------------------------------- |
@@ -19,15 +19,28 @@ Chrome follows **LiteLLM Admin light**: gray sidebar, white main, thin `#E5E7EB`
 | Type           | Inter + IBM Plex Sans JP                                |
 | Pills          | Pastel chips for stage/tags only. No fake S/A/B scores. |
 
-Desktop (~1280px): left grouped sidebar. Mobile (~390px): bottom nav, **取る (capture) first**. Login has no app shell.
+Empty workspace: no dummy cards, no filter chrome. Copy is **まだありません**.
+
+## Responsive homes (X-like split)
+
+Same product, different default surface — like X mobile compose vs desktop timeline.
+
+| Viewport               | After mock login (`/app`)  | Primary nav                        |
+| ---------------------- | -------------------------- | ---------------------------------- |
+| Mobile (`< md`, 768px) | **Capture** `/app/capture` | Bottom nav; 取る first (compose)   |
+| Desktop (`md` and up)  | **List** `/app/list`       | Quiet left sidebar; アイデア first |
+
+`/app` paints the right surface with CSS, then client-replaces to `/app/capture` or `/app/list` so the URL matches nav.
+
+Login has no app shell.
 
 ## Login (`/` and `/login`)
 
-Quiet Google-looking mock. Button continues to `/app` for screen review. Real in-app Google OAuth is later. No philosophy essay, screen map, mock banners, or “skip login” links.
+Minimal card: app name, 「ログイン」, one Google-looking button. Continues to `/app`. No hint line, product pitch, allowlist essay, or skip-login links.
 
-## Idea list (`/app`)
+## Idea list (`/app/list`, desktop home)
 
-Primary view: Relic-style console — left filter (keyword, stage, tags) + table columns (title, stage, tags, age). Empty until real data exists. Kanban is a secondary view, not the default.
+Empty: title + **まだありません**. Filters / table / kanban appear only when ideas exist (Relic-style left filter + table). Mobile list is a simple stack plus a compose FAB.
 
 | Stage      | Japanese   | Role              |
 | ---------- | ---------- | ----------------- |
@@ -37,11 +50,11 @@ Primary view: Relic-style console — left filter (keyword, stage, tags) + table
 | `selected` | 採用       | May be researched |
 | `archived` | アーカイブ | Off the board     |
 
-Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId` (empty/not-found until data exists).
+Route: `app/routes/app/board.tsx`. Detail: `/app/ideas/:ideaId` (empty until data exists).
 
-## Quick capture (`/app/capture`)
+## Quick capture (`/app/capture`, mobile home)
 
-Mobile-first inbox. One textarea. Submit disabled until there is text. Session-local list only; no preloaded ideas.
+Mobile: compose-first (X-like). Large textarea, top-right 「置く」, bottom nav with a primary compose control. Desktop: quiet console panel. Session-local list only; no preloaded ideas.
 
 ## Merge (`/app/merge`)
 
@@ -53,6 +66,6 @@ Only **selected** ideas. Empty until something is adopted. Workers AI is copy-on
 
 ## Team (`/app/team`)
 
-Do not invent teammates. Session placeholder (“ログイン中”) only. Disabled allowlist; crypto stub.
+Do not invent teammates. Session placeholder (“ログイン中”) only. Disabled allowlist stub.
 
 Data: `app/data/mock.ts` (empty arrays). Previews: [../ui-previews/](../ui-previews/).

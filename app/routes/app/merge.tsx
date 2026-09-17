@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { IconMerge } from "../../components/icons";
-import { EmptyState, PageHeader, StagePill } from "../../components/ui";
+import { EmptyState, StagePill } from "../../components/ui";
 import { IDEAS } from "../../data/mock";
 
 export function meta() {
@@ -30,17 +29,10 @@ export default function MergePage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <PageHeader
-        icon={<IconMerge className="h-5 w-5" />}
-        title="融合 / 関連"
-        description="近い着想を重ね、新しい一枚にする。"
-      />
+      <h1 className="text-lg font-semibold tracking-tight">融合</h1>
       {pool.length === 0 ? (
-        <div className="ui-panel">
-          <EmptyState
-            title="融合できるアイデアはまだありません"
-            body="一覧に着想が並んでから、近いものを選んで重ねます。"
-          />
+        <div className="ui-panel mt-4">
+          <EmptyState title="まだありません" />
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-[1fr_18rem]">

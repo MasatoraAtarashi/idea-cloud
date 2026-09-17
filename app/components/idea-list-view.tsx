@@ -1,0 +1,259 @@
+import { useMemo, useState } from "react";
+import { Link } from "react-router";
+import { IconPlus, IconSearch } from "./icons";
+import { EmptyState, StagePill, TagPill } from "./ui";
+import { CAPTURE_PATH } from "../lib/home-path";
+import {
+  allTags,
+  filterIdeas,
+  IDEAS,
+  ideasByStage,
+  STAGE_HINT,
+  STAGE_LABEL,
+  STAGES,
+  type Stage,
+} from "../data/mock";
+
+type View = "table" | "board";
+
+export function IdeaListView() {
+  const [view, setView] = useState<View>("table");
+  const [query, setQuery] = useState("");
+  const [stages, setStages] = useState<Stage[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+
+  const availableTags = allTags(IDEAS);
+  const filtered = useMemo(
+    () => filterIdeas(IDEAS, { query, stages, tags }),
+    [query, stages, tags],
+  );
+  const emptyWorkspace = IDEAS.length === 0;
+
+  function toggleStage(stage: Stage) {
+    setStages((current) =>
+      current.includes(stage) ? current.filter((item) => item !== stage) : [...current, stage],
+    );
+  }
+
+  function toggleTag(tag: string) {
+    setTags((current) =>
+      current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag],
+    );
+  }
+
+  if (emptyWorkspace) {
+    return (
+      <>
+        <div className="md:hidden">
+          <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
+          <p className="mt-10 text-sm text-muted-foreground">まだありません</p>
+          <Link
+            to={CAPTURE_PATH}
+            className="fixed bottom-[4.75rem] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline md:hidden"
+            aria-label="キャプチャ"
+          >
+            <IconPlus className="h-6 w-6" />
+          </Link>
+        </div>
+
+        <div className="hidden md:block">
+          <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
+          <div className="ui-panel mt-4">
+            <EmptyState title="まだありません" />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold tracking-tight">アイデア</h1>
+        <Link to={CAPTURE_PATH} className="ui-btn hidden gap-1.5 md:inline-flex">
+          <IconPlus className="h-4 w-4" />
+          キャプチャ
+        </Link>
+      </div>
+
+      <div className="mb-4 hidden flex-wrap items-center gap-2 md:flex">
+        <div className="flex rounded-md border border-border p-0.5">
+          <button
+            type="button"
+            onClick={() => setView("table")}
+            className={`rounded-sm px-3 py-1 text-sm ${
+              view === "table" ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            一覧
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("board")}
+            className={`rounded-sm px-3 py-1 text-sm ${
+              view === "board" ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            看板
+          </button>
+        </div>
+        <label className="relative min-w-[12rem] flex-1">
+          <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="検索"
+            className="ui-input pl-8"
+          />
+        </label>
+      </div>
+
+      <div className="md:hidden">
+        {filtered.length === 0 ? (
+          <p className="mt-8 text-sm text-muted-foreground">まだありません</p>
+        ) : (
+          <ul className="divide-y divide-border border-t border-border">
+            {filtered.map((idea) => (
+              <li key={idea.id}>
+                <Link to={`/app/ideas/${idea.id}`} className="block py-3 no-underline">
+                  <p className="text-sm text-foreground">{idea.title}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{idea.agedDays}日</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Link
+          to={CAPTURE_PATH}
+          className="fixed bottom-[4.75rem] right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline"
+          aria-label="キャプチャ"
+        >
+          <IconPlus className="h-6 w-6" />
+        </Link>
+      </div>
+
+      <div className="hidden md:block">
+        {view === "table" ? (
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+            <aside className="ui-panel w-full shrink-0 p-4 lg:w-56">
+              <h2 className="text-sm font-medium">フィルタ</h2>
+              <p className="mt-4 text-xs text-muted-foreground">段階</p>
+              <ul className="mt-1.5 space-y-1">
+                {STAGES.map((stage) => (
+                  <li key={stage}>
+                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={stages.includes(stage)}
+                        onChange={() => toggleStage(stage)}
+                        className="accent-primary"
+                      />
+                      {STAGE_LABEL[stage]}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs text-muted-foreground">タグ</p>
+              {availableTags.length === 0 ? (
+                <p className="mt-1.5 text-sm text-muted-foreground">まだありません</p>
+              ) : (
+                <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                  {availableTags.map((tag) => (
+                    <li key={tag}>
+                      <button type="button" onClick={() => toggleTag(tag)} className="align-middle">
+                        <TagPill label={tag} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </aside>
+
+            <div className="ui-panel min-w-0 flex-1 overflow-x-auto">
+              <table className="ui-table">
+                <thead>
+                  <tr>
+                    <th>タイトル</th>
+                    <th>段階</th>
+                    <th>タグ</th>
+                    <th>経過</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={4}>
+                        <EmptyState title="まだありません" />
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((idea) => (
+                      <tr key={idea.id}>
+                        <td>
+                          <Link to={`/app/ideas/${idea.id}`} className="ui-link">
+                            {idea.title}
+                          </Link>
+                        </td>
+                        <td>
+                          <StagePill stage={idea.stage} />
+                        </td>
+                        <td>
+                          <div className="flex flex-wrap gap-1">
+                            {idea.tags.map((tag) => (
+                              <TagPill key={tag} label={tag} />
+                            ))}
+                          </div>
+                        </td>
+                        <td className="text-muted-foreground">{idea.agedDays}日</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {STAGES.map((stage) => {
+              const cards = ideasByStage(stage, filtered);
+              return (
+                <section key={stage} className="ui-panel w-56 shrink-0 bg-muted/80 p-2.5">
+                  <header className="mb-2 flex items-center justify-between">
+                    <h2 className="text-sm font-medium">{STAGE_LABEL[stage]}</h2>
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      {cards.length}
+                    </span>
+                  </header>
+                  <p className="mb-2 text-[11px] leading-relaxed text-muted-foreground">
+                    {STAGE_HINT[stage]}
+                  </p>
+                  {cards.length === 0 ? (
+                    <p className="rounded-md border border-dashed border-border bg-card px-2 py-6 text-center text-[11px] text-muted-foreground">
+                      まだありません
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {cards.map((idea) => (
+                        <Link
+                          key={idea.id}
+                          to={`/app/ideas/${idea.id}`}
+                          className="rounded-md border border-border bg-card p-2.5 no-underline hover:bg-muted"
+                        >
+                          <p className="text-sm leading-snug text-foreground">{idea.title}</p>
+                          <p className="mt-1.5 text-[11px] text-muted-foreground">
+                            {idea.agedDays}日
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

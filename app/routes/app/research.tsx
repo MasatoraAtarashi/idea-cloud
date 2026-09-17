@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { IconSearch } from "../../components/icons";
-import { EmptyState, PageHeader } from "../../components/ui";
+import { EmptyState } from "../../components/ui";
 import { IDEAS, ideasByStage } from "../../data/mock";
 
 export function meta() {
@@ -16,17 +15,10 @@ export default function ResearchPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader
-        icon={<IconSearch className="h-5 w-5" />}
-        title="リサーチ / プロトタイプ"
-        description="採用したアイデアにだけ、調べる権利がある。"
-      />
+      <h1 className="text-lg font-semibold tracking-tight">リサーチ</h1>
       {selected.length === 0 ? (
-        <div className="ui-panel">
-          <EmptyState
-            title="採用したアイデアはまだありません"
-            body="熟した着想を採用すると、ここにリサーチと小さな実験の枠が開きます。"
-          />
+        <div className="ui-panel mt-4">
+          <EmptyState title="まだありません" />
         </div>
       ) : (
         <>
