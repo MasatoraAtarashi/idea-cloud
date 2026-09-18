@@ -57,7 +57,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex h-[52px] shrink-0 items-center gap-3 border-b border-border px-4">
+      <header className="hidden h-[52px] shrink-0 items-center gap-3 border-b border-border px-4 md:flex">
         <h1 className="flex items-center gap-2 text-[16px] font-medium tracking-tight">
           アイデア
           <CountBadge value={ideas.length} />

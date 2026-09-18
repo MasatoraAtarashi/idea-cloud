@@ -112,7 +112,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
           >
             <IconPlus className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="flex-1 text-left">新規アイデア</span>
-            <kbd className="ui-kbd">⌘N</kbd>
+            <kbd className="ui-kbd shrink-0 whitespace-nowrap">⌘N</kbd>
           </button>
           <SidebarNav />
           <div className="border-t border-border px-3 py-3">
@@ -134,6 +134,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
         </aside>
         <div className="flex min-w-0 flex-1 flex-col bg-background">
           <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          <div className="h-16 shrink-0 md:hidden" />
         </div>
       </div>
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] md:hidden">
@@ -172,7 +173,6 @@ function ShellFrame({ children }: { children: ReactNode }) {
           );
         })}
       </nav>
-      <div className="h-16 md:hidden" />
       <ComposeDialog />
     </div>
   );
