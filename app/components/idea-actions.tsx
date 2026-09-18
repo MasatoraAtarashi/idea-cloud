@@ -68,9 +68,9 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
           </Form>
         ) : (
           <p className="cursor-not-allowed px-3 py-1.5 text-[13px] text-muted-foreground">
-            リサーチを実行
+            リサーチを実行（採用で実行）
             <span className="mt-0.5 block text-[11px] leading-snug">
-              上の段階を採用にすると実行できます
+              上の段階を採用に変えると、プリセットが使えます
             </span>
           </p>
         )}

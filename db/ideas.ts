@@ -1,6 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { STAGES } from "../app/data/mock";
+import { commentCountsByIdeaIds } from "./comments";
 import type { Db } from "./client";
 import { ideas, type Idea } from "./schema";
 
@@ -36,7 +37,7 @@ export function splitTitleBody(text: string): { title: string; body: string } {
   return { title, body };
 }
 
-export function toIdeaView(row: Idea): MockIdea {
+export function toIdeaView(row: Idea, extras?: { commentCount?: number }): MockIdea {
   return {
     id: String(row.id),
     title: row.title,
@@ -46,15 +47,17 @@ export function toIdeaView(row: Idea): MockIdea {
     author: "",
     team: "",
     createdAt: row.createdAt,
+    updatedAt: row.updatedAt || row.createdAt,
     agedDays: agedDaysSince(row.createdAt),
     relatedIds: [],
+    commentCount: extras?.commentCount ?? 0,
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
   };
 }
 
-export function ideaJson(row: Idea) {
+export function ideaJson(row: Idea, extras?: { commentCount?: number }) {
   return {
     id: row.id,
     title: row.title,
@@ -62,6 +65,9 @@ export function ideaJson(row: Idea) {
     stage: asStage(row.stage),
     tags: parseTags(row.tags),
     createdAt: row.createdAt,
+    updatedAt: row.updatedAt || row.createdAt,
+    commentCount: extras?.commentCount ?? 0,
+    researched: Boolean(row.researchedAt || row.researchNotes),
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
@@ -74,7 +80,11 @@ export async function listIdeaRows(db: Db): Promise<Idea[]> {
 
 export async function listIdeaViews(db: Db): Promise<MockIdea[]> {
   const rows = await listIdeaRows(db);
-  return rows.map(toIdeaView);
+  const counts = await commentCountsByIdeaIds(
+    db,
+    rows.map((row) => row.id),
+  );
+  return rows.map((row) => toIdeaView(row, { commentCount: counts.get(row.id) ?? 0 }));
 }
 
 export async function getIdeaRow(db: Db, id: number): Promise<Idea | undefined> {
@@ -86,7 +96,9 @@ export async function getIdeaView(db: Db, id: string | undefined): Promise<MockI
   const numeric = Number(id);
   if (!Number.isInteger(numeric) || numeric <= 0) return undefined;
   const row = await getIdeaRow(db, numeric);
-  return row ? toIdeaView(row) : undefined;
+  if (!row) return undefined;
+  const counts = await commentCountsByIdeaIds(db, [row.id]);
+  return toIdeaView(row, { commentCount: counts.get(row.id) ?? 0 });
 }
 
 export async function insertIdea(
@@ -105,7 +117,11 @@ export async function insertIdea(
 }
 
 export async function updateIdeaStage(db: Db, id: number, stage: Stage): Promise<Idea | undefined> {
-  const [updated] = await db.update(ideas).set({ stage }).where(eq(ideas.id, id)).returning();
+  const [updated] = await db
+    .update(ideas)
+    .set({ stage, updatedAt: sql`(datetime('now'))` })
+    .where(eq(ideas.id, id))
+    .returning();
   return updated;
 }
 
@@ -120,6 +136,7 @@ export async function saveIdeaResearch(
       researchNotes: data.notes,
       researchModel: data.model,
       researchedAt: sql`(datetime('now'))`,
+      updatedAt: sql`(datetime('now'))`,
     })
     .where(eq(ideas.id, id))
     .returning();

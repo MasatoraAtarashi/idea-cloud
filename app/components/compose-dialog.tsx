@@ -121,13 +121,16 @@ export function ComposeDialog() {
               name="tags"
               value={tags}
               onChange={(event) => setTags(event.target.value)}
-              placeholder="タグを追加"
+              placeholder="空なら自動タグ"
               className="h-8 w-40 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground"
             />
             <StageSelect defaultValue="spark" />
             <span className="inline-flex h-8 items-center rounded-full border border-border-control px-2.5 text-[12.5px] text-muted-foreground">
               {SESSION_USER.label}
             </span>
+            <p className="basis-full text-[11.5px] text-muted-foreground">
+              タグを空のまま作成すると、短い日本語タグを自動で付けます。失敗してもアイデアは残ります。
+            </p>
           </div>
           {fetcher.data?.error ? (
             <p className="mt-2 text-xs text-muted-foreground">{fetcher.data.error}</p>

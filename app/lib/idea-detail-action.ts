@@ -2,6 +2,7 @@ import { redirect, type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { asStage, updateIdeaStage } from "../../db/ideas";
 import { STAGES } from "../data/mock";
+import { commentIdeaAction } from "./idea-comment-action";
 import { researchIdeaAction } from "./idea-research-action";
 
 export type IdeaDetailActionData = {
@@ -30,6 +31,9 @@ export async function ideaDetailAction(args: ActionFunctionArgs) {
       return redirect(redirectTo);
     }
     return redirect(`/app/ideas/${ideaId}`);
+  }
+  if (intent === "comment") {
+    return commentIdeaAction(args);
   }
   return researchIdeaAction(args);
 }

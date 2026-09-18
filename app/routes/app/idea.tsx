@@ -1,5 +1,6 @@
 import { Form, Link, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
+import { IdeaComments } from "../../components/idea-comments";
 import { IdeaResearchControls, IdeaResearchNotes } from "../../components/idea-research";
 import { StageSelect } from "../../components/stage-select";
 import { SESSION_USER } from "../../data/mock";
@@ -7,6 +8,7 @@ import { formatAgedDays, formatDateJa, ideaPublicId } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
 import { ideaDetailAction } from "../../lib/idea-detail-action";
 import { createDb } from "../../../db/client";
+import { listCommentsForIdea, toCommentView } from "../../../db/comments";
 import { getIdeaView } from "../../../db/ideas";
 import { IconMerge, IconShare } from "../../components/icons";
 
@@ -19,11 +21,15 @@ export function meta() {
 export async function loader({ params, context }: LoaderFunctionArgs) {
   const db = createDb(context.cloudflare.env.DB);
   const idea = await getIdeaView(db, params.ideaId);
-  return { idea };
+  if (!idea) {
+    return { idea: undefined, comments: [] };
+  }
+  const comments = await listCommentsForIdea(db, Number(idea.id));
+  return { idea, comments: comments.map(toCommentView) };
 }
 
 export default function IdeaPage() {
-  const { idea } = useLoaderData<typeof loader>();
+  const { idea, comments } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof ideaDetailAction>();
 
   if (!idea) {
@@ -44,6 +50,11 @@ export default function IdeaPage() {
   }
 
   const actionError = actionData && "error" in actionData ? actionData.error : undefined;
+  const commentError =
+    actionData && "intent" in actionData && actionData.intent === "comment"
+      ? actionData.error
+      : undefined;
+  const researchError = commentError ? undefined : actionError;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -64,6 +75,12 @@ export default function IdeaPage() {
           >
             熟成 {formatAgedDays(idea.agedDays)}
           </span>
+          <span className="font-mono text-[11.5px] text-muted-foreground">
+            コメント {idea.commentCount}
+          </span>
+          {idea.researchedAt || idea.researchNotes ? (
+            <span className="font-mono text-[11.5px] text-muted-foreground">調査済</span>
+          ) : null}
         </div>
         <h1 className="ui-title mt-3 text-[23px] leading-[1.4]">{idea.title}</h1>
         {idea.tags.length > 0 ? (
@@ -72,23 +89,13 @@ export default function IdeaPage() {
               <TagPill key={tag} label={tag} />
             ))}
           </div>
-        ) : null}
+        ) : (
+          <p className="mt-3 text-[12.5px] text-muted-foreground">自動タグは付きませんでした</p>
+        )}
         <p className="mt-5 max-w-2xl whitespace-pre-wrap text-[13.5px] leading-relaxed text-muted-foreground">
           {idea.body}
         </p>
-        <section className="mt-10">
-          <h2 className="text-[16px] font-medium">アクティビティ</h2>
-          <ul className="mt-3 space-y-2 text-[12.5px] text-muted-foreground">
-            <li>
-              {SESSION_USER.label} が作成 {formatDateJa(idea.createdAt)}
-            </li>
-            {idea.researchedAt ? (
-              <li>
-                {SESSION_USER.label} がリサーチを実行 {formatDateJa(idea.researchedAt)}
-              </li>
-            ) : null}
-          </ul>
-        </section>
+        <IdeaComments comments={comments} error={commentError} />
       </article>
 
       <aside
@@ -110,7 +117,7 @@ export default function IdeaPage() {
             <IconMerge className="h-3.5 w-3.5" />
             他のアイデアと融合
           </Link>
-          <IdeaResearchControls idea={idea} error={actionError} />
+          <IdeaResearchControls idea={idea} error={researchError} />
           <Form method="post">
             <input type="hidden" name="intent" value="stage" />
             <input type="hidden" name="stage" value="archived" />
@@ -140,6 +147,20 @@ export default function IdeaPage() {
           <div className="flex items-center justify-between gap-3">
             <dt className="text-muted-foreground">作成</dt>
             <dd className="font-mono text-[11.5px]">{formatDateJa(idea.createdAt)}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">更新</dt>
+            <dd className="font-mono text-[11.5px]">{formatDateJa(idea.updatedAt)}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">コメント</dt>
+            <dd className="font-mono text-[11.5px]">{idea.commentCount}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">リサーチ</dt>
+            <dd className="text-[12.5px]">
+              {idea.researchedAt || idea.researchNotes ? "調査済" : "採用で実行"}
+            </dd>
           </div>
         </dl>
 

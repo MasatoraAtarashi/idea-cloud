@@ -20,6 +20,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
   const [title, setTitle] = useState(actionData?.title ?? "");
   const [draft, setDraft] = useState(actionData?.body ?? "");
   const [stage, setStage] = useState<Stage>("spark");
+  const [tags, setTags] = useState("");
   const canSubmit = Boolean((title.trim() || draft.trim()) && !submitting);
 
   function onComposeKeyDown(event: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) {
@@ -89,10 +90,17 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
                 {STAGE_LABEL[item]}
               </button>
             ))}
-            <span className="inline-flex h-7 items-center rounded-full border border-dashed border-border-control px-2.5 text-[12px] text-muted-foreground">
-              + タグ
-            </span>
+            <input
+              name="tags"
+              value={tags}
+              onChange={(event) => setTags(event.target.value)}
+              placeholder="空なら自動タグ"
+              className="h-7 min-w-[7.5rem] flex-1 rounded-full border border-dashed border-border-control bg-transparent px-2.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
+            />
           </div>
+          <p className="pb-1 text-[11px] text-muted-foreground">
+            タグを空のまま作成すると自動で付けます。失敗しても残ります。
+          </p>
 
           <div className="flex items-center gap-1 border-t border-border py-2 text-muted-foreground">
             <span className="flex h-9 w-9 items-center justify-center" aria-hidden="true">
@@ -129,12 +137,22 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             placeholder={COMPOSE_PLACEHOLDER}
             className="mt-2 h-auto w-full resize-none border-0 bg-transparent py-2 text-[13.5px] outline-none"
           />
-          <div className="mt-3 flex items-center justify-between">
-            <StageSelect defaultValue="spark" />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <StageSelect defaultValue="spark" />
+              <input
+                name="tags"
+                placeholder="空なら自動タグ"
+                className="h-8 min-w-[8rem] flex-1 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[12.5px] outline-none placeholder:text-muted-foreground"
+              />
+            </div>
             <button type="submit" disabled={submitting} className="ui-btn px-4">
               {COMPOSE_SUBMIT}
             </button>
           </div>
+          <p className="mt-2 text-[11.5px] text-muted-foreground">
+            タグを空のまま作成すると、短い日本語タグを自動で付けます。
+          </p>
         </Form>
         {actionData?.error ? (
           <p className="mt-3 text-xs text-muted-foreground">{actionData.error}</p>

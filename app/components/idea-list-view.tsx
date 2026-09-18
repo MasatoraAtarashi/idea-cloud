@@ -18,7 +18,7 @@ import { useListViewSearch } from "../lib/list-view-search";
 import { BrandMark } from "./brand";
 import { IconPlus, IconSearch } from "./icons";
 import { IdeaActionsMenu } from "./idea-actions";
-import { CountBadge, StagePill, TagPill } from "./ui";
+import { CountBadge, StagePill, TagList } from "./ui";
 
 const MOBILE_STAGES: Stage[] = ["spark", "aging", "ripe", "selected"];
 
@@ -254,8 +254,14 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                       >
                         {formatAgedDays(idea.agedDays)}
                       </span>
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        コメント {idea.commentCount}
+                      </span>
+                      {idea.researchedAt || idea.researchNotes ? (
+                        <span className="font-mono text-[11px] text-muted-foreground">調査済</span>
+                      ) : null}
                       <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-                        {formatRelativeJa(idea.createdAt)}
+                        {formatRelativeJa(idea.updatedAt)}
                       </span>
                     </div>
                     <p className="ui-title mt-1 text-[13.5px] leading-snug text-foreground">
@@ -266,6 +272,9 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                         {excerpt}
                       </p>
                     ) : null}
+                    <div className="mt-1">
+                      <TagList tags={idea.tags} />
+                    </div>
                   </Link>
                 </li>
               );
@@ -288,6 +297,8 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                     <th>アイデア</th>
                     <th>段階</th>
                     <th>タグ</th>
+                    <th className="text-right">コメント</th>
+                    <th>リサーチ</th>
                     <th>更新</th>
                     <th className="text-right">熟成日数</th>
                     <th className="w-10">
@@ -316,14 +327,16 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                           <StagePill stage={idea.stage} />
                         </td>
                         <td>
-                          <div className="flex flex-wrap gap-1">
-                            {idea.tags.map((tag) => (
-                              <TagPill key={tag} label={tag} />
-                            ))}
-                          </div>
+                          <TagList tags={idea.tags} />
+                        </td>
+                        <td className="text-right font-mono text-[11px] text-muted-foreground">
+                          {idea.commentCount}
                         </td>
                         <td className="font-mono text-[11px] text-muted-foreground">
-                          {formatRelativeJa(idea.createdAt)}
+                          {idea.researchedAt || idea.researchNotes ? "調査済" : "採用で実行"}
+                        </td>
+                        <td className="font-mono text-[11px] text-muted-foreground">
+                          {formatRelativeJa(idea.updatedAt)}
                         </td>
                         <td
                           className={`text-right font-mono text-[11px] ${
@@ -380,8 +393,15 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                               <p className="ui-title text-[13px] leading-snug text-foreground">
                                 {idea.title}
                               </p>
-                              <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                                {formatAgedDays(idea.agedDays)}
+                              <div className="mt-1">
+                                <TagList tags={idea.tags} limit={2} />
+                              </div>
+                              <p className="mt-1 flex flex-wrap gap-x-2 font-mono text-[11px] text-muted-foreground">
+                                <span>{formatAgedDays(idea.agedDays)}</span>
+                                <span>コメント {idea.commentCount}</span>
+                                {idea.researchedAt || idea.researchNotes ? (
+                                  <span>調査済</span>
+                                ) : null}
                               </p>
                             </Link>
                             <IdeaActionsMenu idea={idea} />
