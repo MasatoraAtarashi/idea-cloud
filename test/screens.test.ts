@@ -199,8 +199,14 @@ describe("responsive home and nav", () => {
     expect(src).toContain("useInstantPending");
     expect(src).toContain("min-h-11");
     expect(src).toContain('prefetch="intent"');
-    expect(src).toContain("line-clamp-3");
-    expect(src).toContain("break-words");
+    const listSrc = appSources["../app/components/idea-list-view.tsx"];
+    const detailSrc = appSources["../app/routes/app/idea.tsx"];
+    expect(src).toContain("idea-title-wrap");
+    expect(listSrc).toContain("idea-title-wrap ui-title mt-1 line-clamp-3");
+    expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-2");
+    expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-3");
+    expect(detailSrc).toContain("idea-title-wrap");
+    expect(detailSrc).not.toMatch(/<h1[^>]*line-clamp/);
     expect(src).toContain("IdeaSwipeRow");
     expect(src).toContain("次の段階へ");
     expect(src).toContain("熟成日数");

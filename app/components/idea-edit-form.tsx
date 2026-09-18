@@ -36,13 +36,17 @@ export function IdeaEditForm({
       <label htmlFor="idea-edit-title" className="sr-only">
         タイトル
       </label>
-      <input
+      <textarea
         id="idea-edit-title"
         name="title"
+        rows={2}
         value={title}
-        onChange={(event) => setTitle(event.target.value)}
+        onChange={(event) => setTitle(event.target.value.replace(/\n/g, " "))}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.preventDefault();
+        }}
         disabled={pending}
-        className="ui-title w-full border-0 bg-transparent text-[22px] leading-snug outline-none md:text-[23px]"
+        className="idea-title-wrap ui-title w-full resize-none border-0 bg-transparent text-[22px] leading-snug outline-none md:text-[23px]"
       />
       <label htmlFor="idea-edit-body" className="sr-only">
         本文

@@ -223,9 +223,7 @@ function MobileIdeaDetail({
         <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
       ) : (
         <>
-          <h1 className="ui-title mt-3 break-words whitespace-normal text-[22px] leading-snug">
-            {idea.title}
-          </h1>
+          <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug">{idea.title}</h1>
           <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground">
             {idea.body}
           </p>
@@ -310,7 +308,7 @@ function DesktopIdeaDetail({
           <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
         ) : (
           <>
-            <h1 className="ui-title mt-3 break-words whitespace-normal text-[23px] leading-[1.4]">
+            <h1 className="idea-title-wrap ui-title mt-3 text-[23px] leading-[1.4]">
               {idea.title}
             </h1>
             <IdeaTags idea={idea} />

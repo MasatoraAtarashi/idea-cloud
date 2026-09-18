@@ -351,7 +351,7 @@ export function IdeaListView({
                             {formatRelativeJa(idea.updatedAt)}
                           </span>
                         </div>
-                        <p className="ui-title mt-1 line-clamp-3 break-words whitespace-normal text-[13.5px] leading-snug text-foreground">
+                        <p className="idea-title-wrap ui-title mt-1 line-clamp-3 text-[13.5px] leading-snug text-foreground">
                           {idea.title}
                         </p>
                         {excerpt ? (
@@ -384,7 +384,7 @@ export function IdeaListView({
               <table className="ui-table">
                 <thead>
                   <tr>
-                    <th>アイデア</th>
+                    <th className="min-w-0 w-[34%]">アイデア</th>
                     <th>段階</th>
                     <th>タグ</th>
                     <th className="text-right">コメント</th>
@@ -402,13 +402,13 @@ export function IdeaListView({
                     const excerpt = ideaExcerpt(idea);
                     return (
                       <tr key={idea.id}>
-                        <td>
+                        <td className="min-w-0">
                           <Link
                             to={`/app/ideas/${idea.id}`}
                             prefetch="intent"
-                            className="block no-underline"
+                            className="block min-w-0 no-underline"
                           >
-                            <p className="ui-title line-clamp-2 break-words whitespace-normal text-[13px] leading-snug text-foreground">
+                            <p className="idea-title-wrap ui-title line-clamp-2 text-[13px] leading-snug text-foreground">
                               {idea.title}
                             </p>
                             {excerpt ? (
@@ -489,7 +489,7 @@ export function IdeaListView({
                               prefetch="intent"
                               className="min-w-0 flex-1 no-underline"
                             >
-                              <p className="ui-title line-clamp-3 break-words whitespace-normal text-[13px] leading-snug text-foreground">
+                              <p className="idea-title-wrap ui-title line-clamp-3 text-[13px] leading-snug text-foreground">
                                 {idea.title}
                               </p>
                               <div className="mt-1">
