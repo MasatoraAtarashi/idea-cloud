@@ -29,7 +29,8 @@ describe("auto-tag parsing", () => {
       "長い",
       "もう一つ",
     ]);
-    expect(parseTagSuggestions('["abcdefghijklmnopqrsuvwxyz"]')).toEqual([]);
+    // Over TAG_MAX_LEN (20). Repeated kana, not a high-entropy Latin blob (ASH detect-secrets).
+    expect(parseTagSuggestions(JSON.stringify(["あ".repeat(21)]))).toEqual([]);
   });
 });
 
