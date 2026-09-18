@@ -24,5 +24,5 @@ export async function researchIdeaAction({ request, params, context }: ActionFun
   if (!result.ok) {
     return { error: result.error } satisfies ResearchIdeaActionData;
   }
-  return redirect(`/app/ideas/${ideaId}`);
+  return redirect(`/app/ideas/${ideaId}#research`);
 }

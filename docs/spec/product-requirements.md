@@ -44,7 +44,7 @@ On **作成** (form action and `POST /api/ideas`), if tags are empty, call Worke
 
 ## Research (v0)
 
-Per-idea only. Button **実行**, presets **速い・安い** / **標準** / **じっくり**. Last notes + model + timestamp persist on the idea. Reject unless stage is **採用**. No web search in this version.
+Per-idea only. **リサーチを実行** (detail rail and list row menu) POSTs the idea action. Presets **速い・安い** / **標準** / **じっくり**. Last notes + model + timestamp persist on the idea. Reject unless stage is **採用**; the UI tells the user to change 段階. AI failure returns a Japanese error and does not wipe existing notes. No web search in this version. Tests stub `setTestAiRun`.
 
 ## Out of scope (this pass)
 

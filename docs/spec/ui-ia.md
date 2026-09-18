@@ -72,7 +72,7 @@ List view state is in the URL so Back/Forward and deep links work:
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`. Tab / stage / view / tag changes push history; search typing uses `replace` so keystrokes do not stack.
 
-Row menu (⋯) and idea detail expose **融合** and **リサーチ** as per-idea actions. Research is disabled until stage is **採用**. Detail has a **段階** control so an idea can be moved to 採用, then researched. On detail, selected ideas get **リサーチを実行** plus presets **速い・安い** / **標準** / **じっくり**, and the last saved notes.
+Row menu (⋯) and idea detail **リサーチを実行** POST to the idea action (`intent=research`), which calls Workers AI and persists notes. Research is disabled until stage is **採用**; the rail then says to change 段階. Detail has a **段階** control so an idea can be moved to 採用, then researched. Selected ideas get presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails, and the last saved notes + model + timestamp.
 
 | Stage      | Japanese   | Role              |
 | ---------- | ---------- | ----------------- |
@@ -94,7 +94,7 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 ## Merge / research (not primary nav)
 
-`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research v0 runs on idea detail (`/app/ideas/:id#research`) via Workers AI (no web search). `/app/research?from=:id` redirects there. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
+`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research v0 runs on idea detail (`/app/ideas/:id#research`) via Workers AI (no web search): the **リサーチを実行** control is a real POST, not a hash stub. `/app/research?from=:id` redirects there. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
 
 ## Settings (`/app/settings`)
 

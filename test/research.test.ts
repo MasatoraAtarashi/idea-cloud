@@ -1,7 +1,7 @@
 import { env, exports } from "cloudflare:workers";
 import { afterEach, describe, expect, it } from "vitest";
 import { extractAiText, RESEARCH_PRESETS, resolveResearchModel } from "../app/lib/research-models";
-import { setTestAiRun } from "../server/ai/research";
+import { RESEARCH_FAIL_MESSAGE, setTestAiRun } from "../server/ai/research";
 
 const authHeaders = {
   "cf-access-authenticated-user-email": "test@example.com",
@@ -160,5 +160,19 @@ describe("ideas research API", () => {
       body: JSON.stringify({ preset: "fast" }),
     });
     expect(res.status).toBe(502);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe(RESEARCH_FAIL_MESSAGE);
+  });
+
+  it("returns a Japanese 502 when Workers AI is missing", async () => {
+    const id = await createIdea("バインディングなし");
+    await markSelected(id);
+    const res = await api(`/ideas/${id}/research`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(502);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe(RESEARCH_FAIL_MESSAGE);
   });
 });

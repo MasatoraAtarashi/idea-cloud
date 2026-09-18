@@ -144,12 +144,17 @@ describe("responsive home and nav", () => {
   it("surfaces merge and research as per-idea actions", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("IdeaActionsMenu");
+    expect(src).toContain("IdeaResearchControls");
     expect(src).toContain("/app/merge?from=");
-    expect(src).toContain("#research");
+    expect(src).toContain('id="research"');
+    expect(src).toContain('name="intent"');
+    expect(src).toContain('value="research"');
+    expect(src).not.toContain('href="#research"');
     expect(src).toContain("速い・安い");
     expect(src).toContain("標準");
     expect(src).toContain("じっくり");
-    expect(src).toContain("実行");
+    expect(src).toContain("実行中…");
+    expect(src).toContain("採用にすると実行できます");
     expect(src).toContain("researchIdeaAction");
     expect(src).toContain("ideaDetailAction");
     expect(src).toContain("autoSubmit");

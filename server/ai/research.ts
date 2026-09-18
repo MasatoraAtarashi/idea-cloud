@@ -6,6 +6,8 @@ import {
 import { getIdeaRow, saveIdeaResearch, type Idea } from "../../db/ideas";
 import type { Db } from "../../db/client";
 
+export const RESEARCH_FAIL_MESSAGE = "リサーチに失敗しました。時間をおいて再度お試しください。";
+
 export const RESEARCH_SYSTEM_PROMPT = [
   "あなたはアイデアのリサーチ助手です。ウェブ検索はしません。",
   "与えられたアイデア本文だけを読み、日本語で短く箇条書きにしてください。",
@@ -80,7 +82,7 @@ export async function researchIdea(opts: {
 
   const idea = await getIdeaRow(opts.db, opts.ideaId);
   if (!idea) {
-    return { ok: false, status: 404, error: "Not Found" };
+    return { ok: false, status: 404, error: "見つかりません" };
   }
   if (idea.stage !== "selected") {
     return { ok: false, status: 409, error: "採用してからリサーチできます" };
@@ -91,7 +93,7 @@ export async function researchIdea(opts: {
   try {
     notes = await generateResearchNotes(opts.ai, resolved.model, ideaText);
   } catch {
-    return { ok: false, status: 502, error: "リサーチに失敗しました" };
+    return { ok: false, status: 502, error: RESEARCH_FAIL_MESSAGE };
   }
 
   const saved = await saveIdeaResearch(opts.db, idea.id, {

@@ -52,7 +52,7 @@ Summarize / analyze one idea’s stored text. **No web search**, Browser Renderi
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local. Tests stub `setTestAiRun` / `setTestTagAiRun`. |
 | Gate     | Idea `stage` must be `selected` (採用). Otherwise 409 / 「採用してからリサーチできます」                                                                                 |
-| UI       | Idea detail only (`#research`). Not a primary nav tab. `/app/research?from=:id` redirects to the detail section                                                          |
+| UI       | Idea detail rail + list row menu POST `intent=research`. `#research` is the notes section, not a stub CTA. `/app/research?from=:id` redirects there                      |
 | Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                                                |
 | Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast`                   |
 | Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                                         |
