@@ -1,6 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { STAGES } from "../app/data/mock";
+import { getLatestBrainstorm, type IdeaBrainstorm } from "./brainstorms";
 import { commentCountsByIdeaIds } from "./comments";
 import type { Db } from "./client";
 import { ideas, type Idea } from "./schema";
@@ -37,7 +38,10 @@ export function splitTitleBody(text: string): { title: string; body: string } {
   return { title, body };
 }
 
-export function toIdeaView(row: Idea, extras?: { commentCount?: number }): MockIdea {
+export function toIdeaView(
+  row: Idea,
+  extras?: { commentCount?: number; brainstorm?: IdeaBrainstorm | null },
+): MockIdea {
   return {
     id: String(row.id),
     title: row.title,
@@ -54,10 +58,16 @@ export function toIdeaView(row: Idea, extras?: { commentCount?: number }): MockI
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
+    brainstormNotes: extras?.brainstorm?.notes ?? null,
+    brainstormModel: extras?.brainstorm?.model ?? null,
+    brainstormedAt: extras?.brainstorm?.createdAt ?? null,
   };
 }
 
-export function ideaJson(row: Idea, extras?: { commentCount?: number }) {
+export function ideaJson(
+  row: Idea,
+  extras?: { commentCount?: number; brainstorm?: IdeaBrainstorm | null },
+) {
   return {
     id: row.id,
     title: row.title,
@@ -71,6 +81,9 @@ export function ideaJson(row: Idea, extras?: { commentCount?: number }) {
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
+    brainstormNotes: extras?.brainstorm?.notes ?? null,
+    brainstormModel: extras?.brainstorm?.model ?? null,
+    brainstormedAt: extras?.brainstorm?.createdAt ?? null,
   };
 }
 
@@ -98,7 +111,11 @@ export async function getIdeaView(db: Db, id: string | undefined): Promise<MockI
   const row = await getIdeaRow(db, numeric);
   if (!row) return undefined;
   const counts = await commentCountsByIdeaIds(db, [row.id]);
-  return toIdeaView(row, { commentCount: counts.get(row.id) ?? 0 });
+  const brainstorm = await getLatestBrainstorm(db, row.id);
+  return toIdeaView(row, {
+    commentCount: counts.get(row.id) ?? 0,
+    brainstorm: brainstorm ?? null,
+  });
 }
 
 export async function insertIdea(

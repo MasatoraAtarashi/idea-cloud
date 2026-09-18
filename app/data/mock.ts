@@ -63,6 +63,9 @@ export interface MockIdea {
   researchNotes?: string | null;
   researchModel?: string | null;
   researchedAt?: string | null;
+  brainstormNotes?: string | null;
+  brainstormModel?: string | null;
+  brainstormedAt?: string | null;
 }
 
 export interface MockMember {

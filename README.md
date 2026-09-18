@@ -27,22 +27,22 @@ UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previ
 ```bash
 pnpm install
 cp .dev.vars.example .dev.vars   # set LOCAL_DEV_USER_EMAIL to your address
-pnpm db:migrate:local            # D1 `todos` + `ideas` + `idea_comments`
+pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms / saved views
 pnpm dev
 ```
 
 http://localhost:5173/app is new-idea compose on a phone. Desktop `/app` replaces to `/app/list`.
 
-| Path             | Screen (Japanese UI)                                                                                 |
-| ---------------- | ---------------------------------------------------------------------------------------------------- |
-| `/app`           | Mobile home: 新規アイデア. Desktop → `/app/list`                                                     |
-| `/app/capture`   | Compose alias (desktop opens the list modal)                                                         |
-| `/app/list`      | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?view=board`, `?stage=`, `?tag=`, `?q=` |
-| `/app/ideas/:id` | Idea detail (コメント stream, 融合 / リサーチ as per-idea actions; research v0 on this page)         |
-| `/app/merge`     | Merge deep link (not in primary nav)                                                                 |
-| `/app/research`  | Research deep link (redirects `from` to idea detail)                                                 |
-| `/app/settings`  | Settings (team / access)                                                                             |
-| `/app/team`      | Redirects to settings                                                                                |
+| Path             | Screen (Japanese UI)                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| `/app`           | Mobile home: 新規アイデア. Desktop → `/app/list`                                                            |
+| `/app/capture`   | Compose alias (desktop opens the list modal)                                                                |
+| `/app/list`      | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?view=board`, `?stage=`, `?tag=`, `?q=`, `?v=` |
+| `/app/ideas/:id` | Idea detail (コメント stream, 融合 / リサーチ / ブレスト as per-idea actions)                               |
+| `/app/merge`     | Merge deep link (not in primary nav)                                                                        |
+| `/app/research`  | Research deep link (redirects `from` to idea detail)                                                        |
+| `/app/settings`  | Settings (team / access)                                                                                    |
+| `/app/team`      | Redirects to settings                                                                                       |
 
 ## What was copied from the template
 
@@ -62,9 +62,9 @@ Included:
 
 - **Login:** `/login` looks like Sign in with Google and currently navigates to `/app` (mock). `/app` is new-idea compose; desktop replaces to `/app/list`. Real OAuth is [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
 - **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. Settings shows a stub, not a working Access editor.
-- **Ideas:** D1 `ideas` table. **作成** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption. Detail **コメント** persist in `idea_comments` (mock author). List rows show tags, stage, updated, aging, comment count, and research.
+- **Ideas:** D1 `ideas` table. **作成** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption. Detail **コメント** persist in `idea_comments` (mock author). List rows show tags, stage, updated, aging, comment count, and research. Named **ビュー** persist in `saved_views`.
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. Not applied to idea rows.
-- **Workers AI:** per-idea research v0 on `/app/ideas/:id` for **採用** ideas (summarize/analyze stored text; no web search). Locked UI says **採用で実行**. **作成** auto-tags with the same fast model (`llama-3.1-8b-instruct-fp8-fast`) when tags are omitted; failures still create the idea and show **自動タグなし**. Binding `AI` in `wrangler.jsonc`. Relation / evolution still copy-only.
+- **Workers AI:** per-idea research and brainstorm on `/app/ideas/:id` from **着想** onward (summarize/analyze or expand stored text; no web search). Archive stays blocked. **作成** auto-tags with the same fast model (`llama-3.1-8b-instruct-fp8-fast`) when tags are omitted; failures still create the idea and show **自動タグなし**. Binding `AI` in `wrangler.jsonc`. Relation / evolution still copy-only.
 - Sample `/api/todos` remains for template verification. `/api/ideas` mirrors that CRUD style (Access middleware still on `/api`).
 
 Env template: `.dev.vars.example`. Do not commit secret values. Production: `wrangler secret put`.

@@ -145,14 +145,17 @@ describe("responsive home and nav", () => {
     expect(src).not.toContain("emptyWorkspace");
   });
 
-  it("surfaces merge and research as per-idea actions", () => {
+  it("surfaces merge, research, and brainstorm as per-idea actions", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("IdeaActionsMenu");
     expect(src).toContain("IdeaResearchControls");
+    expect(src).toContain("IdeaBrainstormControls");
     expect(src).toContain("/app/merge?from=");
     expect(src).toContain('id="research"');
+    expect(src).toContain('id="brainstorm"');
     expect(src).toContain('name="intent"');
     expect(src).toContain('value="research"');
+    expect(src).toContain('value="brainstorm"');
     expect(src).not.toContain('href="#research"');
     expect(src).toContain("速い・安い");
     expect(src).toContain("標準");
@@ -162,19 +165,33 @@ describe("responsive home and nav", () => {
     expect(src).toContain("自動タグなし");
     expect(src).toContain("自動タグは付きませんでした");
     expect(src).toContain("空なら自動タグ");
-    expect(src).toContain("採用で実行");
-    expect(src).toContain("リサーチを実行（採用で実行）");
+    expect(src).toContain("未実行");
+    expect(src).toContain("ブレスト");
     expect(src).toContain("調査済");
     expect(src).toContain("commentCount");
     expect(src).toContain("resolveCommentAuthor");
     expect(src).toContain('intent === "comment"');
-    expect(src).toContain("下の段階を採用に変えると、プリセット");
-    expect(src).toContain("上の段階を採用に変えると、プリセットが使えます");
-    expect(src).not.toContain("下の段階を採用にすると実行できます");
-    expect(src).not.toContain("上の段階を採用にすると実行できます");
+    expect(src).toContain("着想から実行できます");
+    expect(src).toContain("アーカイブではリサーチできません");
+    expect(src).toContain("アーカイブではブレストできません");
+    expect(src).toContain("アーカイブでは実行できません");
+    expect(src).not.toContain("採用で実行");
+    expect(src).not.toContain("リサーチを実行（採用で実行）");
+    expect(src).not.toContain("下の段階を採用に変えると");
+    expect(src).not.toContain("上の段階を採用に変えると");
     expect(src).toContain("researchIdeaAction");
+    expect(src).toContain("brainstormIdeaAction");
     expect(src).toContain("ideaDetailAction");
     expect(src).toContain("autoSubmit");
+  });
+
+  it("keeps named list views next to stage and tag filters", () => {
+    const src = appSources["../app/components/idea-list-view.tsx"];
+    expect(src).toContain("ListSavedViews");
+    expect(src).toContain("useListViewSearch");
+    expect(Object.values(appSources).join("\n")).toContain("ビューを保存");
+    expect(Object.values(appSources).join("\n")).toContain("listViewAction");
+    expect(Object.values(appSources).join("\n")).toContain('params.set("v"');
   });
 });
 

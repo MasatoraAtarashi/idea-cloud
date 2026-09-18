@@ -1,6 +1,7 @@
 import { Form, Link, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
 import { IdeaComments } from "../../components/idea-comments";
+import { IdeaBrainstormControls, IdeaBrainstormNotes } from "../../components/idea-brainstorm";
 import { IdeaResearchControls, IdeaResearchNotes } from "../../components/idea-research";
 import { StageSelect } from "../../components/stage-select";
 import { SESSION_USER } from "../../data/mock";
@@ -50,11 +51,10 @@ export default function IdeaPage() {
   }
 
   const actionError = actionData && "error" in actionData ? actionData.error : undefined;
-  const commentError =
-    actionData && "intent" in actionData && actionData.intent === "comment"
-      ? actionData.error
-      : undefined;
-  const researchError = commentError ? undefined : actionError;
+  const actionIntent = actionData && "intent" in actionData ? actionData.intent : undefined;
+  const commentError = actionIntent === "comment" ? actionError : undefined;
+  const brainstormError = actionIntent === "brainstorm" ? actionError : undefined;
+  const researchError = commentError || brainstormError ? undefined : actionError;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -110,6 +110,8 @@ export default function IdeaPage() {
         </div>
         <h2 className="text-[13.5px] font-medium">このアイデアの操作</h2>
         <div className="mt-2 flex flex-col gap-1.5">
+          <IdeaResearchControls idea={idea} error={researchError} />
+          <IdeaBrainstormControls idea={idea} error={brainstormError} />
           <Link
             to={`/app/merge?from=${idea.id}`}
             className="ui-btn-secondary h-9 justify-start px-3 text-[13px]"
@@ -117,7 +119,6 @@ export default function IdeaPage() {
             <IconMerge className="h-3.5 w-3.5" />
             他のアイデアと融合
           </Link>
-          <IdeaResearchControls idea={idea} error={researchError} />
           <Form method="post">
             <input type="hidden" name="intent" value="stage" />
             <input type="hidden" name="stage" value="archived" />
@@ -159,12 +160,13 @@ export default function IdeaPage() {
           <div className="flex items-center justify-between gap-3">
             <dt className="text-muted-foreground">リサーチ</dt>
             <dd className="text-[12.5px]">
-              {idea.researchedAt || idea.researchNotes ? "調査済" : "採用で実行"}
+              {idea.researchedAt || idea.researchNotes ? "調査済" : "未実行"}
             </dd>
           </div>
         </dl>
 
         <IdeaResearchNotes idea={idea} />
+        <IdeaBrainstormNotes idea={idea} />
       </aside>
     </div>
   );

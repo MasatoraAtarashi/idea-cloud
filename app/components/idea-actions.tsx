@@ -1,17 +1,20 @@
 import { Form, Link, useFetcher, useNavigation } from "react-router";
 import { STAGE_LABEL, STAGES, type MockIdea, type Stage } from "../data/mock";
+import { canRunIdeaAi } from "../lib/idea-ai";
 import { LIST_PATH } from "../lib/home-path";
+import { isBrainstormSubmitting } from "./idea-brainstorm";
 import { isResearchSubmitting } from "./idea-research";
 import { IconMore } from "./icons";
 
 export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
   const fetcher = useFetcher();
   const navigation = useNavigation();
-  const researchReady = idea.stage === "selected";
+  const aiReady = canRunIdeaAi(idea.stage);
+  const actionOnThisIdea = (navigation.formAction ?? "").includes(`/app/ideas/${idea.id}`);
   const researching =
-    navigation.state !== "idle" &&
-    isResearchSubmitting(navigation.formData) &&
-    (navigation.formAction ?? "").includes(`/app/ideas/${idea.id}`);
+    navigation.state !== "idle" && isResearchSubmitting(navigation.formData) && actionOnThisIdea;
+  const brainstorming =
+    navigation.state !== "idle" && isBrainstormSubmitting(navigation.formData) && actionOnThisIdea;
 
   function setStage(stage: Stage) {
     const data = new FormData();
@@ -36,6 +39,37 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
         >
           詳細を開く
         </Link>
+        {aiReady ? (
+          <>
+            <Form method="post" action={`/app/ideas/${idea.id}`}>
+              <input type="hidden" name="intent" value="research" />
+              <button
+                type="submit"
+                disabled={researching}
+                className="block w-full px-3 py-1.5 text-left text-[13px] text-foreground hover:bg-row-hover disabled:text-muted-foreground"
+              >
+                {researching ? "実行中…" : "リサーチを実行"}
+              </button>
+            </Form>
+            <Form method="post" action={`/app/ideas/${idea.id}`}>
+              <input type="hidden" name="intent" value="brainstorm" />
+              <button
+                type="submit"
+                disabled={brainstorming}
+                className="block w-full px-3 py-1.5 text-left text-[13px] text-foreground hover:bg-row-hover disabled:text-muted-foreground"
+              >
+                {brainstorming ? "実行中…" : "ブレスト"}
+              </button>
+            </Form>
+          </>
+        ) : (
+          <p className="cursor-not-allowed px-3 py-1.5 text-[13px] text-muted-foreground">
+            リサーチ / ブレスト
+            <span className="mt-0.5 block text-[11px] leading-snug">
+              アーカイブでは実行できません
+            </span>
+          </p>
+        )}
         <div className="border-t border-border my-1" />
         <p className="px-3 py-1 font-mono text-[11px] text-muted-foreground">段階を変更</p>
         {STAGES.map((stage) => (
@@ -55,25 +89,6 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
         >
           他のアイデアと融合
         </Link>
-        {researchReady ? (
-          <Form method="post" action={`/app/ideas/${idea.id}`}>
-            <input type="hidden" name="intent" value="research" />
-            <button
-              type="submit"
-              disabled={researching}
-              className="block w-full px-3 py-1.5 text-left text-[13px] text-foreground hover:bg-row-hover disabled:text-muted-foreground"
-            >
-              {researching ? "実行中…" : "リサーチを実行"}
-            </button>
-          </Form>
-        ) : (
-          <p className="cursor-not-allowed px-3 py-1.5 text-[13px] text-muted-foreground">
-            リサーチを実行（採用で実行）
-            <span className="mt-0.5 block text-[11px] leading-snug">
-              上の段階を採用に変えると、プリセットが使えます
-            </span>
-          </p>
-        )}
         <div className="border-t border-border my-1" />
         <button
           type="button"

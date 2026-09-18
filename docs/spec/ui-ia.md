@@ -2,7 +2,7 @@
 
 Product UI copy is **Japanese**. This spec is English.
 
-Working screens: **login gate**, **idea list** (desktop home at `/app/list`), **kanban view**, **new idea compose** (mobile home at `/app`; desktop modal), idea detail, **settings** (team / access). Merge and research exist as **per-idea actions** (deep links / detail rail), not primary destinations.
+Working screens: **login gate**, **idea list** (desktop home at `/app/list`), **kanban view**, **new idea compose** (mobile home at `/app`; desktop modal), idea detail, **settings** (team / access). Merge, research, and brainstorm exist as **per-idea actions** (deep links / detail rail), not primary destinations.
 
 There is **no landing page**. `/` is the login gate.
 
@@ -58,7 +58,7 @@ Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを
 
 ## Idea list (`/app/list`, desktop home)
 
-Always show list chrome (search, 新規アイデア, tabs すべてのアイデア / 熟成中の棚, stage filter, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Desktop table columns: idea (title + excerpt), stage, tags (or **自動タグなし**), comment count, research (**調査済** / **採用で実行**), relative **更新**, aging days, row menu. Mobile cards keep compact padding and still show tags + comment count + research + aging. Board cards show the same signals.
+Always show list chrome (search, 新規アイデア, tabs すべてのアイデア / 熟成中の棚, **ビュー**, stage/tag filter, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Desktop table columns: idea (title + excerpt), stage, tags (or **自動タグなし**), comment count, research (**調査済** / **未実行**), relative **更新**, aging days, row menu. Mobile cards keep compact padding and still show tags + comment count + research + aging. Board cards show the same signals. Mobile 絞り込み also has tags and named views.
 
 List view state is in the URL so Back/Forward and deep links work:
 
@@ -69,22 +69,23 @@ List view state is in the URL so Back/Forward and deep links work:
 | `stage` | comma-separated stage ids  | none              |
 | `tag`   | comma-separated tag labels | none              |
 | `q`     | search string              | none              |
+| `v`     | saved view id              | none              |
 
-Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`. Tab / stage / view / tag changes push history; search typing uses `replace` so keystrokes do not stack.
+Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
-Row menu (⋯) and idea detail **リサーチを実行** POST to the idea action (`intent=research`), which calls Workers AI and persists notes. Research is disabled until stage is **採用**; locked copy says **採用で実行** and that changing 段階 unlocks presets. Detail has a **段階** control so an idea can be moved to 採用, then researched. Selected ideas get presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails, and the last saved notes + model + timestamp.
+Row menu (⋯) lists **リサーチを実行** and **ブレスト** immediately under 詳細 (not behind 段階). Detail rail puts those controls first. Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails. Research notes stay on the idea row; brainstorm latest row is on detail (`#brainstorm`).
 
 Detail also has a **コメント** stream (oldest first, composer at the bottom). `intent=comment` inserts into `idea_comments`. Mock author is the session placeholder unless the API has an Access email.
 
-| Stage      | Japanese   | Role              |
-| ---------- | ---------- | ----------------- |
-| `spark`    | 着想       | Just caught       |
-| `aging`    | 熟成中     | Resting           |
-| `ripe`     | 熟した     | Review now        |
-| `selected` | 採用       | May be researched |
-| `archived` | アーカイブ | Off the board     |
+| Stage      | Japanese   | Role            |
+| ---------- | ---------- | --------------- |
+| `spark`    | 着想       | Just caught     |
+| `aging`    | 熟成中     | Resting         |
+| `ripe`     | 熟した     | Review now      |
+| `selected` | 採用       | Ready to act on |
+| `archived` | アーカイブ | Off the board   |
 
-Route: `app/routes/app/board.tsx` (loader reads D1 `ideas`). Detail: `/app/ideas/:ideaId` (loader reads the saved row).
+Route: `app/routes/app/board.tsx` (loader reads D1 `ideas` + `saved_views`). Detail: `/app/ideas/:ideaId` (loader reads the saved row + latest brainstorm).
 
 ## New idea (`/app`, `/app/capture`, desktop modal)
 
@@ -96,10 +97,10 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 ## Merge / research (not primary nav)
 
-`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research v0 runs on idea detail (`/app/ideas/:id#research`) via Workers AI (no web search): the **リサーチを実行** control is a real POST, not a hash stub. `/app/research?from=:id` redirects there. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
+`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research and brainstorm run on idea detail via Workers AI (no web search): the **リサーチを実行** / **ブレスト** controls are real POSTs, not hash stubs. `/app/research?from=:id` redirects to detail `#research`. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
 
 ## Settings (`/app/settings`)
 
 Team and access live here — not a top-level 「アクセス」 section. `/app/team` redirects to settings. Settings shell has a secondary nav (members / general / team / stages / profile / notify / shortcuts). **Do not invent teammates.** Session placeholder (“ログイン中”) only. Default-visibility cards are visual chrome, not persisted.
 
-List/detail data: D1 `ideas` + `idea_comments`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row. Previews: [../ui-previews/](../ui-previews/).
+List/detail data: D1 `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row; brainstorm from the latest `idea_brainstorms` row. Previews: [../ui-previews/](../ui-previews/).

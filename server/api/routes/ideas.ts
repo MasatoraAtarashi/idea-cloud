@@ -17,8 +17,14 @@ import {
   listIdeaRows,
   updateIdeaStage,
 } from "../../../db/ideas";
+import {
+  brainstormJson,
+  getLatestBrainstorm,
+  listBrainstormsForIdea,
+} from "../../../db/brainstorms";
 import { resolveCommentAuthor, STAGES } from "../../../app/data/mock";
 import { bindResearchAi, researchIdea } from "../../ai/research";
+import { brainstormIdea } from "../../ai/brainstorm";
 import { resolveCreateTags } from "../../ai/tags";
 import type { AppEnv } from "../../env";
 
@@ -122,7 +128,13 @@ export const ideasRoute = new Hono<AppEnv>()
       return c.json({ error: "Not Found" }, 404);
     }
     const counts = await commentCountsByIdeaIds(db, [id]);
-    return c.json({ item: ideaJson(row, { commentCount: counts.get(id) ?? 0 }) });
+    const brainstorm = await getLatestBrainstorm(db, id);
+    return c.json({
+      item: ideaJson(row, {
+        commentCount: counts.get(id) ?? 0,
+        brainstorm: brainstorm ?? null,
+      }),
+    });
   })
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
     const { body, stage, tags } = c.req.valid("json");
@@ -168,4 +180,44 @@ export const ideasRoute = new Hono<AppEnv>()
       return c.json({ error: result.error }, result.status);
     }
     return c.json({ item: ideaJson(result.idea) });
+  })
+  .get("/:id/brainstorms", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const row = await getIdeaRow(db, id);
+    if (!row) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    const items = await listBrainstormsForIdea(db, id);
+    return c.json({ items: items.map(brainstormJson) });
+  })
+  .post("/:id/brainstorm", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const input = await readResearchInput(c);
+    if ("error" in input) {
+      return c.json({ error: input.error }, 400);
+    }
+    const db = createDb(c.env.DB);
+    const result = await brainstormIdea({
+      db,
+      ai: bindResearchAi(c.env.AI),
+      ideaId: id,
+      preset: input.preset,
+      model: input.model,
+    });
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status);
+    }
+    const row = await getIdeaRow(db, id);
+    if (!row) {
+      return c.json({ error: "見つかりません" }, 404);
+    }
+    const counts = await commentCountsByIdeaIds(db, [id]);
+    return c.json({
+      item: ideaJson(row, {
+        commentCount: counts.get(id) ?? 0,
+        brainstorm: result.brainstorm,
+      }),
+      brainstorm: brainstormJson(result.brainstorm),
+    });
   });

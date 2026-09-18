@@ -14,14 +14,15 @@ describe("list view search params", () => {
       query: "",
       stages: [],
       tags: [],
+      savedViewId: null,
     });
     expect(serializeListViewSearch(parseListViewSearch(new URLSearchParams())).toString()).toBe("");
     expect(listViewHref(parseListViewSearch(new URLSearchParams()))).toBe("/app/list");
   });
 
-  it("round-trips tab, view, query, stages, and tags", () => {
+  it("round-trips tab, view, query, stages, tags, and saved view id", () => {
     const params = new URLSearchParams(
-      "tab=aging&view=board&q=通勤&stage=ripe,selected&tag=音声,朝",
+      "tab=aging&view=board&q=通勤&stage=ripe,selected&tag=音声,朝&v=4",
     );
     const parsed = parseListViewSearch(params);
     expect(parsed).toEqual({
@@ -30,12 +31,14 @@ describe("list view search params", () => {
       query: "通勤",
       stages: ["ripe", "selected"],
       tags: ["音声", "朝"],
+      savedViewId: 4,
     });
     expect(serializeListViewSearch(parsed).get("tab")).toBe("aging");
     expect(serializeListViewSearch(parsed).get("view")).toBe("board");
     expect(serializeListViewSearch(parsed).get("q")).toBe("通勤");
     expect(serializeListViewSearch(parsed).get("stage")).toBe("ripe,selected");
     expect(serializeListViewSearch(parsed).get("tag")).toBe("音声,朝");
+    expect(serializeListViewSearch(parsed).get("v")).toBe("4");
     expect(parseListViewSearch(serializeListViewSearch(parsed))).toEqual(parsed);
     expect(listViewHref(parsed)).toContain("/app/list?");
   });
@@ -52,11 +55,21 @@ describe("list view search params", () => {
     expect(parsed.tags).toEqual(["メモ"]);
   });
 
-  it("drops unknown stages and keeps a patch on top of current params", () => {
-    const current = parseListViewSearch(new URLSearchParams("tab=aging&stage=nope,ripe"));
+  it("drops unknown stages and clears saved view id when filters change", () => {
+    const current = parseListViewSearch(new URLSearchParams("tab=aging&stage=nope,ripe&v=9"));
     expect(current.stages).toEqual(["ripe"]);
+    expect(current.savedViewId).toBe(9);
     expect(listViewHref(patchListViewSearch(current, { view: "board", tab: "all" }))).toBe(
       "/app/list?view=board&stage=ripe",
     );
+    expect(
+      listViewHref(
+        patchListViewSearch(current, {
+          view: "board",
+          tab: "all",
+          savedViewId: 9,
+        }),
+      ),
+    ).toBe("/app/list?view=board&stage=ripe&v=9");
   });
 });

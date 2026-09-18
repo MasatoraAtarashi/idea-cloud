@@ -3,6 +3,7 @@ import { createDb } from "../../db/client";
 import { asStage, updateIdeaStage } from "../../db/ideas";
 import { STAGES } from "../data/mock";
 import { commentIdeaAction } from "./idea-comment-action";
+import { brainstormIdeaAction } from "./idea-brainstorm-action";
 import { researchIdeaAction } from "./idea-research-action";
 
 export type IdeaDetailActionData = {
@@ -34,6 +35,9 @@ export async function ideaDetailAction(args: ActionFunctionArgs) {
   }
   if (intent === "comment") {
     return commentIdeaAction(args);
+  }
+  if (intent === "brainstorm") {
+    return brainstormIdeaAction(args);
   }
   return researchIdeaAction(args);
 }

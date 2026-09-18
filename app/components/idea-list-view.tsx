@@ -14,10 +14,12 @@ import {
 import { useCompose } from "../lib/compose";
 import { formatAgedDays, formatRelativeJa, ideaExcerpt } from "../lib/format";
 import { NEW_IDEA_PATH } from "../lib/home-path";
-import { useListViewSearch } from "../lib/list-view-search";
+import type { SavedViewItem } from "../lib/list-view-search";
+import { useListViewSearch } from "../lib/use-list-view-search";
 import { BrandMark } from "./brand";
 import { IconPlus, IconSearch } from "./icons";
 import { IdeaActionsMenu } from "./idea-actions";
+import { ListSavedViews } from "./list-saved-views";
 import { CountBadge, StagePill, TagList } from "./ui";
 
 const MOBILE_STAGES: Stage[] = ["spark", "aging", "ripe", "selected"];
@@ -26,9 +28,16 @@ function toggleValue<T>(current: T[], value: T): T[] {
   return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
 }
 
-export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
+export function IdeaListView({
+  ideas,
+  savedViews = [],
+}: {
+  ideas: MockIdea[];
+  savedViews?: SavedViewItem[];
+}) {
   const { open } = useCompose();
-  const { tab, view, query, stages, tags, hrefFor, update } = useListViewSearch();
+  const listState = useListViewSearch();
+  const { tab, view, query, stages, tags, savedViewId, hrefFor, update } = listState;
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const availableTags = allTags(ideas);
   const tabbed =
@@ -97,6 +106,34 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
               </button>
             ))}
           </div>
+          {availableTags.length > 0 ? (
+            <>
+              <p className="mt-3 font-mono text-[11px] text-muted-foreground">タグ</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {availableTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => update({ tags: toggleValue(tags, tag) })}
+                    className={`rounded-full px-2.5 py-1 text-[12px] ${
+                      tags.includes(tag)
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+          <div className="mt-3">
+            <ListSavedViews
+              views={savedViews}
+              state={{ tab, view, query, stages, tags, savedViewId }}
+              nameFieldId="saved-view-name-mobile"
+            />
+          </div>
         </div>
       ) : null}
 
@@ -131,6 +168,11 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
       </div>
 
       <div className="hidden h-[46px] shrink-0 items-center gap-2 border-b border-border px-4 md:flex">
+        <ListSavedViews
+          views={savedViews}
+          state={{ tab, view, query, stages, tags, savedViewId }}
+          nameFieldId="saved-view-name-desktop"
+        />
         <details className="ui-menu relative">
           <summary
             className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px]"
@@ -333,7 +375,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                           {idea.commentCount}
                         </td>
                         <td className="font-mono text-[11px] text-muted-foreground">
-                          {idea.researchedAt || idea.researchNotes ? "調査済" : "採用で実行"}
+                          {idea.researchedAt || idea.researchNotes ? "調査済" : "未実行"}
                         </td>
                         <td className="font-mono text-[11px] text-muted-foreground">
                           {formatRelativeJa(idea.updatedAt)}

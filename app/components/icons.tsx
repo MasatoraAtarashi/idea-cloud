@@ -200,6 +200,15 @@ export function IconShare(props: IconProps) {
   );
 }
 
+export function IconBrainstorm(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 18h6M10.5 21h3" />
+      <path d="M8.4 14.6A5.2 5.2 0 1 1 15.6 14.6C15.6 16.2 14 17.2 14 18.2h-4c0-1-1.6-2-1.6-3.6z" />
+    </Svg>
+  );
+}
+
 export function IconSun(props: IconProps) {
   return (
     <Svg {...props}>

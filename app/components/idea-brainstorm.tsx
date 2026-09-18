@@ -1,42 +1,43 @@
 import { Form, useNavigation } from "react-router";
 import type { MockIdea } from "../data/mock";
-import { canRunIdeaAi, RESEARCH_ARCHIVE_ERROR } from "../lib/idea-ai";
+import { BRAINSTORM_ARCHIVE_ERROR, canRunIdeaAi } from "../lib/idea-ai";
 import { formatDateJa } from "../lib/format";
 import {
+  DEFAULT_BRAINSTORM_PRESET,
   RESEARCH_PRESET_LABEL,
   type ResearchPreset,
   presetFromModel,
 } from "../lib/research-models";
-import type { ResearchIdeaActionData } from "../lib/idea-research-action";
-import { IconSearch } from "./icons";
+import type { BrainstormIdeaActionData } from "../lib/idea-brainstorm-action";
+import { IconBrainstorm } from "./icons";
 
 const PRESETS = Object.keys(RESEARCH_PRESET_LABEL) as ResearchPreset[];
 
-export function isResearchSubmitting(formData: FormData | undefined) {
-  return formData?.get("intent") === "research";
+export function isBrainstormSubmitting(formData: FormData | undefined) {
+  return formData?.get("intent") === "brainstorm";
 }
 
-export function IdeaResearchControls({
+export function IdeaBrainstormControls({
   idea,
   error,
 }: {
   idea: MockIdea;
-  error?: ResearchIdeaActionData["error"];
+  error?: BrainstormIdeaActionData["error"];
 }) {
   const navigation = useNavigation();
-  const submitting = navigation.state !== "idle" && isResearchSubmitting(navigation.formData);
-  const researchReady = canRunIdeaAi(idea.stage);
-  const defaultPreset = presetFromModel(idea.researchModel) ?? "fast";
+  const submitting = navigation.state !== "idle" && isBrainstormSubmitting(navigation.formData);
+  const ready = canRunIdeaAi(idea.stage);
+  const defaultPreset = presetFromModel(idea.brainstormModel) ?? DEFAULT_BRAINSTORM_PRESET;
 
-  if (!researchReady) {
+  if (!ready) {
     return (
       <div>
         <span className="ui-btn-secondary h-9 w-full cursor-not-allowed justify-start px-3 text-[13px] opacity-40">
-          <IconSearch className="h-3.5 w-3.5" />
-          リサーチを実行
+          <IconBrainstorm className="h-3.5 w-3.5" />
+          ブレスト
         </span>
-        <p id="research-gate" className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-          {RESEARCH_ARCHIVE_ERROR}
+        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+          {BRAINSTORM_ARCHIVE_ERROR}
         </p>
         {error ? <p className="mt-1.5 text-[12.5px] text-danger">{error}</p> : null}
       </div>
@@ -45,12 +46,12 @@ export function IdeaResearchControls({
 
   return (
     <Form method="post" className="flex flex-col gap-1.5">
-      <input type="hidden" name="intent" value="research" />
-      <label className="sr-only" htmlFor="research-preset">
+      <input type="hidden" name="intent" value="brainstorm" />
+      <label className="sr-only" htmlFor="brainstorm-preset">
         プリセット
       </label>
       <select
-        id="research-preset"
+        id="brainstorm-preset"
         name="preset"
         defaultValue={defaultPreset}
         disabled={submitting}
@@ -67,46 +68,46 @@ export function IdeaResearchControls({
         className="ui-btn-secondary h-9 w-full justify-start px-3 text-[13px]"
         disabled={submitting}
       >
-        <IconSearch className="h-3.5 w-3.5" />
-        {submitting ? "実行中…" : "リサーチを実行"}
+        <IconBrainstorm className="h-3.5 w-3.5" />
+        {submitting ? "実行中…" : "ブレスト"}
       </button>
       {error ? <p className="text-[12.5px] text-danger">{error}</p> : null}
       <p className="text-[11.5px] leading-snug text-muted-foreground">
-        着想から実行できます。保存した本文だけを分析します。ウェブ検索はありません。
+        切り口・別案・次の問いを広げます。既定は標準です。
       </p>
     </Form>
   );
 }
 
-export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
-  const preset = presetFromModel(idea.researchModel);
-  const modelLabel = preset ? RESEARCH_PRESET_LABEL[preset] : idea.researchModel;
+export function IdeaBrainstormNotes({ idea }: { idea: MockIdea }) {
+  const preset = presetFromModel(idea.brainstormModel);
+  const modelLabel = preset ? RESEARCH_PRESET_LABEL[preset] : idea.brainstormModel;
 
   return (
-    <section className="mt-6">
-      <h3 className="text-[13.5px] font-medium">リサーチ</h3>
-      {idea.researchNotes ? (
+    <section id="brainstorm" className="mt-6">
+      <h3 className="text-[13.5px] font-medium">ブレスト</h3>
+      {idea.brainstormNotes ? (
         <div className="ui-panel mt-2 p-3">
           <p className="font-mono text-[11px] text-muted-foreground">
             {modelLabel}
-            {idea.researchedAt ? ` · ${formatDateJa(idea.researchedAt)}` : ""}
+            {idea.brainstormedAt ? ` · ${formatDateJa(idea.brainstormedAt)}` : ""}
           </p>
-          {idea.researchModel ? (
+          {idea.brainstormModel ? (
             <p className="mt-0.5 font-mono text-[10.5px] text-muted-foreground">
-              {idea.researchModel}
+              {idea.brainstormModel}
             </p>
           ) : null}
           <p className="mt-2 whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
-            {idea.researchNotes}
+            {idea.brainstormNotes}
           </p>
         </div>
       ) : canRunIdeaAi(idea.stage) ? (
         <p className="mt-2 text-[12.5px] text-muted-foreground">
-          まだ実行していません。上のプリセットから実行できます。
+          まだ実行していません。上のプリセットから広げられます。
         </p>
       ) : (
         <p className="mt-2 text-[12.5px] text-muted-foreground">
-          調査メモはまだありません。{RESEARCH_ARCHIVE_ERROR}
+          展開はまだありません。{BRAINSTORM_ARCHIVE_ERROR}
         </p>
       )}
     </section>

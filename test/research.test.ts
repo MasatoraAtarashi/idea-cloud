@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { ActionFunctionArgs } from "react-router";
 import { ideaDetailAction } from "../app/lib/idea-detail-action";
 import { extractAiText, RESEARCH_PRESETS, resolveResearchModel } from "../app/lib/research-models";
+import { RESEARCH_ARCHIVE_ERROR } from "../app/lib/idea-ai";
 import { RESEARCH_FAIL_MESSAGE, setTestAiRun } from "../server/ai/research";
 
 const authHeaders = {
@@ -25,8 +26,8 @@ async function createIdea(body: string) {
   return created.item.id;
 }
 
-async function markSelected(id: number) {
-  await env.DB.prepare("UPDATE ideas SET stage = 'selected' WHERE id = ?").bind(id).run();
+async function markArchived(id: number) {
+  await env.DB.prepare("UPDATE ideas SET stage = 'archived' WHERE id = ?").bind(id).run();
 }
 
 describe("research model mapping", () => {
@@ -45,6 +46,11 @@ describe("research model mapping", () => {
       ok: true,
       preset: "deep",
       model: RESEARCH_PRESETS.deep,
+    });
+    expect(resolveResearchModel({ defaultPreset: "standard" })).toEqual({
+      ok: true,
+      preset: "standard",
+      model: RESEARCH_PRESETS.standard,
     });
   });
 
@@ -70,15 +76,34 @@ describe("ideas research API", () => {
     setTestAiRun();
   });
 
-  it("rejects research until the idea is selected", async () => {
+  it("runs research from 着想 without waiting for 採用", async () => {
+    setTestAiRun(async () => ({
+      response: "観点:\n- 着想\nリスク:\n- なし\n次の一手:\n- 続ける",
+    }));
     const id = await createIdea("まだ着想");
+    const res = await api(`/ideas/${id}/research`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      item: { stage: string; researchNotes: string; researchModel: string };
+    };
+    expect(body.item.stage).toBe("spark");
+    expect(body.item.researchNotes).toContain("着想");
+    expect(body.item.researchModel).toBe(RESEARCH_PRESETS.fast);
+  });
+
+  it("rejects research when the idea is archived", async () => {
+    const id = await createIdea("しまってある");
+    await markArchived(id);
     const res = await api(`/ideas/${id}/research`, {
       method: "POST",
       body: JSON.stringify({}),
     });
     expect(res.status).toBe(409);
     const body = (await res.json()) as { error: string };
-    expect(body.error).toBe("採用してからリサーチできます");
+    expect(body.error).toBe(RESEARCH_ARCHIVE_ERROR);
 
     const one = await api(`/ideas/${id}`);
     const detail = (await one.json()) as { item: { researchNotes: string | null } };
@@ -95,7 +120,6 @@ describe("ideas research API", () => {
 
   it("rejects a model outside the allowlist", async () => {
     const id = await createIdea("許可外モデル");
-    await markSelected(id);
     const res = await api(`/ideas/${id}/research`, {
       method: "POST",
       body: JSON.stringify({ model: "@hf/thebloke/not-allowed" }),
@@ -103,13 +127,12 @@ describe("ideas research API", () => {
     expect(res.status).toBe(400);
   });
 
-  it("runs research for selected ideas, persists notes, and honors presets", async () => {
+  it("persists notes and honors presets", async () => {
     setTestAiRun(async (model) => ({
       response: `観点:\n- テスト\nリスク:\n- なし\n次の一手:\n- ${model}`,
     }));
 
-    const id = await createIdea("採用したアイデア");
-    await markSelected(id);
+    const id = await createIdea("採用前でもリサーチ");
 
     const fast = await api(`/ideas/${id}/research`, {
       method: "POST",
@@ -156,7 +179,6 @@ describe("ideas research API", () => {
   it("returns 502 when the model yields empty text", async () => {
     setTestAiRun(async () => ({ response: "   " }));
     const id = await createIdea("空の応答");
-    await markSelected(id);
     const res = await api(`/ideas/${id}/research`, {
       method: "POST",
       body: JSON.stringify({ preset: "fast" }),
@@ -168,7 +190,6 @@ describe("ideas research API", () => {
 
   it("returns a Japanese 502 when Workers AI is missing", async () => {
     const id = await createIdea("バインディングなし");
-    await markSelected(id);
     const res = await api(`/ideas/${id}/research`, {
       method: "POST",
       body: JSON.stringify({}),
@@ -181,7 +202,6 @@ describe("ideas research API", () => {
   it("keeps saved notes when a later run fails", async () => {
     setTestAiRun(async () => ({ response: "観点:\n- 残す\nリスク:\n- なし\n次の一手:\n- 続ける" }));
     const id = await createIdea("メモを残す");
-    await markSelected(id);
     const first = await api(`/ideas/${id}/research`, {
       method: "POST",
       body: JSON.stringify({}),
@@ -233,20 +253,11 @@ describe("idea detail research action", () => {
     setTestAiRun();
   });
 
-  it("rejects the UI POST until the idea is selected", async () => {
-    const id = await createIdea("まだ着想の詳細");
-    const result = await ideaDetailAction(
-      detailActionArgs(id, { intent: "research", preset: "fast" }),
-    );
-    expect(result).toEqual({ error: "採用してからリサーチできます" });
-  });
-
-  it("runs research from the detail form, persists notes, and redirects", async () => {
+  it("runs research from the detail form on a 着想 idea", async () => {
     setTestAiRun(async () => ({
       response: "観点:\n- 詳細\nリスク:\n- なし\n次の一手:\n- 採用する",
     }));
     const id = await createIdea("詳細からリサーチ");
-    await markSelected(id);
 
     const result = await ideaDetailAction(
       detailActionArgs(id, { intent: "research", preset: "standard" }),
@@ -266,9 +277,17 @@ describe("idea detail research action", () => {
     expect(reloaded.item.researchedAt).toBeTruthy();
   });
 
+  it("rejects the UI POST when the idea is archived", async () => {
+    const id = await createIdea("詳細のアーカイブ");
+    await markArchived(id);
+    const result = await ideaDetailAction(
+      detailActionArgs(id, { intent: "research", preset: "fast" }),
+    );
+    expect(result).toEqual({ error: RESEARCH_ARCHIVE_ERROR });
+  });
+
   it("returns a Japanese error when the detail action cannot call AI", async () => {
     const id = await createIdea("詳細の失敗");
-    await markSelected(id);
     const result = await ideaDetailAction(detailActionArgs(id, { intent: "research" }));
     expect(result).toEqual({ error: RESEARCH_FAIL_MESSAGE });
   });
