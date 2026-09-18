@@ -8,6 +8,8 @@ Linear-quiet IA (plus-to-compose, settings for team/access) with Relic in-app co
 
 Product UI copy in the captures is Japanese. This index is English.
 
+Claude Design pack has mobile **list** and mobile **compose**. There is **no dedicated mobile detail frame** (desktop detail is center + right rail only). [mobile-idea-detail.svg](./mobile-idea-detail.svg) is a token sketch of the shipped quiet stack — not a new visual system and not a shrunk rail. If a Claude Design mobile-detail lands later, replace the sketch; until then keep chrome sparse (back, stage, wrapping title/body, one **AI** sheet, **編集**).
+
 | Screen                         | Desktop                                              | Mobile                                             |
 | ------------------------------ | ---------------------------------------------------- | -------------------------------------------------- |
 | Login `/` `/login`             | [desktop-login.svg](./desktop-login.svg)             | [mobile-login.svg](./mobile-login.svg)             |
