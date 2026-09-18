@@ -1,6 +1,8 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { asStage, IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
+import { bindResearchAi } from "../../server/ai/research";
+import { resolveCreateTags } from "../../server/ai/tags";
 import { STAGES, type Stage } from "../data/mock";
 import { LIST_PATH } from "./home-path";
 
@@ -51,6 +53,11 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
     return { error: "長すぎます", title, body: bodyField } satisfies CreateIdeaActionData;
   }
   const db = createDb(context.cloudflare.env.DB);
-  await insertIdea(db, text, { stage, tags });
+  const resolvedTags = await resolveCreateTags({
+    ai: bindResearchAi(context.cloudflare.env.AI),
+    text,
+    tags,
+  });
+  await insertIdea(db, text, { stage, tags: resolvedTags });
   return redirect(LIST_PATH);
 }

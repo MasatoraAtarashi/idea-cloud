@@ -65,6 +65,7 @@ describe("empty workspace data", () => {
     expect(src).toContain("listIdeaViews");
     expect(src).toContain("getIdeaView");
     expect(src).toContain("createIdeaAction");
+    expect(src).toContain("resolveCreateTags");
   });
 
   it("keeps Japanese aging stages for filters and empty board columns", () => {
@@ -127,6 +128,8 @@ describe("responsive home and nav", () => {
     expect(src).toContain("まだアイデアがありません");
     expect(src).toContain("テーブル");
     expect(src).toContain("ボード");
+    expect(src).toContain("useListViewSearch");
+    expect(src).toContain('hrefFor({ tab: "aging-shelf" })');
     expect(src).not.toContain("emptyWorkspace");
   });
 
@@ -161,11 +164,16 @@ describe("desktop compose shortcuts and brand", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("BrandMark");
     expect(src).toContain("--brand-spark");
-    expect(src).toContain("Noto+Sans+JP");
+    expect(src).toContain("Noto+Sans+JP:wght@400;500");
+    expect(src).not.toContain("Noto+Sans+JP:wght@400;500;600");
     expect(src).toContain("IBM+Plex+Mono");
     expect(src).toContain("stage-spark");
+    expect(src).toContain("ui-title");
+    expect(src).toContain("height: 40px");
+    expect(src).not.toContain("height: 52px");
     expect(DESIGN_TOKENS.accent).toBe("#3b6ef6");
     expect(DESIGN_TOKENS.sidebar).toBe("#fafafb");
+    expect(DESIGN_TOKENS.rowHeight).toBe(40);
     expect(STAGE_PILL_HEX.spark.bg).toBe("#f3f0ff");
     expect(STAGE_PILL_HEX.aging.fg).toBe("#b45309");
   });

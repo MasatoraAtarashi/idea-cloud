@@ -60,7 +60,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
               onKeyDown={onComposeKeyDown}
               autoFocus={autofocus}
               placeholder={COMPOSE_TITLE_PLACEHOLDER}
-              className="w-full border-0 bg-transparent text-[22px] font-semibold leading-snug tracking-[-0.02em] text-foreground outline-none placeholder:text-muted-foreground/70"
+              className="ui-title w-full border-0 bg-transparent text-[22px] leading-snug text-foreground outline-none placeholder:text-muted-foreground/70"
             />
             <label htmlFor="idea-mobile" className="sr-only">
               {COMPOSE_PLACEHOLDER}
@@ -119,7 +119,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             name="title"
             defaultValue={actionData?.title ?? ""}
             placeholder={COMPOSE_TITLE_PLACEHOLDER}
-            className="w-full border-0 bg-transparent text-[20px] font-semibold outline-none"
+            className="ui-title w-full border-0 bg-transparent text-[20px] outline-none"
           />
           <textarea
             name="body"

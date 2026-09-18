@@ -66,9 +66,7 @@ export default function IdeaPage() {
             熟成 {formatAgedDays(idea.agedDays)}
           </span>
         </div>
-        <h1 className="mt-3 text-[23px] font-semibold leading-[1.4] tracking-[-0.02em]">
-          {idea.title}
-        </h1>
+        <h1 className="ui-title mt-3 text-[23px] leading-[1.4]">{idea.title}</h1>
         {idea.tags.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {idea.tags.map((tag) => (

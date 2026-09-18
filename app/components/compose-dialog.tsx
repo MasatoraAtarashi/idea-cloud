@@ -96,7 +96,7 @@ export function ComposeDialog() {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder={COMPOSE_TITLE_PLACEHOLDER}
-            className="w-full border-0 bg-transparent text-[23px] font-semibold leading-[1.4] tracking-[-0.02em] text-foreground outline-none placeholder:text-muted-foreground/70"
+            className="ui-title w-full border-0 bg-transparent text-[23px] leading-[1.4] text-foreground outline-none placeholder:text-muted-foreground/70"
           />
           <label htmlFor="idea-dialog" className="sr-only">
             {COMPOSE_PLACEHOLDER}
