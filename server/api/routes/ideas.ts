@@ -3,6 +3,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { createDb } from "../../../db/client";
 import {
+  COMMENT_BODY_MAX,
+  commentCountsByIdeaIds,
+  commentJson,
+  insertIdeaComment,
+  listCommentsForIdea,
+} from "../../../db/comments";
+import {
   getIdeaRow,
   IDEA_BODY_MAX,
   ideaJson,
@@ -10,7 +17,7 @@ import {
   listIdeaRows,
   updateIdeaStage,
 } from "../../../db/ideas";
-import { STAGES } from "../../../app/data/mock";
+import { resolveCommentAuthor, STAGES } from "../../../app/data/mock";
 import { bindResearchAi, researchIdea } from "../../ai/research";
 import { resolveCreateTags } from "../../ai/tags";
 import type { AppEnv } from "../../env";
@@ -32,6 +39,10 @@ const idParamSchema = z.object({
 const researchSchema = z.object({
   preset: z.string().optional(),
   model: z.string().optional(),
+});
+
+const createCommentSchema = z.object({
+  body: z.string().trim().min(1).max(COMMENT_BODY_MAX),
 });
 
 async function readResearchInput(c: {
@@ -64,8 +75,45 @@ export const ideasRoute = new Hono<AppEnv>()
   .get("/", async (c) => {
     const db = createDb(c.env.DB);
     const rows = await listIdeaRows(db);
-    return c.json({ items: rows.map(ideaJson) });
+    const counts = await commentCountsByIdeaIds(
+      db,
+      rows.map((row) => row.id),
+    );
+    return c.json({
+      items: rows.map((row) => ideaJson(row, { commentCount: counts.get(row.id) ?? 0 })),
+    });
   })
+  .get("/:id/comments", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const row = await getIdeaRow(db, id);
+    if (!row) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    const comments = await listCommentsForIdea(db, id);
+    return c.json({ items: comments.map(commentJson) });
+  })
+  .post(
+    "/:id/comments",
+    zValidator("param", idParamSchema),
+    zValidator("json", createCommentSchema),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { body } = c.req.valid("json");
+      const db = createDb(c.env.DB);
+      const row = await getIdeaRow(db, id);
+      if (!row) {
+        return c.json({ error: "Not Found" }, 404);
+      }
+      const created = await insertIdeaComment(
+        db,
+        id,
+        body,
+        resolveCommentAuthor(c.get("userEmail")),
+      );
+      return c.json({ item: commentJson(created) }, 201);
+    },
+  )
   .get("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const db = createDb(c.env.DB);
@@ -73,7 +121,8 @@ export const ideasRoute = new Hono<AppEnv>()
     if (!row) {
       return c.json({ error: "Not Found" }, 404);
     }
-    return c.json({ item: ideaJson(row) });
+    const counts = await commentCountsByIdeaIds(db, [id]);
+    return c.json({ item: ideaJson(row, { commentCount: counts.get(id) ?? 0 }) });
   })
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
     const { body, stage, tags } = c.req.valid("json");

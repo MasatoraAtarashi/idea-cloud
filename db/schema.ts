@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // テンプレート由来のサンプル CRUD。アイデア本文の暗号化保存（field-crypto）は未配線。
 
@@ -25,6 +25,9 @@ export const ideas = sqliteTable("ideas", {
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
   researchNotes: text("research_notes"),
   researchModel: text("research_model"),
   researchedAt: text("researched_at"),
@@ -32,3 +35,24 @@ export const ideas = sqliteTable("ideas", {
 
 export type Idea = typeof ideas.$inferSelect;
 export type NewIdea = typeof ideas.$inferInsert;
+
+/** Chronological per-idea notes (Zenn scrap-style). No threads or reactions in v1. */
+export const ideaComments = sqliteTable(
+  "idea_comments",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    ideaId: integer("idea_id")
+      .notNull()
+      .references(() => ideas.id),
+    body: text("body").notNull(),
+    authorId: text("author_id").notNull(),
+    authorName: text("author_name").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [index("idea_comments_idea_created_idx").on(table.ideaId, table.createdAt)],
+);
+
+export type IdeaComment = typeof ideaComments.$inferSelect;
+export type NewIdeaComment = typeof ideaComments.$inferInsert;

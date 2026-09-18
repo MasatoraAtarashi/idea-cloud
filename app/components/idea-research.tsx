@@ -1,5 +1,5 @@
 import { Form, useNavigation } from "react-router";
-import { STAGE_LABEL, type MockIdea } from "../data/mock";
+import type { MockIdea } from "../data/mock";
 import { formatDateJa } from "../lib/format";
 import {
   RESEARCH_PRESET_LABEL,
@@ -35,7 +35,8 @@ export function IdeaResearchControls({
           リサーチを実行
         </span>
         <p id="research-gate" className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-          いまは{STAGE_LABEL[idea.stage]}です。下の段階を採用にすると実行できます。
+          採用で実行できます。下の段階を採用に変えると、プリセット（速い・安い / 標準 /
+          じっくり）が使えます。
         </p>
         {error ? <p className="mt-1.5 text-[12.5px] text-danger">{error}</p> : null}
       </div>
@@ -70,6 +71,9 @@ export function IdeaResearchControls({
         {submitting ? "実行中…" : "リサーチを実行"}
       </button>
       {error ? <p className="text-[12.5px] text-danger">{error}</p> : null}
+      <p className="text-[11.5px] leading-snug text-muted-foreground">
+        保存した本文だけを分析します。ウェブ検索はありません。
+      </p>
     </Form>
   );
 }
@@ -96,8 +100,14 @@ export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
             {idea.researchNotes}
           </p>
         </div>
+      ) : idea.stage === "selected" ? (
+        <p className="mt-2 text-[12.5px] text-muted-foreground">
+          まだ実行していません。上のプリセットから実行できます。
+        </p>
       ) : (
-        <p className="mt-2 text-[12.5px] text-muted-foreground">調査メモはまだありません。</p>
+        <p className="mt-2 text-[12.5px] text-muted-foreground">
+          調査メモはまだありません。採用で実行できます。
+        </p>
       )}
     </section>
   );

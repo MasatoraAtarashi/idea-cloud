@@ -60,6 +60,32 @@ export function TagPill({ label }: { label: string }) {
   );
 }
 
+export function TagList({
+  tags,
+  emptyLabel = "自動タグなし",
+  limit = 3,
+}: {
+  tags: string[];
+  emptyLabel?: string;
+  limit?: number;
+}) {
+  if (tags.length === 0) {
+    return <span className="text-[11px] text-muted-foreground">{emptyLabel}</span>;
+  }
+  const shown = tags.slice(0, limit);
+  const extra = tags.length - shown.length;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {shown.map((tag) => (
+        <TagPill key={tag} label={tag} />
+      ))}
+      {extra > 0 ? (
+        <span className="font-mono text-[11px] text-muted-foreground">+{extra}</span>
+      ) : null}
+    </div>
+  );
+}
+
 export function CountBadge({ value }: { value: number }) {
   return (
     <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 font-mono text-[11px] text-muted-foreground">

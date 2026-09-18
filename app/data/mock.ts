@@ -56,8 +56,10 @@ export interface MockIdea {
   author: string;
   team: string;
   createdAt: string;
+  updatedAt: string;
   agedDays: number;
   relatedIds: string[];
+  commentCount: number;
   researchNotes?: string | null;
   researchModel?: string | null;
   researchedAt?: string | null;
@@ -71,9 +73,27 @@ export interface MockMember {
 
 /** Signed-in session placeholder. Do not invent teammate names. */
 export const SESSION_USER = {
+  id: "mock-user",
   label: "ログイン中",
   role: "owner" as const,
 };
+
+export type CommentAuthor = {
+  id: string;
+  name: string;
+};
+
+/** Mock auth: Access email when the API has one, else the session placeholder. */
+export function resolveCommentAuthor(email?: string | null): CommentAuthor {
+  const trimmed = email?.trim();
+  if (trimmed) {
+    return { id: trimmed, name: trimmed };
+  }
+  if (SESSION_USER.id && SESSION_USER.label) {
+    return { id: SESSION_USER.id, name: SESSION_USER.label };
+  }
+  return { id: "anonymous", name: "自分" };
+}
 
 export const MEMBERS: MockMember[] = [];
 

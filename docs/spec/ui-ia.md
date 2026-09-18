@@ -10,20 +10,20 @@ There is **no landing page**. `/` is the login gate.
 
 Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboard-first, settings for access/team), LiteLLM-thin chrome (white main, hairline borders, shadow only on modal/popover), Ideation Cloud pastel stage pills. Do **not** copy Relic’s logo, Relic’s blue marketing LP, or X dark mode. Do not put 融合 / リサーチ in the sidebar.
 
-| Token        | Value                                                                                                                                     |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Surface      | `#FFFFFF`                                                                                                                                 |
-| Sidebar      | `#FAFAFB`                                                                                                                                 |
-| Table header | `#FCFCFD`                                                                                                                                 |
-| Border       | `#E9EBEF` (controls `#E3E6EC`)                                                                                                            |
-| Accent       | `#3B6EF6`                                                                                                                                 |
-| Body         | `#15181D`                                                                                                                                 |
-| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                           |
-| Density      | Row ~40px, filter 46px, table header 36px; 1px dividers, not zebra                                                                        |
-| Radius       | 6–7px controls, 9–12px panels                                                                                                             |
-| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–500); IBM Plex Mono for meta only. Titles `font-weight: 500` with slightly tight tracking. |
-| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                 |
-| Pills        | Pastel chips for stage/tags only. No fake S/A/B scores.                                                                                   |
+| Token        | Value                                                                                                                                                                 |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surface      | `#FFFFFF`                                                                                                                                                             |
+| Sidebar      | `#FAFAFB`                                                                                                                                                             |
+| Table header | `#FCFCFD`                                                                                                                                                             |
+| Border       | `#E9EBEF` (controls `#E3E6EC`)                                                                                                                                        |
+| Accent       | `#3B6EF6`                                                                                                                                                             |
+| Body         | `#15181D`                                                                                                                                                             |
+| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                       |
+| Density      | Row ~40px, filter 46px, table header 36px; 1px dividers, not zebra. Rows stay compact but filled: tags, stage, relative updated, aging, comment count, research mark. |
+| Radius       | 6–7px controls, 9–12px panels                                                                                                                                         |
+| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–500); IBM Plex Mono for meta only. Titles `font-weight: 500` with slightly tight tracking.                             |
+| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                             |
+| Pills        | Pastel chips for stage/tags only. No fake S/A/B scores.                                                                                                               |
 
 Stage pill hex (background / foreground):
 
@@ -58,7 +58,7 @@ Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを
 
 ## Idea list (`/app/list`, desktop home)
 
-Always show list chrome (search, 新規アイデア, tabs すべてのアイデア / 熟成中の棚, stage filter, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Mobile list is a denser stack with stage chips; 絞り込み stays closed until tapped.
+Always show list chrome (search, 新規アイデア, tabs すべてのアイデア / 熟成中の棚, stage filter, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Desktop table columns: idea (title + excerpt), stage, tags (or **自動タグなし**), comment count, research (**調査済** / **採用で実行**), relative **更新**, aging days, row menu. Mobile cards keep compact padding and still show tags + comment count + research + aging. Board cards show the same signals.
 
 List view state is in the URL so Back/Forward and deep links work:
 
@@ -72,7 +72,9 @@ List view state is in the URL so Back/Forward and deep links work:
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`. Tab / stage / view / tag changes push history; search typing uses `replace` so keystrokes do not stack.
 
-Row menu (⋯) and idea detail **リサーチを実行** POST to the idea action (`intent=research`), which calls Workers AI and persists notes. Research is disabled until stage is **採用**; the rail then says to change 段階. Detail has a **段階** control so an idea can be moved to 採用, then researched. Selected ideas get presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails, and the last saved notes + model + timestamp.
+Row menu (⋯) and idea detail **リサーチを実行** POST to the idea action (`intent=research`), which calls Workers AI and persists notes. Research is disabled until stage is **採用**; locked copy says **採用で実行** and that changing 段階 unlocks presets. Detail has a **段階** control so an idea can be moved to 採用, then researched. Selected ideas get presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails, and the last saved notes + model + timestamp.
+
+Detail also has a **コメント** stream (oldest first, composer at the bottom). `intent=comment` inserts into `idea_comments`. Mock author is the session placeholder unless the API has an Access email.
 
 | Stage      | Japanese   | Role              |
 | ---------- | ---------- | ----------------- |
@@ -90,7 +92,7 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 `/app/capture` remains a deep-link alias (desktop: open modal on the list). Do not label the product 「キャプチャ」.
 
-**作成** INSERTs into D1 (optional stage/tags) and redirects to `/app/list`. If the form/API omits tags, Workers AI (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) suggests a few short Japanese tags from title+body and they are stored on the row. If AI fails, the idea is still created (user tags kept when present). Auth is still mock; there is no per-user ownership.
+**作成** INSERTs into D1 (optional stage/tags) and redirects to `/app/list`. If the form/API omits tags, Workers AI (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) suggests a few short Japanese tags from title+body and they are stored on the row. Compose copy: **空なら自動タグ**. If AI fails, the idea is still created and list/detail show **自動タグなし** / **自動タグは付きませんでした**. Auth is still mock; there is no per-user ownership.
 
 ## Merge / research (not primary nav)
 
@@ -100,4 +102,4 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 Team and access live here — not a top-level 「アクセス」 section. `/app/team` redirects to settings. Settings shell has a secondary nav (members / general / team / stages / profile / notify / shortcuts). **Do not invent teammates.** Session placeholder (“ログイン中”) only. Default-visibility cards are visual chrome, not persisted.
 
-List/detail data: D1 `ideas`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row. Previews: [../ui-previews/](../ui-previews/).
+List/detail data: D1 `ideas` + `idea_comments`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row. Previews: [../ui-previews/](../ui-previews/).

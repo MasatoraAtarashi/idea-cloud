@@ -74,6 +74,8 @@ describe("empty workspace data", () => {
     expect(src).toContain("getIdeaView");
     expect(src).toContain("createIdeaAction");
     expect(src).toContain("resolveCreateTags");
+    expect(src).toContain("listCommentsForIdea");
+    expect(src).toContain("insertIdeaComment");
   });
 
   it("keeps Japanese aging stages for filters and empty board columns", () => {
@@ -96,8 +98,10 @@ describe("empty workspace data", () => {
         author: "",
         team: "",
         createdAt: "2026-09-16",
+        updatedAt: "2026-09-16",
         agedDays: 0,
         relatedIds: [],
+        commentCount: 0,
       },
     ];
     expect(filterIdeas(sample, { query: "一時", stages: ["spark"], tags: [] })).toHaveLength(1);
@@ -154,8 +158,20 @@ describe("responsive home and nav", () => {
     expect(src).toContain("標準");
     expect(src).toContain("じっくり");
     expect(src).toContain("実行中…");
-    expect(src).toContain("下の段階を採用にすると実行できます");
-    expect(src).toContain("上の段階を採用にすると実行できます");
+    expect(src).toContain("IdeaComments");
+    expect(src).toContain("自動タグなし");
+    expect(src).toContain("自動タグは付きませんでした");
+    expect(src).toContain("空なら自動タグ");
+    expect(src).toContain("採用で実行");
+    expect(src).toContain("リサーチを実行（採用で実行）");
+    expect(src).toContain("調査済");
+    expect(src).toContain("commentCount");
+    expect(src).toContain("resolveCommentAuthor");
+    expect(src).toContain('intent === "comment"');
+    expect(src).toContain("下の段階を採用に変えると、プリセット");
+    expect(src).toContain("上の段階を採用に変えると、プリセットが使えます");
+    expect(src).not.toContain("下の段階を採用にすると実行できます");
+    expect(src).not.toContain("上の段階を採用にすると実行できます");
     expect(src).toContain("researchIdeaAction");
     expect(src).toContain("ideaDetailAction");
     expect(src).toContain("autoSubmit");
@@ -216,8 +232,10 @@ describe("display helpers", () => {
         author: "",
         team: "",
         createdAt: "2026-09-16",
+        updatedAt: "2026-09-16",
         agedDays: 2,
         relatedIds: [],
+        commentCount: 0,
       }),
     ).toBe("本文の続き");
     expect(formatRelativeJa("2026-09-18T02:00:00Z", Date.parse("2026-09-18T02:00:30Z"))).toBe(
