@@ -12,6 +12,7 @@ import {
 } from "../../../db/ideas";
 import { STAGES } from "../../../app/data/mock";
 import { bindResearchAi, researchIdea } from "../../ai/research";
+import { resolveCreateTags } from "../../ai/tags";
 import type { AppEnv } from "../../env";
 
 const createIdeaSchema = z.object({
@@ -77,7 +78,12 @@ export const ideasRoute = new Hono<AppEnv>()
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
     const { body, stage, tags } = c.req.valid("json");
     const db = createDb(c.env.DB);
-    const created = await insertIdea(db, body, { stage, tags });
+    const resolvedTags = await resolveCreateTags({
+      ai: bindResearchAi(c.env.AI),
+      text: body,
+      tags: tags ?? [],
+    });
+    const created = await insertIdea(db, body, { stage, tags: resolvedTags });
     return c.json({ item: ideaJson(created) }, 201);
   })
   .patch(

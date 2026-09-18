@@ -1,6 +1,6 @@
 import { Form, Link, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
-import { IdeaResearchSection } from "../../components/idea-research";
+import { IdeaResearchControls, IdeaResearchNotes } from "../../components/idea-research";
 import { StageSelect } from "../../components/stage-select";
 import { SESSION_USER } from "../../data/mock";
 import { formatAgedDays, formatDateJa, ideaPublicId } from "../../lib/format";
@@ -8,7 +8,7 @@ import { LIST_PATH } from "../../lib/home-path";
 import { ideaDetailAction } from "../../lib/idea-detail-action";
 import { createDb } from "../../../db/client";
 import { getIdeaView } from "../../../db/ideas";
-import { IconMerge, IconSearch, IconShare } from "../../components/icons";
+import { IconMerge, IconShare } from "../../components/icons";
 
 export { ideaDetailAction as action };
 
@@ -43,7 +43,6 @@ export default function IdeaPage() {
     );
   }
 
-  const researchReady = idea.stage === "selected";
   const actionError = actionData && "error" in actionData ? actionData.error : undefined;
 
   return (
@@ -66,9 +65,7 @@ export default function IdeaPage() {
             熟成 {formatAgedDays(idea.agedDays)}
           </span>
         </div>
-        <h1 className="mt-3 text-[23px] font-semibold leading-[1.4] tracking-[-0.02em]">
-          {idea.title}
-        </h1>
+        <h1 className="ui-title mt-3 text-[23px] leading-[1.4]">{idea.title}</h1>
         {idea.tags.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {idea.tags.map((tag) => (
@@ -92,9 +89,6 @@ export default function IdeaPage() {
             ) : null}
           </ul>
         </section>
-        <div className="lg:hidden">
-          <IdeaResearchSection idea={idea} error={actionError} />
-        </div>
       </article>
 
       <aside
@@ -116,17 +110,7 @@ export default function IdeaPage() {
             <IconMerge className="h-3.5 w-3.5" />
             他のアイデアと融合
           </Link>
-          {researchReady ? (
-            <a href="#research" className="ui-btn-secondary h-9 justify-start px-3 text-[13px]">
-              <IconSearch className="h-3.5 w-3.5" />
-              リサーチを実行
-            </a>
-          ) : (
-            <span className="ui-btn-secondary h-9 cursor-not-allowed justify-start px-3 text-[13px] opacity-40">
-              <IconSearch className="h-3.5 w-3.5" />
-              リサーチを実行
-            </span>
-          )}
+          <IdeaResearchControls idea={idea} error={actionError} />
           <Form method="post">
             <input type="hidden" name="intent" value="stage" />
             <input type="hidden" name="stage" value="archived" />
@@ -159,9 +143,7 @@ export default function IdeaPage() {
           </div>
         </dl>
 
-        <div className="mt-6 hidden lg:block">
-          <IdeaResearchSection idea={idea} error={actionError} compact />
-        </div>
+        <IdeaResearchNotes idea={idea} />
       </aside>
     </div>
   );

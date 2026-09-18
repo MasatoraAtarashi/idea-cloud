@@ -31,7 +31,7 @@ export function LoginGate() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="flex w-full max-w-[22rem] flex-col items-center text-center">
         <BrandMark className="h-11 w-11" />
-        <BrandWordmark className="mt-5 text-[22px] font-semibold tracking-[-0.02em]" />
+        <BrandWordmark className="ui-title mt-5 text-[22px]" />
         <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{LOGIN_TAGLINE}</p>
         <Link
           to="/app"

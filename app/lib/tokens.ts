@@ -8,6 +8,7 @@ export const DESIGN_TOKENS = {
   body: "#15181d",
   rowHover: "#f8fafe",
   selection: "#eef2fd",
+  rowHeight: 40,
 } as const;
 
 export const STAGE_PILL_HEX = {

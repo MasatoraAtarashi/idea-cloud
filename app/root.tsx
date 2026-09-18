@@ -10,19 +10,23 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 
-/** Latin: Inter. Japanese: Noto Sans JP / Hiragino. Meta: IBM Plex Mono. */
+/** Latin: Inter (variable, 400–600). Japanese: Noto Sans JP 400–500. Meta: IBM Plex Mono. */
+
+const FONT_STYLESHEET =
+  "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:ital,opsz,wght@0,14..32,400..600;1,14..32,400..500&family=Noto+Sans+JP:wght@400;500&display=swap";
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
+  { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
     href: "https://fonts.gstatic.com",
     crossOrigin: "anonymous",
   },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+JP:wght@400;500;600&display=swap",
-  },
+  { rel: "preload", as: "style", href: FONT_STYLESHEET },
+  { rel: "stylesheet", href: FONT_STYLESHEET },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -62,7 +66,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="mx-auto max-w-xl px-4 py-16">
-      <h1 className="text-2xl font-semibold">{message}</h1>
+      <h1 className="ui-title text-2xl">{message}</h1>
       <p className="mt-3 text-sm text-muted-foreground">{details}</p>
       {stack && (
         <pre className="ui-panel mt-6 overflow-x-auto p-4 text-xs">

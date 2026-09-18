@@ -1,7 +1,9 @@
 import { env, exports } from "cloudflare:workers";
 import { afterEach, describe, expect, it } from "vitest";
+import type { ActionFunctionArgs } from "react-router";
+import { ideaDetailAction } from "../app/lib/idea-detail-action";
 import { extractAiText, RESEARCH_PRESETS, resolveResearchModel } from "../app/lib/research-models";
-import { setTestAiRun } from "../server/ai/research";
+import { RESEARCH_FAIL_MESSAGE, setTestAiRun } from "../server/ai/research";
 
 const authHeaders = {
   "cf-access-authenticated-user-email": "test@example.com",
@@ -160,5 +162,114 @@ describe("ideas research API", () => {
       body: JSON.stringify({ preset: "fast" }),
     });
     expect(res.status).toBe(502);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe(RESEARCH_FAIL_MESSAGE);
+  });
+
+  it("returns a Japanese 502 when Workers AI is missing", async () => {
+    const id = await createIdea("バインディングなし");
+    await markSelected(id);
+    const res = await api(`/ideas/${id}/research`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(502);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe(RESEARCH_FAIL_MESSAGE);
+  });
+
+  it("keeps saved notes when a later run fails", async () => {
+    setTestAiRun(async () => ({ response: "観点:\n- 残す\nリスク:\n- なし\n次の一手:\n- 続ける" }));
+    const id = await createIdea("メモを残す");
+    await markSelected(id);
+    const first = await api(`/ideas/${id}/research`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(first.status).toBe(200);
+
+    setTestAiRun(async () => {
+      throw new Error("Workers AI down");
+    });
+    const second = await api(`/ideas/${id}/research`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(second.status).toBe(502);
+    const failBody = (await second.json()) as { error: string };
+    expect(failBody.error).toBe(RESEARCH_FAIL_MESSAGE);
+
+    const reload = await api(`/ideas/${id}`);
+    const reloaded = (await reload.json()) as {
+      item: { researchNotes: string; researchModel: string };
+    };
+    expect(reloaded.item.researchNotes).toContain("残す");
+    expect(reloaded.item.researchModel).toBe(RESEARCH_PRESETS.fast);
+  });
+});
+
+function detailActionArgs(ideaId: number, fields: Record<string, string>): ActionFunctionArgs {
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) {
+    form.set(key, value);
+  }
+  return {
+    request: new Request(`https://example.com/app/ideas/${ideaId}`, {
+      method: "POST",
+      body: form,
+    }),
+    params: { ideaId: String(ideaId) },
+    context: {
+      cloudflare: {
+        env,
+        ctx: { waitUntil() {} },
+      },
+    },
+  } as unknown as ActionFunctionArgs;
+}
+
+describe("idea detail research action", () => {
+  afterEach(() => {
+    setTestAiRun();
+  });
+
+  it("rejects the UI POST until the idea is selected", async () => {
+    const id = await createIdea("まだ着想の詳細");
+    const result = await ideaDetailAction(
+      detailActionArgs(id, { intent: "research", preset: "fast" }),
+    );
+    expect(result).toEqual({ error: "採用してからリサーチできます" });
+  });
+
+  it("runs research from the detail form, persists notes, and redirects", async () => {
+    setTestAiRun(async () => ({
+      response: "観点:\n- 詳細\nリスク:\n- なし\n次の一手:\n- 採用する",
+    }));
+    const id = await createIdea("詳細からリサーチ");
+    await markSelected(id);
+
+    const result = await ideaDetailAction(
+      detailActionArgs(id, { intent: "research", preset: "standard" }),
+    );
+    expect(result).toBeInstanceOf(Response);
+    const response = result as Response;
+    expect(response.status).toBeGreaterThanOrEqual(300);
+    expect(response.status).toBeLessThan(400);
+    expect(response.headers.get("Location")).toBe(`/app/ideas/${id}#research`);
+
+    const reload = await api(`/ideas/${id}`);
+    const reloaded = (await reload.json()) as {
+      item: { researchNotes: string; researchModel: string; researchedAt: string };
+    };
+    expect(reloaded.item.researchModel).toBe(RESEARCH_PRESETS.standard);
+    expect(reloaded.item.researchNotes).toContain("詳細");
+    expect(reloaded.item.researchedAt).toBeTruthy();
+  });
+
+  it("returns a Japanese error when the detail action cannot call AI", async () => {
+    const id = await createIdea("詳細の失敗");
+    await markSelected(id);
+    const result = await ideaDetailAction(detailActionArgs(id, { intent: "research" }));
+    expect(result).toEqual({ error: RESEARCH_FAIL_MESSAGE });
   });
 });

@@ -17,13 +17,13 @@ Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app
 | API           | `server/api/` (`ideas` + template `todos`)       |
 | Auth on APIs  | `server/middleware/access-auth.ts`               |
 
-Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research). No unused KV, R2, Queue, or Durable Object bindings.
+Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research and create-time auto-tags). No unused KV, R2, Queue, or Durable Object bindings.
 
 ```
 Browser
   → Worker (SSR pages + Hono)
       → D1 binding `DB` (idea-cloud-db)
-      → Workers AI binding `AI` (idea research v0; no web search)
+      → Workers AI binding `AI` (idea research v0 + create auto-tags; no web search)
       → secrets from wrangler / `.dev.vars` (never in git)
 ```
 
@@ -40,7 +40,7 @@ Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` 
 | Members table    | **Not created**                                                                                                                                              |
 | Field encryption | Helper exists; **not** applied to idea rows                                                                                                                  |
 
-**作成** is a React Router action (`insert` into `ideas`). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. Per-idea **リサーチ** is a React Router action on the detail page (`env.AI.run`, persist on the idea row). Hono `GET/POST /api/ideas` and `POST /api/ideas/:id/research` follow the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
+**作成** is a React Router action (`insert` into `ideas`, optional Workers AI tags). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. List tabs/filters live in `/app/list` search params (`tab`, `view`, `stage`, `tag`, `q`). Per-idea **リサーチ** is a React Router action on the detail page (`env.AI.run`, persist on the idea row). Hono `GET/POST /api/ideas` and `POST /api/ideas/:id/research` follow the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
 
 Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
 
@@ -48,16 +48,20 @@ Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [securit
 
 Summarize / analyze one idea’s stored text. **No web search**, Browser Rendering, embeddings, or merge-AI.
 
-| Item     | Today                                                                                                                                                  |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local.                              |
-| Gate     | Idea `stage` must be `selected` (採用). Otherwise 409 / 「採用してからリサーチできます」                                                               |
-| UI       | Idea detail only (`#research`). Not a primary nav tab. `/app/research?from=:id` redirects to the detail section                                        |
-| Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                              |
-| Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
-| Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                       |
+| Item     | Today                                                                                                                                                                    |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local. Tests stub `setTestAiRun` / `setTestTagAiRun`. |
+| Gate     | Idea `stage` must be `selected` (採用). Otherwise 409 / 「採用してからリサーチできます」                                                                                 |
+| UI       | Idea detail rail + list row menu POST `intent=research`. `#research` is the notes section, not a stub CTA. `/app/research?from=:id` redirects there                      |
+| Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                                                |
+| Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast`                   |
+| Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                                         |
 
 Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.AI.run` via a thin wrapper. Vite `pnpm dev` does not open a remote Workers AI session.
+
+## Workers AI auto-tags
+
+On idea create, if the client sent no tags, run the **fast** research model (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) on title+body and store 2–5 short Japanese tags on `ideas.tags`. User-supplied tags win. Any AI failure creates the row with `[]`. No extra table or queue.
 
 ## Provenance
 

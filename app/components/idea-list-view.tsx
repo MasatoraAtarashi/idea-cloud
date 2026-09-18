@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import {
   allTags,
@@ -14,13 +14,11 @@ import {
 import { useCompose } from "../lib/compose";
 import { formatAgedDays, formatRelativeJa, ideaExcerpt } from "../lib/format";
 import { NEW_IDEA_PATH } from "../lib/home-path";
+import { useListViewSearch } from "../lib/list-view-search";
 import { BrandMark } from "./brand";
 import { IconPlus, IconSearch } from "./icons";
 import { IdeaActionsMenu } from "./idea-actions";
 import { CountBadge, StagePill, TagPill } from "./ui";
-
-type View = "table" | "board";
-type ListTab = "all" | "aging-shelf";
 
 const MOBILE_STAGES: Stage[] = ["spark", "aging", "ripe", "selected"];
 
@@ -30,24 +28,14 @@ function toggleValue<T>(current: T[], value: T): T[] {
 
 export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
   const { open } = useCompose();
-  const [view, setView] = useState<View>("table");
-  const [tab, setTab] = useState<ListTab>("all");
-  const [query, setQuery] = useState("");
-  const [stages, setStages] = useState<Stage[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
+  const { tab, view, query, stages, tags, hrefFor, update } = useListViewSearch();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
   const availableTags = allTags(ideas);
-  const tabbed = useMemo(() => {
-    if (tab === "aging-shelf") {
-      return ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe");
-    }
-    return ideas;
-  }, [ideas, tab]);
-  const filtered = useMemo(
-    () => filterIdeas(tabbed, { query, stages, tags }),
-    [tabbed, query, stages, tags],
-  );
+  const tabbed =
+    tab === "aging-shelf"
+      ? ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe")
+      : ideas;
+  const filtered = filterIdeas(tabbed, { query, stages, tags });
   const agingCount = ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe").length;
 
   function stageFilterLabel() {
@@ -58,7 +46,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="hidden h-[52px] shrink-0 items-center gap-3 border-b border-border px-4 md:flex">
-        <h1 className="flex items-center gap-2 text-[16px] font-medium tracking-tight">
+        <h1 className="ui-title flex items-center gap-2 text-[16px]">
           アイデア
           <CountBadge value={ideas.length} />
         </h1>
@@ -67,7 +55,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
           <input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => update({ query: event.target.value }, { replace: true })}
             placeholder="アイデアを検索"
             className="ui-input pl-8"
           />
@@ -100,7 +88,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
               <button
                 key={stage}
                 type="button"
-                onClick={() => setStages((current) => toggleValue(current, stage))}
+                onClick={() => update({ stages: toggleValue(stages, stage) })}
                 className={`stage-pill ${STAGE_PILL_CLASS[stage]} ${
                   stages.includes(stage) ? "" : "opacity-60"
                 }`}
@@ -112,23 +100,25 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
         </div>
       ) : null}
 
-      <div className="hidden h-11 shrink-0 items-center gap-3 border-b border-border px-4 md:flex">
+      <div className="hidden h-11 shrink-0 items-center gap-4 border-b border-border px-4 md:flex">
         <div className="flex min-w-0 flex-1 items-center gap-4 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setTab("all")}
-            className={`shrink-0 pb-2 text-[13.5px] ${
+          <Link
+            to={hrefFor({ tab: "all" })}
+            preventScrollReset
+            aria-current={tab === "all" ? "page" : undefined}
+            className={`shrink-0 pb-2 text-[13.5px] no-underline ${
               tab === "all"
                 ? "border-b-2 border-foreground font-medium text-foreground"
                 : "text-muted-foreground"
             }`}
           >
             すべてのアイデア
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("aging-shelf")}
-            className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] ${
+          </Link>
+          <Link
+            to={hrefFor({ tab: "aging-shelf" })}
+            preventScrollReset
+            aria-current={tab === "aging-shelf" ? "page" : undefined}
+            className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] no-underline ${
               tab === "aging-shelf"
                 ? "border-b-2 border-foreground font-medium text-foreground"
                 : "text-muted-foreground"
@@ -136,7 +126,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
           >
             熟成中の棚
             <span className="font-mono text-[11px] text-muted-foreground">{agingCount}</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -158,7 +148,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                 <input
                   type="checkbox"
                   checked={stages.includes(stage)}
-                  onChange={() => setStages((current) => toggleValue(current, stage))}
+                  onChange={() => update({ stages: toggleValue(stages, stage) })}
                   className="accent-primary"
                 />
                 {STAGE_LABEL[stage]}
@@ -177,7 +167,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                 <button
                   key={tag}
                   type="button"
-                  onClick={() => setTags((current) => toggleValue(current, tag))}
+                  onClick={() => update({ tags: toggleValue(tags, tag) })}
                   className="block w-full px-3 py-1.5 text-left text-[13px] hover:bg-row-hover"
                 >
                   {tag}
@@ -188,53 +178,57 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
         ) : null}
         <span className="ml-auto font-mono text-[11.5px] text-muted-foreground">更新順</span>
         <div className="flex rounded-md border border-border-control p-0.5">
-          <button
-            type="button"
-            onClick={() => setView("table")}
-            className={`rounded-sm px-2.5 py-1 text-[12.5px] ${
+          <Link
+            to={hrefFor({ view: "table" })}
+            preventScrollReset
+            aria-current={view === "table" ? "page" : undefined}
+            className={`rounded-sm px-2.5 py-1 text-[12.5px] no-underline ${
               view === "table" ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
             }`}
           >
             テーブル
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("board")}
-            className={`rounded-sm px-2.5 py-1 text-[12.5px] ${
+          </Link>
+          <Link
+            to={hrefFor({ view: "board" })}
+            preventScrollReset
+            aria-current={view === "board" ? "page" : undefined}
+            className={`rounded-sm px-2.5 py-1 text-[12.5px] no-underline ${
               view === "board" ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
             }`}
           >
             ボード
-          </button>
+          </Link>
         </div>
       </div>
 
-      <div className="px-4 pt-3 md:hidden">
+      <div className="px-4 pt-2 md:hidden">
         <div className="flex gap-1.5 overflow-x-auto pb-2">
-          <button
-            type="button"
-            onClick={() => setStages([])}
-            className={`shrink-0 rounded-full px-3 py-1 text-[12.5px] font-medium ${
+          <Link
+            to={hrefFor({ stages: [] })}
+            preventScrollReset
+            aria-current={stages.length === 0 ? "page" : undefined}
+            className={`shrink-0 rounded-full px-3 py-1 text-[12.5px] font-medium no-underline ${
               stages.length === 0
                 ? "bg-foreground text-background"
                 : "bg-muted text-muted-foreground"
             }`}
           >
             すべて
-          </button>
+          </Link>
           {MOBILE_STAGES.map((stage) => (
-            <button
+            <Link
               key={stage}
-              type="button"
-              onClick={() => setStages([stage])}
-              className={`stage-pill shrink-0 ${STAGE_PILL_CLASS[stage]} ${
+              to={hrefFor({ stages: [stage] })}
+              preventScrollReset
+              aria-current={stages.length === 1 && stages[0] === stage ? "page" : undefined}
+              className={`stage-pill shrink-0 no-underline ${STAGE_PILL_CLASS[stage]} ${
                 stages.length === 1 && stages[0] === stage
                   ? "ring-1 ring-foreground/20"
                   : "opacity-80"
               }`}
             >
               {STAGE_LABEL[stage]}
-            </button>
+            </Link>
           ))}
         </div>
       </div>
@@ -247,12 +241,12 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
             {filtered.map((idea) => {
               const excerpt = ideaExcerpt(idea);
               return (
-                <li key={idea.id} className="px-4 py-3">
+                <li key={idea.id} className="px-4 py-2">
                   <Link to={`/app/ideas/${idea.id}`} className="block no-underline">
                     <div className="flex items-center gap-2 text-[12px]">
                       <StagePill stage={idea.stage} />
                       <span
-                        className={`font-mono text-[11.5px] ${
+                        className={`font-mono text-[11px] ${
                           idea.agedDays > 30
                             ? "text-[var(--stage-aging-fg)]"
                             : "text-muted-foreground"
@@ -260,15 +254,15 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                       >
                         {formatAgedDays(idea.agedDays)}
                       </span>
-                      <span className="ml-auto font-mono text-[11.5px] text-muted-foreground">
+                      <span className="ml-auto font-mono text-[11px] text-muted-foreground">
                         {formatRelativeJa(idea.createdAt)}
                       </span>
                     </div>
-                    <p className="mt-1.5 text-[15px] font-medium leading-snug text-foreground">
+                    <p className="ui-title mt-1 text-[13.5px] leading-snug text-foreground">
                       {idea.title}
                     </p>
                     {excerpt ? (
-                      <p className="mt-0.5 line-clamp-2 text-[12.5px] text-muted-foreground">
+                      <p className="mt-0.5 line-clamp-1 text-[12px] leading-snug text-muted-foreground">
                         {excerpt}
                       </p>
                     ) : null}
@@ -306,13 +300,13 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                     const excerpt = ideaExcerpt(idea);
                     return (
                       <tr key={idea.id}>
-                        <td className="py-2.5">
+                        <td>
                           <Link to={`/app/ideas/${idea.id}`} className="block no-underline">
-                            <p className="text-[13.5px] font-medium text-foreground">
+                            <p className="ui-title text-[13px] leading-tight text-foreground">
                               {idea.title}
                             </p>
                             {excerpt ? (
-                              <p className="mt-0.5 line-clamp-1 text-[12.5px] text-muted-foreground">
+                              <p className="mt-px line-clamp-1 text-[11.5px] leading-tight text-muted-foreground">
                                 {excerpt}
                               </p>
                             ) : null}
@@ -328,11 +322,11 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                             ))}
                           </div>
                         </td>
-                        <td className="font-mono text-[11.5px] text-muted-foreground">
+                        <td className="font-mono text-[11px] text-muted-foreground">
                           {formatRelativeJa(idea.createdAt)}
                         </td>
                         <td
-                          className={`text-right font-mono text-[11.5px] ${
+                          className={`text-right font-mono text-[11px] ${
                             idea.agedDays > 30
                               ? "text-[var(--stage-aging-fg)]"
                               : "text-muted-foreground"
@@ -357,7 +351,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
               return (
                 <section key={stage} className="w-64 shrink-0">
                   <header className="mb-2 flex items-center justify-between">
-                    <h2 className="flex items-center gap-2 text-[13.5px] font-medium">
+                    <h2 className="ui-title flex items-center gap-2 text-[13.5px]">
                       <StagePill stage={stage} />
                       <span className="font-mono text-[11px] text-muted-foreground">
                         {cards.length}
@@ -372,21 +366,21 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                       まだありません
                     </p>
                   ) : (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5">
                       {cards.map((idea) => (
                         <div
                           key={idea.id}
-                          className="rounded-[10px] border border-border bg-card p-3 hover:bg-row-hover"
+                          className="rounded-[10px] border border-border bg-card px-2.5 py-2 hover:bg-row-hover"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <Link
                               to={`/app/ideas/${idea.id}`}
                               className="min-w-0 flex-1 no-underline"
                             >
-                              <p className="text-[13.5px] font-medium leading-snug text-foreground">
+                              <p className="ui-title text-[13px] leading-snug text-foreground">
                                 {idea.title}
                               </p>
-                              <p className="mt-1.5 font-mono text-[11px] text-muted-foreground">
+                              <p className="mt-1 font-mono text-[11px] text-muted-foreground">
                                 {formatAgedDays(idea.agedDays)}
                               </p>
                             </Link>
@@ -410,7 +404,7 @@ function ListEmpty({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
       <BrandMark className="h-10 w-10 opacity-70" />
-      <p className="mt-4 text-[15px] font-medium">まだアイデアがありません</p>
+      <p className="ui-title mt-4 text-[15px]">まだアイデアがありません</p>
       <p className="mt-1.5 max-w-sm text-[12.5px] leading-relaxed text-muted-foreground">
         思いついた時点の粗さを残します。預けて寝かせ、熟した頃に見返します。
       </p>

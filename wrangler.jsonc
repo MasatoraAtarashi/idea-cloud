@@ -24,7 +24,7 @@
       "migrations_table": "d1_migrations",
     },
   ],
-  // Per-idea research (Workers AI). No web search / Browser Rendering this pass.
+  // Per-idea research + create-time auto-tags (Workers AI). No web search / Browser Rendering.
   // Local `pnpm dev` disables remote bindings in vite.config.ts so this does not
   // open an OAuth session. Production deploy uses the real Workers AI service.
   "ai": {

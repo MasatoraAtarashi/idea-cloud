@@ -21,6 +21,14 @@ const appSources = import.meta.glob(["../app/**/*.{ts,tsx,css}"], {
   eager: true,
 }) as Record<string, string>;
 
+const faviconSvg = Object.values(
+  import.meta.glob(["../public/favicon.svg"], {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }) as Record<string, string>,
+).join("\n");
+
 const DEMO_STRINGS = [
   "通勤の音声メモを、次の朝に構造化する",
   "『よく忘れる』をチームの公式ルールにする",
@@ -65,6 +73,7 @@ describe("empty workspace data", () => {
     expect(src).toContain("listIdeaViews");
     expect(src).toContain("getIdeaView");
     expect(src).toContain("createIdeaAction");
+    expect(src).toContain("resolveCreateTags");
   });
 
   it("keeps Japanese aging stages for filters and empty board columns", () => {
@@ -127,18 +136,26 @@ describe("responsive home and nav", () => {
     expect(src).toContain("まだアイデアがありません");
     expect(src).toContain("テーブル");
     expect(src).toContain("ボード");
+    expect(src).toContain("useListViewSearch");
+    expect(src).toContain('hrefFor({ tab: "aging-shelf" })');
     expect(src).not.toContain("emptyWorkspace");
   });
 
   it("surfaces merge and research as per-idea actions", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("IdeaActionsMenu");
+    expect(src).toContain("IdeaResearchControls");
     expect(src).toContain("/app/merge?from=");
-    expect(src).toContain("#research");
+    expect(src).toContain('id="research"');
+    expect(src).toContain('name="intent"');
+    expect(src).toContain('value="research"');
+    expect(src).not.toContain('href="#research"');
     expect(src).toContain("速い・安い");
     expect(src).toContain("標準");
     expect(src).toContain("じっくり");
-    expect(src).toContain("実行");
+    expect(src).toContain("実行中…");
+    expect(src).toContain("下の段階を採用にすると実行できます");
+    expect(src).toContain("上の段階を採用にすると実行できます");
     expect(src).toContain("researchIdeaAction");
     expect(src).toContain("ideaDetailAction");
     expect(src).toContain("autoSubmit");
@@ -160,14 +177,29 @@ describe("desktop compose shortcuts and brand", () => {
   it("ships an original brand mark and quiet JP/Latin/mono stack", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("BrandMark");
+    expect(src).toContain("/favicon.svg");
+    expect(src).toContain("/favicon.ico");
+    expect(src).toContain("/apple-touch-icon.png");
     expect(src).toContain("--brand-spark");
-    expect(src).toContain("Noto+Sans+JP");
+    expect(src).toContain("Noto+Sans+JP:wght@400;500");
+    expect(src).not.toContain("Noto+Sans+JP:wght@400;500;600");
     expect(src).toContain("IBM+Plex+Mono");
     expect(src).toContain("stage-spark");
+    expect(src).toContain("ui-title");
+    expect(src).toContain("px-4 py-2");
+    expect(src).not.toContain("height: 52px");
     expect(DESIGN_TOKENS.accent).toBe("#3b6ef6");
     expect(DESIGN_TOKENS.sidebar).toBe("#fafafb");
+    expect(DESIGN_TOKENS.rowHeight).toBe(40);
     expect(STAGE_PILL_HEX.spark.bg).toBe("#f3f0ff");
     expect(STAGE_PILL_HEX.aging.fg).toBe("#b45309");
+    expect(faviconSvg).toContain("#3B6EF6");
+    expect(faviconSvg).toContain("#FFFFFF");
+    expect(faviconSvg).toContain("M8.4 24.2c-3.4 0-6.15-2.55-6.15-5.7");
+    expect(faviconSvg).toContain("M24.6 1.6 26.2 6.2 30.8 7.8");
+    expect(appSources["../app/components/brand.tsx"]).toContain(
+      "M8.4 24.2c-3.4 0-6.15-2.55-6.15-5.7",
+    );
   });
 });
 
