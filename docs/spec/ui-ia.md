@@ -45,7 +45,7 @@ Minimal card: brand mark + 「アイデアクラウド」, 「ログイン」, o
 
 Always show list/board chrome (view toggle, search, filter rail, table headers or kanban columns), including when there are **0 ideas**. Empty row/column copy: **まだありません**. Filters stay available from `md` up (left filter + table). Mobile list is a stack; フィルタ stays closed until tapped.
 
-Row menu (⋯) and idea detail expose **融合** and **リサーチ** as per-idea actions. Research may be disabled until stage is **採用**. Stub flows are OK.
+Row menu (⋯) and idea detail expose **融合** and **リサーチ** as per-idea actions. Research is disabled until stage is **採用**. On detail, selected ideas get **実行** plus presets **速い・安い** / **標準** / **じっくり**, and the last saved notes.
 
 | Stage      | Japanese   | Role              |
 | ---------- | ---------- | ----------------- |
@@ -67,10 +67,10 @@ Not a desktop nav tab. Desktop: plus in the sidebar header (and `⌘N` / `Ctrl+N
 
 ## Merge / research (not primary nav)
 
-`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Empty state when there is nothing to merge or no **selected** ideas.
+`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research v0 runs on idea detail (`/app/ideas/:id#research`) via Workers AI (no web search). `/app/research?from=:id` redirects there. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
 
 ## Settings (`/app/settings`)
 
 Team and access live here — not a top-level 「アクセス」 section. `/app/team` redirects to settings. Do not invent teammates. Session placeholder (“ログイン中”) only.
 
-List/detail data: D1 `ideas`. Stage labels and empty merge/research/settings shells still use `app/data/mock.ts` (no seed rows). Previews: [../ui-previews/](../ui-previews/).
+List/detail data: D1 `ideas`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row. Previews: [../ui-previews/](../ui-previews/).

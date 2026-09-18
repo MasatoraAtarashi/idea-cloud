@@ -1,8 +1,10 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { STAGES } from "../app/data/mock";
 import type { Db } from "./client";
 import { ideas, type Idea } from "./schema";
+
+export type { Idea };
 
 export const IDEA_BODY_MAX = 8000;
 
@@ -46,6 +48,9 @@ export function toIdeaView(row: Idea): MockIdea {
     createdAt: row.createdAt,
     agedDays: agedDaysSince(row.createdAt),
     relatedIds: [],
+    researchNotes: row.researchNotes,
+    researchModel: row.researchModel,
+    researchedAt: row.researchedAt,
   };
 }
 
@@ -57,6 +62,9 @@ export function ideaJson(row: Idea) {
     stage: asStage(row.stage),
     tags: parseTags(row.tags),
     createdAt: row.createdAt,
+    researchNotes: row.researchNotes,
+    researchModel: row.researchModel,
+    researchedAt: row.researchedAt,
   };
 }
 
@@ -91,4 +99,24 @@ export async function insertIdea(db: Db, text: string): Promise<Idea> {
     throw new Error("Failed to insert idea");
   }
   return created;
+}
+
+export async function saveIdeaResearch(
+  db: Db,
+  id: number,
+  data: { notes: string; model: string },
+): Promise<Idea> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      researchNotes: data.notes,
+      researchModel: data.model,
+      researchedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  if (!updated) {
+    throw new Error("Failed to save research");
+  }
+  return updated;
 }

@@ -130,7 +130,12 @@ describe("responsive home and nav", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("IdeaActionsMenu");
     expect(src).toContain("/app/merge?from=");
-    expect(src).toContain("/app/research?from=");
+    expect(src).toContain("#research");
+    expect(src).toContain("速い・安い");
+    expect(src).toContain("標準");
+    expect(src).toContain("じっくり");
+    expect(src).toContain("実行");
+    expect(src).toContain("researchIdeaAction");
   });
 });
 

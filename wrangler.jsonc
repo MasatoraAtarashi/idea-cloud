@@ -24,8 +24,10 @@
       "migrations_table": "d1_migrations",
     },
   ],
-  /**
-   * Add Static Assets / Service Bindings only when the code uses them:
-   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-   */
+  // Per-idea research (Workers AI). No web search / Browser Rendering this pass.
+  // Local `pnpm dev` disables remote bindings in vite.config.ts so this does not
+  // open an OAuth session. Production deploy uses the real Workers AI service.
+  "ai": {
+    "binding": "AI",
+  },
 }

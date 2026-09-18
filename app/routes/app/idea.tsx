@@ -1,9 +1,13 @@
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
+import { Link, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
+import { IdeaResearchSection } from "../../components/idea-research";
 import { STAGE_LABEL } from "../../data/mock";
 import { LIST_PATH } from "../../lib/home-path";
+import { researchIdeaAction } from "../../lib/idea-research-action";
 import { createDb } from "../../../db/client";
 import { getIdeaView } from "../../../db/ideas";
+
+export { researchIdeaAction as action };
 
 export function meta() {
   return [{ title: "アイデア — アイデアクラウド" }];
@@ -17,6 +21,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 
 export default function IdeaPage() {
   const { idea } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof researchIdeaAction>();
 
   if (!idea) {
     return (
@@ -36,6 +41,7 @@ export default function IdeaPage() {
   }
 
   const researchReady = idea.stage === "selected";
+  const actionError = actionData && "error" in actionData ? actionData.error : undefined;
 
   return (
     <article className="mx-auto max-w-3xl">
@@ -69,12 +75,9 @@ export default function IdeaPage() {
           融合
         </Link>
         {researchReady ? (
-          <Link
-            to={`/app/research?from=${idea.id}`}
-            className="ui-btn-ghost px-3 py-2 text-center text-[13px]"
-          >
+          <a href="#research" className="ui-btn-ghost px-3 py-2 text-center text-[13px]">
             リサーチ
-          </Link>
+          </a>
         ) : (
           <span
             className="ui-btn-ghost cursor-not-allowed px-3 py-2 text-center text-[13px] opacity-40"
@@ -90,6 +93,7 @@ export default function IdeaPage() {
           捨てる
         </Link>
       </section>
+      <IdeaResearchSection idea={idea} error={actionError} />
     </article>
   );
 }

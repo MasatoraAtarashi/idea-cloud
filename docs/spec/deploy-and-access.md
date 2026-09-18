@@ -24,16 +24,18 @@ Intended steps (run only with a real token; do not commit the token):
 
 1. `wrangler d1 create idea-cloud-db` (or `wrangler d1 list` if it already exists)
 2. Patch `database_id` in `wrangler.jsonc`
-3. `wrangler d1 migrations apply DB --remote` (or `pnpm db:migrate:remote`) applies `todos` + `ideas`
+3. `wrangler d1 migrations apply DB --remote` (or `pnpm db:migrate:remote`) applies `todos` + `ideas` (including research columns)
 4. Production `deploy.yml` runs the same `d1 migrations apply DB --remote` before `wrangler deploy`. Local: `pnpm db:migrate:local`
+
+Workers AI research uses the `AI` binding. No extra wrangler secret. The deploy token needs permission to run Workers AI in production.
 
 ## Workflows
 
-| Workflow                        | Trigger today  | Notes                                                     |
-| ------------------------------- | -------------- | --------------------------------------------------------- |
-| `.github/workflows/deploy.yml`  | Push to `main` | D1 migrations (`ideas` + `todos`) then production Worker. |
-| `.github/workflows/preview.yml` | Pull requests  | Uploads a Worker version / preview URL when secrets exist |
-| `.github/workflows/pr.yml`      | PRs            | typecheck / lint / test / gitleaks / zizmor / audit / ASH |
+| Workflow                        | Trigger today  | Notes                                                                                 |
+| ------------------------------- | -------------- | ------------------------------------------------------------------------------------- |
+| `.github/workflows/deploy.yml`  | Push to `main` | D1 migrations (`ideas` + `todos`, including research columns) then production Worker. |
+| `.github/workflows/preview.yml` | Pull requests  | Uploads a Worker version / preview URL when secrets exist                             |
+| `.github/workflows/pr.yml`      | PRs            | typecheck / lint / test / gitleaks / zizmor / audit / ASH                             |
 
 `workflow_dispatch` on deploy is a follow-up so first-deploy can run without merging placeholder D1.
 

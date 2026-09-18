@@ -15,6 +15,13 @@
       "when": 1789609429802,
       "tag": "0001_useful_mulholland_black",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789692267176,
+      "tag": "0002_daily_lake",
+      "breakpoints": true
     }
   ]
 }
