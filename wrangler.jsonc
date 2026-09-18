@@ -24,8 +24,8 @@
       "migrations_table": "d1_migrations",
     },
   ],
-  /**
-   * Add Static Assets / Service Bindings only when the code uses them:
-   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-   */
+  // Per-idea research (Workers AI). No web search / Browser Rendering this pass.
+  "ai": {
+    "binding": "AI",
+  },
 }

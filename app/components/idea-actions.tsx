@@ -22,7 +22,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
         </Link>
         {researchReady ? (
           <Link
-            to={`/app/research?from=${idea.id}`}
+            to={`/app/ideas/${idea.id}#research`}
             className="block px-3 py-1.5 text-[13px] text-foreground no-underline hover:bg-row-hover"
           >
             リサーチ

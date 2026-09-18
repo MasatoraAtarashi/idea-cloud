@@ -17,12 +17,13 @@ Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app
 | API           | `server/api/` (`ideas` + template `todos`)       |
 | Auth on APIs  | `server/middleware/access-auth.ts`               |
 
-Bindings declared only if used. Today that is **D1 `DB`**. No unused Workers AI, KV, R2, Queue, or Durable Object bindings.
+Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research). No unused KV, R2, Queue, or Durable Object bindings.
 
 ```
 Browser
   → Worker (SSR pages + Hono)
       → D1 binding `DB` (idea-cloud-db)
+      → Workers AI binding `AI` (idea research v0; no web search)
       → secrets from wrangler / `.dev.vars` (never in git)
 ```
 
@@ -30,18 +31,33 @@ Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` 
 
 ## D1
 
-| Item             | Today                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| Database name    | `idea-cloud-db`                                                                         |
-| Binding          | `DB`                                                                                    |
-| Migrations       | `todos` (template) + `ideas` (`migrations/`)                                            |
-| `ideas` columns  | `id`, `title`, `body`, `stage` (default `spark`), `tags` (JSON text `[]`), `created_at` |
-| Members table    | **Not created**                                                                         |
-| Field encryption | Helper exists; **not** applied to idea rows                                             |
+| Item             | Today                                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Database name    | `idea-cloud-db`                                                                                                                                              |
+| Binding          | `DB`                                                                                                                                                         |
+| Migrations       | `todos` (template) + `ideas` (`migrations/`)                                                                                                                 |
+| `ideas` columns  | `id`, `title`, `body`, `stage` (default `spark`), `tags` (JSON text `[]`), `created_at`, plus nullable `research_notes` / `research_model` / `researched_at` |
+| Members table    | **Not created**                                                                                                                                              |
+| Field encryption | Helper exists; **not** applied to idea rows                                                                                                                  |
 
-**作成** is a React Router action (`insert` into `ideas`). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. Hono `GET/POST /api/ideas` follows the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
+**作成** is a React Router action (`insert` into `ideas`). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. Per-idea **リサーチ** is a React Router action on the detail page (`env.AI.run`, persist on the idea row). Hono `GET/POST /api/ideas` and `POST /api/ideas/:id/research` follow the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
 
 Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
+
+## Workers AI research (v0)
+
+Summarize / analyze one idea’s stored text. **No web search**, Browser Rendering, embeddings, or merge-AI.
+
+| Item     | Today                                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Binding  | `AI` in `wrangler.jsonc` / `wrangler.vitest.jsonc`                                                                                                     |
+| Gate     | Idea `stage` must be `selected` (採用). Otherwise 409 / 「採用してからリサーチできます」                                                               |
+| UI       | Idea detail only (`#research`). Not a primary nav tab. `/app/research?from=:id` redirects to the detail section                                        |
+| Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                              |
+| Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
+| Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                       |
+
+Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.AI.run` via a thin wrapper.
 
 ## Provenance
 
@@ -55,11 +71,11 @@ Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [securit
 
 ## Storage map (product, mostly future)
 
-| Need                 | Service                         |
-| -------------------- | ------------------------------- |
-| Ideas (SQL)          | **D1** `ideas` (plaintext)      |
-| Members              | Not created                     |
-| Profile / flags      | Workers KV (not added)          |
-| Uploads              | R2 (not added)                  |
-| Multiplayer / agents | Durable Objects (not this pass) |
-| Background jobs      | Queues + DLQ (not this pass)    |
+| Need                 | Service                                                 |
+| -------------------- | ------------------------------------------------------- |
+| Ideas (SQL)          | **D1** `ideas` (plaintext, including research v0 notes) |
+| Members              | Not created                                             |
+| Profile / flags      | Workers KV (not added)                                  |
+| Uploads              | R2 (not added)                                          |
+| Multiplayer / agents | Durable Objects (not this pass)                         |
+| Background jobs      | Queues + DLQ (not this pass)                            |

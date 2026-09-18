@@ -25,6 +25,9 @@ export const ideas = sqliteTable("ideas", {
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
+  researchNotes: text("research_notes"),
+  researchModel: text("research_model"),
+  researchedAt: text("researched_at"),
 });
 
 export type Idea = typeof ideas.$inferSelect;

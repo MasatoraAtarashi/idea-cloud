@@ -1,10 +1,18 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, redirect, type LoaderFunctionArgs } from "react-router";
 import { EmptyState } from "../../components/ui";
 import { IDEAS, ideasByStage } from "../../data/mock";
 
 export function meta() {
   return [{ title: "リサーチ — アイデアクラウド" }];
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const from = new URL(request.url).searchParams.get("from");
+  if (from && /^\d+$/.test(from)) {
+    return redirect(`/app/ideas/${from}#research`);
+  }
+  return null;
 }
 
 export default function ResearchPage() {

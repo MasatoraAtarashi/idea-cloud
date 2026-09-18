@@ -58,6 +58,9 @@ export interface MockIdea {
   createdAt: string;
   agedDays: number;
   relatedIds: string[];
+  researchNotes?: string | null;
+  researchModel?: string | null;
+  researchedAt?: string | null;
 }
 
 export interface MockMember {

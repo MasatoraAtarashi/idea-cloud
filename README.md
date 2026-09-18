@@ -27,22 +27,22 @@ UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previ
 ```bash
 pnpm install
 cp .dev.vars.example .dev.vars   # set LOCAL_DEV_USER_EMAIL to your address
-pnpm db:migrate:local            # D1 `todos` + `ideas`
+pnpm db:migrate:local            # D1 `todos` + `ideas` (+ research columns)
 pnpm dev
 ```
 
 http://localhost:5173/app is new-idea compose on a phone. Desktop `/app` replaces to `/app/list`.
 
-| Path             | Screen (Japanese UI)                              |
-| ---------------- | ------------------------------------------------- |
-| `/app`           | Mobile home: 新規アイデア. Desktop → `/app/list`  |
-| `/app/capture`   | Compose alias (desktop opens the list modal)      |
-| `/app/list`      | Idea list (desktop home; mobile 一覧)             |
-| `/app/ideas/:id` | Idea detail (融合 / リサーチ as per-idea actions) |
-| `/app/merge`     | Merge deep link (not in primary nav)              |
-| `/app/research`  | Research deep link (not in primary nav)           |
-| `/app/settings`  | Settings (team / access)                          |
-| `/app/team`      | Redirects to settings                             |
+| Path             | Screen (Japanese UI)                                                        |
+| ---------------- | --------------------------------------------------------------------------- |
+| `/app`           | Mobile home: 新規アイデア. Desktop → `/app/list`                            |
+| `/app/capture`   | Compose alias (desktop opens the list modal)                                |
+| `/app/list`      | Idea list (desktop home; mobile 一覧)                                       |
+| `/app/ideas/:id` | Idea detail (融合 / リサーチ as per-idea actions; research v0 on this page) |
+| `/app/merge`     | Merge deep link (not in primary nav)                                        |
+| `/app/research`  | Research deep link (redirects `from` to idea detail)                        |
+| `/app/settings`  | Settings (team / access)                                                    |
+| `/app/team`      | Redirects to settings                                                       |
 
 ## What was copied from the template
 
@@ -64,7 +64,7 @@ Included:
 - **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. Settings shows a stub, not a working Access editor.
 - **Ideas:** D1 `ideas` table. **作成** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption.
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. Not applied to idea rows.
-- **Workers AI:** tagging / relation / evolution copy only. No unused AI binding in `wrangler.jsonc`.
+- **Workers AI:** per-idea research v0 on `/app/ideas/:id` for **採用** ideas (summarize/analyze stored text; no web search). Binding `AI` in `wrangler.jsonc`. Tagging / relation / evolution still copy-only.
 - Sample `/api/todos` remains for template verification. `/api/ideas` mirrors that CRUD style (Access middleware still on `/api`).
 
 Env template: `.dev.vars.example`. Do not commit secret values. Production: `wrangler secret put`.
