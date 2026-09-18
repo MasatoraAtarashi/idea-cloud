@@ -2,12 +2,26 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { createDb } from "../../../db/client";
-import { getIdeaRow, IDEA_BODY_MAX, ideaJson, insertIdea, listIdeaRows } from "../../../db/ideas";
+import {
+  getIdeaRow,
+  IDEA_BODY_MAX,
+  ideaJson,
+  insertIdea,
+  listIdeaRows,
+  updateIdeaStage,
+} from "../../../db/ideas";
+import { STAGES } from "../../../app/data/mock";
 import { bindResearchAi, researchIdea } from "../../ai/research";
 import type { AppEnv } from "../../env";
 
 const createIdeaSchema = z.object({
   body: z.string().trim().min(1).max(IDEA_BODY_MAX),
+  stage: z.enum(STAGES).optional(),
+  tags: z.array(z.string().trim().min(1)).max(8).optional(),
+});
+
+const updateIdeaSchema = z.object({
+  stage: z.enum(STAGES),
 });
 
 const idParamSchema = z.object({
@@ -61,11 +75,26 @@ export const ideasRoute = new Hono<AppEnv>()
     return c.json({ item: ideaJson(row) });
   })
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
-    const { body } = c.req.valid("json");
+    const { body, stage, tags } = c.req.valid("json");
     const db = createDb(c.env.DB);
-    const created = await insertIdea(db, body);
+    const created = await insertIdea(db, body, { stage, tags });
     return c.json({ item: ideaJson(created) }, 201);
   })
+  .patch(
+    "/:id",
+    zValidator("param", idParamSchema),
+    zValidator("json", updateIdeaSchema),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { stage } = c.req.valid("json");
+      const db = createDb(c.env.DB);
+      const updated = await updateIdeaStage(db, id, stage);
+      if (!updated) {
+        return c.json({ error: "Not Found" }, 404);
+      }
+      return c.json({ item: ideaJson(updated) });
+    },
+  )
   .post("/:id/research", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const input = await readResearchInput(c);

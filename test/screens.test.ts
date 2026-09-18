@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { MOBILE_NAV, SETTINGS_NAV, WORKSPACE_NAV } from "../app/nav";
 import { homePath, isDesktopViewport, NEW_IDEA_PATH, LIST_PATH } from "../app/lib/home-path";
 import { isNewIdeaShortcut, isSubmitShortcut } from "../app/lib/shortcuts";
+import { formatRelativeJa, ideaExcerpt, ideaPublicId } from "../app/lib/format";
+import { DESIGN_TOKENS, STAGE_PILL_HEX } from "../app/lib/tokens";
 import {
   allTags,
   filterIdeas,
@@ -13,7 +15,7 @@ import {
   type MockIdea,
 } from "../app/data/mock";
 
-const appSources = import.meta.glob(["../app/**/*.{ts,tsx}", "../app/app.css"], {
+const appSources = import.meta.glob(["../app/**/*.{ts,tsx,css}"], {
   query: "?raw",
   import: "default",
   eager: true,
@@ -50,7 +52,7 @@ describe("empty workspace data", () => {
     expect(src).toContain("いま思いついたこと");
     expect(src).toContain("新規アイデア");
     expect(src).toContain("作成");
-    expect(src).toContain("IconBack");
+    expect(src).toContain("閉じる");
     expect(src).toContain('method="post"');
     expect(src).not.toContain("キャプチャ");
     expect(src).not.toContain("置く");
@@ -118,11 +120,13 @@ describe("responsive home and nav", () => {
     expect(MOBILE_NAV.some((item) => item.to.includes("research"))).toBe(false);
   });
 
-  it("keeps empty list chrome instead of hiding the table", () => {
+  it("keeps empty list chrome instead of hiding the view frame", () => {
     const src = appSources["../app/components/idea-list-view.tsx"];
     expect(src).toContain("ui-table");
     expect(src).toContain("フィルタ");
-    expect(src).toContain("まだありません");
+    expect(src).toContain("まだアイデアがありません");
+    expect(src).toContain("テーブル");
+    expect(src).toContain("ボード");
     expect(src).not.toContain("emptyWorkspace");
   });
 
@@ -136,6 +140,8 @@ describe("responsive home and nav", () => {
     expect(src).toContain("じっくり");
     expect(src).toContain("実行");
     expect(src).toContain("researchIdeaAction");
+    expect(src).toContain("ideaDetailAction");
+    expect(src).toContain("autoSubmit");
   });
 });
 
@@ -151,12 +157,39 @@ describe("desktop compose shortcuts and brand", () => {
     expect(isSubmitShortcut({ key: "Enter", metaKey: false, ctrlKey: false })).toBe(false);
   });
 
-  it("ships an original brand mark and quiet JP/Latin stack", () => {
+  it("ships an original brand mark and quiet JP/Latin/mono stack", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("BrandMark");
     expect(src).toContain("--brand-spark");
     expect(src).toContain("Noto+Sans+JP");
-    expect(src).toContain("Hiragino Sans");
-    expect(src).not.toContain("IBM Plex");
+    expect(src).toContain("IBM+Plex+Mono");
+    expect(src).toContain("stage-spark");
+    expect(DESIGN_TOKENS.accent).toBe("#3b6ef6");
+    expect(DESIGN_TOKENS.sidebar).toBe("#fafafb");
+    expect(STAGE_PILL_HEX.spark.bg).toBe("#f3f0ff");
+    expect(STAGE_PILL_HEX.aging.fg).toBe("#b45309");
+  });
+});
+
+describe("display helpers", () => {
+  it("formats ids, excerpts, and relative time", () => {
+    expect(ideaPublicId("142")).toBe("IC-142");
+    expect(
+      ideaExcerpt({
+        id: "1",
+        title: "見出し",
+        body: "見出し\n本文の続き",
+        stage: "spark",
+        tags: [],
+        author: "",
+        team: "",
+        createdAt: "2026-09-16",
+        agedDays: 2,
+        relatedIds: [],
+      }),
+    ).toBe("本文の続き");
+    expect(formatRelativeJa("2026-09-18T02:00:00Z", Date.parse("2026-09-18T02:00:30Z"))).toBe(
+      "たった今",
+    );
   });
 });

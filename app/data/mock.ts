@@ -10,35 +10,35 @@ export const STAGE_LABEL: Record<Stage, string> = {
 };
 
 export const STAGE_HINT: Record<Stage, string> = {
-  spark: "入れたばかり。まだ触らない。",
-  aging: "寝かせている。忘れてよい。",
-  ripe: "見返す頃合い。進めるか、捨てる。",
-  selected: "リサーチ / プロトタイプの対象。",
-  archived: "記録として残す。表には出さない。",
+  spark: "預けた直後",
+  aging: "寝かせて観点が増える",
+  ripe: "見直しの対象",
+  selected: "実行へ進した",
+  archived: "今は動かさない",
 };
 
 export const STAGE_PILL_CLASS: Record<Stage, string> = {
-  spark: "border-amber-200 bg-amber-100/90 text-amber-900",
-  aging: "border-sky-200 bg-sky-100/90 text-sky-900",
-  ripe: "border-violet-200 bg-violet-100/90 text-violet-900",
-  selected: "border-emerald-200 bg-emerald-100/90 text-emerald-900",
-  archived: "border-slate-200 bg-slate-100 text-slate-600",
+  spark: "stage-spark",
+  aging: "stage-aging",
+  ripe: "stage-ripe",
+  selected: "stage-selected",
+  archived: "stage-archived",
 };
 
 export const STAGE_COLUMN_CLASS: Record<Stage, string> = {
-  spark: "border-amber-100 bg-amber-50/90",
-  aging: "border-sky-100 bg-sky-50/90",
-  ripe: "border-violet-100 bg-violet-50/90",
-  selected: "border-emerald-100 bg-emerald-50/90",
-  archived: "border-slate-200 bg-slate-50",
+  spark: "stage-spark",
+  aging: "stage-aging",
+  ripe: "stage-ripe",
+  selected: "stage-selected",
+  archived: "stage-archived",
 };
 
 const TAG_PILL_CLASSES = [
-  "border-rose-200 bg-rose-100/80 text-rose-900",
-  "border-indigo-200 bg-indigo-100/80 text-indigo-900",
-  "border-teal-200 bg-teal-100/80 text-teal-900",
-  "border-orange-200 bg-orange-100/80 text-orange-900",
-  "border-fuchsia-200 bg-fuchsia-100/80 text-fuchsia-900",
+  "bg-[#f8eef2] text-[#9f1239]",
+  "bg-[#eef0fb] text-[#3730a3]",
+  "bg-[#eaf6f3] text-[#0f766e]",
+  "bg-[#fff3e8] text-[#c2410c]",
+  "bg-[#f6eef8] text-[#86198f]",
 ] as const;
 
 export function tagPillClass(tag: string): string {

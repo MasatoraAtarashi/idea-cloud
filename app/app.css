@@ -1,33 +1,50 @@
 @import "tailwindcss" source(".");
 
 /*
- * In-app chrome: Linear-quiet IA + Relic IDEATION Cloud in-app color density
- * (cool canvas, pastel pills, table hierarchy). Not Relic's blue marketing LP.
+ * Quiet light console: Linear IA × LiteLLM-thin chrome × Ideation Cloud pastel stages.
+ * Tokens from the Claude Design system frame. Original mark; not Relic’s logo.
  */
 :root {
-  --background: #f5f7fb;
-  --foreground: #1c2433;
+  --background: #ffffff;
+  --foreground: #15181d;
   --card: #ffffff;
-  --muted: #eef2f8;
-  --muted-foreground: #5c677a;
-  --primary: #2a3548;
+  --muted: #f4f5f8;
+  --muted-foreground: #687280;
+  --primary: #3b6ef6;
   --primary-foreground: #ffffff;
-  --border: #d9e1ee;
-  --ring: #8aa0c4;
-  --sidebar: #e8eef6;
-  --accent: #e4ebf6;
-  --accent-foreground: #2a3548;
-  --row-hover: #f3f6fc;
-  --table-head: #eef2f8;
-  --brand: #2a3548;
-  --brand-spark: #7ea6e6;
-  --radius: 0.375rem;
+  --border: #e9ebef;
+  --border-control: #e3e6ec;
+  --ring: #3b6ef6;
+  --sidebar: #fafafb;
+  --accent: #eef2fd;
+  --accent-foreground: #15181d;
+  --row-hover: #f8fafe;
+  --table-head: #fcfcfd;
+  --brand: #3b6ef6;
+  --brand-spark: #93b0ff;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --radius: 0.4375rem;
+  --radius-panel: 0.75rem;
+  --shadow-float: 0 16px 40px rgba(21, 24, 29, 0.12), 0 0 0 1px var(--border);
+
+  --stage-spark-bg: #f3f0ff; /* STAGE_PILL_HEX.spark */
+  --stage-spark-fg: #6d28d9;
+  --stage-aging-bg: #fff6ec;
+  --stage-aging-fg: #b45309;
+  --stage-ripe-bg: #ecfbf6;
+  --stage-ripe-fg: #0f766e;
+  --stage-selected-bg: #edf4ff;
+  --stage-selected-fg: #1f49c4;
+  --stage-archived-bg: #f4f5f8;
+  --stage-archived-fg: #687280;
 }
 
 @theme {
   --font-sans:
-    Inter, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI",
+    Inter, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI",
     "Yu Gothic", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", menlo, monaco, consolas, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -36,6 +53,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-border: var(--border);
+  --color-border-control: var(--border-control);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
   --color-accent: var(--accent);
@@ -44,18 +62,20 @@
   --color-table-head: var(--table-head);
   --color-brand: var(--brand);
   --color-brand-spark: var(--brand-spark);
-  --radius-sm: calc(var(--radius) - 2px);
+  --color-danger: var(--danger);
+  --radius-sm: 0.375rem;
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --radius-lg: var(--radius-panel);
 }
 
 html,
 body {
-  @apply min-h-full bg-sidebar text-foreground antialiased;
+  @apply min-h-full bg-background text-foreground antialiased;
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 13.5px;
+  line-height: 1.5;
   letter-spacing: -0.011em;
+  font-weight: 400;
   color-scheme: light;
 }
 
@@ -64,27 +84,45 @@ a {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--brand-spark) 38%, transparent);
+  background: color-mix(in oklab, var(--primary) 22%, transparent);
 }
 
 @layer components {
   .ui-panel {
-    @apply rounded-md border border-border bg-card;
+    @apply rounded-lg border border-border bg-card;
     box-shadow: none;
   }
 
+  .ui-float {
+    @apply rounded-lg border border-border bg-card;
+    box-shadow: var(--shadow-float);
+  }
+
   .ui-btn {
-    @apply inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground no-underline disabled:opacity-40;
+    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-[13.5px] font-medium text-primary-foreground no-underline disabled:opacity-40;
+    box-shadow: none;
+  }
+
+  .ui-btn:hover:not(:disabled) {
+    filter: brightness(0.96);
+  }
+
+  .ui-btn-secondary,
+  .ui-btn-ghost {
+    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border-control bg-card px-3 text-[13.5px] font-medium text-foreground no-underline hover:bg-row-hover disabled:opacity-40;
     box-shadow: none;
   }
 
   .ui-btn-ghost {
-    @apply inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[13px] font-medium text-foreground no-underline hover:bg-row-hover;
-    box-shadow: none;
+    @apply border-transparent bg-transparent;
+  }
+
+  .ui-btn-danger {
+    @apply inline-flex h-8 items-center justify-center rounded-md px-3 text-[13.5px] font-medium text-danger no-underline hover:bg-[var(--danger-soft)];
   }
 
   .ui-input {
-    @apply h-8 w-full rounded-md border border-border bg-card px-2.5 text-[13px] text-foreground outline-none;
+    @apply h-8 w-full rounded-md border border-border-control bg-card px-2.5 text-[13.5px] text-foreground outline-none;
     box-shadow: none;
   }
 
@@ -93,28 +131,63 @@ a {
   }
 
   .ui-link {
-    @apply text-[13px] font-medium text-foreground no-underline hover:underline;
+    @apply text-[13.5px] font-medium text-foreground no-underline hover:underline;
   }
 
   .ui-table {
-    @apply w-full border-collapse text-[13px];
+    @apply w-full border-collapse text-[13.5px];
   }
 
   .ui-table th {
-    @apply border-b border-border px-3 py-2 text-left text-[11px] font-medium tracking-wide text-muted-foreground;
+    @apply border-b border-border px-3 text-left text-[12.5px] font-medium text-muted-foreground;
     background: var(--table-head);
+    height: 36px;
   }
 
   .ui-table td {
-    @apply border-b border-border px-3 py-2 align-middle;
+    @apply border-b border-border px-3 align-middle;
   }
 
   .ui-table tbody tr {
     background: var(--card);
+    height: 52px;
   }
 
   .ui-table tbody tr:hover {
     background: var(--row-hover);
+  }
+
+  .ui-kbd {
+    @apply inline-flex items-center rounded border border-border-control bg-muted px-1 font-mono text-[11px] font-medium text-muted-foreground;
+  }
+
+  .stage-pill {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium;
+  }
+
+  .stage-spark {
+    background: var(--stage-spark-bg);
+    color: var(--stage-spark-fg);
+  }
+
+  .stage-aging {
+    background: var(--stage-aging-bg);
+    color: var(--stage-aging-fg);
+  }
+
+  .stage-ripe {
+    background: var(--stage-ripe-bg);
+    color: var(--stage-ripe-fg);
+  }
+
+  .stage-selected {
+    background: var(--stage-selected-bg);
+    color: var(--stage-selected-fg);
+  }
+
+  .stage-archived {
+    background: var(--stage-archived-bg);
+    color: var(--stage-archived-fg);
   }
 
   .ui-menu > summary {

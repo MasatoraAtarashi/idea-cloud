@@ -159,8 +159,52 @@ export function IconClock(props: IconProps) {
 export function IconPin(props: IconProps) {
   return (
     <Svg {...props}>
-      <path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z" />
+      <path d="M12 21s6-5.2 6-10a6 6 0 0 0-12 0c0 4.8 6 10 6 10z" />
       <circle cx="12" cy="11" r="1.8" />
+    </Svg>
+  );
+}
+
+export function IconHash(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M10 4 8 20M16 4l-2 16M5 9h14M4 15h14" />
+    </Svg>
+  );
+}
+
+export function IconType(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 7h14M12 7v11M8 18h8" />
+    </Svg>
+  );
+}
+
+export function IconChevronDown(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 9 12 15 18 9" />
+    </Svg>
+  );
+}
+
+export function IconShare(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="18" cy="6" r="2.2" />
+      <circle cx="6" cy="12" r="2.2" />
+      <circle cx="18" cy="18" r="2.2" />
+      <path d="M8 11.2 16 7.2M8 12.8 16 16.8" />
+    </Svg>
+  );
+}
+
+export function IconSun(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 3.5v1.8M12 18.7v1.8M4.9 4.9l1.3 1.3M17.8 17.8l1.3 1.3M3.5 12h1.8M18.7 12h1.8M4.9 19.1l1.3-1.3M17.8 6.2l1.3-1.3" />
     </Svg>
   );
 }

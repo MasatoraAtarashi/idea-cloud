@@ -48,7 +48,7 @@ http://localhost:5173/app is new-idea compose on a phone. Desktop `/app` replace
 
 `MasatoraAtarashi/app-template` is not a GitHub Template Repository, so `gh repo create --template` was not used. This app was copied from squat’s **`personal-fullstack`** template (strict tier, Cloudflare Access auth).
 
-**Visual language (honest):** the _stack_ is from the template. In-app chrome is Linear-quiet (dense sidebar, plus-to-compose) with Relic IDEATION Cloud **in-app** color density (cool canvas, pastel pills, table hierarchy). Relic’s blue marketing LP is not used.
+**Visual language (honest):** the _stack_ is from the template. In-app chrome is a quiet light console (Linear-leaning IA, white surfaces, pastel stage pills, original cloud mark). Relic’s logo and blue marketing LP are not used.
 
 Included:
 

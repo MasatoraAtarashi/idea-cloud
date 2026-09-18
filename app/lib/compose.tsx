@@ -3,6 +3,8 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 export const COMPOSE_TITLE = "新規アイデア";
 export const COMPOSE_SUBMIT = "作成";
 export const COMPOSE_PLACEHOLDER = "いま思いついたこと";
+export const COMPOSE_TITLE_PLACEHOLDER = "タイトル";
+export const COMPOSE_DRAFT_HINT = "⌘Enter で作成";
 
 type ComposeContextValue = {
   isOpen: boolean;

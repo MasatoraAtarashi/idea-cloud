@@ -17,9 +17,9 @@ export function PageHeader({
       <div className="flex min-w-0 items-start gap-3">
         {icon ? <div className="mt-1 text-muted-foreground">{icon}</div> : null}
         <div className="min-w-0">
-          <h1 className="text-[15px] font-medium tracking-tight">{title}</h1>
+          <h1 className="text-[16px] font-medium tracking-tight">{title}</h1>
           {description ? (
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
+            <p className="mt-1 max-w-2xl text-[13.5px] text-muted-foreground">{description}</p>
           ) : null}
         </div>
       </div>
@@ -28,31 +28,42 @@ export function PageHeader({
   );
 }
 
-export function EmptyState({ title, body }: { title: string; body?: string }) {
+export function EmptyState({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-      <p className="text-[13px] text-muted-foreground">{title}</p>
-      {body ? <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{body}</p> : null}
+      <p className="text-[13.5px] font-medium text-foreground">{title}</p>
+      {body ? <p className="mt-1.5 max-w-sm text-[12.5px] text-muted-foreground">{body}</p> : null}
+      {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );
 }
 
 export function StagePill({ stage }: { stage: Stage }) {
-  return (
-    <span
-      className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${STAGE_PILL_CLASS[stage]}`}
-    >
-      {STAGE_LABEL[stage]}
-    </span>
-  );
+  return <span className={`stage-pill ${STAGE_PILL_CLASS[stage]}`}>{STAGE_LABEL[stage]}</span>;
 }
 
 export function TagPill({ label }: { label: string }) {
   return (
     <span
-      className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${tagPillClass(label)}`}
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${tagPillClass(label)}`}
     >
       {label}
+    </span>
+  );
+}
+
+export function CountBadge({ value }: { value: number }) {
+  return (
+    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 font-mono text-[11px] text-muted-foreground">
+      {value}
     </span>
   );
 }
