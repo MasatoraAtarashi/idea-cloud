@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { COMMENT_BODY_MAX, type IdeaCommentView } from "../../db/comments";
 import { formatDateJa, formatRelativeJa } from "../lib/format";
@@ -9,6 +9,10 @@ import { IconSpinner } from "./icons";
 
 export function isCommentSubmitting(formData: FormData | undefined) {
   return formData?.get("intent") === "comment";
+}
+
+function commentSucceeded(data: (CommentIdeaActionData & { ok?: true }) | undefined) {
+  return Boolean(data && "ok" in data && data.ok);
 }
 
 export function IdeaComments({
@@ -25,27 +29,47 @@ export function IdeaComments({
   const { pending, hold } = useInstantPending(busy);
   const [body, setBody] = useState("");
   const [formKey, setFormKey] = useState(0);
+  const submittedBody = useRef("");
+  const lastSuccess = useRef<(CommentIdeaActionData & { ok?: true }) | undefined>(undefined);
   const fail = (fetcher.data && "error" in fetcher.data ? fetcher.data.error : undefined) ?? error;
 
   useEffect(() => {
-    if (fetcher.state !== "idle") return;
-    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+    if (fetcher.state === "submitting" && isCommentSubmitting(fetcher.formData)) {
+      submittedBody.current = String(fetcher.formData?.get("body") ?? "");
       setBody("");
-      setFormKey((key) => key + 1);
+    }
+  }, [fetcher.state, fetcher.formData]);
+
+  useEffect(() => {
+    if (fetcher.state !== "idle") return;
+    if (commentSucceeded(fetcher.data)) {
+      if (lastSuccess.current !== fetcher.data) {
+        lastSuccess.current = fetcher.data;
+        setBody("");
+        setFormKey((key) => key + 1);
+      }
+      return;
+    }
+    if (fetcher.data && "error" in fetcher.data && fetcher.data.error && submittedBody.current) {
+      setBody(submittedBody.current);
     }
   }, [fetcher.data, fetcher.state]);
 
   return (
-    <section id="comments" className={compact ? "mt-8" : "mt-10 max-w-2xl"}>
-      <h2 className={compact ? "text-[15px] font-medium" : "text-[16px] font-medium"}>
+    <section id="comments" className={compact ? "mt-8" : "mt-8 max-w-2xl lg:mt-10"}>
+      <h2
+        className={compact ? "text-[15px] font-medium" : "text-[15px] font-medium lg:text-[16px]"}
+      >
         コメント
         <span className="ml-2 font-mono text-[11.5px] font-normal text-muted-foreground">
           {comments.length}
         </span>
       </h2>
-      <p className="mt-1 text-[12.5px] text-muted-foreground">
-        あとから少しずつ残せます。スレッドやリアクションはありません。
-      </p>
+      {compact ? null : (
+        <p className="mt-1 hidden text-[12.5px] text-muted-foreground lg:block">
+          あとから少しずつ残せます。スレッドやリアクションはありません。
+        </p>
+      )}
 
       {comments.length === 0 ? (
         <p className="mt-4 text-[12.5px] text-muted-foreground">まだコメントはありません。</p>
@@ -89,8 +113,12 @@ export function IdeaComments({
           disabled={pending}
           className="ui-input h-auto min-h-[4.5rem] resize-y py-2"
         />
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <p className="text-[12px] text-muted-foreground">{SESSION_USER.label} として追加</p>
+        <div className="mt-2 flex items-center justify-end gap-3">
+          {compact ? null : (
+            <p className="mr-auto hidden text-[12px] text-muted-foreground lg:block">
+              {SESSION_USER.label} として追加
+            </p>
+          )}
           <button
             type="submit"
             disabled={pending || body.trim().length === 0}

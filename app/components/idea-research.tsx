@@ -20,9 +20,11 @@ export function isResearchSubmitting(formData: FormData | undefined) {
 export function IdeaResearchControls({
   idea,
   error,
+  compact = false,
 }: {
   idea: MockIdea;
   error?: ResearchIdeaActionData["error"];
+  compact?: boolean;
 }) {
   const fetcher = useFetcher<ResearchIdeaActionData>();
   const busy = fetcher.state !== "idle";
@@ -38,9 +40,14 @@ export function IdeaResearchControls({
           <IconSearch className="h-3.5 w-3.5" />
           リサーチを実行
         </span>
-        <p id="research-gate" className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-          {RESEARCH_ARCHIVE_ERROR}
-        </p>
+        {compact ? null : (
+          <p
+            id="research-gate"
+            className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground"
+          >
+            {RESEARCH_ARCHIVE_ERROR}
+          </p>
+        )}
         {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
       </div>
     );
@@ -49,22 +56,28 @@ export function IdeaResearchControls({
   return (
     <fetcher.Form method="post" className="flex flex-col gap-1.5" onSubmit={hold}>
       <input type="hidden" name="intent" value="research" />
-      <label className="sr-only" htmlFor="research-preset">
-        プリセット
-      </label>
-      <select
-        id="research-preset"
-        name="preset"
-        defaultValue={defaultPreset}
-        disabled={pending}
-        className="ui-input text-[13px]"
-      >
-        {PRESETS.map((preset) => (
-          <option key={preset} value={preset}>
-            {RESEARCH_PRESET_LABEL[preset]}
-          </option>
-        ))}
-      </select>
+      {compact ? (
+        <input type="hidden" name="preset" value={defaultPreset} />
+      ) : (
+        <>
+          <label className="sr-only" htmlFor="research-preset">
+            プリセット
+          </label>
+          <select
+            id="research-preset"
+            name="preset"
+            defaultValue={defaultPreset}
+            disabled={pending}
+            className="ui-input text-[13px]"
+          >
+            {PRESETS.map((preset) => (
+              <option key={preset} value={preset}>
+                {RESEARCH_PRESET_LABEL[preset]}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
       <button
         type="submit"
         className="ui-btn-secondary w-full justify-start px-3 text-[13px]"
@@ -79,9 +92,11 @@ export function IdeaResearchControls({
         {pending ? "実行中…" : "リサーチを実行"}
       </button>
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
-      <p className="text-[11.5px] leading-snug text-muted-foreground">
-        着想から実行できます。保存した本文だけを分析します。ウェブ検索はありません。
-      </p>
+      {compact ? null : (
+        <p className="text-[11.5px] leading-snug text-muted-foreground">
+          着想から実行できます。保存した本文だけを分析します。ウェブ検索はありません。
+        </p>
+      )}
     </fetcher.Form>
   );
 }

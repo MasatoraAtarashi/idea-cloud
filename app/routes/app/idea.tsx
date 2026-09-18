@@ -77,28 +77,16 @@ export default function IdeaPage() {
       : actionError;
 
   return (
-    <>
-      <MobileIdeaDetail
-        idea={idea}
-        comments={comments}
-        commentError={commentError}
-        researchError={researchError}
-        brainstormError={brainstormError}
-        evaluateError={evaluateError}
-        editError={editError}
-        scoreError={scoreError}
-      />
-      <DesktopIdeaDetail
-        idea={idea}
-        comments={comments}
-        commentError={commentError}
-        researchError={researchError}
-        brainstormError={brainstormError}
-        evaluateError={evaluateError}
-        editError={editError}
-        scoreError={scoreError}
-      />
-    </>
+    <IdeaDetail
+      idea={idea}
+      comments={comments}
+      commentError={commentError}
+      researchError={researchError}
+      brainstormError={brainstormError}
+      evaluateError={evaluateError}
+      editError={editError}
+      scoreError={scoreError}
+    />
   );
 }
 
@@ -113,11 +101,13 @@ function IdeaMeta({ idea }: { idea: MockIdea }) {
       >
         熟成 {formatAgedDays(idea.agedDays)}
       </span>
-      <span className="font-mono text-[11.5px] text-muted-foreground">
+      <span className="hidden font-mono text-[11.5px] text-muted-foreground lg:inline">
         コメント {idea.commentCount}
       </span>
       {idea.researchedAt || idea.researchNotes ? (
-        <span className="font-mono text-[11.5px] text-muted-foreground">調査済</span>
+        <span className="hidden font-mono text-[11.5px] text-muted-foreground lg:inline">
+          調査済
+        </span>
       ) : null}
     </div>
   );
@@ -143,7 +133,7 @@ function StageAdvanceButton({ idea }: { idea: MockIdea }) {
   const { pending, hold } = useInstantPending(busy);
   if (!next) return null;
   return (
-    <fetcher.Form method="post" className="flex-1" onSubmit={hold}>
+    <fetcher.Form method="post" className="min-w-0 flex-1" onSubmit={hold}>
       <input type="hidden" name="intent" value="stage" />
       <input type="hidden" name="stage" value={next} />
       <button type="submit" disabled={pending} className="ui-btn w-full px-3 text-[13px]">
@@ -178,7 +168,7 @@ function ArchiveButton({ idea, ghost = false }: { idea: MockIdea; ghost?: boolea
   );
 }
 
-function MobileIdeaDetail({
+function IdeaDetail({
   idea,
   comments,
   commentError,
@@ -200,90 +190,16 @@ function MobileIdeaDetail({
   const [editing, setEditing] = useState(false);
 
   return (
-    <article className="flex min-h-0 flex-1 flex-col px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] lg:hidden">
-      <header className="flex items-center justify-between gap-3">
-        <Link
-          to={LIST_PATH}
-          className="flex min-h-11 items-center text-[13.5px] text-muted-foreground no-underline"
-        >
-          戻る
-        </Link>
-        <button
-          type="button"
-          onClick={() => setEditing((open) => !open)}
-          className="ui-btn-secondary px-3"
-        >
-          {editing ? "閉じる" : "編集"}
-        </button>
-      </header>
-      <div className="mt-3">
-        <IdeaMeta idea={idea} />
-      </div>
-      {editing ? (
-        <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
-      ) : (
-        <>
-          <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug">{idea.title}</h1>
-          <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground">
-            {idea.body}
-          </p>
-          <IdeaTags idea={idea} />
-        </>
-      )}
-      <div className="mt-5 flex flex-wrap gap-2">
-        <StageAdvanceButton idea={idea} />
-        <div className="min-w-[5.5rem] flex-1">
-          <IdeaAiMenu
-            idea={idea}
-            researchError={researchError}
-            brainstormError={brainstormError}
-            evaluateError={evaluateError}
-          />
-        </div>
-        <ArchiveButton idea={idea} />
-      </div>
-      <IdeaHumanScore idea={idea} compact error={scoreError} />
-      <IdeaComments comments={comments} error={commentError} compact />
-      <details className="mt-8">
-        <summary className="flex min-h-11 cursor-pointer items-center text-[13.5px] font-medium">
-          リサーチ・ブレスト・評価の記録
-        </summary>
-        <div className="pb-4">
-          <IdeaResearchNotes idea={idea} />
-          <IdeaBrainstormNotes idea={idea} />
-          <IdeaEvaluateNotes idea={idea} />
-        </div>
-      </details>
-    </article>
-  );
-}
-
-function DesktopIdeaDetail({
-  idea,
-  comments,
-  commentError,
-  researchError,
-  brainstormError,
-  evaluateError,
-  editError,
-  scoreError,
-}: {
-  idea: MockIdea;
-  comments: ReturnType<typeof toCommentView>[];
-  commentError?: string;
-  researchError?: string;
-  brainstormError?: string;
-  evaluateError?: string;
-  editError?: string;
-  scoreError?: string;
-}) {
-  const [editing, setEditing] = useState(false);
-
-  return (
-    <div className="hidden min-h-0 flex-1 lg:flex">
-      <article className="min-w-0 flex-1 px-8 py-6">
-        <div className="flex items-start justify-between gap-3">
-          <p className="font-mono text-[11.5px] text-muted-foreground">
+    <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <article className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-8 lg:py-6">
+        <header className="flex items-center justify-between gap-3 lg:items-start">
+          <Link
+            to={LIST_PATH}
+            className="flex min-h-11 items-center text-[13.5px] text-muted-foreground no-underline lg:hidden"
+          >
+            戻る
+          </Link>
+          <p className="hidden font-mono text-[11.5px] text-muted-foreground lg:block">
             <Link
               to={LIST_PATH}
               className="text-muted-foreground no-underline hover:text-foreground"
@@ -300,28 +216,67 @@ function DesktopIdeaDetail({
           >
             {editing ? "閉じる" : "編集"}
           </button>
-        </div>
-        <div className="mt-4">
+        </header>
+
+        <div className="mt-3 lg:mt-4">
           <IdeaMeta idea={idea} />
         </div>
+
         {editing ? (
           <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
         ) : (
           <>
-            <h1 className="idea-title-wrap ui-title mt-3 text-[23px] leading-[1.4]">
+            <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug lg:text-[23px] lg:leading-[1.4]">
               {idea.title}
             </h1>
-            <IdeaTags idea={idea} />
-            <p className="mt-5 max-w-2xl whitespace-pre-wrap text-[13.5px] leading-relaxed text-muted-foreground">
+            <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground lg:mt-5 lg:text-[13.5px]">
               {idea.body}
             </p>
+            <IdeaTags idea={idea} />
           </>
         )}
+
+        <div className="mt-5 flex gap-2 lg:hidden">
+          <StageAdvanceButton idea={idea} />
+          <div className="w-[6.5rem] shrink-0">
+            <IdeaAiMenu
+              idea={idea}
+              compact
+              researchError={researchError}
+              brainstormError={brainstormError}
+              evaluateError={evaluateError}
+            >
+              <Link
+                to={`/app/merge?from=${idea.id}`}
+                className="ui-btn-ghost w-full justify-start px-3 text-[13px]"
+              >
+                <IconMerge className="h-3.5 w-3.5" />
+                融合
+              </Link>
+              <ArchiveButton idea={idea} ghost />
+            </IdeaAiMenu>
+          </div>
+        </div>
+
         <IdeaHumanScore idea={idea} error={scoreError} />
         <IdeaComments comments={comments} error={commentError} />
+
+        <details className="mt-8 lg:hidden">
+          <summary className="flex min-h-11 cursor-pointer items-center text-[13.5px] font-medium">
+            記録
+          </summary>
+          <div className="pb-4">
+            <IdeaResearchNotes idea={idea} />
+            <IdeaBrainstormNotes idea={idea} />
+            <IdeaEvaluateNotes idea={idea} />
+          </div>
+        </details>
       </article>
 
-      <aside id="research" className="w-72 shrink-0 border-l border-border px-4 py-6">
+      <aside
+        id="research"
+        className="hidden w-72 shrink-0 border-l border-border px-4 py-6 lg:block"
+      >
         <div className="mb-4 flex items-center justify-end gap-2">
           <span className="ui-btn-secondary pointer-events-none h-8 opacity-60">
             <IconShare className="h-3.5 w-3.5" />
@@ -375,8 +330,8 @@ function DesktopIdeaDetail({
         </dl>
 
         <IdeaResearchNotes idea={idea} />
-        <IdeaBrainstormNotes idea={idea} />
-        <IdeaEvaluateNotes idea={idea} />
+        <IdeaBrainstormNotes idea={idea} id="brainstorm" />
+        <IdeaEvaluateNotes idea={idea} id="evaluate" />
       </aside>
     </div>
   );

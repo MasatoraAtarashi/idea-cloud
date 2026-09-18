@@ -21,9 +21,11 @@ export function isBrainstormSubmitting(formData: FormData | undefined) {
 export function IdeaBrainstormControls({
   idea,
   error,
+  compact = false,
 }: {
   idea: MockIdea;
   error?: BrainstormIdeaActionData["error"];
+  compact?: boolean;
 }) {
   const fetcher = useFetcher<BrainstormIdeaActionData>();
   const busy = fetcher.state !== "idle";
@@ -39,9 +41,11 @@ export function IdeaBrainstormControls({
           <IconBrainstorm className="h-3.5 w-3.5" />
           ブレスト
         </span>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-          {BRAINSTORM_ARCHIVE_ERROR}
-        </p>
+        {compact ? null : (
+          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+            {BRAINSTORM_ARCHIVE_ERROR}
+          </p>
+        )}
         {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
       </div>
     );
@@ -50,22 +54,28 @@ export function IdeaBrainstormControls({
   return (
     <fetcher.Form method="post" className="flex flex-col gap-1.5" onSubmit={hold}>
       <input type="hidden" name="intent" value="brainstorm" />
-      <label className="sr-only" htmlFor="brainstorm-preset">
-        プリセット
-      </label>
-      <select
-        id="brainstorm-preset"
-        name="preset"
-        defaultValue={defaultPreset}
-        disabled={pending}
-        className="ui-input text-[13px]"
-      >
-        {PRESETS.map((preset) => (
-          <option key={preset} value={preset}>
-            {RESEARCH_PRESET_LABEL[preset]}
-          </option>
-        ))}
-      </select>
+      {compact ? (
+        <input type="hidden" name="preset" value={defaultPreset} />
+      ) : (
+        <>
+          <label className="sr-only" htmlFor="brainstorm-preset">
+            プリセット
+          </label>
+          <select
+            id="brainstorm-preset"
+            name="preset"
+            defaultValue={defaultPreset}
+            disabled={pending}
+            className="ui-input text-[13px]"
+          >
+            {PRESETS.map((preset) => (
+              <option key={preset} value={preset}>
+                {RESEARCH_PRESET_LABEL[preset]}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
       <button
         type="submit"
         className="ui-btn-secondary w-full justify-start px-3 text-[13px]"
@@ -80,19 +90,21 @@ export function IdeaBrainstormControls({
         {pending ? "実行中…" : "ブレスト"}
       </button>
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
-      <p className="text-[11.5px] leading-snug text-muted-foreground">
-        切り口・別案・次の問いを広げます。既定は標準です。
-      </p>
+      {compact ? null : (
+        <p className="text-[11.5px] leading-snug text-muted-foreground">
+          切り口・別案・次の問いを広げます。既定は標準です。
+        </p>
+      )}
     </fetcher.Form>
   );
 }
 
-export function IdeaBrainstormNotes({ idea }: { idea: MockIdea }) {
+export function IdeaBrainstormNotes({ idea, id }: { idea: MockIdea; id?: string }) {
   const preset = presetFromModel(idea.brainstormModel);
   const modelLabel = preset ? RESEARCH_PRESET_LABEL[preset] : idea.brainstormModel;
 
   return (
-    <section id="brainstorm" className="mt-6">
+    <section id={id} className="mt-6">
       <h3 className="text-[13.5px] font-medium">ブレスト</h3>
       {idea.brainstormNotes ? (
         <div className="ui-panel mt-2 p-3">

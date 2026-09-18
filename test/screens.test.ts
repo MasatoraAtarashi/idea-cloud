@@ -217,12 +217,16 @@ describe("responsive home and nav", () => {
     expect(src).toContain("日以上");
     expect(src).toContain("コメント送信");
     expect(src).toContain('setBody("")');
+    expect(src).toContain('fetcher.state === "submitting"');
     expect(src).toContain("IdeaEditForm");
     expect(src).toContain("編集");
     expect(src).toContain("AI評価");
     expect(src).toContain("IdeaHumanScore");
     expect(src).toContain("evaluateIdeaAction");
     expect(src).toContain("IdeaAiMenu");
+    expect(appSources["../app/components/idea-ai-menu.tsx"]).toContain("compact={compact}");
+    expect(detailSrc).not.toContain("function MobileIdeaDetail");
+    expect(detailSrc).toContain("compact");
     expect(src).toContain("作成中");
     expect(src).toContain('media="print"');
     expect(appSources["../app/components/idea-list-view.tsx"]).toContain("px-4 py-2");

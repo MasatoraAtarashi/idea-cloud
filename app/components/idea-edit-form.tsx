@@ -58,7 +58,7 @@ export function IdeaEditForm({
         value={body}
         onChange={(event) => setBody(event.target.value)}
         disabled={pending}
-        className="mt-3 min-h-[7rem] w-full resize-y border-0 bg-transparent text-[13.5px] leading-relaxed text-muted-foreground outline-none"
+        className="mt-3 min-h-[7rem] w-full resize-y border-0 bg-transparent text-[15px] leading-relaxed text-muted-foreground outline-none lg:text-[13.5px]"
       />
       <label
         htmlFor="idea-edit-tags"

@@ -40,12 +40,16 @@ export function IdeaHumanScore({
   }, [idea.humanScoreNote, idea.id]);
 
   return (
-    <section className={compact ? "mt-5" : "mt-6"}>
-      <h3 className="text-[13.5px] font-medium">評価</h3>
-      <p className="mt-1 text-[12px] text-muted-foreground">
-        1–5 の点数。任意で短いメモを残せます。
-      </p>
-      <fetcher.Form method="post" className="mt-2" onSubmit={hold}>
+    <section className="mt-5 lg:mt-6">
+      {compact ? null : (
+        <div className="hidden lg:block">
+          <h3 className="text-[13.5px] font-medium">評価</h3>
+          <p className="mt-1 text-[12px] text-muted-foreground">
+            1–5 の点数。任意で短いメモを残せます。
+          </p>
+        </div>
+      )}
+      <fetcher.Form method="post" className="mt-0 lg:mt-2" onSubmit={hold}>
         <input type="hidden" name="intent" value="human-score" />
         <div className="flex flex-wrap gap-1.5">
           {SCORES.map((score) => (
@@ -70,21 +74,27 @@ export function IdeaHumanScore({
             </button>
           ))}
         </div>
-        <label htmlFor="human-score-note" className="sr-only">
-          評価メモ
-        </label>
-        <input
-          id="human-score-note"
-          name="note"
-          value={note}
-          maxLength={HUMAN_SCORE_NOTE_MAX}
-          onChange={(event) => setNote(event.target.value)}
-          placeholder="短いメモ（任意）"
-          className="ui-input mt-2"
-        />
+        {compact ? (
+          <input type="hidden" name="note" value={note} />
+        ) : (
+          <>
+            <label htmlFor="human-score-note" className="sr-only">
+              評価メモ
+            </label>
+            <input
+              id="human-score-note"
+              name="note"
+              value={note}
+              maxLength={HUMAN_SCORE_NOTE_MAX}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="短いメモ（任意）"
+              className="ui-input mt-2 hidden lg:block"
+            />
+          </>
+        )}
       </fetcher.Form>
-      {idea.humanScoredAt ? (
-        <p className="mt-1.5 font-mono text-[11px] text-muted-foreground">
+      {compact ? null : idea.humanScoredAt ? (
+        <p className="mt-1.5 hidden font-mono text-[11px] text-muted-foreground lg:block">
           {formatDateJa(idea.humanScoredAt)}
           {idea.humanScoreNote ? ` · ${idea.humanScoreNote}` : ""}
         </p>

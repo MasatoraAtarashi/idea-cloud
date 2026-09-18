@@ -21,9 +21,11 @@ export function isEvaluateSubmitting(formData: FormData | undefined) {
 export function IdeaEvaluateControls({
   idea,
   error,
+  compact = false,
 }: {
   idea: MockIdea;
   error?: EvaluateIdeaActionData["error"];
+  compact?: boolean;
 }) {
   const fetcher = useFetcher<EvaluateIdeaActionData>();
   const busy = fetcher.state !== "idle";
@@ -39,9 +41,11 @@ export function IdeaEvaluateControls({
           <IconStar className="h-3.5 w-3.5" />
           AI評価
         </span>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-          {EVALUATE_ARCHIVE_ERROR}
-        </p>
+        {compact ? null : (
+          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
+            {EVALUATE_ARCHIVE_ERROR}
+          </p>
+        )}
         {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
       </div>
     );
@@ -50,22 +54,28 @@ export function IdeaEvaluateControls({
   return (
     <fetcher.Form method="post" className="flex flex-col gap-1.5" onSubmit={hold}>
       <input type="hidden" name="intent" value="evaluate" />
-      <label className="sr-only" htmlFor="evaluate-preset">
-        プリセット
-      </label>
-      <select
-        id="evaluate-preset"
-        name="preset"
-        defaultValue={defaultPreset}
-        disabled={pending}
-        className="ui-input text-[13px]"
-      >
-        {PRESETS.map((preset) => (
-          <option key={preset} value={preset}>
-            {RESEARCH_PRESET_LABEL[preset]}
-          </option>
-        ))}
-      </select>
+      {compact ? (
+        <input type="hidden" name="preset" value={defaultPreset} />
+      ) : (
+        <>
+          <label className="sr-only" htmlFor="evaluate-preset">
+            プリセット
+          </label>
+          <select
+            id="evaluate-preset"
+            name="preset"
+            defaultValue={defaultPreset}
+            disabled={pending}
+            className="ui-input text-[13px]"
+          >
+            {PRESETS.map((preset) => (
+              <option key={preset} value={preset}>
+                {RESEARCH_PRESET_LABEL[preset]}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
       <button
         type="submit"
         className="ui-btn-secondary w-full justify-start px-3 text-[13px]"
@@ -80,19 +90,21 @@ export function IdeaEvaluateControls({
         {pending ? "実行中…" : "AI評価"}
       </button>
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
-      <p className="text-[11.5px] leading-snug text-muted-foreground">
-        強み・リスク・新規性・次の一手と 1–5 の点数です。
-      </p>
+      {compact ? null : (
+        <p className="text-[11.5px] leading-snug text-muted-foreground">
+          強み・リスク・新規性・次の一手と 1–5 の点数です。
+        </p>
+      )}
     </fetcher.Form>
   );
 }
 
-export function IdeaEvaluateNotes({ idea }: { idea: MockIdea }) {
+export function IdeaEvaluateNotes({ idea, id }: { idea: MockIdea; id?: string }) {
   const preset = presetFromModel(idea.aiEvaluationModel);
   const modelLabel = preset ? RESEARCH_PRESET_LABEL[preset] : idea.aiEvaluationModel;
 
   return (
-    <section id="evaluate" className="mt-6">
+    <section id={id} className="mt-6">
       <h3 className="text-[13.5px] font-medium">AI評価</h3>
       {idea.aiEvaluation ? (
         <div className="ui-panel mt-2 p-3">
