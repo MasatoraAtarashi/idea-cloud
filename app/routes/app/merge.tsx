@@ -28,10 +28,10 @@ export default function MergePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <h1 className="text-[15px] font-medium tracking-tight">融合</h1>
+    <div className="mx-auto max-w-4xl px-6 py-6">
+      <h1 className="text-[16px] font-medium tracking-tight">融合</h1>
       {pool.length === 0 ? (
-        <div className="ui-panel mt-4">
+        <div className="mt-6">
           <EmptyState title="まだありません" />
         </div>
       ) : (

@@ -61,11 +61,11 @@ Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.
 
 ## Provenance
 
-| Layer                                       | Source                                                          |
-| ------------------------------------------- | --------------------------------------------------------------- |
-| Worker, CI, Access middleware, sample todos | squat `personal-fullstack` from `MasatoraAtarashi/app-template` |
-| Product routes, mock data, Japanese UI      | This repo                                                       |
-| Visual tokens                               | LiteLLM Admin light chrome + Relic in-app list IA               |
+| Layer                                       | Source                                                                       |
+| ------------------------------------------- | ---------------------------------------------------------------------------- |
+| Worker, CI, Access middleware, sample todos | squat `personal-fullstack` from `MasatoraAtarashi/app-template`              |
+| Product routes, mock data, Japanese UI      | This repo                                                                    |
+| Visual tokens                               | Claude Design system frame (Linear IA × LiteLLM-thin chrome × pastel stages) |
 
 `app-template` is a squat monorepo (`isTemplate: false`). Copied out; template repo not modified.
 

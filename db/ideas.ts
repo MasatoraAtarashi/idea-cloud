@@ -89,16 +89,24 @@ export async function getIdeaView(db: Db, id: string | undefined): Promise<MockI
   return row ? toIdeaView(row) : undefined;
 }
 
-export async function insertIdea(db: Db, text: string): Promise<Idea> {
+export async function insertIdea(
+  db: Db,
+  text: string,
+  extras?: { stage?: Stage; tags?: string[] },
+): Promise<Idea> {
   const { title, body } = splitTitleBody(text);
-  const [created] = await db
-    .insert(ideas)
-    .values({ title, body, stage: "spark", tags: "[]" })
-    .returning();
+  const stage = extras?.stage ?? "spark";
+  const tags = JSON.stringify(extras?.tags ?? []);
+  const [created] = await db.insert(ideas).values({ title, body, stage, tags }).returning();
   if (!created) {
     throw new Error("Failed to insert idea");
   }
   return created;
+}
+
+export async function updateIdeaStage(db: Db, id: number, stage: Stage): Promise<Idea | undefined> {
+  const [updated] = await db.update(ideas).set({ stage }).where(eq(ideas.id, id)).returning();
+  return updated;
 }
 
 export async function saveIdeaResearch(

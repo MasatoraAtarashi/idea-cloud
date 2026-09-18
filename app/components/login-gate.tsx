@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { GOOGLE_LOGIN_CTA } from "../auth/google-login";
+import { GOOGLE_LOGIN_CTA, GOOGLE_LOGIN_NOTE, LOGIN_TAGLINE } from "../auth/google-login";
 import { BrandMark, BrandWordmark } from "./brand";
 
 /** Official four-color G mark. Visual mock only — this is not a Google SDK. */
@@ -20,7 +20,7 @@ function GoogleMark() {
       />
       <path
         fill="#34A853"
-        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0 11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
     </svg>
   );
@@ -28,20 +28,19 @@ function GoogleMark() {
 
 export function LoginGate() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sidebar px-4">
-      <div className="ui-panel w-full max-w-[22rem] px-8 py-8">
-        <div className="flex flex-col items-center gap-2">
-          <BrandMark className="h-9 w-9" />
-          <BrandWordmark className="text-[15px] font-medium tracking-tight" />
-        </div>
-        <h1 className="mt-6 text-center text-[15px] font-medium">ログイン</h1>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="flex w-full max-w-[22rem] flex-col items-center text-center">
+        <BrandMark className="h-11 w-11" />
+        <BrandWordmark className="mt-5 text-[22px] font-semibold tracking-[-0.02em]" />
+        <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{LOGIN_TAGLINE}</p>
         <Link
           to="/app"
-          className="mt-6 flex h-10 w-full items-center justify-center gap-3 rounded border border-[#747775] bg-white text-sm font-medium text-[#1f1f1f] no-underline hover:bg-[#f8f9fa]"
+          className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-border-control bg-card text-[14px] font-medium text-foreground no-underline hover:bg-row-hover"
         >
           <GoogleMark />
           {GOOGLE_LOGIN_CTA}
         </Link>
+        <p className="mt-4 text-[12.5px] text-muted-foreground">{GOOGLE_LOGIN_NOTE}</p>
       </div>
     </div>
   );
