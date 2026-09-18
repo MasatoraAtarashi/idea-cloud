@@ -164,13 +164,17 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
           他のアイデアと融合
         </Link>
         <div className="border-t border-border my-1" />
-        <button
-          type="button"
-          onClick={() => setStage("archived")}
-          className="flex min-h-11 w-full items-center px-3 text-left text-[13px] text-muted-foreground hover:bg-row-hover md:min-h-9"
-        >
-          アーカイブ
-        </button>
+        {idea.stage !== "archived" ? (
+          <button
+            type="button"
+            onClick={() => setStage("archived")}
+            className="flex min-h-11 w-full items-center px-3 text-left text-[13px] text-muted-foreground hover:bg-row-hover md:min-h-9"
+          >
+            アーカイブ
+          </button>
+        ) : (
+          <p className="px-3 py-2 text-[12px] text-muted-foreground">すでにアーカイブです</p>
+        )}
       </div>
     </details>
   );

@@ -231,7 +231,7 @@ export function IdeaListView({
             <span className="text-muted-foreground">熟成日数</span>
             <span className="font-medium">{minDays > 0 ? `${minDays}日以上` : "すべて"}</span>
           </summary>
-          <div className="ui-float absolute left-0 z-20 mt-1 w-44 py-1">
+          <div className="ui-float absolute left-0 z-20 mt-1 w-48 py-1">
             <button
               type="button"
               onClick={() => update({ minDays: 0 })}
@@ -249,6 +249,29 @@ export function IdeaListView({
                 {days}日以上
               </button>
             ))}
+            <form
+              key={minDays}
+              className="border-t border-border px-3 py-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const value = Number(new FormData(event.currentTarget).get("minDays") ?? "");
+                update({ minDays: Number.isInteger(value) && value > 0 ? value : 0 });
+              }}
+            >
+              <label className="sr-only" htmlFor="aged-days-min">
+                最小の熟成日数
+              </label>
+              <input
+                id="aged-days-min"
+                name="minDays"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                defaultValue={minDays > 0 ? minDays : ""}
+                placeholder="日以上"
+                className="ui-input h-8 text-[13px]"
+              />
+            </form>
           </div>
         </details>
         <span className="ml-auto font-mono text-[11.5px] text-muted-foreground">更新順</span>
@@ -306,9 +329,38 @@ export function IdeaListView({
             </Link>
           ))}
         </div>
-        {minDays > 0 ? (
-          <p className="pb-2 font-mono text-[11px] text-muted-foreground">{minDays}日以上</p>
-        ) : null}
+        <div className="flex gap-1.5 overflow-x-auto pb-2">
+          <Link
+            to={hrefFor({ minDays: 0 })}
+            preventScrollReset
+            aria-current={minDays === 0 ? "page" : undefined}
+            className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
+              minDays === 0 ? "bg-muted text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            熟成
+          </Link>
+          {AGED_DAY_PRESETS.map((days) => (
+            <Link
+              key={days}
+              to={hrefFor({ minDays: days })}
+              preventScrollReset
+              aria-current={minDays === days ? "page" : undefined}
+              className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
+                minDays === days
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {days}日以上
+            </Link>
+          ))}
+          {minDays > 0 && !(AGED_DAY_PRESETS as readonly number[]).includes(minDays) ? (
+            <span className="flex min-h-11 shrink-0 items-center rounded-full bg-foreground px-3 text-[12.5px] font-medium text-background">
+              {minDays}日以上
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="md:hidden">
@@ -573,6 +625,29 @@ function AgedDaysFilter({
           {days}日以上
         </button>
       ))}
+      <form
+        key={minDays}
+        className="flex min-h-11 min-w-[7.5rem] flex-1 items-center"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const value = Number(new FormData(event.currentTarget).get("minDays") ?? "");
+          update({ minDays: Number.isInteger(value) && value > 0 ? value : 0 });
+        }}
+      >
+        <label className="sr-only" htmlFor="aged-days-min-mobile">
+          最小の熟成日数
+        </label>
+        <input
+          id="aged-days-min-mobile"
+          name="minDays"
+          type="number"
+          min={1}
+          inputMode="numeric"
+          defaultValue={minDays > 0 ? minDays : ""}
+          placeholder="日以上"
+          className="ui-input"
+        />
+      </form>
     </div>
   );
 }

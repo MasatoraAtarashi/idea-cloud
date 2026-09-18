@@ -209,8 +209,12 @@ describe("responsive home and nav", () => {
     expect(detailSrc).not.toMatch(/<h1[^>]*line-clamp/);
     expect(src).toContain("IdeaSwipeRow");
     expect(src).toContain("次の段階へ");
+    expect(src).toContain("アーカイブ");
+    expect(appSources["../app/components/idea-swipe-row.tsx"]).toContain("次の段階へ");
+    expect(appSources["../app/components/idea-swipe-row.tsx"]).toContain("アーカイブ");
     expect(src).toContain("熟成日数");
     expect(src).toContain("AGED_DAY_PRESETS");
+    expect(src).toContain("日以上");
     expect(src).toContain("コメント送信");
     expect(src).toContain('setBody("")');
     expect(src).toContain("IdeaEditForm");

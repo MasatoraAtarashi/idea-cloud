@@ -46,6 +46,14 @@ describe("list view search params", () => {
     expect(listViewHref(parsed)).toContain("/app/list?");
   });
 
+  it("keeps a custom aged-days minimum in the URL", () => {
+    const parsed = parseListViewSearch(new URLSearchParams("days=21"));
+    expect(parsed.minDays).toBe(21);
+    expect(serializeListViewSearch(parsed).get("days")).toBe("21");
+    expect(listViewHref(parsed)).toBe("/app/list?days=21");
+    expect(parseListViewSearch(new URLSearchParams("days=nope")).minDays).toBe(0);
+  });
+
   it("accepts repeated keys and aging-shelf as aliases", () => {
     const params = new URLSearchParams();
     params.append("tab", "aging-shelf");

@@ -3,37 +3,52 @@ import { useFetcher } from "react-router";
 import { nextStage, type MockIdea } from "../data/mock";
 import { useInstantPending } from "../lib/use-instant-pending";
 
-const REVEAL_NEXT = 152;
-const REVEAL_ARCHIVE = 80;
+const BUTTON_WIDTH = 88;
 
 export function IdeaSwipeRow({ idea, children }: { idea: MockIdea; children: ReactNode }) {
   const fetcher = useFetcher();
   const startX = useRef(0);
+  const startY = useRef(0);
+  const axis = useRef<"h" | "v" | null>(null);
   const dragging = useRef(false);
   const [offset, setOffset] = useState(0);
   const next = nextStage(idea.stage);
   const canArchive = idea.stage !== "archived";
   const busy = fetcher.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
-  const width = next && canArchive ? REVEAL_NEXT : canArchive || next ? REVEAL_ARCHIVE : 0;
+  const actionCount = Number(Boolean(next)) + Number(canArchive);
+  const width = actionCount * BUTTON_WIDTH;
 
   function onTouchStart(event: TouchEvent) {
     if (width === 0) return;
     startX.current = event.touches[0]?.clientX ?? 0;
+    startY.current = event.touches[0]?.clientY ?? 0;
+    axis.current = null;
     dragging.current = false;
   }
 
   function onTouchMove(event: TouchEvent) {
     if (width === 0) return;
     const x = event.touches[0]?.clientX ?? startX.current;
+    const y = event.touches[0]?.clientY ?? startY.current;
     const dx = startX.current - x;
-    if (Math.abs(dx) > 8) dragging.current = true;
+    const dy = y - startY.current;
+    if (!axis.current) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      axis.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+    }
+    if (axis.current !== "h") return;
+    dragging.current = true;
     setOffset(Math.max(0, Math.min(width, dx)));
   }
 
   function onTouchEnd() {
-    if (width === 0) return;
-    setOffset((current) => (current > 48 ? width : 0));
+    if (width === 0 || axis.current !== "h") {
+      axis.current = null;
+      return;
+    }
+    setOffset((current) => (current > BUTTON_WIDTH / 2 ? width : 0));
+    axis.current = null;
   }
 
   function submitStage(stage: string) {
@@ -46,17 +61,18 @@ export function IdeaSwipeRow({ idea, children }: { idea: MockIdea; children: Rea
   }
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden md:overflow-visible">
       {width > 0 ? (
-        <div className="absolute inset-y-0 right-0 flex">
+        <div className="absolute inset-y-0 right-0 flex md:hidden">
           {next ? (
             <button
               type="button"
               disabled={pending}
               onClick={() => submitStage(next)}
-              className="flex min-h-11 min-w-20 items-center justify-center bg-accent px-2 text-[12px] font-medium text-foreground"
+              className="flex min-h-11 items-center justify-center bg-accent px-2 text-[12px] font-medium text-foreground"
+              style={{ width: BUTTON_WIDTH }}
             >
-              {pending ? "更新中…" : "次の段階"}
+              {pending ? "更新中…" : "次の段階へ"}
             </button>
           ) : null}
           {canArchive ? (
@@ -64,7 +80,8 @@ export function IdeaSwipeRow({ idea, children }: { idea: MockIdea; children: Rea
               type="button"
               disabled={pending}
               onClick={() => submitStage("archived")}
-              className="flex min-h-11 min-w-20 items-center justify-center bg-[var(--danger-soft)] px-2 text-[12px] font-medium text-danger"
+              className="flex min-h-11 items-center justify-center bg-[var(--danger-soft)] px-2 text-[12px] font-medium text-danger"
+              style={{ width: BUTTON_WIDTH }}
             >
               {pending ? "更新中…" : "アーカイブ"}
             </button>
@@ -77,12 +94,13 @@ export function IdeaSwipeRow({ idea, children }: { idea: MockIdea; children: Rea
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
         onClickCapture={(event) => {
           if (dragging.current || offset > 8) {
             event.preventDefault();
             event.stopPropagation();
             dragging.current = false;
-            if (offset > 8 && offset < 48) setOffset(0);
+            if (offset > 8 && offset < BUTTON_WIDTH / 2) setOffset(0);
           }
         }}
       >
