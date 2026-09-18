@@ -39,7 +39,7 @@ Empty workspace still shows **view chrome** (sidebar, list header, filters, tabl
 
 ## Brand
 
-Sidebar header, mobile list header, and login gate use the same mark + wordmark. Geometry is a flat cloud with a spark — not Relic’s mark and not an X bird.
+Sidebar header, mobile list header, and login gate use the same mark + wordmark. Geometry is a flat cloud with a spark — not Relic’s mark and not an X bird. The browser tab icon (`/favicon.svg`, `/favicon.ico`, `/apple-touch-icon.png`) is that mark as a high-contrast white silhouette on the brand blue tile so it stays readable at 16×16.
 
 ## Responsive homes
 

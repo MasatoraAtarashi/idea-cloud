@@ -21,6 +21,14 @@ const appSources = import.meta.glob(["../app/**/*.{ts,tsx,css}"], {
   eager: true,
 }) as Record<string, string>;
 
+const faviconSvg = Object.values(
+  import.meta.glob(["../public/favicon.svg"], {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }) as Record<string, string>,
+).join("\n");
+
 const DEMO_STRINGS = [
   "通勤の音声メモを、次の朝に構造化する",
   "『よく忘れる』をチームの公式ルールにする",
@@ -163,6 +171,9 @@ describe("desktop compose shortcuts and brand", () => {
   it("ships an original brand mark and quiet JP/Latin/mono stack", () => {
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("BrandMark");
+    expect(src).toContain("/favicon.svg");
+    expect(src).toContain("/favicon.ico");
+    expect(src).toContain("/apple-touch-icon.png");
     expect(src).toContain("--brand-spark");
     expect(src).toContain("Noto+Sans+JP:wght@400;500");
     expect(src).not.toContain("Noto+Sans+JP:wght@400;500;600");
@@ -176,6 +187,13 @@ describe("desktop compose shortcuts and brand", () => {
     expect(DESIGN_TOKENS.rowHeight).toBe(40);
     expect(STAGE_PILL_HEX.spark.bg).toBe("#f3f0ff");
     expect(STAGE_PILL_HEX.aging.fg).toBe("#b45309");
+    expect(faviconSvg).toContain("#3B6EF6");
+    expect(faviconSvg).toContain("#FFFFFF");
+    expect(faviconSvg).toContain("M8.4 24.2c-3.4 0-6.15-2.55-6.15-5.7");
+    expect(faviconSvg).toContain("M24.6 1.6 26.2 6.2 30.8 7.8");
+    expect(appSources["../app/components/brand.tsx"]).toContain(
+      "M8.4 24.2c-3.4 0-6.15-2.55-6.15-5.7",
+    );
   });
 });
 
