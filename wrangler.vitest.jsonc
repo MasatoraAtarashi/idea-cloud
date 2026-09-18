@@ -1,6 +1,8 @@
 /**
  * テスト用の wrangler 設定（vitest-pool-workers が読む）。
  * 本番の wrangler.jsonc とバインディング構成を揃えること。
+ * Workers AI is omitted: the binding forces a remote proxy session, and CI
+ * stubs env.AI.run instead of calling models.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -18,7 +20,4 @@
       "database_id": "00000000-0000-0000-0000-000000000000",
     },
   ],
-  "ai": {
-    "binding": "AI",
-  },
 }

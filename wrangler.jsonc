@@ -25,7 +25,9 @@
     },
   ],
   // Per-idea research (Workers AI). No web search / Browser Rendering this pass.
+  // remote:false keeps `pnpm dev` from opening a remote AI session.
   "ai": {
     "binding": "AI",
+    "remote": false,
   },
 }

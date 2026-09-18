@@ -4,6 +4,8 @@ import { STAGES } from "../app/data/mock";
 import type { Db } from "./client";
 import { ideas, type Idea } from "./schema";
 
+export type { Idea };
+
 export const IDEA_BODY_MAX = 8000;
 
 export function parseTags(raw: string): string[] {
