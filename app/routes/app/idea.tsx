@@ -239,7 +239,7 @@ function IdeaDetail({
 
         <div className="mt-5 flex gap-2 lg:hidden">
           <StageAdvanceButton idea={idea} />
-          <div className="w-[6.5rem] shrink-0">
+          <div className="relative w-[5.5rem] shrink-0">
             <IdeaAiMenu
               idea={idea}
               compact
