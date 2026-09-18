@@ -94,4 +94,23 @@ describe("ideas API", () => {
     expect(body.item.title).toBe("直した");
     expect(body.item.tags).toEqual(["棚"]);
   });
+
+  it("saves a human 1–5 score via PATCH", async () => {
+    const create = await api("/ideas", {
+      method: "POST",
+      body: JSON.stringify({ body: "点数を付ける" }),
+    });
+    const created = (await create.json()) as { item: { id: number } };
+    const patched = await api(`/ideas/${created.item.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ humanScore: 4, humanScoreNote: "寝かせる" }),
+    });
+    expect(patched.status).toBe(200);
+    const body = (await patched.json()) as {
+      item: { humanScore: number; humanScoreNote: string; humanScoredAt: string };
+    };
+    expect(body.item.humanScore).toBe(4);
+    expect(body.item.humanScoreNote).toBe("寝かせる");
+    expect(body.item.humanScoredAt).toBeTruthy();
+  });
 });

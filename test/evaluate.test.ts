@@ -77,11 +77,17 @@ describe("ideas evaluate API", () => {
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      item: { aiScore: number; aiEvaluation: string; aiEvaluationModel: string };
+      item: {
+        aiScore: number;
+        aiEvaluation: string;
+        aiEvaluationModel: string;
+        aiEvaluatedAt: string;
+      };
     };
     expect(body.item.aiScore).toBe(4);
     expect(body.item.aiEvaluation).toContain("強み");
     expect(body.item.aiEvaluationModel).toBe(RESEARCH_PRESETS.standard);
+    expect(body.item.aiEvaluatedAt).toBeTruthy();
   });
 
   it("rejects archive and returns a Japanese 502 when AI is missing", async () => {

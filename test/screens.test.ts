@@ -225,6 +225,7 @@ describe("responsive home and nav", () => {
     expect(src).toContain("編集");
     expect(src).toContain("AI評価");
     expect(src).toContain("IdeaHumanScore");
+    expect(src).toContain("IdeaScoreChips");
     expect(src).toContain("evaluateIdeaAction");
     expect(src).toContain("IdeaAiMenu");
     expect(appSources["../app/components/idea-ai-menu.tsx"]).toContain("compact={compact}");
