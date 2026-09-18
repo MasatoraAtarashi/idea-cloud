@@ -46,13 +46,8 @@ export function bindResearchAi(ai: Env["AI"] | undefined): ResearchAi {
   };
 }
 
-export async function runWorkersAi(
-  ai: ResearchAi,
-  model: ResearchModelId,
-  inputs: ResearchAiInputs,
-): Promise<unknown> {
-  const run = testAiRun ?? ai.run;
-  return run(model, inputs);
+export function resolveAiRun(ai: ResearchAi): ResearchAiRun {
+  return testAiRun ?? ((model, inputs) => ai.run(model, inputs));
 }
 
 export async function generateResearchNotes(
@@ -60,7 +55,8 @@ export async function generateResearchNotes(
   model: ResearchModelId,
   ideaText: string,
 ): Promise<string> {
-  const result = await runWorkersAi(ai, model, {
+  const run = resolveAiRun(ai);
+  const result = await run(model, {
     messages: [
       { role: "system", content: RESEARCH_SYSTEM_PROMPT },
       { role: "user", content: ideaText },

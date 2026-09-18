@@ -15,13 +15,6 @@ export { SAVED_VIEW_MAX, SAVED_VIEW_NAME_MAX };
 
 export type SavedViewJson = SavedViewItem;
 
-export type SavedViewJson = {
-  id: number;
-  name: string;
-  filters: SavedViewFilters;
-  createdAt: string;
-};
-
 export function savedViewJson(row: SavedView): SavedViewJson {
   return {
     id: row.id,

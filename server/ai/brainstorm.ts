@@ -9,7 +9,7 @@ import { asStage, getIdeaRow } from "../../db/ideas";
 import { insertIdeaBrainstorm, type IdeaBrainstorm } from "../../db/brainstorms";
 import { listCommentsForIdea, type IdeaComment } from "../../db/comments";
 import type { Db } from "../../db/client";
-import { runWorkersAi, type ResearchAi } from "./research";
+import { resolveAiRun, type ResearchAi } from "./research";
 
 export const BRAINSTORM_FAIL_MESSAGE = "ブレストに失敗しました。時間をおいて再度お試しください。";
 
@@ -44,7 +44,8 @@ export async function generateBrainstormNotes(
   model: ResearchModelId,
   ideaText: string,
 ): Promise<string> {
-  const result = await runWorkersAi(ai, model, {
+  const run = resolveAiRun(ai);
+  const result = await run(model, {
     messages: [
       { role: "system", content: BRAINSTORM_SYSTEM_PROMPT },
       { role: "user", content: ideaText },

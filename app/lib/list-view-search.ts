@@ -39,9 +39,9 @@ function isStage(value: string): value is Stage {
   return (STAGES as readonly string[]).includes(value);
 }
 
-function unique(values: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
+function unique<T extends string>(values: T[]): T[] {
+  const seen = new Set<T>();
+  const out: T[] = [];
   for (const value of values) {
     if (seen.has(value)) continue;
     seen.add(value);
