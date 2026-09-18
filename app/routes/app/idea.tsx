@@ -192,13 +192,14 @@ function IdeaDetail({
   return (
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <article className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-8 lg:py-6">
-        <header className="flex items-center justify-between gap-3 lg:items-start">
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-3 lg:flex lg:items-start lg:justify-between">
           <Link
             to={LIST_PATH}
-            className="flex min-h-11 items-center text-[13.5px] text-muted-foreground no-underline lg:hidden"
+            className="flex min-h-11 min-w-[4.5rem] items-center text-[13.5px] text-muted-foreground no-underline lg:hidden"
           >
             戻る
           </Link>
+          <p className="text-center text-[13.5px] font-medium tracking-tight lg:hidden">アイデア</p>
           <p className="hidden font-mono text-[11.5px] text-muted-foreground lg:block">
             <Link
               to={LIST_PATH}
@@ -212,7 +213,7 @@ function IdeaDetail({
           <button
             type="button"
             onClick={() => setEditing((open) => !open)}
-            className="ui-btn-secondary px-3"
+            className="ui-btn-secondary min-w-[4.5rem] justify-self-end px-3"
           >
             {editing ? "閉じる" : "編集"}
           </button>
