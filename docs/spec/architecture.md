@@ -50,14 +50,14 @@ Summarize / analyze one idea’s stored text. **No web search**, Browser Renderi
 
 | Item     | Today                                                                                                                                                  |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Binding  | `AI` in `wrangler.jsonc` (`remote: false` for local; omitted from `wrangler.vitest.jsonc` so CI stays local)                                           |
+| Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local.                              |
 | Gate     | Idea `stage` must be `selected` (採用). Otherwise 409 / 「採用してからリサーチできます」                                                               |
 | UI       | Idea detail only (`#research`). Not a primary nav tab. `/app/research?from=:id` redirects to the detail section                                        |
 | Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                              |
 | Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
 | Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                       |
 
-Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.AI.run` via a thin wrapper (the vitest wrangler config omits `AI` so CI does not open a remote Workers AI session).
+Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.AI.run` via a thin wrapper. Vite `pnpm dev` does not open a remote Workers AI session.
 
 ## Provenance
 

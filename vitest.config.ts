@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [
     cloudflareTest({
       wrangler: { configPath: "./wrangler.vitest.jsonc" },
+      remoteBindings: false,
     }),
   ],
   test: {
