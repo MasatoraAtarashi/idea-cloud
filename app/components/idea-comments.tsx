@@ -3,16 +3,13 @@ import { useFetcher } from "react-router";
 import { COMMENT_BODY_MAX, type IdeaCommentView } from "../../db/comments";
 import { formatDateJa, formatRelativeJa } from "../lib/format";
 import { SESSION_USER } from "../data/mock";
+import { commentComposerAfterSettle, commentComposerResetOnSubmit } from "../lib/comment-composer";
 import { useInstantPending } from "../lib/use-instant-pending";
 import type { CommentIdeaActionData } from "../lib/idea-comment-action";
 import { IconSpinner } from "./icons";
 
 export function isCommentSubmitting(formData: FormData | undefined) {
   return formData?.get("intent") === "comment";
-}
-
-function commentSucceeded(data: (CommentIdeaActionData & { ok?: true }) | undefined) {
-  return Boolean(data && "ok" in data && data.ok);
 }
 
 export function IdeaComments({
@@ -29,31 +26,37 @@ export function IdeaComments({
   const { pending, hold } = useInstantPending(busy);
   const [body, setBody] = useState("");
   const [formKey, setFormKey] = useState(0);
-  const submittedBody = useRef("");
-  const lastSuccess = useRef<(CommentIdeaActionData & { ok?: true }) | undefined>(undefined);
+  const lastSubmitted = useRef("");
+  const resetFor = useRef<FormData | undefined>(undefined);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fail = (fetcher.data && "error" in fetcher.data ? fetcher.data.error : undefined) ?? error;
 
   useEffect(() => {
     if (fetcher.state === "submitting" && isCommentSubmitting(fetcher.formData)) {
-      submittedBody.current = String(fetcher.formData?.get("body") ?? "");
-      setBody("");
-    }
-  }, [fetcher.state, fetcher.formData]);
-
-  useEffect(() => {
-    if (fetcher.state !== "idle") return;
-    if (commentSucceeded(fetcher.data)) {
-      if (lastSuccess.current !== fetcher.data) {
-        lastSuccess.current = fetcher.data;
-        setBody("");
-        setFormKey((key) => key + 1);
-      }
+      if (resetFor.current === fetcher.formData) return;
+      resetFor.current = fetcher.formData;
+      const submitted = String(fetcher.formData?.get("body") ?? "");
+      const next = commentComposerResetOnSubmit(
+        { body: "", formKey: 0, lastSubmitted: lastSubmitted.current },
+        submitted,
+      );
+      lastSubmitted.current = next.lastSubmitted;
+      setBody(next.body);
+      setFormKey((key) => key + 1);
       return;
     }
-    if (fetcher.data && "error" in fetcher.data && fetcher.data.error && submittedBody.current) {
-      setBody(submittedBody.current);
+    if (fetcher.state !== "idle" || resetFor.current === undefined) return;
+    const next = commentComposerAfterSettle(
+      { body: "", formKey: 0, lastSubmitted: lastSubmitted.current },
+      fetcher.data,
+    );
+    lastSubmitted.current = next.lastSubmitted;
+    setBody(next.body);
+    resetFor.current = undefined;
+    if (fetcher.data && "error" in fetcher.data && fetcher.data.error) {
+      textareaRef.current?.focus();
     }
-  }, [fetcher.data, fetcher.state]);
+  }, [fetcher.data, fetcher.formData, fetcher.state]);
 
   return (
     <section id="comments" className={compact ? "mt-8" : "mt-8 max-w-2xl lg:mt-10"}>
@@ -103,6 +106,7 @@ export function IdeaComments({
           コメント
         </label>
         <textarea
+          ref={textareaRef}
           id="idea-comment"
           name="body"
           rows={3}
@@ -110,7 +114,9 @@ export function IdeaComments({
           value={body}
           onChange={(event) => setBody(event.target.value)}
           placeholder="いまの観点・気づき"
-          disabled={pending}
+          readOnly={pending}
+          autoComplete="off"
+          enterKeyHint="send"
           className="ui-input h-auto min-h-[4.5rem] resize-y py-2"
         />
         <div className="mt-2 flex items-center justify-end gap-3">

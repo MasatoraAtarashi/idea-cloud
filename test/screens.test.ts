@@ -216,8 +216,11 @@ describe("responsive home and nav", () => {
     expect(src).toContain("AGED_DAY_PRESETS");
     expect(src).toContain("日以上");
     expect(src).toContain("コメント送信");
-    expect(src).toContain('setBody("")');
+    expect(src).toContain("commentComposerResetOnSubmit");
+    expect(src).toContain("commentComposerAfterSettle");
     expect(src).toContain('fetcher.state === "submitting"');
+    expect(appSources["../app/components/idea-comments.tsx"]).toContain("readOnly={pending}");
+    expect(appSources["../app/components/idea-comments.tsx"]).toContain("key={formKey}");
     expect(src).toContain("IdeaEditForm");
     expect(src).toContain("編集");
     expect(src).toContain("AI評価");

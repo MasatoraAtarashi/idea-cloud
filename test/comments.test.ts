@@ -2,6 +2,10 @@ import { env, exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import type { ActionFunctionArgs } from "react-router";
 import { ideaDetailAction } from "../app/lib/idea-detail-action";
+import {
+  commentComposerAfterSettle,
+  commentComposerResetOnSubmit,
+} from "../app/lib/comment-composer";
 import { COMMENT_BODY_MAX } from "../db/comments";
 
 const authHeaders = {
@@ -126,5 +130,31 @@ describe("idea detail comment action", () => {
     const id = await createIdea("空コメント");
     const result = await ideaDetailAction(detailActionArgs(id, { intent: "comment", body: "  " }));
     expect(result).toEqual({ error: "入力してください", intent: "comment" });
+  });
+});
+
+describe("comment composer reset", () => {
+  it("clears the input after FormData is captured and stays empty on success", () => {
+    const draft = commentComposerResetOnSubmit(
+      { body: "朝の観点", formKey: 0, lastSubmitted: "" },
+      "朝の観点",
+    );
+    expect(draft.body).toBe("");
+    expect(draft.formKey).toBe(1);
+    expect(draft.lastSubmitted).toBe("朝の観点");
+
+    const settled = commentComposerAfterSettle(draft, { ok: true });
+    expect(settled.body).toBe("");
+    expect(settled.formKey).toBe(1);
+  });
+
+  it("restores the draft when comment create fails", () => {
+    const draft = commentComposerResetOnSubmit(
+      { body: "長すぎる下書き", formKey: 2, lastSubmitted: "" },
+      "長すぎる下書き",
+    );
+    const settled = commentComposerAfterSettle(draft, { error: "長すぎます" });
+    expect(settled.body).toBe("長すぎる下書き");
+    expect(settled.formKey).toBe(3);
   });
 });
