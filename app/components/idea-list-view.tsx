@@ -290,17 +290,17 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
               <ListEmpty onCreate={open} />
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div>
               <table className="ui-table">
                 <thead>
                   <tr>
-                    <th>アイデア</th>
-                    <th>段階</th>
-                    <th>タグ</th>
-                    <th className="text-right">コメント</th>
-                    <th>リサーチ</th>
-                    <th>更新</th>
-                    <th className="text-right">熟成日数</th>
+                    <th className="w-full">アイデア</th>
+                    <th className="whitespace-nowrap">段階</th>
+                    <th className="whitespace-nowrap">タグ</th>
+                    <th className="whitespace-nowrap text-right">コメント</th>
+                    <th className="whitespace-nowrap">リサーチ</th>
+                    <th className="whitespace-nowrap">更新</th>
+                    <th className="whitespace-nowrap text-right">熟成日数</th>
                     <th className="w-10">
                       <span className="sr-only">操作</span>
                     </th>
@@ -323,23 +323,23 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                             ) : null}
                           </Link>
                         </td>
-                        <td>
+                        <td className="whitespace-nowrap">
                           <StagePill stage={idea.stage} />
                         </td>
-                        <td>
+                        <td className="whitespace-nowrap">
                           <TagList tags={idea.tags} />
                         </td>
-                        <td className="text-right font-mono text-[11px] text-muted-foreground">
+                        <td className="whitespace-nowrap text-right font-mono text-[11px] text-muted-foreground">
                           {idea.commentCount}
                         </td>
-                        <td className="font-mono text-[11px] text-muted-foreground">
+                        <td className="whitespace-nowrap font-mono text-[11px] text-muted-foreground">
                           {idea.researchedAt || idea.researchNotes ? "調査済" : "採用で実行"}
                         </td>
-                        <td className="font-mono text-[11px] text-muted-foreground">
+                        <td className="whitespace-nowrap font-mono text-[11px] text-muted-foreground">
                           {formatRelativeJa(idea.updatedAt)}
                         </td>
                         <td
-                          className={`text-right font-mono text-[11px] ${
+                          className={`whitespace-nowrap text-right font-mono text-[11px] ${
                             idea.agedDays > 30
                               ? "text-[var(--stage-aging-fg)]"
                               : "text-muted-foreground"

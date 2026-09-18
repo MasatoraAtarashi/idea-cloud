@@ -56,6 +56,7 @@ export function IdeaComments({ comments, error }: { comments: IdeaCommentView[];
         </label>
         <textarea
           id="idea-comment"
+          key={comments.length}
           name="body"
           rows={3}
           maxLength={COMMENT_BODY_MAX}

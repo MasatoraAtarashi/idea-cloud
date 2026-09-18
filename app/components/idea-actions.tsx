@@ -29,7 +29,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
       >
         <IconMore className="h-4 w-4" />
       </summary>
-      <div className="ui-float absolute right-0 z-20 mt-1 w-52 py-1">
+      <div className="ui-float absolute right-0 z-30 mt-1 w-56 py-1">
         <Link
           to={`/app/ideas/${idea.id}`}
           className="block px-3 py-1.5 text-[13px] text-foreground no-underline hover:bg-row-hover"
