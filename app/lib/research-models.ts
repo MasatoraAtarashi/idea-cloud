@@ -14,6 +14,8 @@ export const RESEARCH_PRESET_LABEL: Record<ResearchPreset, string> = {
 };
 
 export const DEFAULT_RESEARCH_PRESET: ResearchPreset = "fast";
+export const DEFAULT_BRAINSTORM_PRESET: ResearchPreset = "standard";
+export const DEFAULT_EVALUATE_PRESET: ResearchPreset = "standard";
 
 const ALLOWED_MODELS = new Set<string>(Object.values(RESEARCH_PRESETS));
 
@@ -39,7 +41,9 @@ export function presetFromModel(model: string | null | undefined): ResearchPrese
 export function resolveResearchModel(input: {
   preset?: string | null;
   model?: string | null;
+  defaultPreset?: ResearchPreset;
 }): { ok: true; preset: ResearchPreset; model: ResearchModelId } | { ok: false; error: string } {
+  const fallback = input.defaultPreset ?? DEFAULT_RESEARCH_PRESET;
   const rawModel = input.model?.trim() ?? "";
   if (rawModel) {
     if (!isResearchModelId(rawModel)) {
@@ -47,11 +51,11 @@ export function resolveResearchModel(input: {
     }
     return {
       ok: true,
-      preset: presetFromModel(rawModel) ?? DEFAULT_RESEARCH_PRESET,
+      preset: presetFromModel(rawModel) ?? fallback,
       model: rawModel,
     };
   }
-  const presetRaw = input.preset?.trim() || DEFAULT_RESEARCH_PRESET;
+  const presetRaw = input.preset?.trim() || fallback;
   if (!isResearchPreset(presetRaw)) {
     return { ok: false, error: "preset が不正です" };
   }

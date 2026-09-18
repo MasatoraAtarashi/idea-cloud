@@ -48,8 +48,10 @@ export default function MergePage() {
                       onChange={() => toggle(idea.id)}
                       className="mt-1 accent-primary"
                     />
-                    <span>
-                      <span className="block text-sm">{idea.title}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="idea-title-wrap ui-title block text-sm leading-snug">
+                        {idea.title}
+                      </span>
                       <span className="mt-1 inline-flex items-center gap-2">
                         <StagePill stage={idea.stage} />
                         <Link

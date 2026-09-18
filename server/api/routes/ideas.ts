@@ -15,10 +15,20 @@ import {
   ideaJson,
   insertIdea,
   listIdeaRows,
+  saveHumanScore,
+  updateIdeaFields,
   updateIdeaStage,
 } from "../../../db/ideas";
+import {
+  brainstormJson,
+  getLatestBrainstorm,
+  listBrainstormsForIdea,
+} from "../../../db/brainstorms";
 import { resolveCommentAuthor, STAGES } from "../../../app/data/mock";
+import { HUMAN_SCORE_NOTE_MAX } from "../../../app/lib/scores";
 import { bindResearchAi, researchIdea } from "../../ai/research";
+import { brainstormIdea } from "../../ai/brainstorm";
+import { evaluateIdea } from "../../ai/evaluate";
 import { resolveCreateTags } from "../../ai/tags";
 import type { AppEnv } from "../../env";
 
@@ -28,9 +38,24 @@ const createIdeaSchema = z.object({
   tags: z.array(z.string().trim().min(1)).max(8).optional(),
 });
 
-const updateIdeaSchema = z.object({
-  stage: z.enum(STAGES),
-});
+const updateIdeaSchema = z
+  .object({
+    stage: z.enum(STAGES).optional(),
+    title: z.string().trim().min(1).max(200).optional(),
+    body: z.string().max(IDEA_BODY_MAX).optional(),
+    tags: z.array(z.string().trim().min(1)).max(8).optional(),
+    humanScore: z.number().int().min(1).max(5).optional(),
+    humanScoreNote: z.string().max(HUMAN_SCORE_NOTE_MAX).optional(),
+  })
+  .refine(
+    (value) =>
+      value.stage !== undefined ||
+      value.title !== undefined ||
+      value.body !== undefined ||
+      value.tags !== undefined ||
+      value.humanScore !== undefined,
+    { message: "更新する項目がありません" },
+  );
 
 const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -122,7 +147,13 @@ export const ideasRoute = new Hono<AppEnv>()
       return c.json({ error: "Not Found" }, 404);
     }
     const counts = await commentCountsByIdeaIds(db, [id]);
-    return c.json({ item: ideaJson(row, { commentCount: counts.get(id) ?? 0 }) });
+    const brainstorm = await getLatestBrainstorm(db, id);
+    return c.json({
+      item: ideaJson(row, {
+        commentCount: counts.get(id) ?? 0,
+        brainstorm: brainstorm ?? null,
+      }),
+    });
   })
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
     const { body, stage, tags } = c.req.valid("json");
@@ -141,13 +172,42 @@ export const ideasRoute = new Hono<AppEnv>()
     zValidator("json", updateIdeaSchema),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { stage } = c.req.valid("json");
+      const patch = c.req.valid("json");
       const db = createDb(c.env.DB);
-      const updated = await updateIdeaStage(db, id, stage);
-      if (!updated) {
+      if (patch.humanScore !== undefined) {
+        const note = patch.humanScoreNote?.trim() ?? "";
+        const scored = await saveHumanScore(db, id, { score: patch.humanScore, note });
+        if (!scored) {
+          return c.json({ error: "Not Found" }, 404);
+        }
+      }
+      if (
+        patch.stage !== undefined ||
+        patch.title !== undefined ||
+        patch.body !== undefined ||
+        patch.tags !== undefined
+      ) {
+        const updated =
+          patch.title !== undefined || patch.body !== undefined || patch.tags !== undefined
+            ? await updateIdeaFields(db, id, {
+                title: patch.title,
+                body: patch.body,
+                tags: patch.tags,
+                stage: patch.stage,
+              })
+            : patch.stage !== undefined
+              ? await updateIdeaStage(db, id, patch.stage)
+              : await getIdeaRow(db, id);
+        if (!updated) {
+          return c.json({ error: "Not Found" }, 404);
+        }
+        return c.json({ item: ideaJson(updated) });
+      }
+      const row = await getIdeaRow(db, id);
+      if (!row) {
         return c.json({ error: "Not Found" }, 404);
       }
-      return c.json({ item: ideaJson(updated) });
+      return c.json({ item: ideaJson(row) });
     },
   )
   .post("/:id/research", zValidator("param", idParamSchema), async (c) => {
@@ -158,6 +218,65 @@ export const ideasRoute = new Hono<AppEnv>()
     }
     const db = createDb(c.env.DB);
     const result = await researchIdea({
+      db,
+      ai: bindResearchAi(c.env.AI),
+      ideaId: id,
+      preset: input.preset,
+      model: input.model,
+    });
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json({ item: ideaJson(result.idea) });
+  })
+  .get("/:id/brainstorms", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const row = await getIdeaRow(db, id);
+    if (!row) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    const items = await listBrainstormsForIdea(db, id);
+    return c.json({ items: items.map(brainstormJson) });
+  })
+  .post("/:id/brainstorm", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const input = await readResearchInput(c);
+    if ("error" in input) {
+      return c.json({ error: input.error }, 400);
+    }
+    const db = createDb(c.env.DB);
+    const result = await brainstormIdea({
+      db,
+      ai: bindResearchAi(c.env.AI),
+      ideaId: id,
+      preset: input.preset,
+      model: input.model,
+    });
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status);
+    }
+    const row = await getIdeaRow(db, id);
+    if (!row) {
+      return c.json({ error: "見つかりません" }, 404);
+    }
+    const counts = await commentCountsByIdeaIds(db, [id]);
+    return c.json({
+      item: ideaJson(row, {
+        commentCount: counts.get(id) ?? 0,
+        brainstorm: result.brainstorm,
+      }),
+      brainstorm: brainstormJson(result.brainstorm),
+    });
+  })
+  .post("/:id/evaluate", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const input = await readResearchInput(c);
+    if ("error" in input) {
+      return c.json({ error: input.error }, 400);
+    }
+    const db = createDb(c.env.DB);
+    const result = await evaluateIdea({
       db,
       ai: bindResearchAi(c.env.AI),
       ideaId: id,

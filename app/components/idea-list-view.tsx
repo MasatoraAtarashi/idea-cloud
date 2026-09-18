@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import {
+  AGED_DAY_PRESETS,
   allTags,
   filterIdeas,
   ideasByStage,
@@ -14,10 +15,14 @@ import {
 import { useCompose } from "../lib/compose";
 import { formatAgedDays, formatRelativeJa, ideaExcerpt } from "../lib/format";
 import { NEW_IDEA_PATH } from "../lib/home-path";
-import { useListViewSearch } from "../lib/list-view-search";
+import type { SavedViewItem } from "../lib/list-view-search";
+import { useListViewSearch } from "../lib/use-list-view-search";
 import { BrandMark } from "./brand";
 import { IconPlus, IconSearch } from "./icons";
 import { IdeaActionsMenu } from "./idea-actions";
+import { IdeaScoreChips } from "./idea-score";
+import { IdeaSwipeRow } from "./idea-swipe-row";
+import { ListSavedViews } from "./list-saved-views";
 import { CountBadge, StagePill, TagList } from "./ui";
 
 const MOBILE_STAGES: Stage[] = ["spark", "aging", "ripe", "selected"];
@@ -26,16 +31,23 @@ function toggleValue<T>(current: T[], value: T): T[] {
   return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
 }
 
-export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
+export function IdeaListView({
+  ideas,
+  savedViews = [],
+}: {
+  ideas: MockIdea[];
+  savedViews?: SavedViewItem[];
+}) {
   const { open } = useCompose();
-  const { tab, view, query, stages, tags, hrefFor, update } = useListViewSearch();
+  const listState = useListViewSearch();
+  const { tab, view, query, stages, tags, minDays, savedViewId, hrefFor, update } = listState;
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const availableTags = allTags(ideas);
   const tabbed =
     tab === "aging-shelf"
       ? ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe")
       : ideas;
-  const filtered = filterIdeas(tabbed, { query, stages, tags });
+  const filtered = filterIdeas(tabbed, { query, stages, tags, minDays });
   const agingCount = ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe").length;
 
   function stageFilterLabel() {
@@ -74,7 +86,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
         <button
           type="button"
           onClick={() => setMobileFiltersOpen((openState) => !openState)}
-          className="text-[13.5px] text-muted-foreground"
+          className="flex min-h-11 items-center px-2 text-[13.5px] text-muted-foreground"
         >
           絞り込み
         </button>
@@ -96,6 +108,36 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                 {STAGE_LABEL[stage]}
               </button>
             ))}
+          </div>
+          {availableTags.length > 0 ? (
+            <>
+              <p className="mt-3 font-mono text-[11px] text-muted-foreground">タグ</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {availableTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => update({ tags: toggleValue(tags, tag) })}
+                    className={`rounded-full px-2.5 py-1 text-[12px] ${
+                      tags.includes(tag)
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+          <div className="mt-3">
+            <ListSavedViews
+              views={savedViews}
+              state={{ tab, view, query, stages, tags, minDays, savedViewId }}
+              nameFieldId="saved-view-name-mobile"
+            />
+            <p className="mt-3 font-mono text-[11px] text-muted-foreground">熟成日数</p>
+            <AgedDaysFilter minDays={minDays} update={update} />
           </div>
         </div>
       ) : null}
@@ -131,6 +173,11 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
       </div>
 
       <div className="hidden h-[46px] shrink-0 items-center gap-2 border-b border-border px-4 md:flex">
+        <ListSavedViews
+          views={savedViews}
+          state={{ tab, view, query, stages, tags, minDays, savedViewId }}
+          nameFieldId="saved-view-name-desktop"
+        />
         <details className="ui-menu relative">
           <summary
             className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px]"
@@ -176,6 +223,57 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
             </div>
           </details>
         ) : null}
+        <details className="ui-menu relative">
+          <summary
+            className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px]"
+            aria-label="熟成日数"
+          >
+            <span className="text-muted-foreground">熟成日数</span>
+            <span className="font-medium">{minDays > 0 ? `${minDays}日以上` : "すべて"}</span>
+          </summary>
+          <div className="ui-float absolute left-0 z-20 mt-1 w-48 py-1">
+            <button
+              type="button"
+              onClick={() => update({ minDays: 0 })}
+              className="block w-full px-3 py-1.5 text-left text-[13px] hover:bg-row-hover"
+            >
+              すべて
+            </button>
+            {AGED_DAY_PRESETS.map((days) => (
+              <button
+                key={days}
+                type="button"
+                onClick={() => update({ minDays: days })}
+                className="block w-full px-3 py-1.5 text-left text-[13px] hover:bg-row-hover"
+              >
+                {days}日以上
+              </button>
+            ))}
+            <form
+              key={minDays}
+              className="border-t border-border px-3 py-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const value = Number(new FormData(event.currentTarget).get("minDays") ?? "");
+                update({ minDays: Number.isInteger(value) && value > 0 ? value : 0 });
+              }}
+            >
+              <label className="sr-only" htmlFor="aged-days-min">
+                最小の熟成日数
+              </label>
+              <input
+                id="aged-days-min"
+                name="minDays"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                defaultValue={minDays > 0 ? minDays : ""}
+                placeholder="日以上"
+                className="ui-input h-8 text-[13px]"
+              />
+            </form>
+          </div>
+        </details>
         <span className="ml-auto font-mono text-[11.5px] text-muted-foreground">更新順</span>
         <div className="flex rounded-md border border-border-control p-0.5">
           <Link
@@ -207,7 +305,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
             to={hrefFor({ stages: [] })}
             preventScrollReset
             aria-current={stages.length === 0 ? "page" : undefined}
-            className={`shrink-0 rounded-full px-3 py-1 text-[12.5px] font-medium no-underline ${
+            className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
               stages.length === 0
                 ? "bg-foreground text-background"
                 : "bg-muted text-muted-foreground"
@@ -221,7 +319,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
               to={hrefFor({ stages: [stage] })}
               preventScrollReset
               aria-current={stages.length === 1 && stages[0] === stage ? "page" : undefined}
-              className={`stage-pill shrink-0 no-underline ${STAGE_PILL_CLASS[stage]} ${
+              className={`stage-pill flex min-h-11 shrink-0 items-center no-underline ${STAGE_PILL_CLASS[stage]} ${
                 stages.length === 1 && stages[0] === stage
                   ? "ring-1 ring-foreground/20"
                   : "opacity-80"
@@ -230,6 +328,38 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
               {STAGE_LABEL[stage]}
             </Link>
           ))}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto pb-2">
+          <Link
+            to={hrefFor({ minDays: 0 })}
+            preventScrollReset
+            aria-current={minDays === 0 ? "page" : undefined}
+            className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
+              minDays === 0 ? "bg-muted text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            熟成
+          </Link>
+          {AGED_DAY_PRESETS.map((days) => (
+            <Link
+              key={days}
+              to={hrefFor({ minDays: days })}
+              preventScrollReset
+              aria-current={minDays === days ? "page" : undefined}
+              className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
+                minDays === days
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {days}日以上
+            </Link>
+          ))}
+          {minDays > 0 && !(AGED_DAY_PRESETS as readonly number[]).includes(minDays) ? (
+            <span className="flex min-h-11 shrink-0 items-center rounded-full bg-foreground px-3 text-[12.5px] font-medium text-background">
+              {minDays}日以上
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -241,41 +371,53 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
             {filtered.map((idea) => {
               const excerpt = ideaExcerpt(idea);
               return (
-                <li key={idea.id} className="px-4 py-2">
-                  <Link to={`/app/ideas/${idea.id}`} className="block no-underline">
-                    <div className="flex items-center gap-2 text-[12px]">
-                      <StagePill stage={idea.stage} />
-                      <span
-                        className={`font-mono text-[11px] ${
-                          idea.agedDays > 30
-                            ? "text-[var(--stage-aging-fg)]"
-                            : "text-muted-foreground"
-                        }`}
+                <li key={idea.id}>
+                  <IdeaSwipeRow idea={idea}>
+                    <div className="flex items-start gap-1 px-4 py-2">
+                      <Link
+                        to={`/app/ideas/${idea.id}`}
+                        prefetch="intent"
+                        className="min-w-0 flex-1 no-underline"
                       >
-                        {formatAgedDays(idea.agedDays)}
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        コメント {idea.commentCount}
-                      </span>
-                      {idea.researchedAt || idea.researchNotes ? (
-                        <span className="font-mono text-[11px] text-muted-foreground">調査済</span>
-                      ) : null}
-                      <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-                        {formatRelativeJa(idea.updatedAt)}
-                      </span>
+                        <div className="flex flex-wrap items-center gap-2 text-[12px]">
+                          <StagePill stage={idea.stage} />
+                          <span
+                            className={`font-mono text-[11px] ${
+                              idea.agedDays > 30
+                                ? "text-[var(--stage-aging-fg)]"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            {formatAgedDays(idea.agedDays)}
+                          </span>
+                          <span className="font-mono text-[11px] text-muted-foreground">
+                            コメント {idea.commentCount}
+                          </span>
+                          {idea.researchedAt || idea.researchNotes ? (
+                            <span className="font-mono text-[11px] text-muted-foreground">
+                              調査済
+                            </span>
+                          ) : null}
+                          <IdeaScoreChips idea={idea} />
+                          <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                            {formatRelativeJa(idea.updatedAt)}
+                          </span>
+                        </div>
+                        <p className="idea-title-wrap ui-title mt-1 line-clamp-3 text-[13.5px] leading-snug text-foreground">
+                          {idea.title}
+                        </p>
+                        {excerpt ? (
+                          <p className="mt-0.5 line-clamp-1 text-[12px] leading-snug text-muted-foreground">
+                            {excerpt}
+                          </p>
+                        ) : null}
+                        <div className="mt-1">
+                          <TagList tags={idea.tags} />
+                        </div>
+                      </Link>
+                      <IdeaActionsMenu idea={idea} />
                     </div>
-                    <p className="ui-title mt-1 text-[13.5px] leading-snug text-foreground">
-                      {idea.title}
-                    </p>
-                    {excerpt ? (
-                      <p className="mt-0.5 line-clamp-1 text-[12px] leading-snug text-muted-foreground">
-                        {excerpt}
-                      </p>
-                    ) : null}
-                    <div className="mt-1">
-                      <TagList tags={idea.tags} />
-                    </div>
-                  </Link>
+                  </IdeaSwipeRow>
                 </li>
               );
             })}
@@ -294,11 +436,12 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
               <table className="ui-table">
                 <thead>
                   <tr>
-                    <th>アイデア</th>
+                    <th className="min-w-0 w-[34%]">アイデア</th>
                     <th>段階</th>
                     <th>タグ</th>
                     <th className="text-right">コメント</th>
                     <th>リサーチ</th>
+                    <th>評価</th>
                     <th>更新</th>
                     <th className="text-right">熟成日数</th>
                     <th className="w-10">
@@ -311,9 +454,13 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                     const excerpt = ideaExcerpt(idea);
                     return (
                       <tr key={idea.id}>
-                        <td>
-                          <Link to={`/app/ideas/${idea.id}`} className="block no-underline">
-                            <p className="ui-title text-[13px] leading-tight text-foreground">
+                        <td className="min-w-0">
+                          <Link
+                            to={`/app/ideas/${idea.id}`}
+                            prefetch="intent"
+                            className="block min-w-0 no-underline"
+                          >
+                            <p className="idea-title-wrap ui-title line-clamp-2 text-[13px] leading-snug text-foreground">
                               {idea.title}
                             </p>
                             {excerpt ? (
@@ -333,7 +480,10 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                           {idea.commentCount}
                         </td>
                         <td className="font-mono text-[11px] text-muted-foreground">
-                          {idea.researchedAt || idea.researchNotes ? "調査済" : "採用で実行"}
+                          {idea.researchedAt || idea.researchNotes ? "調査済" : "未実行"}
+                        </td>
+                        <td>
+                          <IdeaScoreChips idea={idea} />
                         </td>
                         <td className="font-mono text-[11px] text-muted-foreground">
                           {formatRelativeJa(idea.updatedAt)}
@@ -388,9 +538,10 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                           <div className="flex items-start justify-between gap-2">
                             <Link
                               to={`/app/ideas/${idea.id}`}
+                              prefetch="intent"
                               className="min-w-0 flex-1 no-underline"
                             >
-                              <p className="ui-title text-[13px] leading-snug text-foreground">
+                              <p className="idea-title-wrap ui-title line-clamp-3 text-[13px] leading-snug text-foreground">
                                 {idea.title}
                               </p>
                               <div className="mt-1">
@@ -402,6 +553,7 @@ export function IdeaListView({ ideas }: { ideas: MockIdea[] }) {
                                 {idea.researchedAt || idea.researchNotes ? (
                                   <span>調査済</span>
                                 ) : null}
+                                <IdeaScoreChips idea={idea} />
                               </p>
                             </Link>
                             <IdeaActionsMenu idea={idea} />
@@ -439,6 +591,63 @@ function ListEmpty({ onCreate }: { onCreate: () => void }) {
         最初のアイデアを作成
         <kbd className="ui-kbd ml-1.5">⌘N</kbd>
       </button>
+    </div>
+  );
+}
+
+function AgedDaysFilter({
+  minDays,
+  update,
+}: {
+  minDays: number;
+  update: (patch: { minDays: number }) => void;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      <button
+        type="button"
+        onClick={() => update({ minDays: 0 })}
+        className={`flex min-h-11 items-center rounded-full px-3 text-[12px] ${
+          minDays === 0 ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
+        }`}
+      >
+        すべて
+      </button>
+      {AGED_DAY_PRESETS.map((days) => (
+        <button
+          key={days}
+          type="button"
+          onClick={() => update({ minDays: days })}
+          className={`flex min-h-11 items-center rounded-full px-3 text-[12px] ${
+            minDays === days ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {days}日以上
+        </button>
+      ))}
+      <form
+        key={minDays}
+        className="flex min-h-11 min-w-[7.5rem] flex-1 items-center"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const value = Number(new FormData(event.currentTarget).get("minDays") ?? "");
+          update({ minDays: Number.isInteger(value) && value > 0 ? value : 0 });
+        }}
+      >
+        <label className="sr-only" htmlFor="aged-days-min-mobile">
+          最小の熟成日数
+        </label>
+        <input
+          id="aged-days-min-mobile"
+          name="minDays"
+          type="number"
+          min={1}
+          inputMode="numeric"
+          defaultValue={minDays > 0 ? minDays : ""}
+          placeholder="日以上"
+          className="ui-input"
+        />
+      </form>
     </div>
   );
 }

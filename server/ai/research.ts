@@ -3,7 +3,8 @@ import {
   resolveResearchModel,
   type ResearchModelId,
 } from "../../app/lib/research-models";
-import { getIdeaRow, saveIdeaResearch, type Idea } from "../../db/ideas";
+import { canRunIdeaAi, RESEARCH_ARCHIVE_ERROR } from "../../app/lib/idea-ai";
+import { asStage, getIdeaRow, saveIdeaResearch, type Idea } from "../../db/ideas";
 import type { Db } from "../../db/client";
 
 export const RESEARCH_FAIL_MESSAGE = "リサーチに失敗しました。時間をおいて再度お試しください。";
@@ -45,12 +46,16 @@ export function bindResearchAi(ai: Env["AI"] | undefined): ResearchAi {
   };
 }
 
+export function resolveAiRun(ai: ResearchAi): ResearchAiRun {
+  return testAiRun ?? ((model, inputs) => ai.run(model, inputs));
+}
+
 export async function generateResearchNotes(
   ai: ResearchAi,
   model: ResearchModelId,
   ideaText: string,
 ): Promise<string> {
-  const run = testAiRun ?? ai.run;
+  const run = resolveAiRun(ai);
   const result = await run(model, {
     messages: [
       { role: "system", content: RESEARCH_SYSTEM_PROMPT },
@@ -84,8 +89,8 @@ export async function researchIdea(opts: {
   if (!idea) {
     return { ok: false, status: 404, error: "見つかりません" };
   }
-  if (idea.stage !== "selected") {
-    return { ok: false, status: 409, error: "採用してからリサーチできます" };
+  if (!canRunIdeaAi(asStage(idea.stage))) {
+    return { ok: false, status: 409, error: RESEARCH_ARCHIVE_ERROR };
   }
 
   const ideaText = [idea.title, idea.body].filter((part) => part.trim().length > 0).join("\n");

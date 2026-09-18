@@ -1,6 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { STAGES } from "../app/data/mock";
+import { getLatestBrainstorm, type IdeaBrainstorm } from "./brainstorms";
 import { commentCountsByIdeaIds } from "./comments";
 import type { Db } from "./client";
 import { ideas, type Idea } from "./schema";
@@ -37,7 +38,10 @@ export function splitTitleBody(text: string): { title: string; body: string } {
   return { title, body };
 }
 
-export function toIdeaView(row: Idea, extras?: { commentCount?: number }): MockIdea {
+export function toIdeaView(
+  row: Idea,
+  extras?: { commentCount?: number; brainstorm?: IdeaBrainstorm | null },
+): MockIdea {
   return {
     id: String(row.id),
     title: row.title,
@@ -54,10 +58,23 @@ export function toIdeaView(row: Idea, extras?: { commentCount?: number }): MockI
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
+    brainstormNotes: extras?.brainstorm?.notes ?? null,
+    brainstormModel: extras?.brainstorm?.model ?? null,
+    brainstormedAt: extras?.brainstorm?.createdAt ?? null,
+    humanScore: row.humanScore ?? null,
+    humanScoreNote: row.humanScoreNote ?? null,
+    humanScoredAt: row.humanScoredAt ?? null,
+    aiScore: row.aiScore ?? null,
+    aiEvaluation: row.aiEvaluation ?? null,
+    aiEvaluatedAt: row.aiEvaluatedAt ?? null,
+    aiEvaluationModel: row.aiEvaluationModel ?? null,
   };
 }
 
-export function ideaJson(row: Idea, extras?: { commentCount?: number }) {
+export function ideaJson(
+  row: Idea,
+  extras?: { commentCount?: number; brainstorm?: IdeaBrainstorm | null },
+) {
   return {
     id: row.id,
     title: row.title,
@@ -71,6 +88,16 @@ export function ideaJson(row: Idea, extras?: { commentCount?: number }) {
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
+    brainstormNotes: extras?.brainstorm?.notes ?? null,
+    brainstormModel: extras?.brainstorm?.model ?? null,
+    brainstormedAt: extras?.brainstorm?.createdAt ?? null,
+    humanScore: row.humanScore ?? null,
+    humanScoreNote: row.humanScoreNote ?? null,
+    humanScoredAt: row.humanScoredAt ?? null,
+    aiScore: row.aiScore ?? null,
+    aiEvaluation: row.aiEvaluation ?? null,
+    aiEvaluatedAt: row.aiEvaluatedAt ?? null,
+    aiEvaluationModel: row.aiEvaluationModel ?? null,
   };
 }
 
@@ -98,7 +125,11 @@ export async function getIdeaView(db: Db, id: string | undefined): Promise<MockI
   const row = await getIdeaRow(db, numeric);
   if (!row) return undefined;
   const counts = await commentCountsByIdeaIds(db, [row.id]);
-  return toIdeaView(row, { commentCount: counts.get(row.id) ?? 0 });
+  const brainstorm = await getLatestBrainstorm(db, row.id);
+  return toIdeaView(row, {
+    commentCount: counts.get(row.id) ?? 0,
+    brainstorm: brainstorm ?? null,
+  });
 }
 
 export async function insertIdea(
@@ -142,6 +173,65 @@ export async function saveIdeaResearch(
     .returning();
   if (!updated) {
     throw new Error("Failed to save research");
+  }
+  return updated;
+}
+
+export async function updateIdeaFields(
+  db: Db,
+  id: number,
+  data: { title?: string; body?: string; tags?: string[]; stage?: Stage },
+): Promise<Idea | undefined> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      ...(data.title !== undefined ? { title: data.title } : {}),
+      ...(data.body !== undefined ? { body: data.body } : {}),
+      ...(data.tags !== undefined ? { tags: JSON.stringify(data.tags) } : {}),
+      ...(data.stage !== undefined ? { stage: data.stage } : {}),
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  return updated;
+}
+
+export async function saveHumanScore(
+  db: Db,
+  id: number,
+  data: { score: number; note: string },
+): Promise<Idea | undefined> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      humanScore: data.score,
+      humanScoreNote: data.note,
+      humanScoredAt: sql`(datetime('now'))`,
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  return updated;
+}
+
+export async function saveAiEvaluation(
+  db: Db,
+  id: number,
+  data: { score: number | null; notes: string; model: string },
+): Promise<Idea> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      aiScore: data.score,
+      aiEvaluation: data.notes,
+      aiEvaluationModel: data.model,
+      aiEvaluatedAt: sql`(datetime('now'))`,
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  if (!updated) {
+    throw new Error("Failed to save evaluation");
   }
   return updated;
 }

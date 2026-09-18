@@ -31,6 +31,13 @@ export const ideas = sqliteTable("ideas", {
   researchNotes: text("research_notes"),
   researchModel: text("research_model"),
   researchedAt: text("researched_at"),
+  humanScore: integer("human_score"),
+  humanScoreNote: text("human_score_note"),
+  humanScoredAt: text("human_scored_at"),
+  aiScore: integer("ai_score"),
+  aiEvaluation: text("ai_evaluation"),
+  aiEvaluatedAt: text("ai_evaluated_at"),
+  aiEvaluationModel: text("ai_evaluation_model"),
 });
 
 export type Idea = typeof ideas.$inferSelect;
@@ -56,3 +63,36 @@ export const ideaComments = sqliteTable(
 
 export type IdeaComment = typeof ideaComments.$inferSelect;
 export type NewIdeaComment = typeof ideaComments.$inferInsert;
+
+/** Per-idea AI expansions (angles / variants / questions). Latest row is shown on detail. */
+export const ideaBrainstorms = sqliteTable(
+  "idea_brainstorms",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    ideaId: integer("idea_id")
+      .notNull()
+      .references(() => ideas.id),
+    notes: text("notes").notNull(),
+    model: text("model").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [index("idea_brainstorms_idea_created_idx").on(table.ideaId, table.createdAt)],
+);
+
+export type IdeaBrainstorm = typeof ideaBrainstorms.$inferSelect;
+export type NewIdeaBrainstorm = typeof ideaBrainstorms.$inferInsert;
+
+/** Named list filters (stage / tag / query / tab / layout). JSON in `filters`. */
+export const savedViews = sqliteTable("saved_views", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  filters: text("filters").notNull().default("{}"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export type SavedView = typeof savedViews.$inferSelect;
+export type NewSavedView = typeof savedViews.$inferInsert;

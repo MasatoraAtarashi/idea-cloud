@@ -1,19 +1,20 @@
-import { redirect, type ActionFunctionArgs } from "react-router";
+import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { COMMENT_BODY_MAX, insertIdeaComment } from "../../db/comments";
 import { getIdeaRow } from "../../db/ideas";
 import { resolveCommentAuthor } from "../data/mock";
 
 export type CommentIdeaActionData = {
-  error: string;
+  error?: string;
   intent: "comment";
+  ok?: true;
 };
 
 export async function commentIdeaAction({
   request,
   params,
   context,
-}: ActionFunctionArgs): Promise<Response | CommentIdeaActionData> {
+}: ActionFunctionArgs): Promise<CommentIdeaActionData> {
   const ideaId = Number(params.ideaId);
   if (!Number.isInteger(ideaId) || ideaId <= 0) {
     return { error: "見つかりません", intent: "comment" } satisfies CommentIdeaActionData;
@@ -35,5 +36,5 @@ export async function commentIdeaAction({
   }
 
   await insertIdeaComment(db, ideaId, body, resolveCommentAuthor());
-  return redirect(`/app/ideas/${ideaId}#comments`);
+  return { ok: true, intent: "comment" } satisfies CommentIdeaActionData;
 }

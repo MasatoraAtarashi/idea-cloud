@@ -29,6 +29,20 @@
       "when": 1789724580606,
       "tag": "0003_true_the_spike",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789729064622,
+      "tag": "0004_blushing_bill_hollister",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789732984381,
+      "tag": "0005_fearless_leader",
+      "breakpoints": true
     }
   ]
 }

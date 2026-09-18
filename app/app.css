@@ -86,6 +86,13 @@ body {
   color-scheme: light;
 }
 
+button,
+a,
+summary,
+[role="button"] {
+  touch-action: manipulation;
+}
+
 a {
   @apply underline-offset-4;
 }
@@ -106,7 +113,7 @@ a {
   }
 
   .ui-btn {
-    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-[13.5px] font-medium text-primary-foreground no-underline disabled:opacity-40;
+    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-[13.5px] font-medium text-primary-foreground no-underline disabled:opacity-40 md:h-8 md:min-h-8;
     box-shadow: none;
   }
 
@@ -116,7 +123,7 @@ a {
 
   .ui-btn-secondary,
   .ui-btn-ghost {
-    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border-control bg-card px-3 text-[13.5px] font-medium text-foreground no-underline hover:bg-row-hover disabled:opacity-40;
+    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border border-border-control bg-card px-3 text-[13.5px] font-medium text-foreground no-underline hover:bg-row-hover disabled:opacity-40 md:h-8 md:min-h-8;
     box-shadow: none;
   }
 
@@ -129,7 +136,7 @@ a {
   }
 
   .ui-input {
-    @apply h-8 w-full rounded-md border border-border-control bg-card px-2.5 text-[13.5px] text-foreground outline-none;
+    @apply min-h-11 w-full rounded-md border border-border-control bg-card px-2.5 text-[13.5px] text-foreground outline-none md:h-8 md:min-h-8;
     box-shadow: none;
   }
 
@@ -142,7 +149,7 @@ a {
   }
 
   .ui-table {
-    @apply w-full border-collapse text-[13.5px];
+    @apply w-full table-fixed border-collapse text-[13.5px];
   }
 
   .ui-table th {
@@ -152,12 +159,12 @@ a {
   }
 
   .ui-table td {
-    @apply border-b border-border px-3 py-1 align-middle;
+    @apply border-b border-border px-3 py-2 align-top;
   }
 
   .ui-table tbody tr {
     background: var(--card);
-    height: 40px;
+    min-height: 40px;
   }
 
   .ui-table tbody tr:hover {
@@ -167,6 +174,13 @@ a {
   .ui-title {
     font-weight: 500;
     letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+
+  .idea-title-wrap {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
   }
 
   .ui-kbd {
