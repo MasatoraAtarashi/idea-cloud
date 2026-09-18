@@ -154,7 +154,8 @@ describe("responsive home and nav", () => {
     expect(src).toContain("標準");
     expect(src).toContain("じっくり");
     expect(src).toContain("実行中…");
-    expect(src).toContain("採用にすると実行できます");
+    expect(src).toContain("下の段階を採用にすると実行できます");
+    expect(src).toContain("上の段階を採用にすると実行できます");
     expect(src).toContain("researchIdeaAction");
     expect(src).toContain("ideaDetailAction");
     expect(src).toContain("autoSubmit");

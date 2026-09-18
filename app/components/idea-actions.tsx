@@ -67,12 +67,12 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
             </button>
           </Form>
         ) : (
-          <span
-            className="block cursor-not-allowed px-3 py-1.5 text-[13px] text-muted-foreground"
-            title="段階を採用にすると実行できます"
-          >
+          <p className="cursor-not-allowed px-3 py-1.5 text-[13px] text-muted-foreground">
             リサーチを実行
-          </span>
+            <span className="mt-0.5 block text-[11px] leading-snug">
+              上の段階を採用にすると実行できます
+            </span>
+          </p>
         )}
         <div className="border-t border-border my-1" />
         <button
