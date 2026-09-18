@@ -14,15 +14,16 @@ describe("list view search params", () => {
       query: "",
       stages: [],
       tags: [],
+      minDays: 0,
       savedViewId: null,
     });
     expect(serializeListViewSearch(parseListViewSearch(new URLSearchParams())).toString()).toBe("");
     expect(listViewHref(parseListViewSearch(new URLSearchParams()))).toBe("/app/list");
   });
 
-  it("round-trips tab, view, query, stages, tags, and saved view id", () => {
+  it("round-trips tab, view, query, stages, tags, aged days, and saved view id", async () => {
     const params = new URLSearchParams(
-      "tab=aging&view=board&q=通勤&stage=ripe,selected&tag=音声,朝&v=4",
+      "tab=aging&view=board&q=通勤&stage=ripe,selected&tag=音声,朝&days=14&v=4",
     );
     const parsed = parseListViewSearch(params);
     expect(parsed).toEqual({
@@ -31,6 +32,7 @@ describe("list view search params", () => {
       query: "通勤",
       stages: ["ripe", "selected"],
       tags: ["音声", "朝"],
+      minDays: 14,
       savedViewId: 4,
     });
     expect(serializeListViewSearch(parsed).get("tab")).toBe("aging");
@@ -38,6 +40,7 @@ describe("list view search params", () => {
     expect(serializeListViewSearch(parsed).get("q")).toBe("通勤");
     expect(serializeListViewSearch(parsed).get("stage")).toBe("ripe,selected");
     expect(serializeListViewSearch(parsed).get("tag")).toBe("音声,朝");
+    expect(serializeListViewSearch(parsed).get("days")).toBe("14");
     expect(serializeListViewSearch(parsed).get("v")).toBe("4");
     expect(parseListViewSearch(serializeListViewSearch(parsed))).toEqual(parsed);
     expect(listViewHref(parsed)).toContain("/app/list?");

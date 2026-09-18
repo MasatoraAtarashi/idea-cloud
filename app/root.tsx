@@ -26,7 +26,6 @@ export const links: Route.LinksFunction = () => [
     crossOrigin: "anonymous",
   },
   { rel: "preload", as: "style", href: FONT_STYLESHEET },
-  { rel: "stylesheet", href: FONT_STYLESHEET },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -34,9 +33,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="ja">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <Meta />
         <Links />
+        <link
+          rel="stylesheet"
+          href={FONT_STYLESHEET}
+          media="print"
+          onLoad={(event) => {
+            event.currentTarget.media = "all";
+          }}
+        />
+        <noscript>
+          <link rel="stylesheet" href={FONT_STYLESHEET} />
+        </noscript>
       </head>
       <body>
         {children}

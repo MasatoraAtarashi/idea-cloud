@@ -106,7 +106,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={open}
-            className="mx-2 mt-3 flex h-[34px] items-center gap-2 rounded-md border border-border-control bg-card px-2.5 text-[13.5px] font-medium text-foreground hover:bg-row-hover"
+            className="mx-2 mt-3 flex min-h-11 items-center gap-2 rounded-md border border-border-control bg-card px-2.5 text-[13.5px] font-medium text-foreground hover:bg-row-hover md:h-[34px] md:min-h-[34px]"
             aria-label="新規アイデア"
             title="新規アイデア (⌘N)"
           >
@@ -147,7 +147,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
               end={item.end}
               className={({ isActive }) => {
                 const on = item.primary ? isComposePath(location.pathname) : isActive;
-                return `flex flex-col items-center gap-0.5 py-1.5 no-underline ${
+                return `flex min-h-11 flex-col items-center justify-center gap-0.5 py-1.5 no-underline ${
                   on ? "text-primary" : "text-muted-foreground"
                 }`;
               }}

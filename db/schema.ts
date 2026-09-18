@@ -31,6 +31,13 @@ export const ideas = sqliteTable("ideas", {
   researchNotes: text("research_notes"),
   researchModel: text("research_model"),
   researchedAt: text("researched_at"),
+  humanScore: integer("human_score"),
+  humanScoreNote: text("human_score_note"),
+  humanScoredAt: text("human_scored_at"),
+  aiScore: integer("ai_score"),
+  aiEvaluation: text("ai_evaluation"),
+  aiEvaluatedAt: text("ai_evaluated_at"),
+  aiEvaluationModel: text("ai_evaluation_model"),
 });
 
 export type Idea = typeof ideas.$inferSelect;

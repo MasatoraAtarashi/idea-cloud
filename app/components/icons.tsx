@@ -200,11 +200,27 @@ export function IconShare(props: IconProps) {
   );
 }
 
+export function IconSpinner(props: IconProps) {
+  return (
+    <Svg {...props} className={`animate-spin ${props.className ?? "h-4 w-4"}`}>
+      <path d="M12 4.75a7.25 7.25 0 1 1-5.13 2.12" />
+    </Svg>
+  );
+}
+
 export function IconBrainstorm(props: IconProps) {
   return (
     <Svg {...props}>
       <path d="M9 18h6M10.5 21h3" />
       <path d="M8.4 14.6A5.2 5.2 0 1 1 15.6 14.6C15.6 16.2 14 17.2 14 18.2h-4c0-1-1.6-2-1.6-3.6z" />
+    </Svg>
+  );
+}
+
+export function IconStar(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 4.6 14.1 9.3 19.2 10l-3.7 3.5.9 5.1L12 16.2 7.6 18.6l.9-5.1L4.8 10l5.1-.7z" />
     </Svg>
   );
 }

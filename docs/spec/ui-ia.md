@@ -23,7 +23,7 @@ Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboar
 | Radius       | 6–7px controls, 9–12px panels                                                                                                                                         |
 | Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–500); IBM Plex Mono for meta only. Titles `font-weight: 500` with slightly tight tracking.                             |
 | Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                             |
-| Pills        | Pastel chips for stage/tags only. No fake S/A/B scores.                                                                                                               |
+| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                          |
 
 Stage pill hex (background / foreground):
 
@@ -58,24 +58,25 @@ Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを
 
 ## Idea list (`/app/list`, desktop home)
 
-Always show list chrome (search, 新規アイデア, tabs すべてのアイデア / 熟成中の棚, **ビュー**, stage/tag filter, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Desktop table columns: idea (title + excerpt), stage, tags (or **自動タグなし**), comment count, research (**調査済** / **未実行**), relative **更新**, aging days, row menu. Mobile cards keep compact padding and still show tags + comment count + research + aging. Board cards show the same signals. Mobile 絞り込み also has tags and named views.
+Always show list chrome (search, 新規アイデア, tabs すべてのアイデア / 熟成中の棚, **ビュー**, stage/tag/熟成日数 filter, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Desktop table columns: idea (title wraps 2 lines + excerpt), stage, tags (or **自動タグなし**), comment count, research (**調査済** / **未実行**), compact human/AI score, relative **更新**, aging days, row menu. Mobile cards wrap titles up to 3 lines, include ⋯ plus swipe for **次の段階** / **アーカイブ**, and still show tags + comment count + research + aging + scores. Board cards show the same signals. Mobile 絞り込み also has tags, named views, and 熟成日数.
 
 List view state is in the URL so Back/Forward and deep links work:
 
-| Param   | Values                     | Default (omitted) |
-| ------- | -------------------------- | ----------------- |
-| `tab`   | `aging` (熟成中の棚)       | all ideas         |
-| `view`  | `board`                    | `table`           |
-| `stage` | comma-separated stage ids  | none              |
-| `tag`   | comma-separated tag labels | none              |
-| `q`     | search string              | none              |
-| `v`     | saved view id              | none              |
+| Param   | Values                          | Default (omitted) |
+| ------- | ------------------------------- | ----------------- |
+| `tab`   | `aging` (熟成中の棚)            | all ideas         |
+| `view`  | `board`                         | `table`           |
+| `stage` | comma-separated stage ids       | none              |
+| `tag`   | comma-separated tag labels      | none              |
+| `q`     | search string                   | none              |
+| `days`  | min aged days (`7`, `14`, `30`) | none              |
+| `v`     | saved view id                   | none              |
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
-Row menu (⋯) lists **リサーチを実行** and **ブレスト** immediately under 詳細 (not behind 段階). Detail rail puts those controls first. Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails. Research notes stay on the idea row; brainstorm latest row is on detail (`#brainstorm`).
+Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ**. Detail rail puts those controls first; mobile detail uses a single **AI** disclosure instead of stacking every panel. Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails. Research notes stay on the idea row; brainstorm latest row is on detail (`#brainstorm`).
 
-Detail also has a **コメント** stream (oldest first, composer at the bottom). `intent=comment` inserts into `idea_comments`. Mock author is the session placeholder unless the API has an Access email.
+Detail also has **編集** (title/body/tags/stage) and a **コメント** stream (oldest first, composer at the bottom). Successful comment create clears the composer. `intent=comment` inserts into `idea_comments`. Mock author is the session placeholder unless the API has an Access email. Mobile detail is a quiet stack (back, stage + aging, wrapping title + body, tags, one action row, compact human score, comments) — not a shrunk desktop rail.
 
 | Stage      | Japanese   | Role            |
 | ---------- | ---------- | --------------- |

@@ -9,19 +9,21 @@ import {
 import type { CreateIdeaActionData } from "../lib/idea-action";
 import { LIST_PATH } from "../lib/home-path";
 import { isSubmitShortcut } from "../lib/shortcuts";
+import { useInstantPending } from "../lib/use-instant-pending";
 import { STAGE_LABEL, STAGE_PILL_CLASS, STAGES, type Stage } from "../data/mock";
-import { IconHash, IconList, IconType } from "./icons";
+import { IconHash, IconList, IconSpinner, IconType } from "./icons";
 import { StageSelect } from "./stage-select";
 
 export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
   const actionData = useActionData() as CreateIdeaActionData | undefined;
   const navigation = useNavigation();
   const submitting = navigation.state !== "idle";
+  const { pending, hold } = useInstantPending(submitting);
   const [title, setTitle] = useState(actionData?.title ?? "");
   const [draft, setDraft] = useState(actionData?.body ?? "");
   const [stage, setStage] = useState<Stage>("spark");
   const [tags, setTags] = useState("");
-  const canSubmit = Boolean((title.trim() || draft.trim()) && !submitting);
+  const canSubmit = Boolean((title.trim() || draft.trim()) && !pending);
 
   function onComposeKeyDown(event: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) {
     if (!isSubmitShortcut(event)) return;
@@ -33,7 +35,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col bg-background px-4 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
-        <Form method="post" className="flex min-h-0 flex-1 flex-col">
+        <Form method="post" className="flex min-h-0 flex-1 flex-col" onSubmit={hold}>
           <input type="hidden" name="stage" value={stage} />
           <div className="flex items-center justify-between gap-3">
             <Link to={LIST_PATH} className="text-[13.5px] text-muted-foreground no-underline">
@@ -43,9 +45,11 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="ui-btn h-8 rounded-full px-4 text-[13.5px] disabled:opacity-40"
+              aria-busy={pending}
+              className="ui-btn min-w-[4.5rem] rounded-full px-4 text-[13.5px] disabled:opacity-40"
             >
-              {COMPOSE_SUBMIT}
+              {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+              {pending ? "作成中" : COMPOSE_SUBMIT}
             </button>
           </div>
 
@@ -122,7 +126,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
 
       <div className="mx-auto hidden max-w-2xl px-6 py-8 md:block">
         <h1 className="text-[16px] font-medium tracking-tight">{COMPOSE_TITLE}</h1>
-        <Form method="post" className="ui-panel mt-4 p-4">
+        <Form method="post" className="ui-panel mt-4 p-4" onSubmit={hold}>
           <input
             name="title"
             defaultValue={actionData?.title ?? ""}
@@ -146,8 +150,9 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
                 className="h-8 min-w-[8rem] flex-1 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[12.5px] outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <button type="submit" disabled={submitting} className="ui-btn px-4">
-              {COMPOSE_SUBMIT}
+            <button type="submit" disabled={!canSubmit} aria-busy={pending} className="ui-btn px-4">
+              {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+              {pending ? "作成中" : COMPOSE_SUBMIT}
             </button>
           </div>
           <p className="mt-2 text-[11.5px] text-muted-foreground">

@@ -26,7 +26,7 @@ export function ListSavedViews({
   return (
     <details className="ui-menu relative">
       <summary
-        className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px]"
+        className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px] md:h-8 md:min-h-8"
         aria-label="ビュー"
       >
         <span className="text-muted-foreground">ビュー</span>
@@ -40,10 +40,11 @@ export function ListSavedViews({
             query: "",
             stages: [],
             tags: [],
+            minDays: 0,
             savedViewId: null,
           })}
           preventScrollReset
-          className="block px-3 py-1.5 text-[13px] text-foreground no-underline hover:bg-row-hover"
+          className="block min-h-11 px-3 py-2 text-[13px] text-foreground no-underline hover:bg-row-hover md:min-h-0 md:py-1.5"
         >
           すべてのアイデア
         </Link>
@@ -56,7 +57,7 @@ export function ListSavedViews({
                 to={listViewHref({ ...view.filters, savedViewId: view.id })}
                 preventScrollReset
                 aria-current={active?.id === view.id ? "page" : undefined}
-                className={`min-w-0 flex-1 truncate px-3 py-1.5 text-[13px] no-underline hover:bg-row-hover ${
+                className={`min-w-0 flex-1 truncate px-3 py-2 text-[13px] no-underline hover:bg-row-hover md:py-1.5 ${
                   active?.id === view.id ? "font-medium text-foreground" : "text-foreground"
                 }`}
               >
@@ -96,7 +97,7 @@ export function ListSavedViews({
             <p className="mt-1.5 text-[12px] text-danger">{actionData.error}</p>
           ) : (
             <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
-              段階・タグ・検索を名前付きで残せます
+              段階・タグ・熟成日数・検索を名前付きで残せます
             </p>
           )}
         </Form>

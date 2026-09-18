@@ -15,6 +15,7 @@ export const RESEARCH_PRESET_LABEL: Record<ResearchPreset, string> = {
 
 export const DEFAULT_RESEARCH_PRESET: ResearchPreset = "fast";
 export const DEFAULT_BRAINSTORM_PRESET: ResearchPreset = "standard";
+export const DEFAULT_EVALUATE_PRESET: ResearchPreset = "standard";
 
 const ALLOWED_MODELS = new Set<string>(Object.values(RESEARCH_PRESETS));
 

@@ -107,6 +107,7 @@ describe("list view save action", () => {
         query: "通勤",
         stages: ["spark", "aging"],
         tags: ["朝"],
+        minDays: 0,
         savedViewId: saved!.id,
       }),
     );

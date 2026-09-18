@@ -1,19 +1,43 @@
-import { Form, useNavigation } from "react-router";
+import { useEffect, useState } from "react";
+import { useFetcher } from "react-router";
 import { COMMENT_BODY_MAX, type IdeaCommentView } from "../../db/comments";
 import { formatDateJa, formatRelativeJa } from "../lib/format";
 import { SESSION_USER } from "../data/mock";
+import { useInstantPending } from "../lib/use-instant-pending";
+import type { CommentIdeaActionData } from "../lib/idea-comment-action";
+import { IconSpinner } from "./icons";
 
 export function isCommentSubmitting(formData: FormData | undefined) {
   return formData?.get("intent") === "comment";
 }
 
-export function IdeaComments({ comments, error }: { comments: IdeaCommentView[]; error?: string }) {
-  const navigation = useNavigation();
-  const submitting = navigation.state !== "idle" && isCommentSubmitting(navigation.formData);
+export function IdeaComments({
+  comments,
+  error,
+  compact = false,
+}: {
+  comments: IdeaCommentView[];
+  error?: string;
+  compact?: boolean;
+}) {
+  const fetcher = useFetcher<CommentIdeaActionData & { ok?: true }>();
+  const busy = fetcher.state !== "idle" && isCommentSubmitting(fetcher.formData);
+  const { pending, hold } = useInstantPending(busy);
+  const [body, setBody] = useState("");
+  const [formKey, setFormKey] = useState(0);
+  const fail = (fetcher.data && "error" in fetcher.data ? fetcher.data.error : undefined) ?? error;
+
+  useEffect(() => {
+    if (fetcher.state !== "idle") return;
+    if (fetcher.data && "ok" in fetcher.data && fetcher.data.ok) {
+      setBody("");
+      setFormKey((key) => key + 1);
+    }
+  }, [fetcher.data, fetcher.state]);
 
   return (
-    <section id="comments" className="mt-10 max-w-2xl">
-      <h2 className="text-[16px] font-medium">
+    <section id="comments" className={compact ? "mt-8" : "mt-10 max-w-2xl"}>
+      <h2 className={compact ? "text-[15px] font-medium" : "text-[16px] font-medium"}>
         コメント
         <span className="ml-2 font-mono text-[11.5px] font-normal text-muted-foreground">
           {comments.length}
@@ -49,7 +73,7 @@ export function IdeaComments({ comments, error }: { comments: IdeaCommentView[];
         </ol>
       )}
 
-      <Form method="post" className="mt-4">
+      <fetcher.Form method="post" className="mt-4" onSubmit={hold} key={formKey}>
         <input type="hidden" name="intent" value="comment" />
         <label htmlFor="idea-comment" className="sr-only">
           コメント
@@ -59,18 +83,26 @@ export function IdeaComments({ comments, error }: { comments: IdeaCommentView[];
           name="body"
           rows={3}
           maxLength={COMMENT_BODY_MAX}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
           placeholder="いまの観点・気づき"
-          disabled={submitting}
+          disabled={pending}
           className="ui-input h-auto min-h-[4.5rem] resize-y py-2"
         />
         <div className="mt-2 flex items-center justify-between gap-3">
           <p className="text-[12px] text-muted-foreground">{SESSION_USER.label} として追加</p>
-          <button type="submit" disabled={submitting} className="ui-btn h-8 px-3">
-            {submitting ? "追加中…" : "追加"}
+          <button
+            type="submit"
+            disabled={pending || body.trim().length === 0}
+            aria-busy={pending}
+            className="ui-btn px-3"
+          >
+            {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+            {pending ? "送信中…" : "コメント送信"}
           </button>
         </div>
-        {error ? <p className="mt-1.5 text-[12.5px] text-danger">{error}</p> : null}
-      </Form>
+        {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
+      </fetcher.Form>
     </section>
   );
 }

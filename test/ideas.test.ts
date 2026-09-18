@@ -78,4 +78,20 @@ describe("ideas API", () => {
     const body = (await patched.json()) as { item: { stage: string } };
     expect(body.item.stage).toBe("selected");
   });
+
+  it("updates title and tags via PATCH", async () => {
+    const create = await api("/ideas", {
+      method: "POST",
+      body: JSON.stringify({ body: "直す前" }),
+    });
+    const created = (await create.json()) as { item: { id: number } };
+    const patched = await api(`/ideas/${created.item.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title: "直した", tags: ["棚"] }),
+    });
+    expect(patched.status).toBe(200);
+    const body = (await patched.json()) as { item: { title: string; tags: string[] } };
+    expect(body.item.title).toBe("直した");
+    expect(body.item.tags).toEqual(["棚"]);
+  });
 });

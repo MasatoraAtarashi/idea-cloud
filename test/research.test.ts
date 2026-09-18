@@ -262,11 +262,7 @@ describe("idea detail research action", () => {
     const result = await ideaDetailAction(
       detailActionArgs(id, { intent: "research", preset: "standard" }),
     );
-    expect(result).toBeInstanceOf(Response);
-    const response = result as Response;
-    expect(response.status).toBeGreaterThanOrEqual(300);
-    expect(response.status).toBeLessThan(400);
-    expect(response.headers.get("Location")).toBe(`/app/ideas/${id}#research`);
+    expect(result).toEqual({ ok: true, intent: "research" });
 
     const reload = await api(`/ideas/${id}`);
     const reloaded = (await reload.json()) as {
@@ -283,12 +279,12 @@ describe("idea detail research action", () => {
     const result = await ideaDetailAction(
       detailActionArgs(id, { intent: "research", preset: "fast" }),
     );
-    expect(result).toEqual({ error: RESEARCH_ARCHIVE_ERROR });
+    expect(result).toEqual({ error: RESEARCH_ARCHIVE_ERROR, intent: "research" });
   });
 
   it("returns a Japanese error when the detail action cannot call AI", async () => {
     const id = await createIdea("詳細の失敗");
     const result = await ideaDetailAction(detailActionArgs(id, { intent: "research" }));
-    expect(result).toEqual({ error: RESEARCH_FAIL_MESSAGE });
+    expect(result).toEqual({ error: RESEARCH_FAIL_MESSAGE, intent: "research" });
   });
 });

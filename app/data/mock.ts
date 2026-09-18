@@ -1,6 +1,17 @@
 export const STAGES = ["spark", "aging", "ripe", "selected", "archived"] as const;
 export type Stage = (typeof STAGES)[number];
 
+/** Advance along 着想 → 熟成中 → 熟した → 採用. Archive is separate. */
+export const STAGE_FLOW = ["spark", "aging", "ripe", "selected"] as const;
+
+export function nextStage(stage: Stage): Stage | null {
+  const index = (STAGE_FLOW as readonly string[]).indexOf(stage);
+  if (index < 0 || index >= STAGE_FLOW.length - 1) return null;
+  return STAGE_FLOW[index + 1];
+}
+
+export const AGED_DAY_PRESETS = [7, 14, 30] as const;
+
 export const STAGE_LABEL: Record<Stage, string> = {
   spark: "着想",
   aging: "熟成中",
@@ -66,6 +77,13 @@ export interface MockIdea {
   brainstormNotes?: string | null;
   brainstormModel?: string | null;
   brainstormedAt?: string | null;
+  humanScore?: number | null;
+  humanScoreNote?: string | null;
+  humanScoredAt?: string | null;
+  aiScore?: number | null;
+  aiEvaluation?: string | null;
+  aiEvaluatedAt?: string | null;
+  aiEvaluationModel?: string | null;
 }
 
 export interface MockMember {
@@ -117,9 +135,10 @@ export function allTags(ideas: MockIdea[] = IDEAS): string[] {
 
 export function filterIdeas(
   ideas: MockIdea[],
-  opts: { query: string; stages: Stage[]; tags: string[] },
+  opts: { query: string; stages: Stage[]; tags: string[]; minDays?: number },
 ): MockIdea[] {
   const query = opts.query.trim().toLowerCase();
+  const minDays = opts.minDays && opts.minDays > 0 ? opts.minDays : 0;
   return ideas.filter((idea) => {
     if (query) {
       const haystack = `${idea.title} ${idea.body} ${idea.tags.join(" ")}`.toLowerCase();
@@ -127,6 +146,7 @@ export function filterIdeas(
     }
     if (opts.stages.length > 0 && !opts.stages.includes(idea.stage)) return false;
     if (opts.tags.length > 0 && !opts.tags.some((tag) => idea.tags.includes(tag))) return false;
+    if (minDays > 0 && idea.agedDays < minDays) return false;
     return true;
   });
 }

@@ -4,12 +4,15 @@ import { LIST_PATH } from "./home-path";
 export type ListTab = "all" | "aging-shelf";
 export type ListLayout = "table" | "board";
 
+export const AGED_DAYS_PARAM = "days";
+
 export type SavedViewFilters = {
   tab: ListTab;
   view: ListLayout;
   query: string;
   stages: Stage[];
   tags: string[];
+  minDays: number;
 };
 
 export type ListViewSearch = SavedViewFilters & {
@@ -29,6 +32,7 @@ export const LIST_VIEW_DEFAULTS: ListViewSearch = {
   query: "",
   stages: [],
   tags: [],
+  minDays: 0,
   savedViewId: null,
 };
 
@@ -77,7 +81,14 @@ export function normalizeSavedViewFilters(input: Partial<SavedViewFilters>): Sav
     query: (input.query ?? "").trim(),
     stages: unique((input.stages ?? []).filter(isStage)),
     tags: unique((input.tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length > 0)),
+    minDays: normalizeMinDays(input.minDays),
   };
+}
+
+function normalizeMinDays(value: unknown): number {
+  const n = typeof value === "number" ? value : Number(String(value ?? "").trim());
+  if (!Number.isInteger(n) || n <= 0) return 0;
+  return n;
 }
 
 export function parseSavedViewFilters(raw: unknown): SavedViewFilters {
@@ -99,6 +110,7 @@ export function parseSavedViewFilters(raw: unknown): SavedViewFilters {
     query: typeof rec.query === "string" ? rec.query : "",
     stages: asStringArray(rec.stages).filter(isStage),
     tags: asStringArray(rec.tags),
+    minDays: normalizeMinDays(rec.minDays ?? rec.days),
   });
 }
 
@@ -109,6 +121,7 @@ export function omitSavedViewId(state: ListViewSearch): SavedViewFilters {
     query: state.query,
     stages: state.stages,
     tags: state.tags,
+    minDays: state.minDays,
   };
 }
 
@@ -126,6 +139,7 @@ export function parseListViewSearch(params: URLSearchParams): ListViewSearch {
     query: params.get("q") ?? "",
     stages: readList(params, "stage").filter(isStage),
     tags: readList(params, "tag"),
+    minDays: normalizeMinDays(params.get(AGED_DAYS_PARAM)),
     savedViewId,
   };
 }
@@ -137,6 +151,7 @@ export function serializeListViewSearch(state: ListViewSearch): URLSearchParams 
   if (state.query.trim()) params.set("q", state.query.trim());
   if (state.stages.length > 0) params.set("stage", state.stages.join(","));
   if (state.tags.length > 0) params.set("tag", state.tags.join(","));
+  if (state.minDays > 0) params.set(AGED_DAYS_PARAM, String(state.minDays));
   if (state.savedViewId && state.savedViewId > 0) params.set("v", String(state.savedViewId));
   return params;
 }

@@ -105,16 +105,12 @@ describe("idea comments API", () => {
 });
 
 describe("idea detail comment action", () => {
-  it("persists a comment from the detail form and redirects", async () => {
+  it("persists a comment from the detail form without a document redirect", async () => {
     const id = await createIdea("詳細からコメント");
     const result = await ideaDetailAction(
       detailActionArgs(id, { intent: "comment", body: "寝かせてから見る" }),
     );
-    expect(result).toBeInstanceOf(Response);
-    const response = result as Response;
-    expect(response.status).toBeGreaterThanOrEqual(300);
-    expect(response.status).toBeLessThan(400);
-    expect(response.headers.get("Location")).toBe(`/app/ideas/${id}#comments`);
+    expect(result).toEqual({ ok: true, intent: "comment" });
 
     const list = await api(`/ideas/${id}/comments`);
     const listed = (await list.json()) as {

@@ -11,8 +11,9 @@ import {
 import { NEW_IDEA_PATH } from "../lib/home-path";
 import type { CreateIdeaActionData } from "../lib/idea-action";
 import { isSubmitShortcut } from "../lib/shortcuts";
+import { useInstantPending } from "../lib/use-instant-pending";
 import { SESSION_USER } from "../data/mock";
-import { IconClose } from "./icons";
+import { IconClose, IconSpinner } from "./icons";
 import { StageSelect } from "./stage-select";
 
 export function ComposeDialog() {
@@ -23,7 +24,8 @@ export function ComposeDialog() {
   const [tags, setTags] = useState("");
   const submitted = useRef(false);
   const submitting = fetcher.state !== "idle";
-  const canSubmit = Boolean((title.trim() || draft.trim()) && !submitting);
+  const { pending, hold } = useInstantPending(submitting);
+  const canSubmit = Boolean((title.trim() || draft.trim()) && !pending);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -85,6 +87,7 @@ export function ComposeDialog() {
           className="px-5 pb-4 pt-4"
           onSubmit={() => {
             submitted.current = true;
+            hold();
           }}
         >
           <label htmlFor="idea-dialog-title" className="sr-only">
@@ -141,8 +144,14 @@ export function ComposeDialog() {
               <button type="button" onClick={close} className="ui-btn-secondary h-8 px-3">
                 キャンセル
               </button>
-              <button type="submit" disabled={!canSubmit} className="ui-btn h-8 px-3 text-[13.5px]">
-                {COMPOSE_SUBMIT}
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                aria-busy={pending}
+                className="ui-btn h-8 px-3 text-[13.5px]"
+              >
+                {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+                {pending ? "作成中" : COMPOSE_SUBMIT}
                 <kbd className="ml-1 rounded bg-white/20 px-1 font-mono text-[10px] text-primary-foreground">
                   ⌘↵
                 </kbd>

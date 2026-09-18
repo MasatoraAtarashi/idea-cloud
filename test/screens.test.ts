@@ -9,6 +9,7 @@ import {
   filterIdeas,
   IDEAS,
   MEMBERS,
+  nextStage,
   SESSION_USER,
   STAGE_LABEL,
   STAGES,
@@ -85,6 +86,11 @@ describe("empty workspace data", () => {
     expect(STAGE_LABEL.ripe).toBe("熟した");
     expect(STAGE_LABEL.selected).toBe("採用");
     expect(STAGE_LABEL.archived).toBe("アーカイブ");
+    expect(nextStage("spark")).toBe("aging");
+    expect(nextStage("aging")).toBe("ripe");
+    expect(nextStage("ripe")).toBe("selected");
+    expect(nextStage("selected")).toBeNull();
+    expect(nextStage("archived")).toBeNull();
   });
 
   it("filters ephemeral ideas without relying on shipped rows", () => {
@@ -107,6 +113,9 @@ describe("empty workspace data", () => {
     expect(filterIdeas(sample, { query: "一時", stages: ["spark"], tags: [] })).toHaveLength(1);
     expect(filterIdeas(sample, { query: "ない", stages: [], tags: [] })).toHaveLength(0);
     expect(filterIdeas(sample, { query: "", stages: ["ripe"], tags: [] })).toHaveLength(0);
+    expect(filterIdeas(sample, { query: "", stages: [], tags: [], minDays: 7 })).toHaveLength(0);
+    sample[0]!.agedDays = 14;
+    expect(filterIdeas(sample, { query: "", stages: [], tags: [], minDays: 7 })).toHaveLength(1);
   });
 });
 
@@ -185,6 +194,30 @@ describe("responsive home and nav", () => {
     expect(src).toContain("autoSubmit");
   });
 
+  it("keeps fetcher pending, 44px taps, title wrap, swipe, edit, and scores", () => {
+    const src = Object.values(appSources).join("\n");
+    expect(src).toContain("useInstantPending");
+    expect(src).toContain("min-h-11");
+    expect(src).toContain('prefetch="intent"');
+    expect(src).toContain("line-clamp-3");
+    expect(src).toContain("break-words");
+    expect(src).toContain("IdeaSwipeRow");
+    expect(src).toContain("次の段階へ");
+    expect(src).toContain("熟成日数");
+    expect(src).toContain("AGED_DAY_PRESETS");
+    expect(src).toContain("コメント送信");
+    expect(src).toContain('setBody("")');
+    expect(src).toContain("IdeaEditForm");
+    expect(src).toContain("編集");
+    expect(src).toContain("AI評価");
+    expect(src).toContain("IdeaHumanScore");
+    expect(src).toContain("evaluateIdeaAction");
+    expect(src).toContain("IdeaAiMenu");
+    expect(src).toContain("作成中");
+    expect(src).toContain('media="print"');
+    expect(appSources["../app/components/idea-list-view.tsx"]).toContain("px-4 py-2");
+  });
+
   it("keeps named list views next to stage and tag filters", () => {
     const src = appSources["../app/components/idea-list-view.tsx"];
     expect(src).toContain("ListSavedViews");
@@ -192,6 +225,8 @@ describe("responsive home and nav", () => {
     expect(Object.values(appSources).join("\n")).toContain("ビューを保存");
     expect(Object.values(appSources).join("\n")).toContain("listViewAction");
     expect(Object.values(appSources).join("\n")).toContain('params.set("v"');
+    expect(Object.values(appSources).join("\n")).toContain("熟成日数");
+    expect(Object.values(appSources).join("\n")).toContain("params.set(AGED_DAYS_PARAM");
   });
 });
 

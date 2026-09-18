@@ -4,7 +4,10 @@ import { asStage, updateIdeaStage } from "../../db/ideas";
 import { STAGES } from "../data/mock";
 import { commentIdeaAction } from "./idea-comment-action";
 import { brainstormIdeaAction } from "./idea-brainstorm-action";
+import { editIdeaAction } from "./idea-edit-action";
+import { evaluateIdeaAction } from "./idea-evaluate-action";
 import { researchIdeaAction } from "./idea-research-action";
+import { humanScoreIdeaAction } from "./idea-score-action";
 
 export type IdeaDetailActionData = {
   error: string;
@@ -31,13 +34,22 @@ export async function ideaDetailAction(args: ActionFunctionArgs) {
     if (redirectTo.startsWith("/app")) {
       return redirect(redirectTo);
     }
-    return redirect(`/app/ideas/${ideaId}`);
+    return { ok: true, intent: "stage" };
   }
   if (intent === "comment") {
     return commentIdeaAction(args);
   }
   if (intent === "brainstorm") {
     return brainstormIdeaAction(args);
+  }
+  if (intent === "evaluate") {
+    return evaluateIdeaAction(args);
+  }
+  if (intent === "edit") {
+    return editIdeaAction(args);
+  }
+  if (intent === "human-score") {
+    return humanScoreIdeaAction(args);
   }
   return researchIdeaAction(args);
 }

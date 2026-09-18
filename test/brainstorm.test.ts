@@ -181,15 +181,13 @@ describe("idea detail brainstorm action", () => {
     setTestAiRun();
   });
 
-  it("runs brainstorm from the detail form and redirects", async () => {
+  it("runs brainstorm from the detail form without a document redirect", async () => {
     setTestAiRun(async () => ({ response: "切り口:\n- 詳細" }));
     const id = await createIdea("詳細からブレスト");
     const result = await ideaDetailAction(
       detailActionArgs(id, { intent: "brainstorm", preset: "fast" }),
     );
-    expect(result).toBeInstanceOf(Response);
-    const response = result as Response;
-    expect(response.headers.get("Location")).toBe(`/app/ideas/${id}#brainstorm`);
+    expect(result).toEqual({ ok: true, intent: "brainstorm" });
 
     const reload = await api(`/ideas/${id}`);
     const reloaded = (await reload.json()) as {

@@ -61,6 +61,13 @@ export function toIdeaView(
     brainstormNotes: extras?.brainstorm?.notes ?? null,
     brainstormModel: extras?.brainstorm?.model ?? null,
     brainstormedAt: extras?.brainstorm?.createdAt ?? null,
+    humanScore: row.humanScore ?? null,
+    humanScoreNote: row.humanScoreNote ?? null,
+    humanScoredAt: row.humanScoredAt ?? null,
+    aiScore: row.aiScore ?? null,
+    aiEvaluation: row.aiEvaluation ?? null,
+    aiEvaluatedAt: row.aiEvaluatedAt ?? null,
+    aiEvaluationModel: row.aiEvaluationModel ?? null,
   };
 }
 
@@ -84,6 +91,13 @@ export function ideaJson(
     brainstormNotes: extras?.brainstorm?.notes ?? null,
     brainstormModel: extras?.brainstorm?.model ?? null,
     brainstormedAt: extras?.brainstorm?.createdAt ?? null,
+    humanScore: row.humanScore ?? null,
+    humanScoreNote: row.humanScoreNote ?? null,
+    humanScoredAt: row.humanScoredAt ?? null,
+    aiScore: row.aiScore ?? null,
+    aiEvaluation: row.aiEvaluation ?? null,
+    aiEvaluatedAt: row.aiEvaluatedAt ?? null,
+    aiEvaluationModel: row.aiEvaluationModel ?? null,
   };
 }
 
@@ -159,6 +173,65 @@ export async function saveIdeaResearch(
     .returning();
   if (!updated) {
     throw new Error("Failed to save research");
+  }
+  return updated;
+}
+
+export async function updateIdeaFields(
+  db: Db,
+  id: number,
+  data: { title?: string; body?: string; tags?: string[]; stage?: Stage },
+): Promise<Idea | undefined> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      ...(data.title !== undefined ? { title: data.title } : {}),
+      ...(data.body !== undefined ? { body: data.body } : {}),
+      ...(data.tags !== undefined ? { tags: JSON.stringify(data.tags) } : {}),
+      ...(data.stage !== undefined ? { stage: data.stage } : {}),
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  return updated;
+}
+
+export async function saveHumanScore(
+  db: Db,
+  id: number,
+  data: { score: number; note: string },
+): Promise<Idea | undefined> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      humanScore: data.score,
+      humanScoreNote: data.note,
+      humanScoredAt: sql`(datetime('now'))`,
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  return updated;
+}
+
+export async function saveAiEvaluation(
+  db: Db,
+  id: number,
+  data: { score: number | null; notes: string; model: string },
+): Promise<Idea> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      aiScore: data.score,
+      aiEvaluation: data.notes,
+      aiEvaluationModel: data.model,
+      aiEvaluatedAt: sql`(datetime('now'))`,
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  if (!updated) {
+    throw new Error("Failed to save evaluation");
   }
   return updated;
 }
