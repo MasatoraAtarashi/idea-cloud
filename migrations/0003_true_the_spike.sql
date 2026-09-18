@@ -9,5 +9,5 @@ CREATE TABLE `idea_comments` (
 );
 --> statement-breakpoint
 CREATE INDEX `idea_comments_idea_created_idx` ON `idea_comments` (`idea_id`,`created_at`);--> statement-breakpoint
-ALTER TABLE `ideas` ADD `updated_at` text DEFAULT (datetime('now')) NOT NULL;--> statement-breakpoint
+ALTER TABLE `ideas` ADD `updated_at` text DEFAULT '' NOT NULL;--> statement-breakpoint
 UPDATE `ideas` SET `updated_at` = `created_at`;
