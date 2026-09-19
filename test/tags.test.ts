@@ -1,7 +1,12 @@
 import { exports } from "cloudflare:workers";
 import { afterEach, describe, expect, it } from "vitest";
 import { RESEARCH_PRESETS } from "../app/lib/research-models";
-import { parseTagSuggestions, setTestTagAiRun, AUTO_TAG_MODEL } from "../server/ai/tags";
+import {
+  parseTagSuggestions,
+  resolveCreateTags,
+  setTestTagAiRun,
+  AUTO_TAG_MODEL,
+} from "../server/ai/tags";
 import { setTestSystemOneRun } from "../server/ai/typesafe";
 
 const authHeaders = {
@@ -115,9 +120,10 @@ describe("ideas auto-tags on create", () => {
   });
 
   it("falls back to Workers AI when Jev fails", async () => {
-    setTestSystemOneRun(async () => {
-      throw new Error("TypeSafe down");
-    });
+    setTestSystemOneRun(async () => ({
+      model: "jev-latest",
+      answers: {},
+    }));
     setTestTagAiRun(async () => ({ response: '["通勤","音声メモ"]' }));
     const create = await api("/ideas", {
       method: "POST",
@@ -126,5 +132,22 @@ describe("ideas auto-tags on create", () => {
     expect(create.status).toBe(201);
     const created = (await create.json()) as { item: { tags: string[] } };
     expect(created.item.tags).toEqual(["通勤", "音声メモ"]);
+  });
+
+  it("catches Jev errors and uses Workers AI", async () => {
+    setTestSystemOneRun(async () => {
+      throw new Error("TypeSafe down");
+    });
+    const tags = await resolveCreateTags({
+      ai: {
+        async run() {
+          return { response: '["通勤"]' };
+        },
+      },
+      text: "本文",
+      tags: [],
+      typesafeApiKey: "test-key",
+    });
+    expect(tags).toEqual(["通勤"]);
   });
 });

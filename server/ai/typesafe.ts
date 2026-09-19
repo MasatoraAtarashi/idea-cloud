@@ -100,7 +100,11 @@ export async function runSystemOne(
   request: SystemOneRequest,
 ): Promise<SystemOneResult> {
   if (testSystemOneRun) {
-    return testSystemOneRun(request);
+    try {
+      return await testSystemOneRun(request);
+    } catch {
+      throw new Error("TypeSafe request failed");
+    }
   }
   const key = apiKey?.trim();
   if (!key) {
