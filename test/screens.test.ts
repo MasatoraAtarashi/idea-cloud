@@ -153,7 +153,7 @@ describe("responsive home and nav", () => {
     expect(src).toContain("useListViewSearch");
     expect(src).toContain("熟成候補");
     expect(src).toContain("試したアイデア");
-    expect(src).toContain('tab: "candidates"');
+    expect(src).toContain('tab === "candidates"');
     expect(src).not.toContain("emptyWorkspace");
   });
 
