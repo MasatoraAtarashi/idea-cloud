@@ -1,7 +1,13 @@
 import { exports } from "cloudflare:workers";
 import { afterEach, describe, expect, it } from "vitest";
 import { RESEARCH_PRESETS } from "../app/lib/research-models";
-import { parseTagSuggestions, setTestTagAiRun, AUTO_TAG_MODEL } from "../server/ai/tags";
+import {
+  parseTagSuggestions,
+  resolveCreateTags,
+  setTestTagAiRun,
+  AUTO_TAG_MODEL,
+} from "../server/ai/tags";
+import { setTestSystemOneRun } from "../server/ai/typesafe";
 
 const authHeaders = {
   "cf-access-authenticated-user-email": "test@example.com",
@@ -37,6 +43,7 @@ describe("auto-tag parsing", () => {
 describe("ideas auto-tags on create", () => {
   afterEach(() => {
     setTestTagAiRun();
+    setTestSystemOneRun();
   });
 
   it("uses the fast research model", () => {
@@ -56,6 +63,12 @@ describe("ideas auto-tags on create", () => {
 
   it("keeps user-provided tags and does not replace them", async () => {
     setTestTagAiRun(async () => ({ response: '["無視する"]' }));
+    setTestSystemOneRun(async () => ({
+      model: "jev-latest",
+      answers: {
+        tag: { type: "choice", choice: "AI", probabilities: { AI: 1 }, confidence: 1 },
+      },
+    }));
     const create = await api("/ideas", {
       method: "POST",
       body: JSON.stringify({ body: "ユーザー指定", tags: ["手元"] }),
@@ -77,5 +90,64 @@ describe("ideas auto-tags on create", () => {
     const created = (await create.json()) as { item: { tags: string[]; title: string } };
     expect(created.item.title).toBe("失敗しても作る");
     expect(created.item.tags).toEqual([]);
+  });
+
+  it("uses Jev choice tags when TypeSafe is stubbed", async () => {
+    let workersAiCalled = false;
+    setTestTagAiRun(async () => {
+      workersAiCalled = true;
+      return { response: '["無視する"]' };
+    });
+    setTestSystemOneRun(async () => ({
+      model: "jev-latest",
+      answers: {
+        tag: {
+          type: "choice",
+          choice: "記録",
+          probabilities: { 記録: 0.42, 時間: 0.27, 個人: 0.19, AI: 0.04 },
+          confidence: 0.5,
+        },
+      },
+    }));
+    const create = await api("/ideas", {
+      method: "POST",
+      body: JSON.stringify({ body: "朝の音声メモを残す" }),
+    });
+    expect(create.status).toBe(201);
+    const created = (await create.json()) as { item: { tags: string[] } };
+    expect(created.item.tags).toEqual(["記録", "時間", "個人"]);
+    expect(workersAiCalled).toBe(false);
+  });
+
+  it("falls back to Workers AI when Jev fails", async () => {
+    setTestSystemOneRun(async () => ({
+      model: "jev-latest",
+      answers: {},
+    }));
+    setTestTagAiRun(async () => ({ response: '["通勤","音声メモ"]' }));
+    const create = await api("/ideas", {
+      method: "POST",
+      body: JSON.stringify({ body: "Jevが落ちてもタグは付ける" }),
+    });
+    expect(create.status).toBe(201);
+    const created = (await create.json()) as { item: { tags: string[] } };
+    expect(created.item.tags).toEqual(["通勤", "音声メモ"]);
+  });
+
+  it("catches Jev errors and uses Workers AI", async () => {
+    setTestSystemOneRun(async () => {
+      throw new Error("TypeSafe down");
+    });
+    const tags = await resolveCreateTags({
+      ai: {
+        async run() {
+          return { response: '["通勤"]' };
+        },
+      },
+      text: "本文",
+      tags: [],
+      typesafeApiKey: "test-key",
+    });
+    expect(tags).toEqual(["通勤"]);
   });
 });

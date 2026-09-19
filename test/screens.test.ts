@@ -224,6 +224,7 @@ describe("responsive home and nav", () => {
     expect(src).toContain("IdeaEditForm");
     expect(src).toContain("編集");
     expect(src).toContain("AI評価");
+    expect(src).toContain("Jev 利用時は分解スコアです");
     expect(src).toContain("IdeaHumanScore");
     expect(src).toContain("IdeaScoreChips");
     expect(src).toContain("evaluateIdeaAction");

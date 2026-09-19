@@ -24,7 +24,8 @@
       "migrations_table": "d1_migrations",
     },
   ],
-  // Per-idea research + brainstorm + create-time auto-tags (Workers AI). No web search / Browser Rendering.
+  // Per-idea research + brainstorm stay on Workers AI. Auto-tags + AI評価 prefer
+  // TypeSafe Jev when TYPESAFE_API_KEY is set (wrangler secret / .dev.vars; never in git).
   // Local `pnpm dev` disables remote bindings in vite.config.ts so this does not
   // open an OAuth session. Production deploy uses the real Workers AI service.
   "ai": {

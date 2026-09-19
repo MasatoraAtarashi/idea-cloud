@@ -14,7 +14,7 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare credentials.**
 | `CLOUDFLARE_API_TOKEN`  | Wrangler deploy. Workers Scripts: Edit, plus D1 edit if migrations run in CI |
 | `CLOUDFLARE_ACCOUNT_ID` | Account for that token                                                       |
 
-Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production).
+Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset).
 
 ## D1
 
@@ -27,7 +27,7 @@ Intended steps (run only with a real token; do not commit the token):
 3. `wrangler d1 migrations apply DB --remote` (or `pnpm db:migrate:remote`) applies `todos` + `ideas` (including research columns, comments, brainstorms, saved views)
 4. Production `deploy.yml` runs the same `d1 migrations apply DB --remote` before `wrangler deploy`. Local: `pnpm db:migrate:local`
 
-Workers AI research uses the `AI` binding. No extra wrangler secret. The deploy token needs permission to run Workers AI in production.
+Workers AI research uses the `AI` binding. No extra wrangler secret for that path. Auto-tags and AI評価 prefer TypeSafe Jev when `TYPESAFE_API_KEY` is set (`wrangler secret put TYPESAFE_API_KEY` / `.dev.vars`). The deploy token needs permission to run Workers AI in production.
 
 ## Workflows
 

@@ -94,7 +94,7 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 `/app/capture` remains a deep-link alias (desktop: open modal on the list). Do not label the product 「キャプチャ」.
 
-**作成** INSERTs into D1 (optional stage/tags) and redirects to `/app/list`. If the form/API omits tags, Workers AI (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) suggests a few short Japanese tags from title+body and they are stored on the row. Compose copy: **空なら自動タグ**. If AI fails, the idea is still created and list/detail show **自動タグなし** / **自動タグは付きませんでした**. Auth is still mock; there is no per-user ownership.
+**作成** INSERTs into D1 (optional stage/tags) and redirects to `/app/list`. If the form/API omits tags, TypeSafe Jev (`jev-latest`) suggests 2–5 tags from a curated Japanese vocabulary when `TYPESAFE_API_KEY` is set; otherwise Workers AI (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) suggests short Japanese tags from title+body. Compose copy: **空なら自動タグ**. If AI fails, the idea is still created and list/detail show **自動タグなし** / **自動タグは付きませんでした**. Auth is still mock; there is no per-user ownership.
 
 ## Merge / research (not primary nav)
 

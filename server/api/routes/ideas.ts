@@ -30,6 +30,7 @@ import { bindResearchAi, researchIdea } from "../../ai/research";
 import { brainstormIdea } from "../../ai/brainstorm";
 import { evaluateIdea } from "../../ai/evaluate";
 import { resolveCreateTags } from "../../ai/tags";
+import { typesafeApiKeyFromEnv } from "../../ai/typesafe";
 import type { AppEnv } from "../../env";
 
 const createIdeaSchema = z.object({
@@ -162,6 +163,7 @@ export const ideasRoute = new Hono<AppEnv>()
       ai: bindResearchAi(c.env.AI),
       text: body,
       tags: tags ?? [],
+      typesafeApiKey: typesafeApiKeyFromEnv(c.env),
     });
     const created = await insertIdea(db, body, { stage, tags: resolvedTags });
     return c.json({ item: ideaJson(created) }, 201);
@@ -282,6 +284,7 @@ export const ideasRoute = new Hono<AppEnv>()
       ideaId: id,
       preset: input.preset,
       model: input.model,
+      typesafeApiKey: typesafeApiKeyFromEnv(c.env),
     });
     if (!result.ok) {
       return c.json({ error: result.error }, result.status);

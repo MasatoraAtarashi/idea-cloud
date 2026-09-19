@@ -17,13 +17,14 @@ Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app
 | API           | `server/api/` (`ideas` + template `todos`)       |
 | Auth on APIs  | `server/middleware/access-auth.ts`               |
 
-Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research, brainstorm, evaluation, and create-time auto-tags). No unused KV, R2, Queue, or Durable Object bindings.
+Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research, brainstorm, evaluation fallback, and auto-tag fallback). TypeSafe Jev is an outbound HTTPS call when `TYPESAFE_API_KEY` is set. No unused KV, R2, Queue, or Durable Object bindings.
 
 ```
 Browser
   → Worker (SSR pages + Hono)
       → D1 binding `DB` (idea-cloud-db)
-      → Workers AI binding `AI` (idea research + brainstorm + evaluation + create auto-tags; no web search)
+      → Workers AI binding `AI` (research + brainstorm; evaluation + auto-tags when Jev is unset)
+      → TypeSafe System One (`POST https://api.typesafe.ai/v1/systemone`) when `TYPESAFE_API_KEY` is set
       → secrets from wrangler / `.dev.vars` (never in git)
 ```
 
@@ -43,7 +44,7 @@ Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` 
 | Members table      | **Not created**                                                                                                                                                                                                                                                                  |
 | Field encryption   | Helper exists; **not** applied to idea rows                                                                                                                                                                                                                                      |
 
-**作成** is a React Router action (`insert` into `ideas`, optional Workers AI tags). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. List tabs/filters live in `/app/list` search params (`tab`, `view`, `stage`, `tag`, `q`, `days`, `v`). Named views persist in `saved_views`. Per-idea **コメント** / **編集** / **human-score** / **リサーチ** / **ブレスト** / **AI評価** are React Router actions on the detail page; AI intents return `{ ok: true }` so `useFetcher` can revalidate in place instead of waiting on a document navigation. Hono `GET/POST /api/ideas`, `PATCH /api/ideas/:id`, `GET/POST /api/ideas/:id/comments`, `POST /api/ideas/:id/research`, `GET/POST /api/ideas/:id/brainstorm(s)`, `POST /api/ideas/:id/evaluate`, and `GET/POST/DELETE /api/saved-views` follow the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
+**作成** is a React Router action (`insert` into `ideas`, optional auto-tags via Jev or Workers AI). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. List tabs/filters live in `/app/list` search params (`tab`, `view`, `stage`, `tag`, `q`, `days`, `v`). Named views persist in `saved_views`. Per-idea **コメント** / **編集** / **human-score** / **リサーチ** / **ブレスト** / **AI評価** are React Router actions on the detail page; AI intents return `{ ok: true }` so `useFetcher` can revalidate in place instead of waiting on a document navigation. Hono `GET/POST /api/ideas`, `PATCH /api/ideas/:id`, `GET/POST /api/ideas/:id/comments`, `POST /api/ideas/:id/research`, `GET/POST /api/ideas/:id/brainstorm(s)`, `POST /api/ideas/:id/evaluate`, and `GET/POST/DELETE /api/saved-views` follow the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
 
 Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
 
@@ -51,14 +52,14 @@ Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [securit
 
 Summarize / analyze one idea’s stored text. **No web search**, Browser Rendering, embeddings, or merge-AI.
 
-| Item     | Today                                                                                                                                                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local. Tests stub `setTestAiRun` / `setTestTagAiRun`.       |
-| Gate     | Idea `stage` must not be `archived`. Otherwise 409 / 「アーカイブではリサーチできません」. 着想 / 熟成中 / 熟した / 採用 are allowed.                                          |
-| UI       | Idea detail rail + list row menu POST `intent=research` (above 段階). Locked copy only for archive. `#research` is the notes section. `/app/research?from=:id` redirects there |
-| Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                                                      |
-| Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast`                         |
-| Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                                               |
+| Item     | Today                                                                                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local. Tests stub `setTestAiRun` / `setTestTagAiRun` / `setTestSystemOneRun`. |
+| Gate     | Idea `stage` must not be `archived`. Otherwise 409 / 「アーカイブではリサーチできません」. 着想 / 熟成中 / 熟した / 採用 are allowed.                                                            |
+| UI       | Idea detail rail + list row menu POST `intent=research` (above 段階). Locked copy only for archive. `#research` is the notes section. `/app/research?from=:id` redirects there                   |
+| Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                                                                        |
+| Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast`                                           |
+| Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                                                                 |
 
 Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.AI.run` via a thin wrapper. Vite `pnpm dev` does not open a remote Workers AI session.
 
@@ -66,9 +67,25 @@ Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.
 
 Expand an idea into concrete angles / variants / next questions / related directions. Same Workers AI binding and model allowlist as research. Default preset is **standard**. Persist in `idea_brainstorms`; detail shows the latest. Archive 409 / 「アーカイブではブレストできません」. Fail-soft Japanese 502. UI: detail rail **ブレスト** + list menu + mobile AI sheet, `#brainstorm`.
 
-## Workers AI evaluation (v1)
+## TypeSafe Jev (System One)
+
+When `TYPESAFE_API_KEY` is set (`.dev.vars` locally, `wrangler secret put` in production), the Worker POSTs to `https://api.typesafe.ai/v1/systemone` with model `jev-latest`. The `@typesafe-ai/sdk` is **not** used: it may assume Node `process.env`, so a thin `fetch` client in `server/ai/typesafe.ts` takes the key from `env.TYPESAFE_API_KEY` explicitly. The key is never logged.
+
+| Path                | Jev                                                                                                                                                              | Fallback                              |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Create auto-tags    | One `choice` over a curated Japanese tag set; 2–5 tags from the probability distribution                                                                         | Workers AI fast 8B, then `[]`         |
+| AI評価              | Score axes (novelty / impact / feasibility / clarity / risk) + `noul` (pursue) + `choice` (next action), combined in code to a 1–5 `ai_score` and Japanese notes | Existing Workers AI evaluation prompt |
+| リサーチ / ブレスト | Unchanged                                                                                                                                                        | Workers AI (要約・考察 prose)         |
+
+User-supplied tags still win. Archive still 409. Persist evaluation on the same idea columns (`ai_score`, `ai_evaluation`, `ai_evaluated_at`, `ai_evaluation_model` = `jev-latest`). List chips and detail **AI評価** already render those fields. Web-search research is still out of scope.
+
+## Workers AI evaluation (fallback)
 
 Same binding and allowlist. Default preset **standard**. Prompt: Japanese 強み / リスク / 新規性 / 次の一手 plus a final `スコア: N` (1–5). Persist on the idea row. Archive 409 / 「アーカイブではAI評価できません」. Fail-soft Japanese 502. Tests stub `setTestAiRun`. UI: **AI評価**, compact list chips.
+
+## Workers AI auto-tags (fallback)
+
+On idea create, if the client sent no tags and Jev is unset or failed, run the **fast** research model (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) on title+body and store 2–5 short Japanese tags on `ideas.tags`. User-supplied tags win. Any AI failure creates the row with `[]`. Compose and list/detail show an empty state so fail-soft does not look like a missing feature. No extra table or queue.
 
 ## Responsiveness / paint (INP, LCP, CLS)
 
@@ -80,10 +97,6 @@ No Lighthouse CI in this environment (Chrome DevTools MCP is not attached). Easy
 | LCP           | Google Fonts stylesheet is preload + `media=print` then swap to `all` (not render-blocking); `display=swap` already in the font URL                                                                                          |
 | CLS / tap     | `touch-action: manipulation`; mobile primary controls `min-h-11` (~44px); favicon `sizes` declared; titles wrap instead of single-line clamp                                                                                 |
 | Unused work   | List links `prefetch="intent"`; AI work stays behind POST, never in the loader                                                                                                                                               |
-
-## Workers AI auto-tags
-
-On idea create, if the client sent no tags, run the **fast** research model (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) on title+body and store 2–5 short Japanese tags on `ideas.tags`. User-supplied tags win. Any AI failure creates the row with `[]`. Compose and list/detail show an empty state so fail-soft does not look like a missing feature. No extra table or queue.
 
 ## Idea comments
 

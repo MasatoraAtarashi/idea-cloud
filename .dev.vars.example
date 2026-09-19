@@ -8,3 +8,7 @@ LOCAL_DEV_USER_EMAIL=you@example.com
 
 # Field encryption stub (not wired to D1 yet). 32-byte hex. Production: wrangler secret.
 # FIELD_ENCRYPTION_KEY=
+
+# TypeSafe Jev (System One). When set, create-time auto-tags and AI評価 prefer Jev
+# over Workers AI. Production: `wrangler secret put TYPESAFE_API_KEY`. Never commit a real key.
+TYPESAFE_API_KEY=

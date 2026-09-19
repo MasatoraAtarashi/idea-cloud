@@ -7,6 +7,7 @@ import {
   DEFAULT_EVALUATE_PRESET,
   RESEARCH_PRESET_LABEL,
   type ResearchPreset,
+  evaluationModelLabel,
   presetFromModel,
 } from "../lib/research-models";
 import type { EvaluateIdeaActionData } from "../lib/idea-evaluate-action";
@@ -92,7 +93,7 @@ export function IdeaEvaluateControls({
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
       {compact ? null : (
         <p className="text-[11.5px] leading-snug text-muted-foreground">
-          強み・リスク・新規性・次の一手と 1–5 の点数です。
+          強み・リスク・新規性・次の一手と 1–5 の点数です。Jev 利用時は分解スコアです。
         </p>
       )}
     </fetcher.Form>
@@ -100,8 +101,7 @@ export function IdeaEvaluateControls({
 }
 
 export function IdeaEvaluateNotes({ idea, id }: { idea: MockIdea; id?: string }) {
-  const preset = presetFromModel(idea.aiEvaluationModel);
-  const modelLabel = preset ? RESEARCH_PRESET_LABEL[preset] : idea.aiEvaluationModel;
+  const modelLabel = evaluationModelLabel(idea.aiEvaluationModel);
 
   return (
     <section id={id} className="mt-6">
