@@ -1,3 +1,6 @@
+import { hasReflection, type ReflectionStatus } from "../lib/reflection";
+import { CANDIDATE_DEFAULT_DAYS, type ReviewStatus } from "../lib/review";
+
 export const STAGES = ["spark", "aging", "ripe", "selected", "archived"] as const;
 export type Stage = (typeof STAGES)[number];
 
@@ -84,6 +87,11 @@ export interface MockIdea {
   aiEvaluation?: string | null;
   aiEvaluatedAt?: string | null;
   aiEvaluationModel?: string | null;
+  lastReviewedAt?: string | null;
+  reviewStatus?: ReviewStatus;
+  reflectionOutcome?: string | null;
+  reflectionStatus?: ReflectionStatus;
+  reflectionNotes?: string | null;
 }
 
 export interface MockMember {
@@ -131,6 +139,28 @@ export function ideasByStage(stage: Stage, ideas: MockIdea[] = IDEAS): MockIdea[
 
 export function allTags(ideas: MockIdea[] = IDEAS): string[] {
   return [...new Set(ideas.flatMap((idea) => idea.tags))].sort();
+}
+
+export function reviewAnchorAt(idea: Pick<MockIdea, "createdAt" | "lastReviewedAt">): string {
+  return idea.lastReviewedAt?.trim() || idea.createdAt;
+}
+
+export function isReviewCandidate(
+  idea: MockIdea,
+  minDays = CANDIDATE_DEFAULT_DAYS,
+  now = Date.now(),
+): boolean {
+  if (idea.stage === "archived") return false;
+  const iso = reviewAnchorAt(idea);
+  const parsed = iso.includes("T") ? iso : `${iso.replace(" ", "T")}Z`;
+  const ms = Date.parse(parsed);
+  if (Number.isNaN(ms)) return false;
+  const days = Math.max(0, Math.floor((now - ms) / 86_400_000));
+  return days >= minDays;
+}
+
+export function isTriedIdea(idea: MockIdea): boolean {
+  return idea.stage === "selected" || hasReflection(idea);
 }
 
 export function filterIdeas(

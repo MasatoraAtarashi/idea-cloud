@@ -19,7 +19,8 @@ const createSavedViewSchema = z.object({
   name: z.string().trim().min(1).max(SAVED_VIEW_NAME_MAX),
   filters: z
     .object({
-      tab: z.enum(["all", "aging-shelf"]).optional(),
+      tab: z.enum(["all", "aging-shelf", "candidates", "tried"]).optional(),
+      minDays: z.number().int().min(0).optional(),
       view: z.enum(["table", "board"]).optional(),
       query: z.string().max(200).optional(),
       stages: z.array(z.enum(STAGES)).optional(),

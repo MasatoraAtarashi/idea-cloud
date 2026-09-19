@@ -62,15 +62,15 @@ Always show list chrome (search, 新規アイデア, tabs すべてのアイデ�
 
 List view state is in the URL so Back/Forward and deep links work:
 
-| Param   | Values                          | Default (omitted) |
-| ------- | ------------------------------- | ----------------- |
-| `tab`   | `aging` (熟成中の棚)            | all ideas         |
-| `view`  | `board`                         | `table`           |
-| `stage` | comma-separated stage ids       | none              |
-| `tag`   | comma-separated tag labels      | none              |
-| `q`     | search string                   | none              |
-| `days`  | min aged days (`7`, `14`, `30`) | none              |
-| `v`     | saved view id                   | none              |
+| Param   | Values                                                                  | Default (omitted) |
+| ------- | ----------------------------------------------------------------------- | ----------------- |
+| `tab`   | `aging` (熟成中の棚), `candidates` (熟成候補), `tried` (試したアイデア) | all ideas         |
+| `view`  | `board`                                                                 | `table`           |
+| `stage` | comma-separated stage ids                                               | none              |
+| `tag`   | comma-separated tag labels                                              | none              |
+| `q`     | search string                                                           | none              |
+| `days`  | min aged days (`7`, `14`, `30`)                                         | none              |
+| `v`     | saved view id                                                           | none              |
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
@@ -104,4 +104,4 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 Team and access live here — not a top-level 「アクセス」 section. `/app/team` redirects to settings. Settings shell has a secondary nav (members / general / team / stages / profile / notify / shortcuts). **Do not invent teammates.** Session placeholder (“ログイン中”) only. Default-visibility cards are visual chrome, not persisted.
 
-List/detail data: D1 `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row; brainstorm from the latest `idea_brainstorms` row. Previews: [../ui-previews/](../ui-previews/).
+List/detail data: D1 `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row; brainstorm from the latest `idea_brainstorms` row. **熟成候補** / **試したアイデア** are extra list tabs (URL `tab`). Detail has **見直し** and **振り返り**. `/app/analytics` is settings-adjacent counts. `/app/inspirations` is the URL/memo shelf. Previews: [../ui-previews/](../ui-previews/).

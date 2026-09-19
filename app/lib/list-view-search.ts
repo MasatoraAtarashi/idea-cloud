@@ -1,8 +1,11 @@
 import { STAGES, type Stage } from "../data/mock";
 import { LIST_PATH } from "./home-path";
+import { CANDIDATE_DEFAULT_DAYS } from "./review";
 
-export type ListTab = "all" | "aging-shelf";
+export type ListTab = "all" | "aging-shelf" | "candidates" | "tried";
 export type ListLayout = "table" | "board";
+
+export const LIST_TABS: ListTab[] = ["all", "aging-shelf", "candidates", "tried"];
 
 export const AGED_DAYS_PARAM = "days";
 
@@ -74,14 +77,23 @@ function asStringArray(value: unknown): string[] {
   );
 }
 
+export function parseListTab(raw: unknown): ListTab {
+  if (raw === "aging" || raw === "aging-shelf") return "aging-shelf";
+  if (raw === "candidates" || raw === "candidate") return "candidates";
+  if (raw === "tried" || raw === "tried-ideas") return "tried";
+  return "all";
+}
+
 export function normalizeSavedViewFilters(input: Partial<SavedViewFilters>): SavedViewFilters {
+  const tab = parseListTab(input.tab);
+  const minDays = normalizeMinDays(input.minDays);
   return {
-    tab: input.tab === "aging-shelf" ? "aging-shelf" : "all",
+    tab,
     view: input.view === "board" ? "board" : "table",
     query: (input.query ?? "").trim(),
     stages: unique((input.stages ?? []).filter(isStage)),
     tags: unique((input.tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length > 0)),
-    minDays: normalizeMinDays(input.minDays),
+    minDays: tab === "candidates" && minDays === 0 ? CANDIDATE_DEFAULT_DAYS : minDays,
   };
 }
 
@@ -105,7 +117,7 @@ export function parseSavedViewFilters(raw: unknown): SavedViewFilters {
   }
   const rec = value as Record<string, unknown>;
   return normalizeSavedViewFilters({
-    tab: rec.tab === "aging-shelf" ? "aging-shelf" : "all",
+    tab: parseListTab(rec.tab),
     view: rec.view === "board" ? "board" : "table",
     query: typeof rec.query === "string" ? rec.query : "",
     stages: asStringArray(rec.stages).filter(isStage),
@@ -126,20 +138,20 @@ export function omitSavedViewId(state: ListViewSearch): SavedViewFilters {
 }
 
 export function parseListViewSearch(params: URLSearchParams): ListViewSearch {
-  const tabRaw = params.get("tab");
-  const tab: ListTab = tabRaw === "aging" || tabRaw === "aging-shelf" ? "aging-shelf" : "all";
+  const tab = parseListTab(params.get("tab"));
   const viewRaw = params.get("view");
   const view: ListLayout = viewRaw === "board" ? "board" : "table";
   const viewIdRaw = params.get("v");
   const savedViewId =
     viewIdRaw && /^\d+$/.test(viewIdRaw) && Number(viewIdRaw) > 0 ? Number(viewIdRaw) : null;
+  const minDaysRaw = normalizeMinDays(params.get(AGED_DAYS_PARAM));
   return {
     tab,
     view,
     query: params.get("q") ?? "",
     stages: readList(params, "stage").filter(isStage),
     tags: readList(params, "tag"),
-    minDays: normalizeMinDays(params.get(AGED_DAYS_PARAM)),
+    minDays: tab === "candidates" && minDaysRaw === 0 ? CANDIDATE_DEFAULT_DAYS : minDaysRaw,
     savedViewId,
   };
 }
@@ -147,6 +159,8 @@ export function parseListViewSearch(params: URLSearchParams): ListViewSearch {
 export function serializeListViewSearch(state: ListViewSearch): URLSearchParams {
   const params = new URLSearchParams();
   if (state.tab === "aging-shelf") params.set("tab", "aging");
+  if (state.tab === "candidates") params.set("tab", "candidates");
+  if (state.tab === "tried") params.set("tab", "tried");
   if (state.view === "board") params.set("view", "board");
   if (state.query.trim()) params.set("q", state.query.trim());
   if (state.stages.length > 0) params.set("stage", state.stages.join(","));

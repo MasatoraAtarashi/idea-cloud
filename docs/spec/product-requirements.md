@@ -64,6 +64,22 @@ Per-idea **human 1–5** (`human_score`, optional note, timestamp) plus **AI評�
 
 Named filters on `/app/list`: at least stage + tag/category, plus current search/tab/layout and aged-days (`days=7|14|30`). Stored in D1 `saved_views` (`name` + filter JSON). Chrome: **ビュー** menu to switch, save, or delete. URL keeps `tab` / `view` / `stage` / `tag` / `q` / `days` and adds `v` (saved view id) so Back/Forward works. Not a full Linear view builder.
 
+## Review candidates (v1 skeleton)
+
+List tab **熟成候補** (`tab=candidates`). Ideas whose `created_at` or `last_reviewed_at` is older than a threshold (URL `days`, default 7), excluding **アーカイブ**. List/detail show a light **見直し** prompt: **見直した** / **保留** / **次の段階へ**. Persist `last_reviewed_at` + `review_status` (`none` / `hold` / `reviewed`).
+
+## Tried-idea reflection (v1 skeleton)
+
+Optional reflection on an idea: `reflection_outcome` (やってみた結果), `reflection_status` (`none` / `tried` / `hold` / `dropped`), `reflection_notes`. Detail can edit/save. List shows a small badge when present. Tab **試したアイデア** (`tab=tried`) is stage **採用** or any reflection. Reflections are **not** sent to Jev / Workers AI yet; they are intended later as knowledge for evaluation and brainstorm.
+
+## Analytics (v1 skeleton)
+
+`/app/analytics` counts from current D1 idea rows (no extra analytics table): stage totals, average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
+
+## Inspiration shelf (v1 skeleton)
+
+D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags). List + compose at `/app/inspirations`, detail at `/app/inspirations/:id`. Detail **AIブレスト** creates a new idea from title/url/memo and reuses the existing brainstorm action. **TODO:** R2 / image upload is deferred — URL + memo only this pass.
+
 ## Out of scope (this pass)
 
 - In-app Google OAuth / sessions / allowlist / Access (login stays a mock continue into `/app`)

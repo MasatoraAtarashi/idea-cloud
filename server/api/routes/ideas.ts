@@ -16,6 +16,8 @@ import {
   insertIdea,
   listIdeaRows,
   saveHumanScore,
+  saveIdeaReflection,
+  saveIdeaReview,
   updateIdeaFields,
   updateIdeaStage,
 } from "../../../db/ideas";
@@ -25,6 +27,13 @@ import {
   listBrainstormsForIdea,
 } from "../../../db/brainstorms";
 import { resolveCommentAuthor, STAGES } from "../../../app/data/mock";
+import {
+  parseReflectionStatus,
+  REFLECTION_NOTES_MAX,
+  REFLECTION_OUTCOME_MAX,
+  REFLECTION_STATUSES,
+} from "../../../app/lib/reflection";
+import { REVIEW_STATUSES } from "../../../app/lib/review";
 import { HUMAN_SCORE_NOTE_MAX } from "../../../app/lib/scores";
 import { bindResearchAi, researchIdea } from "../../ai/research";
 import { brainstormIdea } from "../../ai/brainstorm";
@@ -47,6 +56,10 @@ const updateIdeaSchema = z
     tags: z.array(z.string().trim().min(1)).max(8).optional(),
     humanScore: z.number().int().min(1).max(5).optional(),
     humanScoreNote: z.string().max(HUMAN_SCORE_NOTE_MAX).optional(),
+    reviewStatus: z.enum(REVIEW_STATUSES).optional(),
+    reflectionStatus: z.enum(REFLECTION_STATUSES).optional(),
+    reflectionOutcome: z.string().max(REFLECTION_OUTCOME_MAX).optional(),
+    reflectionNotes: z.string().max(REFLECTION_NOTES_MAX).optional(),
   })
   .refine(
     (value) =>
@@ -54,7 +67,11 @@ const updateIdeaSchema = z
       value.title !== undefined ||
       value.body !== undefined ||
       value.tags !== undefined ||
-      value.humanScore !== undefined,
+      value.humanScore !== undefined ||
+      value.reviewStatus !== undefined ||
+      value.reflectionStatus !== undefined ||
+      value.reflectionOutcome !== undefined ||
+      value.reflectionNotes !== undefined,
     { message: "更新する項目がありません" },
   );
 
@@ -180,6 +197,30 @@ export const ideasRoute = new Hono<AppEnv>()
         const note = patch.humanScoreNote?.trim() ?? "";
         const scored = await saveHumanScore(db, id, { score: patch.humanScore, note });
         if (!scored) {
+          return c.json({ error: "Not Found" }, 404);
+        }
+      }
+      if (patch.reviewStatus !== undefined && patch.reviewStatus !== "none") {
+        const reviewed = await saveIdeaReview(db, id, patch.reviewStatus);
+        if (!reviewed) {
+          return c.json({ error: "Not Found" }, 404);
+        }
+      }
+      if (
+        patch.reflectionStatus !== undefined ||
+        patch.reflectionOutcome !== undefined ||
+        patch.reflectionNotes !== undefined
+      ) {
+        const current = await getIdeaRow(db, id);
+        if (!current) {
+          return c.json({ error: "Not Found" }, 404);
+        }
+        const reflected = await saveIdeaReflection(db, id, {
+          outcome: patch.reflectionOutcome ?? current.reflectionOutcome ?? "",
+          status: patch.reflectionStatus ?? parseReflectionStatus(current.reflectionStatus),
+          notes: patch.reflectionNotes ?? current.reflectionNotes ?? "",
+        });
+        if (!reflected) {
           return c.json({ error: "Not Found" }, 404);
         }
       }

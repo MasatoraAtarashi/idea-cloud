@@ -6,7 +6,9 @@ import { commentIdeaAction } from "./idea-comment-action";
 import { brainstormIdeaAction } from "./idea-brainstorm-action";
 import { editIdeaAction } from "./idea-edit-action";
 import { evaluateIdeaAction } from "./idea-evaluate-action";
+import { reflectionIdeaAction } from "./idea-reflection-action";
 import { researchIdeaAction } from "./idea-research-action";
+import { reviewIdeaAction } from "./idea-review-action";
 import { humanScoreIdeaAction } from "./idea-score-action";
 
 export type IdeaDetailActionData = {
@@ -50,6 +52,12 @@ export async function ideaDetailAction(args: ActionFunctionArgs) {
   }
   if (intent === "human-score") {
     return humanScoreIdeaAction(args);
+  }
+  if (intent === "review") {
+    return reviewIdeaAction(args);
+  }
+  if (intent === "reflection") {
+    return reflectionIdeaAction(args);
   }
   return researchIdeaAction(args);
 }

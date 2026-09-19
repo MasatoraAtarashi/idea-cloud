@@ -1,6 +1,8 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { STAGES } from "../app/data/mock";
+import { parseReflectionStatus, type ReflectionStatus } from "../app/lib/reflection";
+import { parseReviewStatus, type ReviewStatus } from "../app/lib/review";
 import { getLatestBrainstorm, type IdeaBrainstorm } from "./brainstorms";
 import { commentCountsByIdeaIds } from "./comments";
 import type { Db } from "./client";
@@ -68,6 +70,11 @@ export function toIdeaView(
     aiEvaluation: row.aiEvaluation ?? null,
     aiEvaluatedAt: row.aiEvaluatedAt ?? null,
     aiEvaluationModel: row.aiEvaluationModel ?? null,
+    lastReviewedAt: row.lastReviewedAt ?? null,
+    reviewStatus: parseReviewStatus(row.reviewStatus),
+    reflectionOutcome: row.reflectionOutcome ?? "",
+    reflectionStatus: parseReflectionStatus(row.reflectionStatus),
+    reflectionNotes: row.reflectionNotes ?? "",
   };
 }
 
@@ -98,6 +105,11 @@ export function ideaJson(
     aiEvaluation: row.aiEvaluation ?? null,
     aiEvaluatedAt: row.aiEvaluatedAt ?? null,
     aiEvaluationModel: row.aiEvaluationModel ?? null,
+    lastReviewedAt: row.lastReviewedAt ?? null,
+    reviewStatus: parseReviewStatus(row.reviewStatus),
+    reflectionOutcome: row.reflectionOutcome ?? "",
+    reflectionStatus: parseReflectionStatus(row.reflectionStatus),
+    reflectionNotes: row.reflectionNotes ?? "",
   };
 }
 
@@ -233,5 +245,40 @@ export async function saveAiEvaluation(
   if (!updated) {
     throw new Error("Failed to save evaluation");
   }
+  return updated;
+}
+
+export async function saveIdeaReview(
+  db: Db,
+  id: number,
+  status: ReviewStatus,
+): Promise<Idea | undefined> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      reviewStatus: status,
+      lastReviewedAt: sql`(datetime('now'))`,
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
+  return updated;
+}
+
+export async function saveIdeaReflection(
+  db: Db,
+  id: number,
+  data: { outcome: string; status: ReflectionStatus; notes: string },
+): Promise<Idea | undefined> {
+  const [updated] = await db
+    .update(ideas)
+    .set({
+      reflectionOutcome: data.outcome,
+      reflectionStatus: data.status,
+      reflectionNotes: data.notes,
+      updatedAt: sql`(datetime('now'))`,
+    })
+    .where(eq(ideas.id, id))
+    .returning();
   return updated;
 }
