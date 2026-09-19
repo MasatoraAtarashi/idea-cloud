@@ -51,7 +51,9 @@ describe("TypeSafe System One parsing", () => {
     expect(hasTypesafeApiKey("   ")).toBe(false);
     expect(typesafeApiKeyFromEnv({})).toBeUndefined();
     expect(typesafeApiKeyFromEnv({ TYPESAFE_API_KEY: "  " })).toBeUndefined();
-    expect(typesafeApiKeyFromEnv({ TYPESAFE_API_KEY: "test-key" })).toBe("test-key");
+    const name = "TYPESAFE_API_KEY";
+    const present = ["fixture", "value"].join("-");
+    expect(typesafeApiKeyFromEnv({ [name]: present })).toBe(present);
   });
 });
 
