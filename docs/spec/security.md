@@ -18,7 +18,7 @@ Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only (still us
 
 Team settings show the allowlist in a **disabled** textarea so the mock cannot pretend to write secrets.
 
-Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only.
+Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only. Do not log `TYPESAFE_API_KEY`.
 
 ## Field encryption
 

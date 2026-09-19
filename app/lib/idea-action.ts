@@ -3,6 +3,7 @@ import { createDb } from "../../db/client";
 import { asStage, IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
 import { bindResearchAi } from "../../server/ai/research";
 import { resolveCreateTags } from "../../server/ai/tags";
+import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
 import { STAGES, type Stage } from "../data/mock";
 import { LIST_PATH } from "./home-path";
 
@@ -57,6 +58,7 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
     ai: bindResearchAi(context.cloudflare.env.AI),
     text,
     tags,
+    typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
   });
   await insertIdea(db, text, { stage, tags: resolvedTags });
   return redirect(LIST_PATH);

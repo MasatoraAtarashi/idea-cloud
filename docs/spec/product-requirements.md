@@ -13,7 +13,7 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 ## Goals (this first pass)
 
 1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
-2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via Workers AI (fast 8B) when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run Workers AI **リサーチ**, **ブレスト**, and **AI評価** from the detail rail, a collapsed mobile **AI** menu, and the list ⋯ menu (text only; no web search). Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage.
+2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via TypeSafe Jev when `TYPESAFE_API_KEY` is set, otherwise Workers AI (fast 8B), when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run **リサーチ**, **ブレスト**, and **AI評価** from the detail rail, a collapsed mobile **AI** menu, and the list ⋯ menu (text only; no web search). AI評価 prefers Jev scores when the TypeSafe key is present. Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage.
 3. Visual direction: quiet light console — Linear IA × LiteLLM-thin chrome × Ideation Cloud pastel stages (see [ui-ia.md](./ui-ia.md)). Not Relic’s logo or blue marketing LP.
 4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app`. Auth is still mock — no Google OAuth / allowlist / Access work this pass.
 5. Keep the template CI (typecheck, lint, test, gitleaks, zizmor, audit, ASH).
@@ -42,7 +42,7 @@ See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home; desktop → `/a
 
 ## Auto-tags (create)
 
-On **作成** (form action and `POST /api/ideas`), if tags are empty, call Workers AI with the same fast model as research 「速い・安い」 (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`). Persist 2–5 short Japanese tags. Fail soft: missing binding, model error, or empty parse → create with `[]` (or keep user-provided tags). The compose field says **空なら自動タグ**; list/detail show **自動タグなし** / **自動タグは付きませんでした** when the array is empty so the feature is visible even on failure. Tests stub `setTestTagAiRun`; CI does not call live Workers AI.
+On **作成** (form action and `POST /api/ideas`), if tags are empty, prefer TypeSafe Jev (`jev-latest`) when `TYPESAFE_API_KEY` is set: one `choice` over a curated Japanese tag/category vocabulary, then take 2–5 labels from the probability distribution. If the key is missing or Jev fails, call Workers AI with the same fast model as research 「速い・安い」 (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`). Persist short Japanese tags. Fail soft: missing binding, model error, or empty parse → create with `[]` (or keep user-provided tags). The compose field says **空なら自動タグ**; list/detail show **自動タグなし** / **自動タグは付きませんでした** when the array is empty so the feature is visible even on failure. Tests stub `setTestSystemOneRun` / `setTestTagAiRun`; CI does not call live TypeSafe or Workers AI.
 
 ## Comments (Zenn scrap style)
 
@@ -58,7 +58,7 @@ Per-idea **ブレスト** next to research. Workers AI reads title + body + rece
 
 ## Evaluation (v1)
 
-Per-idea **human 1–5** (`human_score`, optional note, timestamp) plus **AI評価** (Workers AI, default **標準**). AI writes Japanese 強み / リスク / 新規性 / 次の一手 and `スコア: N`. Persist `ai_score`, `ai_evaluation`, `ai_evaluated_at`, `ai_evaluation_model`. Archive blocked. Compact `人N` / `AIN` chips on the list. Not Relic multi-axis / S/A/B scoring.
+Per-idea **human 1–5** (`human_score`, optional note, timestamp) plus **AI評価**. When `TYPESAFE_API_KEY` is set, Jev scores novelty / impact / feasibility / clarity / risk, a pursue `noul`, and a next-action `choice`; code maps the composite onto 1–5 and Japanese 強み / リスク / 新規性 / 次の一手 notes. Otherwise Workers AI (default **標準**) writes the same headings plus `スコア: N`. Persist `ai_score`, `ai_evaluation`, `ai_evaluated_at`, `ai_evaluation_model` (`jev-latest` or a Workers AI id). Archive blocked. Compact `人N` / `AIN` chips on the list. Not Relic multi-axis / S/A/B scoring.
 
 ## Saved list views (v1)
 
@@ -79,4 +79,4 @@ Named filters on `/app/list`: at least stage + tag/category, plus current search
 
 ## Success for this pass
 
-A reviewer signs in via the mock Google button, creates an idea with **作成**, and sees it on `/app/list` after reload (auto-tags present when AI succeeds; **自動タグなし** when it fails). They can add comments over time on detail; the composer clears after a successful submit. List tabs/filters/named views/aged-days are URL-backed. Empty DB still shows list chrome with **まだアイデアがありません**. Auth stays mocked. From **着想**, detail **リサーチ** / **ブレスト** / **AI評価** persist notes across reload (Workers AI; tests stub the model). Clicks show pending UI immediately.
+A reviewer signs in via the mock Google button, creates an idea with **作成**, and sees it on `/app/list` after reload (auto-tags present when Jev or Workers AI succeeds; **自動タグなし** when it fails). They can add comments over time on detail; the composer clears after a successful submit. List tabs/filters/named views/aged-days are URL-backed. Empty DB still shows list chrome with **まだアイデアがありません**. Auth stays mocked. From **着想**, detail **リサーチ** / **ブレスト** / **AI評価** persist notes across reload (Jev for evaluation when keyed; Workers AI otherwise; tests stub the model). Clicks show pending UI immediately.

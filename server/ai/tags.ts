@@ -1,5 +1,7 @@
 import { extractAiText, RESEARCH_PRESETS } from "../../app/lib/research-models";
+import { suggestIdeaTagsWithJev } from "./jev-tags";
 import type { ResearchAi, ResearchAiRun } from "./research";
+import { hasTypesafeApiKey } from "./typesafe";
 
 /** Fast/cheap model already used for research 「速い・安い」. */
 export const AUTO_TAG_MODEL = RESEARCH_PRESETS.fast;
@@ -89,13 +91,25 @@ export async function suggestIdeaTags(ai: ResearchAi, text: string): Promise<str
   }
 }
 
-/** Keep user tags when present; otherwise ask Workers AI and fail soft to []. */
+/** Keep user tags when present; otherwise prefer Jev, then Workers AI, fail soft to []. */
 export async function resolveCreateTags(opts: {
   ai: ResearchAi;
   text: string;
   tags: string[];
+  typesafeApiKey?: string;
 }): Promise<string[]> {
   const provided = sanitizeTags(opts.tags, USER_TAG_MAX);
   if (provided.length > 0) return provided;
+  if (hasTypesafeApiKey(opts.typesafeApiKey)) {
+    try {
+      const jevTags = sanitizeTags(
+        await suggestIdeaTagsWithJev(opts.typesafeApiKey, opts.text),
+        AUTO_TAG_MAX,
+      );
+      if (jevTags.length > 0) return jevTags;
+    } catch {
+      // fall through to Workers AI
+    }
+  }
   return suggestIdeaTags(opts.ai, opts.text);
 }

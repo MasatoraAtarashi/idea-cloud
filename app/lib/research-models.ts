@@ -1,3 +1,5 @@
+import { JEV_MODEL, JEV_MODEL_LABEL } from "./jev";
+
 export const RESEARCH_PRESETS = {
   fast: "@cf/meta/llama-3.1-8b-instruct-fp8-fast",
   standard: "@cf/qwen/qwen3-30b-a3b-fp8",
@@ -25,6 +27,13 @@ export function isResearchPreset(value: string): value is ResearchPreset {
 
 export function isResearchModelId(value: string): value is ResearchModelId {
   return ALLOWED_MODELS.has(value);
+}
+
+export function evaluationModelLabel(model: string | null | undefined): string {
+  if (!model) return "";
+  if (model === JEV_MODEL) return JEV_MODEL_LABEL;
+  const preset = presetFromModel(model);
+  return preset ? RESEARCH_PRESET_LABEL[preset] : model;
 }
 
 export function presetFromModel(model: string | null | undefined): ResearchPreset | undefined {

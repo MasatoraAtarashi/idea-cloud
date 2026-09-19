@@ -15,5 +15,7 @@ declare global {
     ACCESS_ALLOWED_EMAILS?: string;
     /** 32 バイト hex。未配線（フィールド暗号化スタブ用） */
     FIELD_ENCRYPTION_KEY?: string;
+    /** TypeSafe Jev (System One). When set, auto-tags and AI評価 prefer Jev. */
+    TYPESAFE_API_KEY?: string;
   }
 }

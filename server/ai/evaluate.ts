@@ -8,7 +8,9 @@ import { canRunIdeaAi, EVALUATE_ARCHIVE_ERROR } from "../../app/lib/idea-ai";
 import { parseAiScore } from "../../app/lib/scores";
 import { asStage, getIdeaRow, saveAiEvaluation, type Idea } from "../../db/ideas";
 import type { Db } from "../../db/client";
+import { evaluateIdeaWithJev } from "./jev-evaluate";
 import { resolveAiRun, type ResearchAi } from "./research";
+import { hasTypesafeApiKey } from "./typesafe";
 
 export const EVALUATE_FAIL_MESSAGE = "AI評価に失敗しました。時間をおいて再度お試しください。";
 
@@ -48,16 +50,8 @@ export async function evaluateIdea(opts: {
   ideaId: number;
   preset?: string | null;
   model?: string | null;
+  typesafeApiKey?: string;
 }): Promise<EvaluateIdeaResult> {
-  const resolved = resolveResearchModel({
-    preset: opts.preset,
-    model: opts.model,
-    defaultPreset: DEFAULT_EVALUATE_PRESET,
-  });
-  if (!resolved.ok) {
-    return { ok: false, status: 400, error: resolved.error };
-  }
-
   const idea = await getIdeaRow(opts.db, opts.ideaId);
   if (!idea) {
     return { ok: false, status: 404, error: "見つかりません" };
@@ -67,6 +61,29 @@ export async function evaluateIdea(opts: {
   }
 
   const ideaText = [idea.title, idea.body].filter((part) => part.trim().length > 0).join("\n");
+  if (hasTypesafeApiKey(opts.typesafeApiKey)) {
+    try {
+      const jev = await evaluateIdeaWithJev(opts.typesafeApiKey, ideaText);
+      const saved = await saveAiEvaluation(opts.db, idea.id, {
+        score: jev.score,
+        notes: jev.notes,
+        model: jev.model,
+      });
+      return { ok: true, idea: saved };
+    } catch {
+      // fall through to Workers AI
+    }
+  }
+
+  const resolved = resolveResearchModel({
+    preset: opts.preset,
+    model: opts.model,
+    defaultPreset: DEFAULT_EVALUATE_PRESET,
+  });
+  if (!resolved.ok) {
+    return { ok: false, status: 400, error: resolved.error };
+  }
+
   let notes: string;
   try {
     notes = await generateAiEvaluation(opts.ai, resolved.model, ideaText);

@@ -4,9 +4,11 @@ import type { ActionFunctionArgs } from "react-router";
 import { ideaDetailAction } from "../app/lib/idea-detail-action";
 import { EVALUATE_ARCHIVE_ERROR } from "../app/lib/idea-ai";
 import { parseAiScore } from "../app/lib/scores";
+import { JEV_MODEL } from "../app/lib/jev";
 import { RESEARCH_PRESETS } from "../app/lib/research-models";
 import { EVALUATE_FAIL_MESSAGE } from "../server/ai/evaluate";
 import { setTestAiRun } from "../server/ai/research";
+import { setTestSystemOneRun } from "../server/ai/typesafe";
 
 const authHeaders = {
   "cf-access-authenticated-user-email": "test@example.com",
@@ -64,6 +66,7 @@ describe("AI evaluation parser", () => {
 describe("ideas evaluate API", () => {
   afterEach(() => {
     setTestAiRun();
+    setTestSystemOneRun();
   });
 
   it("runs AI evaluation from 着想 with the standard preset by default", async () => {
@@ -104,11 +107,88 @@ describe("ideas evaluate API", () => {
     const failBody = (await fail.json()) as { error: string };
     expect(failBody.error).toBe(EVALUATE_FAIL_MESSAGE);
   });
+
+  it("uses Jev scores when TypeSafe is stubbed", async () => {
+    let workersAiCalled = false;
+    setTestAiRun(async () => {
+      workersAiCalled = true;
+      return { response: "強み:\nスコア: 1" };
+    });
+    setTestSystemOneRun(async () => ({
+      model: JEV_MODEL,
+      answers: {
+        novelty: {
+          type: "score",
+          score: 2.4,
+          legend: { "2": "明確に新しい" },
+          probabilities: {},
+          confidence: 0.7,
+        },
+        impact: {
+          type: "score",
+          score: 2.2,
+          legend: { "2": "大きい" },
+          probabilities: {},
+          confidence: 0.7,
+        },
+        feasibility: {
+          type: "score",
+          score: 1.9,
+          legend: { "2": "現実的" },
+          probabilities: {},
+          confidence: 0.7,
+        },
+        clarity: {
+          type: "score",
+          score: 2.0,
+          legend: { "2": "具体的" },
+          probabilities: {},
+          confidence: 0.7,
+        },
+        risk: {
+          type: "score",
+          score: 1.1,
+          legend: { "1": "中程度" },
+          probabilities: {},
+          confidence: 0.7,
+        },
+        pursue: { type: "noul", noul: 0.77 },
+        next: {
+          type: "choice",
+          choice: "age",
+          probabilities: { age: 0.6 },
+          confidence: 0.5,
+        },
+      },
+    }));
+    const id = await createIdea("Jevで評価する着想");
+    const res = await api(`/ideas/${id}/evaluate`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      item: {
+        aiScore: number;
+        aiEvaluation: string;
+        aiEvaluationModel: string;
+        aiEvaluatedAt: string;
+      };
+    };
+    expect(body.item.aiScore).toBeGreaterThanOrEqual(1);
+    expect(body.item.aiScore).toBeLessThanOrEqual(5);
+    expect(body.item.aiEvaluation).toContain("強み");
+    expect(body.item.aiEvaluation).toContain("寝かせて熟成させる");
+    expect(body.item.aiEvaluationModel).toBe(JEV_MODEL);
+    expect(body.item.aiEvaluatedAt).toBeTruthy();
+    expect(workersAiCalled).toBe(false);
+  });
 });
 
 describe("idea detail evaluate and score actions", () => {
   afterEach(() => {
     setTestAiRun();
+    setTestSystemOneRun();
   });
 
   it("saves a human score and AI evaluation without a document redirect", async () => {
