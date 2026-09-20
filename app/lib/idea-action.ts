@@ -1,6 +1,7 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { asStage, IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
+import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
 import { bindResearchAi } from "../../server/ai/research";
 import { resolveCreateTags } from "../../server/ai/tags";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
@@ -61,5 +62,6 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
     typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
   });
   await insertIdea(db, text, { stage, tags: resolvedTags });
+  await safeUpsertInspirationsFromIdeaText(db, text);
   return redirect(LIST_PATH);
 }

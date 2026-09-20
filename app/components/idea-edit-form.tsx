@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import { STAGE_LABEL, STAGES, type MockIdea, type Stage } from "../data/mock";
+import { COMPOSE_URL_HINT } from "../lib/compose";
 import { tagsInputValue, type EditIdeaActionData } from "../lib/idea-edit-action";
 import { useInstantPending } from "../lib/use-instant-pending";
 import { IconSpinner } from "./icons";
@@ -60,6 +61,7 @@ export function IdeaEditForm({
         disabled={pending}
         className="mt-3 min-h-[7rem] w-full resize-y border-0 bg-transparent text-[15px] leading-relaxed text-muted-foreground outline-none lg:text-[13.5px]"
       />
+      <p className="mt-2 text-[11.5px] text-muted-foreground">{COMPOSE_URL_HINT}</p>
       <label
         htmlFor="idea-edit-tags"
         className="mt-3 block font-mono text-[11px] text-muted-foreground"

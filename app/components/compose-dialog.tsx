@@ -6,6 +6,7 @@ import {
   COMPOSE_SUBMIT,
   COMPOSE_TITLE,
   COMPOSE_TITLE_PLACEHOLDER,
+  COMPOSE_URL_HINT,
   useCompose,
 } from "../lib/compose";
 import { NEW_IDEA_PATH } from "../lib/home-path";
@@ -133,6 +134,7 @@ export function ComposeDialog() {
             </span>
             <p className="basis-full text-[11.5px] text-muted-foreground">
               タグを空のまま作成すると、短い日本語タグを自動で付けます。失敗してもアイデアは残ります。
+              {COMPOSE_URL_HINT}
             </p>
           </div>
           {fetcher.data?.error ? (

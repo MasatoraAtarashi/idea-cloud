@@ -15,7 +15,7 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
 2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via TypeSafe Jev when `TYPESAFE_API_KEY` is set, otherwise Workers AI (fast 8B), when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run **リサーチ**, **ブレスト**, and **AI評価** from the detail rail, a collapsed mobile **AI** menu, and the list ⋯ menu (text only; no web search). AI評価 prefers Jev scores when the TypeSafe key is present. Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage.
 3. Visual direction: quiet light console — Linear IA × LiteLLM-thin chrome × Ideation Cloud pastel stages (see [ui-ia.md](./ui-ia.md)). Not Relic’s logo or blue marketing LP.
-4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app`. Auth is still mock — no Google OAuth / allowlist / Access work this pass.
+4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app` on mobile (compose-first) and `/app/list` on desktop. Auth is still mock — no Google OAuth / allowlist / Access work this pass.
 5. Keep the template CI (typecheck, lint, test, gitleaks, zizmor, audit, ASH).
 
 ## Idea stages
@@ -30,7 +30,7 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 
 Rules that the UI must teach:
 
-- Mobile is for composing a new idea. Desktop is for judgment.
+- Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first).
 - Research, brainstorm, and AI evaluation may run from **着想** onward. **アーカイブ** stays blocked.
 - Discarding is a first-class ritual, not a silent delete.
 - List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用) and **アーカイブ**. Mobile rows also swipe to those two actions.
@@ -38,7 +38,7 @@ Rules that the UI must teach:
 
 ## Screens in scope
 
-See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter), `/app/ideas/:id` (detail + edit + リサーチ / ブレスト / AI評価 / human score), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail), `/app/settings` (team / access; `/app/team` redirects).
+See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone UA; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter), `/app/ideas/:id` (detail + edit + リサーチ / ブレスト / AI評価 / human score), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail), `/app/settings` (team / access; `/app/team` redirects).
 
 ## Auto-tags (create)
 
@@ -78,7 +78,7 @@ Optional reflection on an idea: `reflection_outcome` (やってみた結果), `r
 
 ## Inspiration shelf (v1 skeleton)
 
-D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags). List + compose at `/app/inspirations`, detail at `/app/inspirations/:id`. Detail **AIブレスト** creates a new idea from title/url/memo and reuses the existing brainstorm action. **TODO:** R2 / image upload is deferred — URL + memo only this pass.
+D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags). List + compose at `/app/inspirations`, detail at `/app/inspirations/:id`. Detail **AIブレスト** creates a new idea from title/url/memo and reuses the existing brainstorm action. Creating or editing an idea whose body contains http(s) URLs also upserts those URLs here (max 5, hostname/context title, fail-soft, no web fetch, no R2). **TODO:** R2 / image upload is deferred — URL + memo only this pass.
 
 ## Out of scope (this pass)
 

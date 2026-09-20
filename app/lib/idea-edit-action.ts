@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
-import { IDEA_BODY_MAX, updateIdeaFields } from "../../db/ideas";
+import { getIdeaRow, IDEA_BODY_MAX, updateIdeaFields } from "../../db/ideas";
+import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
 import { STAGES, type Stage } from "../data/mock";
 
 export type EditIdeaActionData = {
@@ -43,6 +44,7 @@ export async function editIdeaAction({
     .slice(0, 8);
 
   const db = createDb(context.cloudflare.env.DB);
+  const current = await getIdeaRow(db, ideaId);
   const updated = await updateIdeaFields(db, ideaId, {
     title: title || body.slice(0, 200) || "無題",
     body: body || title,
@@ -51,6 +53,9 @@ export async function editIdeaAction({
   });
   if (!updated) {
     return { error: "見つかりません", intent: "edit" } satisfies EditIdeaActionData;
+  }
+  if (!current || current.body !== updated.body) {
+    await safeUpsertInspirationsFromIdeaText(db, text);
   }
   return { ok: true, intent: "edit" } satisfies EditIdeaActionData;
 }
