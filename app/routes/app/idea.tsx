@@ -9,23 +9,26 @@ import {
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
 import { IdeaAiMenu } from "../../components/idea-ai-menu";
 import { IdeaComments } from "../../components/idea-comments";
-import { IdeaBrainstormControls, IdeaBrainstormNotes } from "../../components/idea-brainstorm";
+import { IdeaBrainstormControls } from "../../components/idea-brainstorm";
 import { IdeaEditForm } from "../../components/idea-edit-form";
-import { IdeaEvaluateControls, IdeaEvaluateNotes } from "../../components/idea-evaluate";
+import { IdeaEvaluateControls } from "../../components/idea-evaluate";
+import { IdeaHistory } from "../../components/idea-history";
 import { IdeaReflectionForm } from "../../components/idea-reflection";
 import { IdeaReviewPrompt } from "../../components/idea-review";
 import { IdeaHumanScore } from "../../components/idea-score";
-import { IdeaResearchControls, IdeaResearchNotes } from "../../components/idea-research";
+import { IdeaResearchControls } from "../../components/idea-research";
 import { StageSelect } from "../../components/stage-select";
 import { SESSION_USER, STAGE_LABEL, nextStage } from "../../data/mock";
 import { formatAgedDays, formatDateJa, ideaPublicId } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
+import { buildIdeaHistory } from "../../lib/idea-history";
 import { ideaDetailAction } from "../../lib/idea-detail-action";
 import { useInstantPending } from "../../lib/use-instant-pending";
 import { createDb } from "../../../db/client";
+import { listBrainstormsForIdea, toBrainstormView } from "../../../db/brainstorms";
 import { listCommentsForIdea, toCommentView } from "../../../db/comments";
 import { getIdeaView } from "../../../db/ideas";
-import { IconMerge, IconShare, IconSpinner } from "../../components/icons";
+import { IconMerge, IconMore, IconShare, IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
 
 export { ideaDetailAction as action };
@@ -38,14 +41,21 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
   const db = createDb(context.cloudflare.env.DB);
   const idea = await getIdeaView(db, params.ideaId);
   if (!idea) {
-    return { idea: undefined, comments: [] };
+    return { idea: undefined, comments: [], brainstorms: [] };
   }
-  const comments = await listCommentsForIdea(db, Number(idea.id));
-  return { idea, comments: comments.map(toCommentView) };
+  const [comments, brainstorms] = await Promise.all([
+    listCommentsForIdea(db, Number(idea.id)),
+    listBrainstormsForIdea(db, Number(idea.id)),
+  ]);
+  return {
+    idea,
+    comments: comments.map(toCommentView),
+    brainstorms: brainstorms.map(toBrainstormView),
+  };
 }
 
 export default function IdeaPage() {
-  const { idea, comments } = useLoaderData<typeof loader>();
+  const { idea, comments, brainstorms } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof ideaDetailAction>();
 
   if (!idea) {
@@ -90,6 +100,7 @@ export default function IdeaPage() {
     <IdeaDetail
       idea={idea}
       comments={comments}
+      brainstorms={brainstorms}
       commentError={commentError}
       researchError={researchError}
       brainstormError={brainstormError}
@@ -183,6 +194,7 @@ function ArchiveButton({ idea, ghost = false }: { idea: MockIdea; ghost?: boolea
 function IdeaDetail({
   idea,
   comments,
+  brainstorms,
   commentError,
   researchError,
   brainstormError,
@@ -194,6 +206,7 @@ function IdeaDetail({
 }: {
   idea: MockIdea;
   comments: ReturnType<typeof toCommentView>[];
+  brainstorms: ReturnType<typeof toBrainstormView>[];
   commentError?: string;
   researchError?: string;
   brainstormError?: string;
@@ -204,35 +217,67 @@ function IdeaDetail({
   reflectionError?: string;
 }) {
   const [editing, setEditing] = useState(false);
+  const history = buildIdeaHistory(idea, brainstorms);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-      <article className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-8 lg:py-6">
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-3 lg:flex lg:items-start lg:justify-between">
-          <Link
-            to={LIST_PATH}
-            className="flex min-h-11 min-w-[4.5rem] items-center text-[13.5px] text-muted-foreground no-underline lg:hidden"
-          >
-            戻る
-          </Link>
-          <p className="text-center text-[13.5px] font-medium tracking-tight lg:hidden">アイデア</p>
-          <p className="hidden font-mono text-[11.5px] text-muted-foreground lg:block">
+      <article className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] lg:px-8 lg:py-6">
+        <header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 py-1 lg:flex lg:items-start lg:justify-between lg:py-0">
             <Link
               to={LIST_PATH}
-              className="text-muted-foreground no-underline hover:text-foreground"
+              className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] text-muted-foreground no-underline lg:hidden"
             >
-              アイデア
+              戻る
             </Link>
-            <span className="mx-2">/</span>
-            {ideaPublicId(idea.id)}
-          </p>
-          <button
-            type="button"
-            onClick={() => setEditing((open) => !open)}
-            className="ui-btn-secondary min-w-[4.5rem] justify-self-end px-3"
-          >
-            {editing ? "閉じる" : "編集"}
-          </button>
+            <p className="idea-title-wrap ui-title line-clamp-2 text-center text-[15px] leading-snug lg:hidden">
+              {idea.title}
+            </p>
+            <p className="hidden font-mono text-[11.5px] text-muted-foreground lg:block">
+              <Link
+                to={LIST_PATH}
+                className="text-muted-foreground no-underline hover:text-foreground"
+              >
+                アイデア
+              </Link>
+              <span className="mx-2">/</span>
+              {ideaPublicId(idea.id)}
+            </p>
+            <div className="justify-self-end lg:hidden">
+              <IdeaAiMenu
+                idea={idea}
+                compact
+                label={<IconMore className="h-4 w-4" />}
+                ariaLabel="操作"
+                researchError={researchError}
+                brainstormError={brainstormError}
+                evaluateError={evaluateError}
+              >
+                <button
+                  type="button"
+                  onClick={() => setEditing((open) => !open)}
+                  className="ui-btn-ghost w-full justify-start px-3 text-[13px]"
+                >
+                  {editing ? "編集を閉じる" : "編集"}
+                </button>
+                <Link
+                  to={`/app/merge?from=${idea.id}`}
+                  className="ui-btn-ghost w-full justify-start px-3 text-[13px]"
+                >
+                  <IconMerge className="h-3.5 w-3.5" />
+                  融合
+                </Link>
+                <ArchiveButton idea={idea} ghost />
+              </IdeaAiMenu>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditing((open) => !open)}
+              className="ui-btn-secondary hidden min-w-[4.5rem] px-3 lg:inline-flex"
+            >
+              {editing ? "閉じる" : "編集"}
+            </button>
+          </div>
         </header>
 
         <div className="mt-3 lg:mt-4">
@@ -253,50 +298,32 @@ function IdeaDetail({
           </>
         )}
 
-        <div className="mt-5 flex gap-2 lg:hidden">
+        <div className="mt-5 lg:hidden">
           <StageAdvanceButton idea={idea} />
-          <div className="relative w-[5.5rem] shrink-0">
-            <IdeaAiMenu
-              idea={idea}
-              compact
-              researchError={researchError}
-              brainstormError={brainstormError}
-              evaluateError={evaluateError}
-            >
-              <Link
-                to={`/app/merge?from=${idea.id}`}
-                className="ui-btn-ghost w-full justify-start px-3 text-[13px]"
-              >
-                <IconMerge className="h-3.5 w-3.5" />
-                融合
-              </Link>
-              <ArchiveButton idea={idea} ghost />
-            </IdeaAiMenu>
-          </div>
         </div>
 
-        <IdeaReviewPrompt idea={idea} />
+        <div className="lg:hidden">
+          <IdeaReviewPrompt idea={idea} compact />
+        </div>
+        <div className="hidden lg:block">
+          <IdeaReviewPrompt idea={idea} />
+        </div>
         {reviewError ? <p className="mt-1.5 text-[12.5px] text-danger">{reviewError}</p> : null}
         <IdeaHumanScore idea={idea} error={scoreError} />
-        <IdeaReflectionForm idea={idea} error={reflectionError} />
-        <IdeaComments comments={comments} error={commentError} />
-
-        <details className="mt-8 lg:hidden">
+        <details className="mt-6 lg:hidden">
           <summary className="flex min-h-11 cursor-pointer items-center text-[13.5px] font-medium">
-            記録
+            振り返り
           </summary>
-          <div className="pb-4">
-            <IdeaResearchNotes idea={idea} />
-            <IdeaBrainstormNotes idea={idea} />
-            <IdeaEvaluateNotes idea={idea} />
-          </div>
+          <IdeaReflectionForm idea={idea} error={reflectionError} />
         </details>
+        <div className="hidden lg:block">
+          <IdeaReflectionForm idea={idea} error={reflectionError} />
+        </div>
+        <IdeaComments comments={comments} error={commentError} />
+        <IdeaHistory items={history} />
       </article>
 
-      <aside
-        id="research"
-        className="hidden w-72 shrink-0 border-l border-border px-4 py-6 lg:block"
-      >
+      <aside className="hidden w-72 shrink-0 border-l border-border px-4 py-6 lg:block">
         <div className="mb-4 flex items-center justify-end gap-2">
           <span className="ui-btn-secondary pointer-events-none h-8 opacity-60">
             <IconShare className="h-3.5 w-3.5" />
@@ -348,10 +375,6 @@ function IdeaDetail({
             </dd>
           </div>
         </dl>
-
-        <IdeaResearchNotes idea={idea} />
-        <IdeaBrainstormNotes idea={idea} id="brainstorm" />
-        <IdeaEvaluateNotes idea={idea} id="evaluate" />
       </aside>
     </div>
   );

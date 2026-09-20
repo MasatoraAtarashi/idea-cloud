@@ -38,9 +38,9 @@ http://localhost:5173/app is new-idea compose on a phone (viewport or mobile UA)
 | `/app`              | Mobile home: 新規アイデア. Desktop → `/app/list`                                                                                             |
 | `/app/capture`      | Compose alias (desktop opens the list modal)                                                                                                 |
 | `/app/list`         | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?tab=candidates`, `?tab=tried`, `?view=board`, `?stage=`, `?tag=`, `?q=`, `?v=` |
-| `/app/ideas/:id`    | Idea detail (コメント, 見直し, 振り返り, 融合 / リサーチ / ブレスト as per-idea actions)                                                     |
-| `/app/inspirations` | Inspiration gallery (URL / memo + OGP preview). Detail can kick **AIブレスト** into a new idea                                               |
-| `/app/analytics`    | Light counts from D1 idea rows                                                                                                               |
+| `/app/ideas/:id`    | Idea detail (コメント, 見直し, 振り返り, **履歴** for リサーチ / ブレスト / AI評価; 融合 as a per-idea action)                               |
+| `/app/inspirations` | Inspiration gallery (URL / memo + OGP preview). First-class nav (mobile インスピ tab). Detail can kick **AIブレスト** into a new idea        |
+| `/app/analytics`    | Light counts from D1 idea rows. First-class nav (mobile 分析 tab)                                                                            |
 | `/app/merge`        | Merge deep link (not in primary nav)                                                                                                         |
 | `/app/research`     | Research deep link (redirects `from` to idea detail)                                                                                         |
 | `/app/settings`     | Settings (team / access)                                                                                                                     |

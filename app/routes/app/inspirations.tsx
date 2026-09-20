@@ -1,5 +1,6 @@
 import { Form, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { InspirationGallery } from "../../components/inspiration-gallery";
+import { SettingsIconLink } from "../../components/settings-link";
 import { createInspirationAction } from "../../lib/inspiration-action";
 import { createDb } from "../../../db/client";
 import { inspirationView, listInspirationRows } from "../../../db/inspirations";
@@ -67,9 +68,10 @@ export default function InspirationsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex h-[52px] shrink-0 items-center border-b border-border px-4">
+      <header className="flex h-11 shrink-0 items-center border-b border-border px-4 md:h-[52px]">
         <h1 className="ui-title text-[16px]">インスピレーション</h1>
         <span className="ml-2 font-mono text-[11px] text-muted-foreground">{items.length}</span>
+        <SettingsIconLink className="ml-auto md:hidden" />
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:grid md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:gap-8 md:px-8">
         <section>

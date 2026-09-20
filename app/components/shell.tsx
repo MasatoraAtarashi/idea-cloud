@@ -3,19 +3,26 @@ import { NavLink, Link, useLocation } from "react-router";
 import { SESSION_USER } from "../data/mock";
 import { initialsFromLabel } from "../lib/format";
 import { ComposeProvider, useCompose } from "../lib/compose";
-import { isComposePath, isDesktopViewport, LIST_PATH } from "../lib/home-path";
+import { isDesktopViewport, LIST_PATH } from "../lib/home-path";
 import { isNewIdeaShortcut } from "../lib/shortcuts";
-import { MOBILE_NAV, SETTINGS_NAV, WORKSPACE_NAV } from "../nav";
+import {
+  isMobileNavActive,
+  isMobileTabBarHidden,
+  isWorkspaceNavActive,
+  MOBILE_NAV,
+  SETTINGS_NAV,
+  WORKSPACE_NAV,
+} from "../nav";
 import { Brand } from "./brand";
 import { ComposeDialog } from "./compose-dialog";
-import { IconClock, IconList, IconPin, IconPlus, IconSettings, IconSun } from "./icons";
+import { IconChart, IconList, IconPin, IconPlus, IconSettings } from "./icons";
 
 const ICONS = {
   list: IconList,
   plus: IconPlus,
   settings: IconSettings,
   pin: IconPin,
-  clock: IconClock,
+  chart: IconChart,
 } as const;
 
 function navClass(isActive: boolean) {
@@ -29,13 +36,6 @@ function navClass(isActive: boolean) {
 
 function SidebarNav() {
   const location = useLocation();
-  const listActive =
-    location.pathname === "/app/list" ||
-    location.pathname.startsWith("/app/ideas") ||
-    location.pathname.startsWith("/app/merge") ||
-    location.pathname.startsWith("/app/research");
-  const inspirationActive = location.pathname.startsWith("/app/inspirations");
-  const analyticsActive = location.pathname.startsWith("/app/analytics");
 
   return (
     <nav className="flex flex-1 flex-col px-2 pt-1">
@@ -47,9 +47,7 @@ function SidebarNav() {
               key={item.to}
               to={item.to}
               end={item.end ?? false}
-              className={() =>
-                navClass(item.to === "/app/inspirations" ? inspirationActive : listActive)
-              }
+              className={() => navClass(isWorkspaceNavActive(item, location.pathname))}
             >
               <Icon className="h-4 w-4 shrink-0" />
               {item.label}
@@ -64,13 +62,7 @@ function SidebarNav() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) =>
-                navClass(
-                  item.to === "/app/analytics"
-                    ? analyticsActive
-                    : isActive || location.pathname.startsWith("/app/team"),
-                )
-              }
+              className={() => navClass(isWorkspaceNavActive(item, location.pathname))}
             >
               <Icon className="h-4 w-4 shrink-0" />
               {item.label}
@@ -85,6 +77,7 @@ function SidebarNav() {
 function ShellFrame({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { open, close } = useCompose();
+  const hideTabBar = isMobileTabBarHidden(location.pathname);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -144,45 +137,42 @@ function ShellFrame({ children }: { children: ReactNode }) {
         </aside>
         <div className="flex min-w-0 flex-1 flex-col bg-background">
           <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-          <div className="h-16 shrink-0 md:hidden" />
+          {hideTabBar ? null : <div className="h-16 shrink-0 md:hidden" />}
         </div>
       </div>
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] md:hidden">
-        {MOBILE_NAV.map((item) => {
-          const Icon = item.icon === "settings" ? IconSun : ICONS[item.icon];
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => {
-                const on = item.primary ? isComposePath(location.pathname) : isActive;
-                return `flex min-h-11 flex-col items-center justify-center gap-0.5 py-1.5 no-underline ${
+      {hideTabBar ? null : (
+        <nav
+          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] md:hidden"
+          aria-label="メイン"
+        >
+          {MOBILE_NAV.map((item) => {
+            const Icon = ICONS[item.icon];
+            const on = isMobileNavActive(item, location.pathname);
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                aria-label={item.ariaLabel}
+                className={`flex min-h-11 flex-col items-center justify-center gap-0.5 py-1.5 no-underline ${
                   on ? "text-primary" : "text-muted-foreground"
-                }`;
-              }}
-            >
-              {({ isActive }) => {
-                const on = item.primary ? isComposePath(location.pathname) : isActive;
-                return (
-                  <>
-                    {item.primary ? (
-                      <span className="flex h-8 w-8 items-center justify-center text-primary">
-                        <IconPlus className="h-6 w-6" strokeWidth={2.2} />
-                      </span>
-                    ) : (
-                      <Icon className={`h-5 w-5 ${on ? "text-foreground" : ""}`} />
-                    )}
-                    <span className={`text-[10px] ${on ? "font-medium text-foreground" : ""}`}>
-                      {item.label}
-                    </span>
-                  </>
-                );
-              }}
-            </NavLink>
-          );
-        })}
-      </nav>
+                }`}
+              >
+                {item.primary ? (
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <IconPlus className="h-5 w-5" strokeWidth={2.2} />
+                  </span>
+                ) : (
+                  <Icon className={`h-5 w-5 ${on ? "text-foreground" : ""}`} />
+                )}
+                <span className={`text-[10px] ${on ? "font-medium text-foreground" : ""}`}>
+                  {item.label}
+                </span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      )}
       <ComposeDialog />
     </div>
   );

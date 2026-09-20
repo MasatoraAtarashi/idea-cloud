@@ -11,6 +11,7 @@ export function IdeaAiMenu({
   evaluateError,
   compact = false,
   label = "AI",
+  ariaLabel,
   children,
 }: {
   idea: MockIdea;
@@ -18,12 +19,17 @@ export function IdeaAiMenu({
   brainstormError?: string;
   evaluateError?: string;
   compact?: boolean;
-  label?: string;
+  label?: ReactNode;
+  ariaLabel?: string;
   children?: ReactNode;
 }) {
+  const summaryLabel = ariaLabel ?? (typeof label === "string" ? label : "操作");
   return (
     <details className="ui-menu relative">
-      <summary className="flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-border-control bg-card px-3 text-[13.5px] font-medium md:h-8 md:min-h-8">
+      <summary
+        aria-label={summaryLabel}
+        className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md border border-border-control bg-card px-3 text-[13.5px] font-medium md:h-8 md:min-h-8"
+      >
         {label}
       </summary>
       <div className="ui-float absolute right-0 z-20 mt-1 w-56 space-y-2 px-3 py-3">

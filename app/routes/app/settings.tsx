@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { MEMBERS, SESSION_USER } from "../../data/mock";
 import { initialsFromLabel } from "../../lib/format";
-import { ANALYTICS_PATH, INSPIRATIONS_PATH } from "../../lib/home-path";
+import { LIST_PATH } from "../../lib/home-path";
 
 const SECTIONS = [
   { id: "members", group: "ワークスペース", label: "メンバーとアクセス" },
@@ -25,8 +25,15 @@ export default function SettingsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-      <header className="flex h-[52px] items-center border-b border-border px-4 md:hidden">
-        <h1 className="text-[16px] font-medium">設定</h1>
+      <header className="flex h-11 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
+        <Link
+          to={LIST_PATH}
+          className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] text-muted-foreground no-underline"
+        >
+          戻る
+        </Link>
+        <h1 className="text-[13.5px] font-medium">設定</h1>
+        <span className="min-w-[3.5rem]" />
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
         <p className="hidden px-2 text-[16px] font-medium md:block">設定</p>
@@ -58,14 +65,6 @@ export default function SettingsPage() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-6">
-        <div className="mb-5 flex flex-wrap gap-2 md:hidden">
-          <Link to={ANALYTICS_PATH} className="ui-btn-secondary px-3 text-[13px]">
-            アナリティクス
-          </Link>
-          <Link to={INSPIRATIONS_PATH} className="ui-btn-secondary px-3 text-[13px]">
-            インスピレーション
-          </Link>
-        </div>
         {section === "members" ? <MembersPanel /> : <StubPanel section={section} />}
       </div>
     </div>

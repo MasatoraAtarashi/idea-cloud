@@ -162,18 +162,24 @@ describe("responsive home and nav", () => {
     expect(src).toContain(COMPOSE_URL_HINT);
   });
 
-  it("keeps list + new + settings on mobile and list-only workspace on desktop", () => {
-    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "新規", "設定"]);
-    expect(MOBILE_NAV[1]?.to).toBe("/app");
-    expect(MOBILE_NAV[1]?.primary).toBe(true);
-    expect(WORKSPACE_NAV.map((item) => item.label)).toEqual(["アイデア", "インスピレーション"]);
+  it("keeps list + compose + inspirations + analytics on mobile and list-first workspace on desktop", () => {
+    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "インスピ", "新規", "分析"]);
+    expect(MOBILE_NAV[2]?.to).toBe("/app");
+    expect(MOBILE_NAV[2]?.primary).toBe(true);
+    expect(WORKSPACE_NAV.map((item) => item.label)).toEqual([
+      "アイデア",
+      "インスピレーション",
+      "アナリティクス",
+    ]);
     expect(WORKSPACE_NAV[0]?.to).toBe("/app/list");
     expect(WORKSPACE_NAV[1]?.to).toBe("/app/inspirations");
-    expect(SETTINGS_NAV.map((item) => item.to)).toEqual(["/app/analytics", "/app/settings"]);
+    expect(WORKSPACE_NAV[2]?.to).toBe("/app/analytics");
+    expect(SETTINGS_NAV.map((item) => item.to)).toEqual(["/app/settings"]);
     expect(WORKSPACE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
     expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("research"))).toBe(false);
+    expect(MOBILE_NAV.some((item) => item.label === "設定")).toBe(false);
   });
 
   it("keeps empty list chrome instead of hiding the view frame", () => {
@@ -207,6 +213,9 @@ describe("responsive home and nav", () => {
     expect(src).toContain("じっくり");
     expect(src).toContain("実行中…");
     expect(src).toContain("IdeaComments");
+    expect(src).toContain("IdeaHistory");
+    expect(src).toContain("buildIdeaHistory");
+    expect(src).toContain("履歴");
     expect(src).toContain("自動タグなし");
     expect(src).toContain("自動タグは付きませんでした");
     expect(src).toContain("空なら自動タグ");
@@ -238,7 +247,7 @@ describe("responsive home and nav", () => {
     const listSrc = appSources["../app/components/idea-list-view.tsx"];
     const detailSrc = appSources["../app/routes/app/idea.tsx"];
     expect(src).toContain("idea-title-wrap");
-    expect(listSrc).toContain("idea-title-wrap ui-title mt-1 line-clamp-3");
+    expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-3");
     expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-2");
     expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-3");
     expect(detailSrc).toContain("idea-title-wrap");
