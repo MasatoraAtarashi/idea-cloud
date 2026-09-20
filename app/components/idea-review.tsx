@@ -4,7 +4,15 @@ import { REVIEW_STATUS_LABEL, type ReviewStatus } from "../lib/review";
 import { useInstantPending } from "../lib/use-instant-pending";
 import { IconSpinner } from "./icons";
 
-export function IdeaReviewPrompt({ idea, compact = false }: { idea: MockIdea; compact?: boolean }) {
+export function IdeaReviewPrompt({
+  idea,
+  compact = false,
+  showNextStage = true,
+}: {
+  idea: MockIdea;
+  compact?: boolean;
+  showNextStage?: boolean;
+}) {
   const reviewFetcher = useFetcher();
   const stageFetcher = useFetcher();
   const reviewBusy = reviewFetcher.state !== "idle";
@@ -72,7 +80,7 @@ export function IdeaReviewPrompt({ idea, compact = false }: { idea: MockIdea; co
         >
           保留
         </button>
-        {next ? (
+        {showNextStage && next ? (
           <button
             type="button"
             disabled={stagePending.pending}

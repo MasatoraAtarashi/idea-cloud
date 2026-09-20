@@ -303,7 +303,7 @@ function IdeaDetail({
         </div>
 
         <div className="lg:hidden">
-          <IdeaReviewPrompt idea={idea} compact />
+          <IdeaReviewPrompt idea={idea} compact showNextStage={false} />
         </div>
         <div className="hidden lg:block">
           <IdeaReviewPrompt idea={idea} />
