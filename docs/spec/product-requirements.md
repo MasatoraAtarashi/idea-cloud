@@ -76,9 +76,9 @@ Optional reflection on an idea: `reflection_outcome` (やってみた結果), `r
 
 `/app/analytics` counts from current D1 idea rows (no extra analytics table): stage totals, average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
 
-## Inspiration shelf (v1 skeleton)
+## Inspiration shelf (gallery + OGP)
 
-D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags). List + compose at `/app/inspirations`, detail at `/app/inspirations/:id`. Detail **AIブレスト** creates a new idea from title/url/memo and reuses the existing brainstorm action. Creating or editing an idea whose body contains http(s) URLs also upserts those URLs here (max 5, hostname/context title, fail-soft, no web fetch, no R2). **TODO:** R2 / image upload is deferred — URL + memo only this pass.
+D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags, plus cached Open Graph fields). `/app/inspirations` is a **mood-board gallery** (2-col mobile, masonry-like on desktop), not a table. Cards show `og:image` when present, otherwise a domain-glyph fallback. Detail shows the same preview prominently and can **再取得**. Saving a URL from the gallery or API fetches `og:title` / `og:description` / `og:image` / `og:site_name` (twitter:image fallback) with timeout, size cap, and SSRF blocks; fetch failure stores `og_status=failed` and does **not** fail the save. Images are hotlinked (`<img loading=lazy referrerpolicy=no-referrer>`); no R2 upload. **AIブレスト** still creates an idea; seed text may include `og_title`. Creating or editing an idea whose body contains http(s) URLs also upserts those URLs here (max 5, hostname/context title, fail-soft, no page fetch at save time). Auto-imported rows use the gallery glyph fallback until **再取得** or a later URL save fills OGP.
 
 ## Out of scope (this pass)
 

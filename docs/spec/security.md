@@ -45,3 +45,7 @@ Also: Dependabot, lefthook (local), security headers middleware (`x-content-type
 ## Headers / CORS
 
 Same-origin UI. No wide CORS on APIs. `/` and `/login` are the unauthenticated login gate. `/app` is behind the mock Google continue (real OAuth later).
+
+## Outbound OGP fetch
+
+When an inspiration URL is saved from the gallery or API (create/update/再取得), the Worker fetches the HTML to read Open Graph / Twitter meta. Idea-body URL upsert does not fetch at save time. The page URL (and every redirect hop) must be public http(s): no credentials, no localhost / `.local` / `.internal`, no private or link-local IPs (including `169.254.169.254`). Timeout 5s, HTML cap 512KB, max 3 redirects. `og:image` is stored only if it is public **https**. Fetch failure is fail-soft (`og_status=failed`); it must not fail idea/inspiration save. Images are hotlinked in the UI; there is no open image proxy.

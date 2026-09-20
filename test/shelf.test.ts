@@ -7,6 +7,7 @@ import { parseReviewStatus } from "../app/lib/review";
 import { isReviewCandidate, isTriedIdea, type MockIdea } from "../app/data/mock";
 import { ideaTextFromInspiration } from "../db/inspirations";
 import { setTestAiRun } from "../server/ai/research";
+import { setTestOgpFetch } from "../server/ogp/fetch";
 
 const authHeaders = {
   "cf-access-authenticated-user-email": "test@example.com",
@@ -145,6 +146,16 @@ describe("inspiration seed text", () => {
     expect(text).toContain("URL: https://example.com/poster");
     expect(text).toContain("色が残る");
   });
+
+  it("includes og:title when it differs from the saved title", () => {
+    const text = ideaTextFromInspiration({
+      title: "無題",
+      url: "https://example.com/poster",
+      memo: "",
+      ogTitle: "駅のポスター",
+    });
+    expect(text).toContain("ページ: 駅のポスター");
+  });
 });
 
 describe("review and reflection API", () => {
@@ -187,9 +198,18 @@ describe("review and reflection API", () => {
 describe("inspirations API", () => {
   afterEach(() => {
     setTestAiRun();
+    setTestOgpFetch();
   });
 
   it("creates, lists, updates, and brainstorms from a memo", async () => {
+    setTestOgpFetch(async () => ({
+      status: "ok",
+      title: "駅の光",
+      description: "夜のホーム",
+      imageUrl: "https://cdn.example.com/poster.jpg",
+      siteName: "Example",
+      fetchedAt: "2026-09-20 00:00:00",
+    }));
     const create = await api("/inspirations", {
       method: "POST",
       body: JSON.stringify({
@@ -199,9 +219,21 @@ describe("inspirations API", () => {
       }),
     });
     expect(create.status).toBe(201);
-    const created = (await create.json()) as { item: { id: number; title: string; url: string } };
+    const created = (await create.json()) as {
+      item: {
+        id: number;
+        title: string;
+        url: string;
+        ogTitle: string;
+        ogImageUrl: string;
+        ogStatus: string;
+      };
+    };
     expect(created.item.title).toBe("駅のポスター");
     expect(created.item.url).toBe("https://example.com/poster");
+    expect(created.item.ogTitle).toBe("駅の光");
+    expect(created.item.ogImageUrl).toBe("https://cdn.example.com/poster.jpg");
+    expect(created.item.ogStatus).toBe("ok");
 
     const list = await api("/inspirations");
     const listed = (await list.json()) as { items: { title: string }[] };
@@ -231,5 +263,35 @@ describe("inspirations API", () => {
       body: JSON.stringify({ title: "   " }),
     });
     expect(res.status).toBe(400);
+  });
+
+  it("stores og_status=failed when fetch fails and still saves the row", async () => {
+    setTestOgpFetch(async () => {
+      throw new Error("network");
+    });
+    const create = await api("/inspirations", {
+      method: "POST",
+      body: JSON.stringify({
+        title: "取れないページ",
+        url: "https://example.com/missing",
+      }),
+    });
+    expect(create.status).toBe(201);
+    const created = (await create.json()) as { item: { id: number; ogStatus: string } };
+    expect(created.item.ogStatus).toBe("failed");
+
+    setTestOgpFetch(async () => ({
+      status: "ok",
+      title: "再取得できた",
+      description: "",
+      imageUrl: "https://cdn.example.com/ok.jpg",
+      siteName: "",
+      fetchedAt: "2026-09-20 01:00:00",
+    }));
+    const refreshed = await api(`/inspirations/${created.item.id}/ogp`, { method: "POST" });
+    expect(refreshed.status).toBe(200);
+    const body = (await refreshed.json()) as { item: { ogTitle: string; ogStatus: string } };
+    expect(body.item.ogTitle).toBe("再取得できた");
+    expect(body.item.ogStatus).toBe("ok");
   });
 });

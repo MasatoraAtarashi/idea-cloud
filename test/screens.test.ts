@@ -255,6 +255,13 @@ describe("responsive home and nav", () => {
     expect(src).toContain("アナリティクス");
     expect(src).toContain("インスピレーション");
     expect(src).toContain("AIブレスト");
+    expect(src).toContain("InspirationGallery");
+    expect(src).toContain("inspiration-masonry");
+    expect(src).toContain("inspiration-card");
+    expect(src).toContain("再取得");
+    expect(src).toContain("referrerPolicy");
+    expect(src).toContain("refresh-ogp");
+    expect(appSources["../app/routes/app/inspirations.tsx"]).not.toContain("divide-y");
     expect(src).toContain("AGED_DAY_PRESETS");
     expect(src).toContain("日以上");
     expect(src).toContain("コメント送信");

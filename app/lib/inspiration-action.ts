@@ -9,9 +9,11 @@ import {
   ideaTextFromInspiration,
   insertInspiration,
   updateInspiration,
+  urlsDiffer,
 } from "../../db/inspirations";
 import { brainstormIdea } from "../../server/ai/brainstorm";
 import { bindResearchAi } from "../../server/ai/research";
+import { enrichInspirationOgp } from "../../server/ogp/enrich";
 
 export const INSPIRATIONS_PATH = "/app/inspirations";
 
@@ -71,6 +73,9 @@ export async function createInspirationAction({
     memo: fields.memo,
     tags: fields.tags,
   });
+  if (created.url) {
+    await enrichInspirationOgp(db, created);
+  }
   return redirect(`${INSPIRATIONS_PATH}/${created.id}`);
 }
 
@@ -87,6 +92,18 @@ export async function inspirationDetailAction({
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "edit");
   const db = createDb(context.cloudflare.env.DB);
+
+  if (intent === "refresh-ogp") {
+    const row = await getInspirationRow(db, inspirationId);
+    if (!row) {
+      return { error: "見つかりません", intent: "refresh-ogp" } satisfies InspirationActionData;
+    }
+    if (!row.url?.trim()) {
+      return { error: "URLがありません", intent: "refresh-ogp" } satisfies InspirationActionData;
+    }
+    await enrichInspirationOgp(db, row);
+    return { ok: true, intent: "refresh-ogp" } satisfies InspirationActionData;
+  }
 
   if (intent === "brainstorm") {
     const row = await getInspirationRow(db, inspirationId);
@@ -116,6 +133,10 @@ export async function inspirationDetailAction({
   if (error) {
     return { error, intent: "edit" } satisfies InspirationActionData;
   }
+  const existing = await getInspirationRow(db, inspirationId);
+  if (!existing) {
+    return { error: "見つかりません", intent: "edit" } satisfies InspirationActionData;
+  }
   const updated = await updateInspiration(db, inspirationId, {
     title: fields.title || fields.memo.slice(0, 200) || fields.url || "無題",
     url: fields.url || null,
@@ -124,6 +145,9 @@ export async function inspirationDetailAction({
   });
   if (!updated) {
     return { error: "見つかりません", intent: "edit" } satisfies InspirationActionData;
+  }
+  if (urlsDiffer(existing.url, updated.url)) {
+    await enrichInspirationOgp(db, updated);
   }
   return { ok: true, intent: "edit" } satisfies InspirationActionData;
 }

@@ -1,5 +1,5 @@
 import { env, exports } from "cloudflare:workers";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { ActionFunctionArgs } from "react-router";
 import { ideaDetailAction } from "../app/lib/idea-detail-action";
 import {
@@ -10,6 +10,7 @@ import {
   titleFromUrlContext,
 } from "../app/lib/idea-urls";
 import { safeUpsertInspirationsFromIdeaText } from "../db/inspirations";
+import { setTestOgpFetch } from "../server/ogp/fetch";
 
 const authHeaders = {
   "cf-access-authenticated-user-email": "test@example.com",
@@ -79,6 +80,10 @@ describe("idea URL extraction", () => {
 });
 
 describe("idea URL → inspiration upsert", () => {
+  afterEach(() => {
+    setTestOgpFetch();
+  });
+
   it("creates one inspiration per new URL on idea create and skips duplicates", async () => {
     const create = await api("/ideas", {
       method: "POST",
@@ -178,5 +183,37 @@ describe("idea URL → inspiration upsert", () => {
     expect(create.status).toBe(201);
     const created = (await create.json()) as { item: { title: string } };
     expect(created.item.title).toContain("棚が落ちても残る");
+  });
+
+  it("does not fetch OGP on idea-URL upsert, then 再取得 can fill the gallery cache", async () => {
+    const create = await api("/ideas", {
+      method: "POST",
+      body: JSON.stringify({
+        body: "遅延プレビュー https://example.com/idea-url-ogp-later",
+      }),
+    });
+    expect(create.status).toBe(201);
+
+    const list = await api("/inspirations");
+    const listed = (await list.json()) as {
+      items: { id: number; url: string | null; ogStatus: string; ogTitle: string }[];
+    };
+    const row = listed.items.find((item) => item.url === "https://example.com/idea-url-ogp-later");
+    expect(row?.ogStatus).toBe("none");
+    expect(row?.ogTitle).toBe("");
+
+    setTestOgpFetch(async () => ({
+      status: "ok",
+      title: "遅延で取れた",
+      description: "",
+      imageUrl: "https://cdn.example.com/later.jpg",
+      siteName: "",
+      fetchedAt: "2026-09-20 02:00:00",
+    }));
+    const refreshed = await api(`/inspirations/${row?.id}/ogp`, { method: "POST" });
+    expect(refreshed.status).toBe(200);
+    const body = (await refreshed.json()) as { item: { ogTitle: string; ogStatus: string } };
+    expect(body.item.ogTitle).toBe("遅延で取れた");
+    expect(body.item.ogStatus).toBe("ok");
   });
 });

@@ -102,7 +102,7 @@ export const savedViews = sqliteTable("saved_views", {
 export type SavedView = typeof savedViews.$inferSelect;
 export type NewSavedView = typeof savedViews.$inferInsert;
 
-/** URL / memo first. R2 image upload is deferred. */
+/** URL / memo first. R2 image upload is deferred; OGP image is hotlinked. */
 export const inspirations = sqliteTable("inspirations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
@@ -115,6 +115,12 @@ export const inspirations = sqliteTable("inspirations", {
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`(datetime('now'))`),
+  ogTitle: text("og_title").notNull().default(""),
+  ogDescription: text("og_description").notNull().default(""),
+  ogImageUrl: text("og_image_url").notNull().default(""),
+  ogSiteName: text("og_site_name").notNull().default(""),
+  ogFetchedAt: text("og_fetched_at"),
+  ogStatus: text("og_status").notNull().default("none"),
 });
 
 export type Inspiration = typeof inspirations.$inferSelect;

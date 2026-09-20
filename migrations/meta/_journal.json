@@ -50,6 +50,13 @@
       "when": 1789800000000,
       "tag": "0006_shelf_skeletons",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1789868000000,
+      "tag": "0007_inspiration_ogp",
+      "breakpoints": true
     }
   ]
 }
