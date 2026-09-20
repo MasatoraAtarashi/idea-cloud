@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { MOBILE_NAV, SETTINGS_NAV, WORKSPACE_NAV } from "../app/nav";
-import { homePath, isDesktopViewport, NEW_IDEA_PATH, LIST_PATH } from "../app/lib/home-path";
+import {
+  homePath,
+  homePathForClient,
+  isDesktopViewport,
+  isMobileUserAgent,
+  prefersComposeHome,
+  NEW_IDEA_PATH,
+  LIST_PATH,
+} from "../app/lib/home-path";
+import { COMPOSE_URL_HINT } from "../app/lib/compose";
 import { isNewIdeaShortcut, isSubmitShortcut } from "../app/lib/shortcuts";
 import { formatRelativeJa, ideaExcerpt, ideaPublicId } from "../app/lib/format";
 import { DESIGN_TOKENS, STAGE_PILL_HEX } from "../app/lib/tokens";
@@ -127,6 +136,30 @@ describe("responsive home and nav", () => {
     expect(LIST_PATH).toBe("/app/list");
     expect(isDesktopViewport(() => ({ matches: false }))).toBe(false);
     expect(isDesktopViewport(() => ({ matches: true }))).toBe(true);
+    expect(
+      isMobileUserAgent(
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
+      ),
+    ).toBe(true);
+    expect(
+      isMobileUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0"),
+    ).toBe(false);
+    expect(
+      prefersComposeHome({
+        isDesktopViewport: true,
+        userAgent:
+          "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Mobile Safari/537.36",
+      }),
+    ).toBe(true);
+    expect(
+      prefersComposeHome({ isDesktopViewport: false, userAgent: "Mozilla/5.0 Chrome/120" }),
+    ).toBe(true);
+    expect(
+      homePathForClient({ isDesktopViewport: true, userAgent: "Mozilla/5.0 Chrome/120" }),
+    ).toBe(LIST_PATH);
+    const src = Object.values(appSources).join("\n");
+    expect(src).toContain("prefersComposeHome");
+    expect(src).toContain(COMPOSE_URL_HINT);
   });
 
   it("keeps list + new + settings on mobile and list-only workspace on desktop", () => {

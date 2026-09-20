@@ -31,7 +31,7 @@ pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms
 pnpm dev
 ```
 
-http://localhost:5173/app is new-idea compose on a phone. Desktop `/app` replaces to `/app/list`.
+http://localhost:5173/app is new-idea compose on a phone (viewport or mobile UA). Desktop `/app` replaces to `/app/list`. Idea bodies with http(s) URLs also land on the inspiration shelf.
 
 | Path                | Screen (Japanese UI)                                                                                                                         |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |

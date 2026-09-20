@@ -5,6 +5,7 @@ export const COMPOSE_SUBMIT = "作成";
 export const COMPOSE_PLACEHOLDER = "いま思いついたこと";
 export const COMPOSE_TITLE_PLACEHOLDER = "タイトル";
 export const COMPOSE_DRAFT_HINT = "⌘Enter で作成";
+export const COMPOSE_URL_HINT = "本文のURLはインスピレーションにも残します";
 
 type ComposeContextValue = {
   isOpen: boolean;

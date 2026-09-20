@@ -1,9 +1,14 @@
 import { useLayoutEffect } from "react";
-import { useNavigate } from "react-router";
+import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router";
 import { CaptureView } from "../../components/capture-view";
 import { useCompose, COMPOSE_TITLE } from "../../lib/compose";
 import { createIdeaAction } from "../../lib/idea-action";
-import { isDesktopViewport, LIST_PATH } from "../../lib/home-path";
+import {
+  isDesktopViewport,
+  isMobileUserAgent,
+  LIST_PATH,
+  prefersComposeHome,
+} from "../../lib/home-path";
 
 export { createIdeaAction as action };
 
@@ -11,17 +16,28 @@ export function meta() {
   return [{ title: `${COMPOSE_TITLE} — アイデアクラウド` }];
 }
 
+export function loader({ request }: LoaderFunctionArgs) {
+  return { mobileUa: isMobileUserAgent(request.headers.get("user-agent")) };
+}
+
 /** Deep link for compose. Desktop opens the list modal instead of a nav tab. */
 export default function CapturePage() {
   const navigate = useNavigate();
   const { open } = useCompose();
+  const { mobileUa } = useLoaderData<typeof loader>();
 
   useLayoutEffect(() => {
-    if (isDesktopViewport()) {
-      open();
-      navigate(LIST_PATH, { replace: true });
+    if (
+      prefersComposeHome({
+        isDesktopViewport: isDesktopViewport(),
+        userAgent: mobileUa ? "Mobile" : navigator.userAgent,
+      })
+    ) {
+      return;
     }
-  }, [navigate, open]);
+    open();
+    navigate(LIST_PATH, { replace: true });
+  }, [mobileUa, navigate, open]);
 
   return <CaptureView autofocus />;
 }

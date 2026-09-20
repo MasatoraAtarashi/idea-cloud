@@ -1,14 +1,24 @@
 import { useLayoutEffect } from "react";
-import { useNavigate } from "react-router";
+import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router";
 import { CaptureView } from "../../components/capture-view";
 import { COMPOSE_TITLE } from "../../lib/compose";
 import { createIdeaAction } from "../../lib/idea-action";
-import { isDesktopViewport, LIST_PATH } from "../../lib/home-path";
+import {
+  isDesktopViewport,
+  isMobileUserAgent,
+  LIST_PATH,
+  prefersComposeHome,
+} from "../../lib/home-path";
 
 export { createIdeaAction as action };
 
 export function meta() {
   return [{ title: `${COMPOSE_TITLE} — アイデアクラウド` }];
+}
+
+/** Mobile UA stays on compose (スマホ=登録トップ) even before the viewport is known. */
+export function loader({ request }: LoaderFunctionArgs) {
+  return { mobileUa: isMobileUserAgent(request.headers.get("user-agent")) };
 }
 
 /**
@@ -17,12 +27,19 @@ export function meta() {
  */
 export default function AppHome() {
   const navigate = useNavigate();
+  const { mobileUa } = useLoaderData<typeof loader>();
 
   useLayoutEffect(() => {
-    if (isDesktopViewport()) {
-      navigate(LIST_PATH, { replace: true });
+    if (
+      prefersComposeHome({
+        isDesktopViewport: isDesktopViewport(),
+        userAgent: mobileUa ? "Mobile" : navigator.userAgent,
+      })
+    ) {
+      return;
     }
-  }, [navigate]);
+    navigate(LIST_PATH, { replace: true });
+  }, [mobileUa, navigate]);
 
   return <CaptureView autofocus />;
 }

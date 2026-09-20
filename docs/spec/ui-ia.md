@@ -43,18 +43,18 @@ Sidebar header, mobile list header, and login gate use the same mark + wordmark.
 
 ## Responsive homes
 
-| Viewport               | After entering `/app` | Primary nav                                  |
-| ---------------------- | --------------------- | -------------------------------------------- |
-| Mobile (`< md`, 768px) | **New idea** `/app`   | Bottom nav: 一覧 + 新規 + 設定               |
-| Desktop (`md` and up)  | **List** `/app/list`  | Sidebar: brand, 新規アイデア, アイデア, 設定 |
+| Viewport / UA                           | After login or `/app` | Primary nav                                  |
+| --------------------------------------- | --------------------- | -------------------------------------------- |
+| Mobile (`< md` **or** phone user-agent) | **New idea** `/app`   | Bottom nav: 一覧 + 新規 + 設定               |
+| Desktop (`md` and up, not a phone UA)   | **List** `/app/list`  | Sidebar: brand, 新規アイデア, アイデア, 設定 |
 
-`/app` is compose-only (mobile home). Desktop client-replaces to `/app/list`. Mobile 一覧 is `/app/list` with 絞り込み collapsed.
+`/app` is compose-only (mobile home, スマホ=登録トップ). Cold open, refresh, and `/app` stay on compose — no extra tap. Phone UA stays compose-first even if the viewport is wide. Desktop client-replaces to `/app/list`. `⌘N` and 一覧 / sidebar still open the list. Mobile 一覧 is `/app/list` with 絞り込み collapsed.
 
 Login has no app shell. Do not treat the gate as the product.
 
 ## Login (`/` and `/login`)
 
-Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを預け、寝かせ、熟した頃に見返す。」, one Google-looking **Google で続行** button, note 「組織アカウントのみ利用できます」. Continues to `/app`. No allowlist essay or skip-login links.
+Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを預け、寝かせ、熟した頃に見返す。」, one Google-looking **Google で続行** button, note 「組織アカウントのみ利用できます」. Continues to `/app` on mobile (compose) and `/app/list` on desktop. No allowlist essay or skip-login links.
 
 ## Idea list (`/app/list`, desktop home)
 
@@ -94,7 +94,7 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 `/app/capture` remains a deep-link alias (desktop: open modal on the list). Do not label the product 「キャプチャ」.
 
-**作成** INSERTs into D1 (optional stage/tags) and redirects to `/app/list`. If the form/API omits tags, TypeSafe Jev (`jev-latest`) suggests 2–5 tags from a curated Japanese vocabulary when `TYPESAFE_API_KEY` is set; otherwise Workers AI (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) suggests short Japanese tags from title+body. Compose copy: **空なら自動タグ**. If AI fails, the idea is still created and list/detail show **自動タグなし** / **自動タグは付きませんでした**. Auth is still mock; there is no per-user ownership.
+**作成** INSERTs into D1 (optional stage/tags) and redirects to `/app/list`. If the form/API omits tags, TypeSafe Jev (`jev-latest`) suggests 2–5 tags from a curated Japanese vocabulary when `TYPESAFE_API_KEY` is set; otherwise Workers AI (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`) suggests short Japanese tags from title+body. Compose copy: **空なら自動タグ**. If AI fails, the idea is still created and list/detail show **自動タグなし** / **自動タグは付きませんでした**. If the body contains http(s) URLs, those are also upserted into the inspiration gallery (title from surrounding text or hostname, memo excerpt, max 5 distinct URLs, no page fetch at save time). Duplicate URLs are skipped. Shelf write failures do not block the idea save. Auto-imported cards use the domain-glyph fallback until **再取得** fills OGP. Auth is still mock; there is no per-user ownership.
 
 ## Merge / research (not primary nav)
 
