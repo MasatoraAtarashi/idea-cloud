@@ -13,10 +13,12 @@ import {
   inspirationJson,
   listInspirationRows,
   updateInspiration,
+  urlsDiffer,
 } from "../../../db/inspirations";
 import { brainstormIdea } from "../../ai/brainstorm";
 import { bindResearchAi } from "../../ai/research";
 import type { AppEnv } from "../../env";
+import { enrichInspirationOgp } from "../../ogp/enrich";
 
 const createInspirationSchema = z.object({
   title: z.string().trim().max(INSPIRATION_TITLE_MAX).optional(),
@@ -64,7 +66,8 @@ export const inspirationsRoute = new Hono<AppEnv>()
       memo: memo ?? "",
       tags: tags ?? [],
     });
-    return c.json({ item: inspirationJson(created) }, 201);
+    const enriched = created.url ? await enrichInspirationOgp(db, created) : created;
+    return c.json({ item: inspirationJson(enriched) }, 201);
   })
   .get("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
@@ -83,13 +86,29 @@ export const inspirationsRoute = new Hono<AppEnv>()
       const { id } = c.req.valid("param");
       const patch = c.req.valid("json");
       const db = createDb(c.env.DB);
+      const existing = await getInspirationRow(db, id);
+      if (!existing) {
+        return c.json({ error: "Not Found" }, 404);
+      }
       const updated = await updateInspiration(db, id, patch);
       if (!updated) {
         return c.json({ error: "Not Found" }, 404);
       }
-      return c.json({ item: inspirationJson(updated) });
+      const urlChanged = patch.url !== undefined && urlsDiffer(existing.url, updated.url);
+      const enriched = urlChanged ? await enrichInspirationOgp(db, updated) : updated;
+      return c.json({ item: inspirationJson(enriched) });
     },
   )
+  .post("/:id/ogp", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const row = await getInspirationRow(db, id);
+    if (!row) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    const enriched = await enrichInspirationOgp(db, row);
+    return c.json({ item: inspirationJson(enriched) });
+  })
   .post("/:id/brainstorm", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const db = createDb(c.env.DB);

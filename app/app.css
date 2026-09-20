@@ -224,6 +224,46 @@ a {
     display: none;
   }
 
+  @media (min-width: 768px) {
+    details.inspiration-compose > summary {
+      pointer-events: none;
+      list-style: none;
+    }
+
+    details.inspiration-compose > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.inspiration-compose:not([open]) > :not(summary) {
+      display: block;
+    }
+  }
+
+  .inspiration-masonry {
+    columns: 2;
+    column-gap: 0.75rem;
+  }
+
+  @media (min-width: 1280px) {
+    .inspiration-masonry {
+      columns: 3;
+    }
+  }
+
+  .inspiration-card {
+    box-shadow: none;
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .inspiration-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-float);
+    border-color: var(--border-control);
+  }
+
   .sr-only {
     position: absolute;
     width: 1px;

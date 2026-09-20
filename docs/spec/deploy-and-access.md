@@ -24,7 +24,7 @@ Intended steps (run only with a real token; do not commit the token):
 
 1. `wrangler d1 create idea-cloud-db` (or `wrangler d1 list` if it already exists)
 2. Patch `database_id` in `wrangler.jsonc`
-3. `wrangler d1 migrations apply DB --remote` (or `pnpm db:migrate:remote`) applies `todos` + `ideas` (including research, review, reflection columns, comments, brainstorms, saved views, inspirations)
+3. `wrangler d1 migrations apply DB --remote` (or `pnpm db:migrate:remote`) applies `todos` + `ideas` (including research, review, reflection columns, comments, brainstorms, saved views, inspirations + OGP columns)
 4. Production `deploy.yml` runs the same `d1 migrations apply DB --remote` before `wrangler deploy`. Local: `pnpm db:migrate:local`
 
 Workers AI research uses the `AI` binding. No extra wrangler secret for that path. Auto-tags and AI評価 prefer TypeSafe Jev when `TYPESAFE_API_KEY` is set (`wrangler secret put TYPESAFE_API_KEY` / `.dev.vars`). The deploy token needs permission to run Workers AI in production.

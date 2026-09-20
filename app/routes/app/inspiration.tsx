@@ -9,6 +9,7 @@ import {
 } from "react-router";
 import { EmptyState, TagList } from "../../components/ui";
 import { IconSpinner } from "../../components/icons";
+import { InspirationDetailPreview } from "../../components/inspiration-preview";
 import { formatDateJa } from "../../lib/format";
 import { INSPIRATIONS_PATH, inspirationDetailAction } from "../../lib/inspiration-action";
 import { useInstantPending } from "../../lib/use-instant-pending";
@@ -62,8 +63,11 @@ function InspirationDetail({
 }) {
   const [editing, setEditing] = useState(false);
   const brainstorm = useFetcher();
+  const refresh = useFetcher();
   const busy = brainstorm.state !== "idle";
+  const refreshing = refresh.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
+  const { pending: refreshPending, hold: holdRefresh } = useInstantPending(refreshing);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col px-4 py-5 md:px-8">
@@ -101,6 +105,7 @@ function InspirationDetail({
         </Form>
       ) : (
         <>
+          <InspirationDetailPreview item={item} />
           <h1 className="ui-title mt-4 text-[22px] leading-snug">{item.title}</h1>
           {item.url ? (
             <a
@@ -124,6 +129,21 @@ function InspirationDetail({
           </div>
         </>
       )}
+
+      {item.url ? (
+        <refresh.Form method="post" className="mt-5" onSubmit={holdRefresh}>
+          <input type="hidden" name="intent" value="refresh-ogp" />
+          <button type="submit" disabled={refreshPending} className="ui-btn-secondary px-3">
+            {refreshPending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+            {refreshPending ? "取得中…" : "再取得"}
+          </button>
+          {item.ogStatus === "failed" ? (
+            <p className="mt-2 text-[12px] text-muted-foreground">
+              プレビューを取得できませんでした。再取得できます。
+            </p>
+          ) : null}
+        </refresh.Form>
+      ) : null}
 
       <dl className="mt-6 space-y-2 text-[13px] text-muted-foreground">
         <div>
