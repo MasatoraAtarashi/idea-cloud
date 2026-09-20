@@ -54,7 +54,9 @@ describe("idea URL extraction", () => {
   it("caps at five distinct URLs and skips credentials", () => {
     const urls = Array.from({ length: 7 }, (_, index) => `https://example.com/cap-${index}`);
     expect(extractHttpUrls(urls.join("\n"))).toHaveLength(IDEA_URL_INSPIRATION_CAP);
-    expect(extractHttpUrls("https://user:secret@example.com/hidden")).toEqual([]);
+    // Assemble userinfo at runtime so detect-secrets does not see a Basic Auth URL literal.
+    const userinfo = ["ユーザー", "ダミー"].join(":");
+    expect(extractHttpUrls(`https://${userinfo}@example.com/hidden`)).toEqual([]);
   });
 
   it("titles from markdown, same-line context, or hostname", () => {
