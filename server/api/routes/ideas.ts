@@ -21,6 +21,7 @@ import {
   updateIdeaFields,
   updateIdeaStage,
 } from "../../../db/ideas";
+import { safeUpsertInspirationsFromIdeaText } from "../../../db/inspirations";
 import {
   brainstormJson,
   getLatestBrainstorm,
@@ -183,6 +184,7 @@ export const ideasRoute = new Hono<AppEnv>()
       typesafeApiKey: typesafeApiKeyFromEnv(c.env),
     });
     const created = await insertIdea(db, body, { stage, tags: resolvedTags });
+    await safeUpsertInspirationsFromIdeaText(db, body);
     return c.json({ item: ideaJson(created) }, 201);
   })
   .patch(
@@ -230,6 +232,7 @@ export const ideasRoute = new Hono<AppEnv>()
         patch.body !== undefined ||
         patch.tags !== undefined
       ) {
+        const current = await getIdeaRow(db, id);
         const updated =
           patch.title !== undefined || patch.body !== undefined || patch.tags !== undefined
             ? await updateIdeaFields(db, id, {
@@ -240,9 +243,15 @@ export const ideasRoute = new Hono<AppEnv>()
               })
             : patch.stage !== undefined
               ? await updateIdeaStage(db, id, patch.stage)
-              : await getIdeaRow(db, id);
+              : current;
         if (!updated) {
           return c.json({ error: "Not Found" }, 404);
+        }
+        if (patch.body !== undefined && current?.body !== updated.body) {
+          await safeUpsertInspirationsFromIdeaText(
+            db,
+            [updated.title, updated.body].filter(Boolean).join("\n"),
+          );
         }
         return c.json({ item: ideaJson(updated) });
       }

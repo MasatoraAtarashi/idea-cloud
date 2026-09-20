@@ -1,4 +1,10 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, isNotNull, sql } from "drizzle-orm";
+import {
+  excerptAroundUrl,
+  extractHttpUrls,
+  normalizeInspirationUrl,
+  titleFromUrlContext,
+} from "../app/lib/idea-urls";
 import { parseTags } from "./ideas";
 import type { Db } from "./client";
 import { inspirations, type Inspiration } from "./schema";
@@ -99,4 +105,50 @@ export async function updateInspiration(
 export async function deleteInspiration(db: Db, id: number): Promise<Inspiration | undefined> {
   const [deleted] = await db.delete(inspirations).where(eq(inspirations.id, id)).returning();
   return deleted;
+}
+
+export async function findInspirationByUrl(db: Db, url: string): Promise<Inspiration | undefined> {
+  const target = normalizeInspirationUrl(url);
+  if (!target) return undefined;
+  const rows = await db.select().from(inspirations).where(isNotNull(inspirations.url));
+  return rows.find((row) => row.url && normalizeInspirationUrl(row.url) === target);
+}
+
+/** Insert one inspiration per distinct URL. Existing URLs are left as-is. */
+export async function upsertInspirationsFromIdeaText(db: Db, text: string): Promise<number> {
+  const urls = extractHttpUrls(text);
+  if (urls.length === 0) return 0;
+  const existing = await db.select().from(inspirations).where(isNotNull(inspirations.url));
+  const seen = new Set(
+    existing
+      .map((row) => (row.url ? normalizeInspirationUrl(row.url) : ""))
+      .filter((key) => key.length > 0),
+  );
+  let created = 0;
+  for (const url of urls) {
+    const key = normalizeInspirationUrl(url);
+    if (!key || seen.has(key)) continue;
+    try {
+      await insertInspiration(db, {
+        title: titleFromUrlContext(text, url),
+        url,
+        memo: excerptAroundUrl(text, url),
+        tags: [],
+      });
+      seen.add(key);
+      created += 1;
+    } catch {
+      // One URL must not block the rest.
+    }
+  }
+  return created;
+}
+
+/** Idea create/edit must succeed even if the shelf write fails. */
+export async function safeUpsertInspirationsFromIdeaText(db: Db, text: string): Promise<void> {
+  try {
+    await upsertInspirationsFromIdeaText(db, text);
+  } catch {
+    // ignore
+  }
 }

@@ -1,5 +1,7 @@
+import { useLayoutEffect, useState } from "react";
 import { Link } from "react-router";
 import { GOOGLE_LOGIN_CTA, GOOGLE_LOGIN_NOTE, LOGIN_TAGLINE } from "../auth/google-login";
+import { homePathForClient, isDesktopViewport, NEW_IDEA_PATH } from "../lib/home-path";
 import { BrandMark, BrandWordmark } from "./brand";
 
 /** Official four-color G mark. Visual mock only — this is not a Google SDK. */
@@ -27,6 +29,17 @@ function GoogleMark() {
 }
 
 export function LoginGate() {
+  const [continueTo, setContinueTo] = useState(NEW_IDEA_PATH);
+
+  useLayoutEffect(() => {
+    setContinueTo(
+      homePathForClient({
+        isDesktopViewport: isDesktopViewport(),
+        userAgent: navigator.userAgent,
+      }),
+    );
+  }, []);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="flex w-full max-w-[22rem] flex-col items-center text-center">
@@ -34,7 +47,7 @@ export function LoginGate() {
         <BrandWordmark className="ui-title mt-5 text-[22px]" />
         <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{LOGIN_TAGLINE}</p>
         <Link
-          to="/app"
+          to={continueTo}
           className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-border-control bg-card text-[14px] font-medium text-foreground no-underline hover:bg-row-hover"
         >
           <GoogleMark />

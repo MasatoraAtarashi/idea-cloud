@@ -5,6 +5,7 @@ import {
   COMPOSE_SUBMIT,
   COMPOSE_TITLE,
   COMPOSE_TITLE_PLACEHOLDER,
+  COMPOSE_URL_HINT,
 } from "../lib/compose";
 import type { CreateIdeaActionData } from "../lib/idea-action";
 import { LIST_PATH } from "../lib/home-path";
@@ -104,6 +105,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
           </div>
           <p className="pb-1 text-[11px] text-muted-foreground">
             タグを空のまま作成すると自動で付けます。失敗しても残ります。
+            {COMPOSE_URL_HINT}
           </p>
 
           <div className="flex items-center gap-1 border-t border-border py-2 text-muted-foreground">
@@ -157,6 +159,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
           </div>
           <p className="mt-2 text-[11.5px] text-muted-foreground">
             タグを空のまま作成すると、短い日本語タグを自動で付けます。
+            {COMPOSE_URL_HINT}
           </p>
         </Form>
         {actionData?.error ? (

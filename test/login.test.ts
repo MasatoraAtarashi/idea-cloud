@@ -24,6 +24,8 @@ describe("login page (Google OAuth mock)", () => {
     expect(src).toContain("GOOGLE_LOGIN_CTA");
     expect(src).toContain("LOGIN_TAGLINE");
     expect(src).toContain("GOOGLE_LOGIN_NOTE");
+    expect(src).toContain("NEW_IDEA_PATH");
+    expect(src).toContain("homePathForClient");
     expect(src).not.toMatch(
       /思考の整理学|画面マップ|許可リスト|画面確認用|Google アカウントで続行/,
     );
