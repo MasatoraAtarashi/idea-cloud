@@ -146,7 +146,7 @@ describe("ideas auto-tags on create", () => {
       },
       text: "本文",
       tags: [],
-      typesafeApiKey: "test-key",
+      typesafeApiKey: "ああああああ",
     });
     expect(tags).toEqual(["通勤"]);
   });

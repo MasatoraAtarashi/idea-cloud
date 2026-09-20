@@ -38,6 +38,11 @@ export const ideas = sqliteTable("ideas", {
   aiEvaluation: text("ai_evaluation"),
   aiEvaluatedAt: text("ai_evaluated_at"),
   aiEvaluationModel: text("ai_evaluation_model"),
+  lastReviewedAt: text("last_reviewed_at"),
+  reviewStatus: text("review_status").notNull().default("none"),
+  reflectionOutcome: text("reflection_outcome").notNull().default(""),
+  reflectionStatus: text("reflection_status").notNull().default("none"),
+  reflectionNotes: text("reflection_notes").notNull().default(""),
 });
 
 export type Idea = typeof ideas.$inferSelect;
@@ -96,3 +101,21 @@ export const savedViews = sqliteTable("saved_views", {
 
 export type SavedView = typeof savedViews.$inferSelect;
 export type NewSavedView = typeof savedViews.$inferInsert;
+
+/** URL / memo first. R2 image upload is deferred. */
+export const inspirations = sqliteTable("inspirations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  url: text("url"),
+  memo: text("memo").notNull().default(""),
+  tags: text("tags").notNull().default("[]"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export type Inspiration = typeof inspirations.$inferSelect;
+export type NewInspiration = typeof inspirations.$inferInsert;

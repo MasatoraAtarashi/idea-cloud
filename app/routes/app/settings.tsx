@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { MEMBERS, SESSION_USER } from "../../data/mock";
 import { initialsFromLabel } from "../../lib/format";
+import { ANALYTICS_PATH, INSPIRATIONS_PATH } from "../../lib/home-path";
 
 const SECTIONS = [
   { id: "members", group: "ワークスペース", label: "メンバーとアクセス" },
@@ -56,6 +58,14 @@ export default function SettingsPage() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-6">
+        <div className="mb-5 flex flex-wrap gap-2 md:hidden">
+          <Link to={ANALYTICS_PATH} className="ui-btn-secondary px-3 text-[13px]">
+            アナリティクス
+          </Link>
+          <Link to={INSPIRATIONS_PATH} className="ui-btn-secondary px-3 text-[13px]">
+            インスピレーション
+          </Link>
+        </div>
         {section === "members" ? <MembersPanel /> : <StubPanel section={section} />}
       </div>
     </div>

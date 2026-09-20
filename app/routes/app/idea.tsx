@@ -12,6 +12,8 @@ import { IdeaComments } from "../../components/idea-comments";
 import { IdeaBrainstormControls, IdeaBrainstormNotes } from "../../components/idea-brainstorm";
 import { IdeaEditForm } from "../../components/idea-edit-form";
 import { IdeaEvaluateControls, IdeaEvaluateNotes } from "../../components/idea-evaluate";
+import { IdeaReflectionForm } from "../../components/idea-reflection";
+import { IdeaReviewPrompt } from "../../components/idea-review";
 import { IdeaHumanScore } from "../../components/idea-score";
 import { IdeaResearchControls, IdeaResearchNotes } from "../../components/idea-research";
 import { StageSelect } from "../../components/stage-select";
@@ -71,8 +73,16 @@ export default function IdeaPage() {
   const evaluateError = actionIntent === "evaluate" ? actionError : undefined;
   const editError = actionIntent === "edit" ? actionError : undefined;
   const scoreError = actionIntent === "human-score" ? actionError : undefined;
+  const reviewError = actionIntent === "review" ? actionError : undefined;
+  const reflectionError = actionIntent === "reflection" ? actionError : undefined;
   const researchError =
-    commentError || brainstormError || evaluateError || editError || scoreError
+    commentError ||
+    brainstormError ||
+    evaluateError ||
+    editError ||
+    scoreError ||
+    reviewError ||
+    reflectionError
       ? undefined
       : actionError;
 
@@ -86,6 +96,8 @@ export default function IdeaPage() {
       evaluateError={evaluateError}
       editError={editError}
       scoreError={scoreError}
+      reviewError={reviewError}
+      reflectionError={reflectionError}
     />
   );
 }
@@ -177,6 +189,8 @@ function IdeaDetail({
   evaluateError,
   editError,
   scoreError,
+  reviewError,
+  reflectionError,
 }: {
   idea: MockIdea;
   comments: ReturnType<typeof toCommentView>[];
@@ -186,6 +200,8 @@ function IdeaDetail({
   evaluateError?: string;
   editError?: string;
   scoreError?: string;
+  reviewError?: string;
+  reflectionError?: string;
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -259,7 +275,10 @@ function IdeaDetail({
           </div>
         </div>
 
+        <IdeaReviewPrompt idea={idea} />
+        {reviewError ? <p className="mt-1.5 text-[12.5px] text-danger">{reviewError}</p> : null}
         <IdeaHumanScore idea={idea} error={scoreError} />
+        <IdeaReflectionForm idea={idea} error={reflectionError} />
         <IdeaComments comments={comments} error={commentError} />
 
         <details className="mt-8 lg:hidden">

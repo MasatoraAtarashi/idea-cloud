@@ -54,6 +54,18 @@ describe("list view search params", () => {
     expect(parseListViewSearch(new URLSearchParams("days=nope")).minDays).toBe(0);
   });
 
+  it("round-trips 熟成候補 and 試したアイデア tabs", () => {
+    const candidates = parseListViewSearch(new URLSearchParams("tab=candidates&days=14"));
+    expect(candidates.tab).toBe("candidates");
+    expect(candidates.minDays).toBe(14);
+    expect(serializeListViewSearch(candidates).get("tab")).toBe("candidates");
+    expect(listViewHref(candidates)).toBe("/app/list?tab=candidates&days=14");
+    const tried = parseListViewSearch(new URLSearchParams("tab=tried"));
+    expect(tried.tab).toBe("tried");
+    expect(serializeListViewSearch(tried).get("tab")).toBe("tried");
+    expect(listViewHref(tried)).toBe("/app/list?tab=tried");
+  });
+
   it("accepts repeated keys and aging-shelf as aliases", () => {
     const params = new URLSearchParams();
     params.append("tab", "aging-shelf");

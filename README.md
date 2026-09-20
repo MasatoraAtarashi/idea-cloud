@@ -27,22 +27,24 @@ UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previ
 ```bash
 pnpm install
 cp .dev.vars.example .dev.vars   # set LOCAL_DEV_USER_EMAIL to your address
-pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms / saved views
+pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms / saved views / inspirations
 pnpm dev
 ```
 
 http://localhost:5173/app is new-idea compose on a phone. Desktop `/app` replaces to `/app/list`.
 
-| Path             | Screen (Japanese UI)                                                                                        |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `/app`           | Mobile home: 新規アイデア. Desktop → `/app/list`                                                            |
-| `/app/capture`   | Compose alias (desktop opens the list modal)                                                                |
-| `/app/list`      | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?view=board`, `?stage=`, `?tag=`, `?q=`, `?v=` |
-| `/app/ideas/:id` | Idea detail (コメント stream, 融合 / リサーチ / ブレスト as per-idea actions)                               |
-| `/app/merge`     | Merge deep link (not in primary nav)                                                                        |
-| `/app/research`  | Research deep link (redirects `from` to idea detail)                                                        |
-| `/app/settings`  | Settings (team / access)                                                                                    |
-| `/app/team`      | Redirects to settings                                                                                       |
+| Path                | Screen (Japanese UI)                                                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/app`              | Mobile home: 新規アイデア. Desktop → `/app/list`                                                                                             |
+| `/app/capture`      | Compose alias (desktop opens the list modal)                                                                                                 |
+| `/app/list`         | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?tab=candidates`, `?tab=tried`, `?view=board`, `?stage=`, `?tag=`, `?q=`, `?v=` |
+| `/app/ideas/:id`    | Idea detail (コメント, 見直し, 振り返り, 融合 / リサーチ / ブレスト as per-idea actions)                                                     |
+| `/app/inspirations` | Inspiration shelf (URL / memo). Detail can kick **AIブレスト** into a new idea                                                               |
+| `/app/analytics`    | Light counts from D1 idea rows                                                                                                               |
+| `/app/merge`        | Merge deep link (not in primary nav)                                                                                                         |
+| `/app/research`     | Research deep link (redirects `from` to idea detail)                                                                                         |
+| `/app/settings`     | Settings (team / access)                                                                                                                     |
+| `/app/team`         | Redirects to settings                                                                                                                        |
 
 ## What was copied from the template
 

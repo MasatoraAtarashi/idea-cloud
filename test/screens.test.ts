@@ -133,9 +133,10 @@ describe("responsive home and nav", () => {
     expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "新規", "設定"]);
     expect(MOBILE_NAV[1]?.to).toBe("/app");
     expect(MOBILE_NAV[1]?.primary).toBe(true);
-    expect(WORKSPACE_NAV.map((item) => item.label)).toEqual(["アイデア"]);
+    expect(WORKSPACE_NAV.map((item) => item.label)).toEqual(["アイデア", "インスピレーション"]);
     expect(WORKSPACE_NAV[0]?.to).toBe("/app/list");
-    expect(SETTINGS_NAV[0]?.to).toBe("/app/settings");
+    expect(WORKSPACE_NAV[1]?.to).toBe("/app/inspirations");
+    expect(SETTINGS_NAV.map((item) => item.to)).toEqual(["/app/analytics", "/app/settings"]);
     expect(WORKSPACE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
     expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
@@ -150,7 +151,9 @@ describe("responsive home and nav", () => {
     expect(src).toContain("テーブル");
     expect(src).toContain("ボード");
     expect(src).toContain("useListViewSearch");
-    expect(src).toContain('hrefFor({ tab: "aging-shelf" })');
+    expect(src).toContain("熟成候補");
+    expect(src).toContain("試したアイデア");
+    expect(src).toContain('tab === "candidates"');
     expect(src).not.toContain("emptyWorkspace");
   });
 
@@ -213,6 +216,12 @@ describe("responsive home and nav", () => {
     expect(appSources["../app/components/idea-swipe-row.tsx"]).toContain("次の段階へ");
     expect(appSources["../app/components/idea-swipe-row.tsx"]).toContain("アーカイブ");
     expect(src).toContain("熟成日数");
+    expect(src).toContain("見直した");
+    expect(src).toContain("振り返りを保存");
+    expect(src).toContain("やってみた結果");
+    expect(src).toContain("アナリティクス");
+    expect(src).toContain("インスピレーション");
+    expect(src).toContain("AIブレスト");
     expect(src).toContain("AGED_DAY_PRESETS");
     expect(src).toContain("日以上");
     expect(src).toContain("コメント送信");

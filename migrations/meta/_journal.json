@@ -43,6 +43,13 @@
       "when": 1789732984381,
       "tag": "0005_fearless_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789800000000,
+      "tag": "0006_shelf_skeletons",
+      "breakpoints": true
     }
   ]
 }

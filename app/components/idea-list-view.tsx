@@ -5,6 +5,8 @@ import {
   allTags,
   filterIdeas,
   ideasByStage,
+  isReviewCandidate,
+  isTriedIdea,
   STAGE_HINT,
   STAGE_LABEL,
   STAGE_PILL_CLASS,
@@ -15,15 +17,25 @@ import {
 import { useCompose } from "../lib/compose";
 import { formatAgedDays, formatRelativeJa, ideaExcerpt } from "../lib/format";
 import { NEW_IDEA_PATH } from "../lib/home-path";
-import type { SavedViewItem } from "../lib/list-view-search";
+import type { ListTab, SavedViewItem } from "../lib/list-view-search";
+import { CANDIDATE_DEFAULT_DAYS } from "../lib/review";
 import { useListViewSearch } from "../lib/use-list-view-search";
 import { BrandMark } from "./brand";
 import { IconPlus, IconSearch } from "./icons";
 import { IdeaActionsMenu } from "./idea-actions";
+import { ReflectionBadge } from "./idea-reflection";
+import { IdeaReviewPrompt, ReviewStatusBadge } from "./idea-review";
 import { IdeaScoreChips } from "./idea-score";
 import { IdeaSwipeRow } from "./idea-swipe-row";
 import { ListSavedViews } from "./list-saved-views";
 import { CountBadge, StagePill, TagList } from "./ui";
+
+const LIST_TAB_LABEL: Record<ListTab, string> = {
+  all: "すべてのアイデア",
+  "aging-shelf": "熟成中の棚",
+  candidates: "熟成候補",
+  tried: "試したアイデア",
+};
 
 const MOBILE_STAGES: Stage[] = ["spark", "aging", "ripe", "selected"];
 
@@ -43,12 +55,24 @@ export function IdeaListView({
   const { tab, view, query, stages, tags, minDays, savedViewId, hrefFor, update } = listState;
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const availableTags = allTags(ideas);
+  const candidateDays = minDays > 0 ? minDays : CANDIDATE_DEFAULT_DAYS;
   const tabbed =
     tab === "aging-shelf"
       ? ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe")
-      : ideas;
-  const filtered = filterIdeas(tabbed, { query, stages, tags, minDays });
+      : tab === "candidates"
+        ? ideas.filter((idea) => isReviewCandidate(idea, candidateDays))
+        : tab === "tried"
+          ? ideas.filter((idea) => isTriedIdea(idea))
+          : ideas;
+  const filtered = filterIdeas(tabbed, {
+    query,
+    stages,
+    tags,
+    minDays: tab === "candidates" ? 0 : minDays,
+  });
   const agingCount = ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe").length;
+  const candidateCount = ideas.filter((idea) => isReviewCandidate(idea, candidateDays)).length;
+  const triedCount = ideas.filter((idea) => isTriedIdea(idea)).length;
 
   function stageFilterLabel() {
     if (stages.length === 0) return "すべて";
@@ -144,31 +168,34 @@ export function IdeaListView({
 
       <div className="hidden h-11 shrink-0 items-center gap-4 border-b border-border px-4 md:flex">
         <div className="flex min-w-0 flex-1 items-center gap-4 overflow-x-auto">
-          <Link
-            to={hrefFor({ tab: "all" })}
-            preventScrollReset
-            aria-current={tab === "all" ? "page" : undefined}
-            className={`shrink-0 pb-2 text-[13.5px] no-underline ${
-              tab === "all"
-                ? "border-b-2 border-foreground font-medium text-foreground"
-                : "text-muted-foreground"
-            }`}
-          >
-            すべてのアイデア
-          </Link>
-          <Link
-            to={hrefFor({ tab: "aging-shelf" })}
-            preventScrollReset
-            aria-current={tab === "aging-shelf" ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] no-underline ${
-              tab === "aging-shelf"
-                ? "border-b-2 border-foreground font-medium text-foreground"
-                : "text-muted-foreground"
-            }`}
-          >
-            熟成中の棚
-            <span className="font-mono text-[11px] text-muted-foreground">{agingCount}</span>
-          </Link>
+          {(
+            [
+              ["all", null],
+              ["aging-shelf", agingCount],
+              ["candidates", candidateCount],
+              ["tried", triedCount],
+            ] as const
+          ).map(([item, count]) => (
+            <Link
+              key={item}
+              to={hrefFor({
+                tab: item,
+                minDays: item === "candidates" && minDays === 0 ? CANDIDATE_DEFAULT_DAYS : minDays,
+              })}
+              preventScrollReset
+              aria-current={tab === item ? "page" : undefined}
+              className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] no-underline ${
+                tab === item
+                  ? "border-b-2 border-foreground font-medium text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {LIST_TAB_LABEL[item]}
+              {count != null ? (
+                <span className="font-mono text-[11px] text-muted-foreground">{count}</span>
+              ) : null}
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -301,6 +328,32 @@ export function IdeaListView({
 
       <div className="px-4 pt-2 md:hidden">
         <div className="flex gap-1.5 overflow-x-auto pb-2">
+          {(
+            [
+              ["all", null],
+              ["aging-shelf", agingCount],
+              ["candidates", candidateCount],
+              ["tried", triedCount],
+            ] as const
+          ).map(([item, count]) => (
+            <Link
+              key={item}
+              to={hrefFor({
+                tab: item,
+                minDays: item === "candidates" && minDays === 0 ? CANDIDATE_DEFAULT_DAYS : minDays,
+              })}
+              preventScrollReset
+              aria-current={tab === item ? "page" : undefined}
+              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[12.5px] font-medium no-underline ${
+                tab === item ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {LIST_TAB_LABEL[item]}
+              {count != null ? <span className="font-mono text-[11px]">{count}</span> : null}
+            </Link>
+          ))}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto pb-2">
           <Link
             to={hrefFor({ stages: [] })}
             preventScrollReset
@@ -399,6 +452,8 @@ export function IdeaListView({
                             </span>
                           ) : null}
                           <IdeaScoreChips idea={idea} />
+                          <ReviewStatusBadge idea={idea} />
+                          <ReflectionBadge idea={idea} />
                           <span className="ml-auto font-mono text-[11px] text-muted-foreground">
                             {formatRelativeJa(idea.updatedAt)}
                           </span>
@@ -414,6 +469,7 @@ export function IdeaListView({
                         <div className="mt-1">
                           <TagList tags={idea.tags} />
                         </div>
+                        {tab === "candidates" ? <IdeaReviewPrompt idea={idea} compact /> : null}
                       </Link>
                       <IdeaActionsMenu idea={idea} />
                     </div>
@@ -483,7 +539,11 @@ export function IdeaListView({
                           {idea.researchedAt || idea.researchNotes ? "調査済" : "未実行"}
                         </td>
                         <td>
-                          <IdeaScoreChips idea={idea} />
+                          <div className="flex flex-col gap-1">
+                            <IdeaScoreChips idea={idea} />
+                            <ReviewStatusBadge idea={idea} />
+                            <ReflectionBadge idea={idea} />
+                          </div>
                         </td>
                         <td className="font-mono text-[11px] text-muted-foreground">
                           {formatRelativeJa(idea.updatedAt)}
@@ -498,7 +558,10 @@ export function IdeaListView({
                           {formatAgedDays(idea.agedDays)}
                         </td>
                         <td className="text-right">
-                          <IdeaActionsMenu idea={idea} />
+                          <div className="flex flex-col items-end gap-1">
+                            {tab === "candidates" ? <IdeaReviewPrompt idea={idea} compact /> : null}
+                            <IdeaActionsMenu idea={idea} />
+                          </div>
                         </td>
                       </tr>
                     );
@@ -554,7 +617,12 @@ export function IdeaListView({
                                   <span>調査済</span>
                                 ) : null}
                                 <IdeaScoreChips idea={idea} />
+                                <ReviewStatusBadge idea={idea} />
+                                <ReflectionBadge idea={idea} />
                               </p>
+                              {tab === "candidates" ? (
+                                <IdeaReviewPrompt idea={idea} compact />
+                              ) : null}
                             </Link>
                             <IdeaActionsMenu idea={idea} />
                           </div>

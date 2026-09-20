@@ -22,6 +22,7 @@ beforeAll(async () => {
   await env.DB.exec("DELETE FROM idea_brainstorms;");
   await env.DB.exec("DELETE FROM idea_comments;");
   await env.DB.exec("DELETE FROM saved_views;");
+  await env.DB.exec("DELETE FROM inspirations;");
   await env.DB.exec("DELETE FROM todos;");
   await env.DB.exec("DELETE FROM ideas;");
 });

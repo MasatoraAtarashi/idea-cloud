@@ -6,6 +6,8 @@ export const NEW_IDEA_PATH = "/app";
 export const NEW_IDEA_ALIAS = "/app/capture";
 export const LIST_PATH = "/app/list";
 export const SETTINGS_PATH = "/app/settings";
+export const ANALYTICS_PATH = "/app/analytics";
+export const INSPIRATIONS_PATH = "/app/inspirations";
 
 export function homePath(isDesktop: boolean): typeof LIST_PATH | typeof NEW_IDEA_PATH {
   return isDesktop ? LIST_PATH : NEW_IDEA_PATH;

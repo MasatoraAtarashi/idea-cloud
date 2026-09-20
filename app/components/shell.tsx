@@ -8,12 +8,14 @@ import { isNewIdeaShortcut } from "../lib/shortcuts";
 import { MOBILE_NAV, SETTINGS_NAV, WORKSPACE_NAV } from "../nav";
 import { Brand } from "./brand";
 import { ComposeDialog } from "./compose-dialog";
-import { IconList, IconPlus, IconSettings, IconSun } from "./icons";
+import { IconClock, IconList, IconPin, IconPlus, IconSettings, IconSun } from "./icons";
 
 const ICONS = {
   list: IconList,
   plus: IconPlus,
   settings: IconSettings,
+  pin: IconPin,
+  clock: IconClock,
 } as const;
 
 function navClass(isActive: boolean) {
@@ -32,6 +34,8 @@ function SidebarNav() {
     location.pathname.startsWith("/app/ideas") ||
     location.pathname.startsWith("/app/merge") ||
     location.pathname.startsWith("/app/research");
+  const inspirationActive = location.pathname.startsWith("/app/inspirations");
+  const analyticsActive = location.pathname.startsWith("/app/analytics");
 
   return (
     <nav className="flex flex-1 flex-col px-2 pt-1">
@@ -43,7 +47,9 @@ function SidebarNav() {
               key={item.to}
               to={item.to}
               end={item.end ?? false}
-              className={() => navClass(listActive)}
+              className={() =>
+                navClass(item.to === "/app/inspirations" ? inspirationActive : listActive)
+              }
             >
               <Icon className="h-4 w-4 shrink-0" />
               {item.label}
@@ -59,7 +65,11 @@ function SidebarNav() {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                navClass(isActive || location.pathname.startsWith("/app/team"))
+                navClass(
+                  item.to === "/app/analytics"
+                    ? analyticsActive
+                    : isActive || location.pathname.startsWith("/app/team"),
+                )
               }
             >
               <Icon className="h-4 w-4 shrink-0" />

@@ -1,0 +1,235 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { exports } from "cloudflare:workers";
+import { summarizeIdeaAnalytics } from "../app/lib/analytics";
+import { parseListViewSearch, serializeListViewSearch } from "../app/lib/list-view-search";
+import { hasReflection, parseReflectionStatus } from "../app/lib/reflection";
+import { parseReviewStatus } from "../app/lib/review";
+import { isReviewCandidate, isTriedIdea, type MockIdea } from "../app/data/mock";
+import { ideaTextFromInspiration } from "../db/inspirations";
+import { setTestAiRun } from "../server/ai/research";
+
+const authHeaders = {
+  "cf-access-authenticated-user-email": "test@example.com",
+};
+
+async function api(path: string, init?: RequestInit) {
+  return exports.default.fetch(`https://example.com/api${path}`, {
+    ...init,
+    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+  });
+}
+
+function sample(partial: Partial<MockIdea> = {}): MockIdea {
+  return {
+    id: "1",
+    title: "棚の種",
+    body: "本文",
+    stage: "spark",
+    tags: [],
+    author: "",
+    team: "",
+    createdAt: "2026-09-01T00:00:00Z",
+    updatedAt: "2026-09-01T00:00:00Z",
+    agedDays: 18,
+    relatedIds: [],
+    commentCount: 0,
+    reviewStatus: "none",
+    reflectionStatus: "none",
+    reflectionOutcome: "",
+    reflectionNotes: "",
+    ...partial,
+  };
+}
+
+describe("review and reflection parsers", () => {
+  it("accepts known review statuses and falls back to none", () => {
+    expect(parseReviewStatus("hold")).toBe("hold");
+    expect(parseReviewStatus("reviewed")).toBe("reviewed");
+    expect(parseReviewStatus("nope")).toBe("none");
+  });
+
+  it("accepts known reflection statuses", () => {
+    expect(parseReflectionStatus("tried")).toBe("tried");
+    expect(parseReflectionStatus("dropped")).toBe("dropped");
+    expect(parseReflectionStatus("")).toBe("none");
+  });
+
+  it("treats outcome or notes as a reflection even when status is none", () => {
+    expect(hasReflection(sample())).toBe(false);
+    expect(hasReflection(sample({ reflectionOutcome: "やってみた" }))).toBe(true);
+    expect(hasReflection(sample({ reflectionStatus: "tried" }))).toBe(true);
+  });
+});
+
+describe("shelf list helpers", () => {
+  it("keeps archived ideas out of 熟成候補 and uses last review as the clock", () => {
+    const now = Date.parse("2026-09-19T00:00:00Z");
+    expect(isReviewCandidate(sample({ stage: "archived" }), 7, now)).toBe(false);
+    expect(
+      isReviewCandidate(sample({ createdAt: "2026-09-18T00:00:00Z", agedDays: 1 }), 7, now),
+    ).toBe(false);
+    expect(isReviewCandidate(sample({ createdAt: "2026-09-01T00:00:00Z" }), 7, now)).toBe(true);
+    expect(
+      isReviewCandidate(
+        sample({ createdAt: "2026-09-01T00:00:00Z", lastReviewedAt: "2026-09-18T00:00:00Z" }),
+        7,
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it("treats 採用 or any reflection as 試したアイデア", () => {
+    expect(isTriedIdea(sample({ stage: "selected" }))).toBe(true);
+    expect(isTriedIdea(sample({ reflectionStatus: "hold" }))).toBe(true);
+    expect(isTriedIdea(sample({ stage: "spark" }))).toBe(false);
+  });
+
+  it("defaults 熟成候補 tab to 7 days in the URL", () => {
+    const parsed = parseListViewSearch(new URLSearchParams("tab=candidates"));
+    expect(parsed.tab).toBe("candidates");
+    expect(parsed.minDays).toBe(7);
+    expect(serializeListViewSearch(parsed).get("tab")).toBe("candidates");
+    expect(serializeListViewSearch(parsed).get("days")).toBe("7");
+    expect(parseListViewSearch(new URLSearchParams("tab=tried")).tab).toBe("tried");
+  });
+});
+
+describe("idea analytics summary", () => {
+  it("counts stages, scores, reflections, and tag frequency", () => {
+    const summary = summarizeIdeaAnalytics([
+      sample({
+        id: "1",
+        stage: "spark",
+        agedDays: 2,
+        tags: ["朝", "音声"],
+        humanScore: 4,
+      }),
+      sample({
+        id: "2",
+        stage: "selected",
+        agedDays: 10,
+        tags: ["朝"],
+        aiScore: 3,
+        reflectionStatus: "tried",
+        reflectionOutcome: "使った",
+      }),
+    ]);
+    expect(summary.total).toBe(2);
+    expect(summary.byStage.find((row) => row.stage === "spark")?.count).toBe(1);
+    expect(summary.byStage.find((row) => row.stage === "selected")?.count).toBe(1);
+    expect(summary.averageAgedDays).toBe(6);
+    expect(summary.medianAgedDays).toBe(6);
+    expect(summary.withHumanScore).toBe(1);
+    expect(summary.withAiScore).toBe(1);
+    expect(summary.withReflection).toBe(1);
+    expect(summary.topTags[0]).toEqual({ tag: "朝", count: 2 });
+  });
+
+  it("returns empty totals for an empty workspace", () => {
+    const summary = summarizeIdeaAnalytics([]);
+    expect(summary.total).toBe(0);
+    expect(summary.averageAgedDays).toBeNull();
+    expect(summary.medianAgedDays).toBeNull();
+    expect(summary.topTags).toEqual([]);
+  });
+});
+
+describe("inspiration seed text", () => {
+  it("joins title, url, and memo for brainstorm context", () => {
+    const text = ideaTextFromInspiration({
+      title: "駅のポスター",
+      url: "https://example.com/poster",
+      memo: "色が残る",
+    });
+    expect(text).toContain("駅のポスター");
+    expect(text).toContain("URL: https://example.com/poster");
+    expect(text).toContain("色が残る");
+  });
+});
+
+describe("review and reflection API", () => {
+  it("saves review status and reflection fields on PATCH", async () => {
+    const create = await api("/ideas", {
+      method: "POST",
+      body: JSON.stringify({ body: "見直し対象" }),
+    });
+    const created = (await create.json()) as { item: { id: number } };
+
+    const reviewed = await api(`/ideas/${created.item.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ reviewStatus: "hold" }),
+    });
+    expect(reviewed.status).toBe(200);
+    const reviewBody = (await reviewed.json()) as {
+      item: { reviewStatus: string; lastReviewedAt: string };
+    };
+    expect(reviewBody.item.reviewStatus).toBe("hold");
+    expect(reviewBody.item.lastReviewedAt).toBeTruthy();
+
+    const reflected = await api(`/ideas/${created.item.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        reflectionStatus: "tried",
+        reflectionOutcome: "やってみた結果",
+        reflectionNotes: "短く残す",
+      }),
+    });
+    expect(reflected.status).toBe(200);
+    const reflectionBody = (await reflected.json()) as {
+      item: { reflectionStatus: string; reflectionOutcome: string; reflectionNotes: string };
+    };
+    expect(reflectionBody.item.reflectionStatus).toBe("tried");
+    expect(reflectionBody.item.reflectionOutcome).toBe("やってみた結果");
+    expect(reflectionBody.item.reflectionNotes).toBe("短く残す");
+  });
+});
+
+describe("inspirations API", () => {
+  afterEach(() => {
+    setTestAiRun();
+  });
+
+  it("creates, lists, updates, and brainstorms from a memo", async () => {
+    const create = await api("/inspirations", {
+      method: "POST",
+      body: JSON.stringify({
+        title: "駅のポスター",
+        url: "https://example.com/poster",
+        memo: "色が残る",
+      }),
+    });
+    expect(create.status).toBe(201);
+    const created = (await create.json()) as { item: { id: number; title: string; url: string } };
+    expect(created.item.title).toBe("駅のポスター");
+    expect(created.item.url).toBe("https://example.com/poster");
+
+    const list = await api("/inspirations");
+    const listed = (await list.json()) as { items: { title: string }[] };
+    expect(listed.items.some((item) => item.title === "駅のポスター")).toBe(true);
+
+    const patched = await api(`/inspirations/${created.item.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ memo: "色と音が残る" }),
+    });
+    expect(patched.status).toBe(200);
+
+    setTestAiRun(async () => ({
+      response: "切り口:\n- 角度\n別案:\n- 変種\n次の問い:\n- 質問\n関連する方向:\n- 棚",
+    }));
+    const brainstorm = await api(`/inspirations/${created.item.id}/brainstorm`, { method: "POST" });
+    expect(brainstorm.status).toBe(200);
+    const body = (await brainstorm.json()) as { item: { id: number; title: string } };
+    expect(body.item.title).toBe("駅のポスター");
+
+    const idea = await api(`/ideas/${body.item.id}`);
+    expect(idea.status).toBe(200);
+  });
+
+  it("rejects an empty inspiration", async () => {
+    const res = await api("/inspirations", {
+      method: "POST",
+      body: JSON.stringify({ title: "   " }),
+    });
+    expect(res.status).toBe(400);
+  });
+});
