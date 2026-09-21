@@ -14,10 +14,10 @@ Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboar
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Surface      | `#FFFFFF`                                                                                                                                                             |
 | Sidebar      | `#FAFAFB`                                                                                                                                                             |
-| Table header | `#FCFCFD`                                                                                                                                                             |
-| Border       | `#E9EBEF` (controls `#E3E6EC`)                                                                                                                                        |
+| Table header | `#F4F5F7`                                                                                                                                                             |
+| Border       | `#C5CAD3` (controls `#B8BFC9`)                                                                                                                                        |
 | Accent       | `#3B6EF6`                                                                                                                                                             |
-| Body         | `#15181D`                                                                                                                                                             |
+| Body         | `#0F1217` (muted labels `#3A424E`)                                                                                                                                    |
 | Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                       |
 | Density      | Row ~40px, filter 46px, table header 36px; 1px dividers, not zebra. Rows stay compact but filled: tags, stage, relative updated, aging, comment count, research mark. |
 | Radius       | 6–7px controls, 9–12px panels                                                                                                                                         |
@@ -45,25 +45,24 @@ Sidebar header, mobile list header, and login gate use the same mark + wordmark.
 
 | Viewport / UA                           | After login or `/app` | Primary nav                                                                                    |
 | --------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------- |
-| Mobile (`< md` **or** phone user-agent) | **New idea** `/app`   | Bottom tabs: 一覧 / インスピ / 新規 / 分析. Settings is a header gear, not a tab.              |
+| Mobile (`< md` **or** phone user-agent) | **New idea** `/app`   | Bottom tabs: 一覧 / インスピ / 分析. **+** in the header creates. Settings is a header gear.   |
 | Desktop (`md` and up, not a phone UA)   | **List** `/app/list`  | Sidebar: brand, 新規アイデア, アイデア, インスピレーション, アナリティクス; 設定 at the bottom |
 
-`/app` is compose-only (mobile home, スマホ=登録トップ). Cold open, refresh, and `/app` stay on compose — no extra tap. Phone UA stays compose-first even if the viewport is wide. Desktop client-replaces to `/app/list`. `⌘N` and 一覧 / sidebar still open the list. Mobile 一覧 is `/app/list` with 絞り込み collapsed (stage / tag / 熟成日数 live in that drawer; one calm tab row stays: すべて / 熟成中 / 熟成候補 / 試した).
+`/app` is compose-only (mobile home, スマホ=登録トップ). Cold open, refresh, and `/app` stay on compose — no extra tap. Phone UA stays compose-first even if the viewport is wide. Desktop client-replaces to `/app/list`. Day-to-day nav is list / inspirations / analytics; compose is a header **+** (and `⌘N` on desktop), not a tab. The mobile tab bar **hides** on compose so it feels like a stack (閉じる returns to 一覧). Mobile 一覧 is `/app/list` with 絞り込み collapsed (stage / tag / 熟成日数 / 並び順 live in that drawer; one calm tab row stays: すべて / 熟成中 / 熟成候補 / 試した).
 
 Login has no app shell. Do not treat the gate as the product.
 
 ### Mobile tab bar
 
-Four primary destinations. Short labels fit the bar; `aria-label` keeps the full name.
+Three primary destinations. Create lives in the top-right **+**, not in the tab bar.
 
-| Tab     | Path                | Short label | `aria-label`       | Notes                                      |
-| ------- | ------------------- | ----------- | ------------------ | ------------------------------------------ |
-| List    | `/app/list`         | 一覧        | 一覧               | Desktop home; not highlighted on detail    |
-| Shelf   | `/app/inspirations` | インスピ    | インスピレーション | Gallery + OGP                              |
-| Compose | `/app`              | 新規        | 新規アイデア       | Primary CTA (filled plus). Cold-start home |
-| Counts  | `/app/analytics`    | 分析        | アナリティクス     | D1 idea-row counts                         |
+| Tab    | Path                | Short label | `aria-label`       | Notes                                   |
+| ------ | ------------------- | ----------- | ------------------ | --------------------------------------- |
+| List   | `/app/list`         | 一覧        | 一覧               | Desktop home; not highlighted on detail |
+| Shelf  | `/app/inspirations` | インスピ    | インスピレーション | Gallery + OGP; header **+** adds a card |
+| Counts | `/app/analytics`    | 分析        | アナリティクス     | D1 idea-row counts                      |
 
-The tab bar stays on compose / list / inspirations / analytics. It **hides** on stack screens (idea detail, inspiration detail, settings, merge, research) so those screens can use a sticky title without stacked chrome. Settings is opened from the gear on list / inspirations / analytics headers.
+The tab bar stays on list / inspirations / analytics. It **hides** on stack screens (compose, idea detail, inspiration detail, settings, merge, research) so those screens can use a sticky title without stacked chrome. Settings is opened from the gear on list / inspirations / analytics headers. Compose is `/app` via the header **+**.
 
 Helpers live in `app/nav.ts` (`isMobileNavActive`, `isWorkspaceNavActive`, `isMobileTabBarHidden`).
 
@@ -73,7 +72,7 @@ Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを
 
 ## Idea list (`/app/list`, desktop home)
 
-Always show list chrome (search, 新規アイデア, tabs すべてのアイデア / 熟成中の棚, **ビュー**, stage/tag/熟成日数 filter, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Desktop table columns: idea (title wraps 2 lines + excerpt), stage, tags (or **自動タグなし**), comment count, research (**調査済** / **未実行**), compact human/AI score, relative **更新**, aging days, row menu. Mobile cards wrap titles up to 3 lines, include ⋯ plus swipe for **次の段階** / **アーカイブ**, and still show tags + comment count + research + aging + scores. Board cards show the same signals. Mobile 絞り込み also has tags, named views, and 熟成日数.
+Always show list chrome (search, header **+** / 新規アイデア, tabs すべてのアイデア / 熟成中の棚, **ビュー**, stage/tag/熟成日数 filter, **並び順**, テーブル / ボード), including when there are **0 ideas**. Empty illustration + **まだアイデアがありません**. Desktop table columns: idea (title wraps 2 lines + excerpt), stage, tags (or **自動タグなし**), comment count, research (**調査済** / **未実行**), compact human/AI score, relative **更新**, **作成**, aging days, row menu. Clickable headers sort by title / stage / updatedAt / createdAt (`sort` + `dir` in the URL; default 更新降順). Mobile cards wrap titles up to 3 lines, include ⋯ plus swipe for **次の段階** / **アーカイブ**, and still show tags + comment count + research + aging + scores. Board: each phase column keeps a fixed header; **only the cards scroll**. ⋯ menus portal + flip + max-height so they stay tappable on a narrow viewport. Row menu includes **削除** (confirm, hard delete). Mobile 絞り込み also has 並び順, tags, named views, and 熟成日数.
 
 List view state is in the URL so Back/Forward and deep links work:
 
@@ -85,15 +84,17 @@ List view state is in the URL so Back/Forward and deep links work:
 | `tag`   | comma-separated tag labels                                              | none              |
 | `q`     | search string                                                           | none              |
 | `days`  | min aged days (`7`, `14`, `30`)                                         | none              |
+| `sort`  | `updatedAt`, `createdAt`, `stage`, `title`                              | `updatedAt`       |
+| `dir`   | `asc`, `desc`                                                           | `desc`            |
 | `v`     | saved view id                                                           | none              |
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
-Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ**. Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail rail puts run controls first. Mobile detail is a stack screen (tab bar hidden): sticky title (戻る + title, no ⋯), wrapping title + body, tags, one primary **次の段階へ**, compact 見直し, comments, then **履歴**. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail. Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
+Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ** and **削除** (browser confirm; hard-deletes the row and its comments/brainstorms). Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail is tabbed: **概要 | リサーチ | AI/履歴 | コメント** (`#research` / `#history` / `#brainstorm` / `#evaluate` / `#comments`). 概要 keeps wrapping title + body, tags, one primary **次の段階へ**, compact 見直し. リサーチ shows run controls + **先行事例** links (or **Web検索未取得**) above **AIコメント**. AI/履歴 is `buildIdeaHistory` and repeats the latest research snapshot. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail (including **削除**). Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
 
 ### Idea detail 履歴
 
-One chronological **履歴** section (`#research`, also `#brainstorm` / `#evaluate` for deep links) lists stored AI/research output, newest first, expandable:
+One chronological **履歴** section (detail tab **AI/履歴**, hashes `#history` / `#brainstorm` / `#evaluate`; `#research` opens the リサーチ tab) lists stored AI/research output, newest first, expandable:
 
 | Kind     | Source                                                                | Persistence                                                                                                   |
 | -------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -117,7 +118,7 @@ Route: `app/routes/app/board.tsx` (loader reads D1 `ideas` + `saved_views`). Det
 
 ## New idea (`/app`, `/app/capture`, desktop modal)
 
-Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / `Ctrl+N`) opens a compose modal; `⌘Enter` / `Ctrl+Enter` submits. Mobile: compose-first home at `/app` — 「閉じる」, title 「新規アイデア」, 「作成」 right, large title + body, stage chips, thin toolbar. Bottom nav stays visible.
+Not a desktop nav tab. Desktop: 新規アイデア in the sidebar and a header **+** (and `⌘N` / `Ctrl+N`) opens a compose modal; `⌘Enter` / `Ctrl+Enter` submits. Mobile: compose-first home at `/app` — 「閉じる」, title 「新規アイデア」, 「作成」 right, large title + body, stage chips, thin toolbar. Bottom nav is hidden on compose (stack). Day-to-day create is the header **+** on 一覧 (and the same **+** on the inspiration shelf).
 
 `/app/capture` remains a deep-link alias (desktop: open modal on the list). Do not label the product 「キャプチャ」.
 
@@ -125,10 +126,10 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 ## Merge / research (not primary nav)
 
-`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research and brainstorm run on idea detail via Workers AI: the **リサーチを実行** / **ブレスト** controls are real POSTs, not hash stubs. Research also fetches a few public web results for **先行事例** (fail-soft **Web検索未取得**). `/app/research?from=:id` redirects to detail `#research`. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
+`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research and brainstorm run on idea detail via Workers AI: the **リサーチを実行** / **ブレスト** controls are real POSTs, not hash stubs. Research also fetches a few public web results for **先行事例** (fail-soft **Web検索未取得**) and shows them on the リサーチ tab. `/app/research?from=:id` redirects to detail `#research`. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
 
 ## Settings (`/app/settings`)
 
 Team and access live here — not a top-level 「アクセス」 section. `/app/team` redirects to settings. Settings shell has a secondary nav (members / general / team / stages / profile / notify / shortcuts). **Do not invent teammates.** Session placeholder (“ログイン中”) only. Default-visibility cards are visual chrome, not persisted. On mobile, settings is a stack screen (gear from list / inspirations / analytics; tab bar hidden).
 
-List/detail data: D1 `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row (latest only); brainstorms load every `idea_brainstorms` row into detail **履歴**. **熟成候補** / **試したアイデア** are extra list tabs (URL `tab`). Detail has **見直し** and **振り返り**. `/app/analytics` is a **top-level** destination (sidebar + mobile 分析 tab) summarizing D1 idea-row counts. `/app/inspirations` is the inspiration **gallery** (card grid / masonry-like; 2-col on mobile) and a **top-level** destination (sidebar + mobile インスピ tab). Cards prefer the cached `og:image`; fallback is a domain glyph + title + memo snippet. Detail repeats the rich preview and offers **再取得**. Previews: [../ui-previews/](../ui-previews/).
+List/detail data: D1 `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row (latest only); brainstorms load every `idea_brainstorms` row into detail **履歴**. **熟成候補** / **試したアイデア** are extra list tabs (URL `tab`). List sort is URL `sort`/`dir`. Detail has **見直し** and **振り返り**, plus a hard **削除** with confirm. `/app/analytics` is a **top-level** destination (sidebar + mobile 分析 tab) summarizing D1 idea-row counts, including created-per-day for the last 7/30 days and counts by stage. `/app/inspirations` is the inspiration **gallery** (card grid / masonry-like; 2-col on mobile) and a **top-level** destination (sidebar + mobile インスピ tab; header **+** opens compose). Cards prefer the cached `og:image`; fallback is a domain glyph + title + memo snippet. Detail repeats the rich preview and offers **再取得**. Previews: [../ui-previews/](../ui-previews/).

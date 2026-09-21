@@ -6,27 +6,27 @@
  */
 :root {
   --background: #ffffff;
-  --foreground: #15181d;
+  --foreground: #0f1217;
   --card: #ffffff;
   --muted: #f4f5f8;
-  --muted-foreground: #687280;
+  --muted-foreground: #3a424e;
   --primary: #3b6ef6;
   --primary-foreground: #ffffff;
-  --border: #e9ebef;
-  --border-control: #e3e6ec;
+  --border: #c5cad3;
+  --border-control: #b8bfc9;
   --ring: #3b6ef6;
   --sidebar: #fafafb;
   --accent: #eef2fd;
-  --accent-foreground: #15181d;
+  --accent-foreground: #0f1217;
   --row-hover: #f8fafe;
-  --table-head: #fcfcfd;
+  --table-head: #f4f5f7;
   --brand: #3b6ef6;
   --brand-spark: #93b0ff;
   --danger: #dc2626;
   --danger-soft: #fef2f2;
   --radius: 0.4375rem;
   --radius-panel: 0.75rem;
-  --shadow-float: 0 16px 40px rgba(21, 24, 29, 0.12), 0 0 0 1px var(--border);
+  --shadow-float: 0 16px 40px rgba(15, 18, 23, 0.14), 0 0 0 1px var(--border);
 
   --stage-spark-bg: #f3f0ff; /* STAGE_PILL_HEX.spark */
   --stage-spark-fg: #6d28d9;
@@ -153,7 +153,7 @@ a {
   }
 
   .ui-table th {
-    @apply border-b border-border px-3 text-left text-[12.5px] font-medium text-muted-foreground;
+    @apply border-b border-border px-3 text-left text-[12.5px] font-medium text-foreground;
     background: var(--table-head);
     height: 36px;
   }

@@ -13,7 +13,7 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 ## Goals (this first pass)
 
 1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
-2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via TypeSafe Jev when `TYPESAFE_API_KEY` is set, otherwise Workers AI (fast 8B), when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run **リサーチ**, **ブレスト**, and **AI評価** from the detail rail, a mobile detail swipe (AI action), and the list ⋯ menu. **リサーチ** folds a few live web results into **先行事例** (fail-soft **Web検索未取得**). Detail **履歴** lists those stored outputs. AI評価 prefers Jev scores when the TypeSafe key is present. Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage.
+2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via TypeSafe Jev when `TYPESAFE_API_KEY` is set, otherwise Workers AI (fast 8B), when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run **リサーチ**, **ブレスト**, and **AI評価** from the detail rail, a mobile detail swipe (AI action), and the list ⋯ menu. **リサーチ** folds a few live web results into **先行事例** (fail-soft **Web検索未取得**). Detail **リサーチ** tab and **AI/履歴** list those stored outputs. AI評価 prefers Jev scores when the TypeSafe key is present. Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage.
 3. Visual direction: quiet light console — Linear IA × LiteLLM-thin chrome × Ideation Cloud pastel stages (see [ui-ia.md](./ui-ia.md)). Not Relic’s logo or blue marketing LP.
 4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app` on mobile (compose-first) and `/app/list` on desktop. Auth is still mock — no Google OAuth / allowlist / Access work this pass.
 5. Keep the template CI (typecheck, lint, test, gitleaks, zizmor, audit, ASH).
@@ -30,15 +30,15 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 
 Rules that the UI must teach:
 
-- Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first). Primary mobile destinations are 一覧 / インスピレーション / 新規 / アナリティクス (bottom tabs). Settings stays in a header gear.
+- Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first). Primary mobile destinations are 一覧 / インスピレーション / アナリティクス (bottom tabs). Create is a header **+**, not a tab. Settings stays in a header gear.
 - Research, brainstorm, and AI evaluation may run from **着想** onward. **アーカイブ** stays blocked.
 - Discarding is a first-class ritual, not a silent delete.
-- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用) and **アーカイブ**. Mobile rows also swipe to those two actions. Mobile idea detail keeps **次の段階へ** as the on-page primary CTA and swipes to **編集** / **AI** / **融合** / **アーカイブ** (no header ⋯). Desktop keeps the rail and a visible **編集** button.
+- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用), **アーカイブ**, and **削除** (confirm, hard delete). Mobile rows also swipe to the first two actions. Mobile idea detail keeps **次の段階へ** as the on-page primary CTA and swipes to **編集** / **AI** / **融合** / **アーカイブ** (no header ⋯). Desktop keeps the rail and a visible **編集** button. Detail content is tabbed (概要 / リサーチ / AI/履歴 / コメント).
 - Titles wrap (2–3 lines on the list, full wrap on detail). Primary controls use ~44px mobile tap targets and show pending UI on the click tick (do not wait for Workers AI).
 
 ## Screens in scope
 
-See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone UA; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter), `/app/ideas/:id` (detail + edit + 履歴 for リサーチ / ブレスト / AI評価 / human score), `/app/inspirations` (gallery; first-class nav), `/app/analytics` (counts; first-class nav), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail 履歴), `/app/settings` (team / access; `/app/team` redirects; not a mobile tab).
+See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone UA; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter + `sort`/`dir`), `/app/ideas/:id` (detail tabs 概要 / リサーチ / AI/履歴 / コメント + edit + 履歴 for リサーチ / ブレスト / AI評価 / human score), `/app/inspirations` (gallery; first-class nav; header +), `/app/analytics` (counts + created-per-day; first-class nav), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail リサーチ tab), `/app/settings` (team / access; `/app/team` redirects; not a mobile tab).
 
 ## Auto-tags (create)
 
@@ -50,7 +50,7 @@ Per-idea chronological notes. Composer + list on detail (`#comments`); optional 
 
 ## Research (v1)
 
-Per-idea only. **リサーチを実行** (detail rail, mobile detail swipe → AI, list row menu) POSTs the idea action via `useFetcher` (no full-document wait on Workers AI). Available from **着想** / **熟成中** / **熟した** / **採用**. **アーカイブ** stays locked (**アーカイブではリサーチできません**). Presets **速い・安い** / **標準** / **じっくり**. Last notes + model + timestamp + **先行事例** JSON persist on the idea (latest only; **履歴** shows that snapshot with links separate from AI commentary). Web search is fail-soft: if HTML/API search fails, notes still save and the UI shows **Web検索未取得**. Do not invent citations. Tests stub `setTestAiRun` / `setTestWebSearch`. List shows **調査済** or **未実行**.
+Per-idea only. **リサーチを実行** (detail rail, mobile detail swipe → AI, list row menu) POSTs the idea action via `useFetcher` (no full-document wait on Workers AI). Available from **着想** / **熟成中** / **熟した** / **採用**. **アーカイブ** stays locked (**アーカイブではリサーチできません**). Presets **速い・安い** / **標準** / **じっくり**. Last notes + model + timestamp + **先行事例** JSON persist on the idea (latest only; **リサーチ** tab and **AI/履歴** show that snapshot with links separate from AI commentary). Web search is fail-soft: if HTML/API search fails, notes still save and the UI shows **Web検索未取得**. Do not invent citations. Tests stub `setTestAiRun` / `setTestWebSearch`. List shows **調査済** or **未実行**.
 
 ## Brainstorm / expand (v1)
 
@@ -74,7 +74,7 @@ Optional reflection on an idea: `reflection_outcome` (やってみた結果), `r
 
 ## Analytics (v1 skeleton)
 
-`/app/analytics` is a first-class destination (desktop sidebar + mobile 分析 tab). Counts from current D1 idea rows (no extra analytics table): stage totals, average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
+`/app/analytics` is a first-class destination (desktop sidebar + mobile 分析 tab). Counts from current D1 idea rows (no extra analytics table): stage totals, ideas created per day (last 7/30 days), average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
 
 ## Inspiration shelf (gallery + OGP)
 

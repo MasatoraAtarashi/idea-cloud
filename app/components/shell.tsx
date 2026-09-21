@@ -95,9 +95,9 @@ function ShellFrame({ children }: { children: ReactNode }) {
   }, [close, open]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-60 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
+    <div className="h-dvh overflow-hidden bg-background">
+      <div className="flex h-full">
+        <aside className="hidden h-full w-60 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
           <div className="flex h-[52px] items-center px-4">
             <Link to={LIST_PATH} className="min-w-0 no-underline text-foreground">
               <Brand
@@ -124,7 +124,9 @@ function ShellFrame({ children }: { children: ReactNode }) {
                 {initialsFromLabel(SESSION_USER.label)}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-[13.5px] font-medium">{SESSION_USER.label}</p>
+                <p className="truncate text-[13.5px] font-medium text-foreground">
+                  {SESSION_USER.label}
+                </p>
                 <a
                   href="/login"
                   className="text-[12.5px] text-muted-foreground no-underline hover:text-foreground"
@@ -135,14 +137,14 @@ function ShellFrame({ children }: { children: ReactNode }) {
             </div>
           </div>
         </aside>
-        <div className="flex min-w-0 flex-1 flex-col bg-background">
-          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
           {hideTabBar ? null : <div className="h-16 shrink-0 md:hidden" />}
         </div>
       </div>
       {hideTabBar ? null : (
         <nav
-          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] md:hidden"
           aria-label="メイン"
         >
           {MOBILE_NAV.map((item) => {
@@ -158,13 +160,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
                   on ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                {item.primary ? (
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <IconPlus className="h-5 w-5" strokeWidth={2.2} />
-                  </span>
-                ) : (
-                  <Icon className={`h-5 w-5 ${on ? "text-foreground" : ""}`} />
-                )}
+                <Icon className={`h-5 w-5 ${on ? "text-foreground" : ""}`} />
                 <span className={`text-[10px] ${on ? "font-medium text-foreground" : ""}`}>
                   {item.label}
                 </span>

@@ -162,10 +162,19 @@ describe("responsive home and nav", () => {
     expect(src).toContain(COMPOSE_URL_HINT);
   });
 
-  it("keeps list + compose + inspirations + analytics on mobile and list-first workspace on desktop", () => {
-    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "インスピ", "新規", "分析"]);
-    expect(MOBILE_NAV[2]?.to).toBe("/app");
-    expect(MOBILE_NAV[2]?.primary).toBe(true);
+  it("keeps list + inspirations + analytics on mobile tabs and list-first workspace on desktop", () => {
+    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "インスピ", "分析"]);
+    expect(MOBILE_NAV.map((item) => item.to)).toEqual([
+      "/app/list",
+      "/app/inspirations",
+      "/app/analytics",
+    ]);
+    const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
+    const mobileLabels: readonly string[] = MOBILE_NAV.map((item) => item.label);
+    expect(mobileDestinations).not.toContain("/app");
+    expect(mobileDestinations).not.toContain("/app/settings");
+    expect(mobileLabels).not.toContain("新規");
+    expect(mobileLabels).not.toContain("設定");
     expect(WORKSPACE_NAV.map((item) => item.label)).toEqual([
       "アイデア",
       "インスピレーション",
@@ -179,8 +188,6 @@ describe("responsive home and nav", () => {
     expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("research"))).toBe(false);
-    const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
-    expect(mobileDestinations).not.toContain("/app/settings");
   });
 
   it("keeps empty list chrome instead of hiding the view frame", () => {
@@ -194,6 +201,11 @@ describe("responsive home and nav", () => {
     expect(src).toContain("熟成候補");
     expect(src).toContain("試したアイデア");
     expect(src).toContain('tab === "candidates"');
+    expect(src).toContain("並び順");
+    expect(src).toContain("sortIdeas");
+    expect(src).toContain("IdeaBoard");
+    expect(src).toContain("overflow-y-auto");
+    expect(src).toContain("IdeaHeaderCreateButton");
     expect(src).not.toContain("emptyWorkspace");
   });
 
@@ -217,6 +229,16 @@ describe("responsive home and nav", () => {
     expect(src).toContain("IdeaHistory");
     expect(src).toContain("buildIdeaHistory");
     expect(src).toContain("履歴");
+    expect(src).toContain("概要");
+    expect(src).toContain("AI/履歴");
+    expect(src).toContain("ideaDetailTabFromHash");
+    expect(src).toContain("削除");
+    expect(src).toContain("confirmIdeaDelete");
+    expect(src).toContain("PopoverMenu");
+    expect(src).toContain("grid-cols-3");
+    expect(src).toContain("ウェブで先行事例を数件取得し");
+    expect(src).not.toContain("ウェブ検索による先行事例はまだありません");
+    expect(src).not.toContain("このリサーチはモデルのみです");
     expect(src).toContain("自動タグなし");
     expect(src).toContain("自動タグは付きませんでした");
     expect(src).toContain("空なら自動タグ");
@@ -354,6 +376,9 @@ describe("desktop compose shortcuts and brand", () => {
     expect(src).not.toContain("height: 52px");
     expect(DESIGN_TOKENS.accent).toBe("#3b6ef6");
     expect(DESIGN_TOKENS.sidebar).toBe("#fafafb");
+    expect(DESIGN_TOKENS.body).toBe("#0f1217");
+    expect(DESIGN_TOKENS.muted).toBe("#3a424e");
+    expect(DESIGN_TOKENS.border).toBe("#c5cad3");
     expect(DESIGN_TOKENS.rowHeight).toBe(40);
     expect(STAGE_PILL_HEX.spark.bg).toBe("#f3f0ff");
     expect(STAGE_PILL_HEX.aging.fg).toBe("#b45309");

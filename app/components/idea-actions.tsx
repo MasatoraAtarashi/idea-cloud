@@ -1,181 +1,206 @@
-import { useRef } from "react";
-import { Link, useFetcher } from "react-router";
+import { Link, useFetcher, useLocation } from "react-router";
 import { nextStage, STAGE_LABEL, STAGES, type MockIdea, type Stage } from "../data/mock";
+import { confirmIdeaDelete } from "../lib/idea-delete";
 import { canRunIdeaAi } from "../lib/idea-ai";
+import { LIST_PATH } from "../lib/home-path";
 import { useInstantPending } from "../lib/use-instant-pending";
 import { isBrainstormSubmitting } from "./idea-brainstorm";
 import { isEvaluateSubmitting } from "./idea-evaluate";
 import { isResearchSubmitting } from "./idea-research";
 import { IconMore, IconSpinner } from "./icons";
+import { PopoverMenu } from "./popover-menu";
+
+const itemClass =
+  "flex min-h-11 w-full items-center px-3 text-left text-[13px] text-foreground no-underline hover:bg-row-hover md:min-h-9";
 
 export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
-  const stageFetcher = useFetcher();
-  const researchFetcher = useFetcher();
-  const brainstormFetcher = useFetcher();
-  const evaluateFetcher = useFetcher();
-  const menuRef = useRef<HTMLDetailsElement>(null);
+  const fetcher = useFetcher();
+  const location = useLocation();
   const aiReady = canRunIdeaAi(idea.stage);
   const next = nextStage(idea.stage);
-  const researchBusy =
-    researchFetcher.state !== "idle" && isResearchSubmitting(researchFetcher.formData);
-  const brainstormBusy =
-    brainstormFetcher.state !== "idle" && isBrainstormSubmitting(brainstormFetcher.formData);
-  const evaluateBusy =
-    evaluateFetcher.state !== "idle" && isEvaluateSubmitting(evaluateFetcher.formData);
-  const stageBusy = stageFetcher.state !== "idle";
+  const intent = fetcher.formData?.get("intent");
+  const busy = fetcher.state !== "idle";
+  const researchBusy = busy && isResearchSubmitting(fetcher.formData);
+  const brainstormBusy = busy && isBrainstormSubmitting(fetcher.formData);
+  const evaluateBusy = busy && isEvaluateSubmitting(fetcher.formData);
+  const stageBusy = busy && intent === "stage";
+  const deleteBusy = busy && intent === "delete";
   const researchPending = useInstantPending(researchBusy);
   const brainstormPending = useInstantPending(brainstormBusy);
   const evaluatePending = useInstantPending(evaluateBusy);
   const stagePending = useInstantPending(stageBusy);
+  const deletePending = useInstantPending(deleteBusy);
+
+  function submitIntent(nextIntent: string, extra?: Record<string, string>) {
+    const data = new FormData();
+    data.set("intent", nextIntent);
+    if (extra) {
+      for (const [key, value] of Object.entries(extra)) data.set(key, value);
+    }
+    void fetcher.submit(data, { method: "post", action: `/app/ideas/${idea.id}` });
+  }
 
   function setStage(stage: Stage) {
     stagePending.hold();
-    menuRef.current?.removeAttribute("open");
-    const data = new FormData();
-    data.set("intent", "stage");
-    data.set("stage", stage);
-    void stageFetcher.submit(data, { method: "post", action: `/app/ideas/${idea.id}` });
+    submitIntent("stage", { stage });
   }
 
-  function closeMenu() {
-    menuRef.current?.removeAttribute("open");
+  function deleteIdeaRow() {
+    if (!confirmIdeaDelete(idea.title)) return;
+    deletePending.hold();
+    const here = `${location.pathname}${location.search}`;
+    submitIntent("delete", { redirectTo: here.startsWith("/app/ideas/") ? LIST_PATH : here });
   }
 
   return (
-    <details ref={menuRef} className="ui-menu relative" name="idea-actions">
-      <summary
-        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:h-7 md:w-7"
-        aria-label="操作"
-      >
-        {stagePending.pending ? (
+    <PopoverMenu
+      label="操作"
+      trigger={
+        stagePending.pending || deletePending.pending ? (
           <IconSpinner className="h-4 w-4 animate-spin" />
         ) : (
           <IconMore className="h-4 w-4" />
-        )}
-      </summary>
-      <div className="ui-float absolute right-0 z-20 mt-1 w-52 py-1">
-        <Link
-          to={`/app/ideas/${idea.id}`}
-          prefetch="intent"
-          className="flex min-h-11 items-center px-3 text-[13px] text-foreground no-underline hover:bg-row-hover md:min-h-9"
-        >
-          詳細を開く
-        </Link>
-        {next ? (
-          <button
-            type="button"
-            onClick={() => setStage(next)}
-            className="flex min-h-11 w-full items-center px-3 text-left text-[13px] text-foreground hover:bg-row-hover md:min-h-9"
+        )
+      }
+    >
+      {(close) => (
+        <>
+          <Link
+            role="menuitem"
+            to={`/app/ideas/${idea.id}`}
+            prefetch="intent"
+            className={itemClass}
+            onClick={close}
           >
-            次の段階へ（{STAGE_LABEL[next]}）
-          </button>
-        ) : null}
-        {aiReady ? (
-          <>
-            <researchFetcher.Form
-              method="post"
-              action={`/app/ideas/${idea.id}`}
-              onSubmit={() => {
-                researchPending.hold();
-                closeMenu();
+            詳細を開く
+          </Link>
+          {next ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                close();
+                setStage(next);
               }}
+              className={itemClass}
             >
-              <input type="hidden" name="intent" value="research" />
+              次の段階へ（{STAGE_LABEL[next]}）
+            </button>
+          ) : null}
+          {aiReady ? (
+            <>
               <button
-                type="submit"
+                type="button"
+                role="menuitem"
                 disabled={researchPending.pending}
-                aria-busy={researchPending.pending}
-                className="flex min-h-11 w-full items-center gap-1.5 px-3 text-left text-[13px] text-foreground hover:bg-row-hover disabled:text-muted-foreground md:min-h-9"
+                onClick={() => {
+                  researchPending.hold();
+                  close();
+                  submitIntent("research");
+                }}
+                className={`${itemClass} gap-1.5 disabled:text-muted-foreground`}
               >
                 {researchPending.pending ? (
                   <IconSpinner className="h-3.5 w-3.5 animate-spin" />
                 ) : null}
                 {researchPending.pending ? "実行中…" : "リサーチを実行"}
               </button>
-            </researchFetcher.Form>
-            <brainstormFetcher.Form
-              method="post"
-              action={`/app/ideas/${idea.id}`}
-              onSubmit={() => {
-                brainstormPending.hold();
-                closeMenu();
-              }}
-            >
-              <input type="hidden" name="intent" value="brainstorm" />
               <button
-                type="submit"
+                type="button"
+                role="menuitem"
                 disabled={brainstormPending.pending}
-                aria-busy={brainstormPending.pending}
-                className="flex min-h-11 w-full items-center gap-1.5 px-3 text-left text-[13px] text-foreground hover:bg-row-hover disabled:text-muted-foreground md:min-h-9"
+                onClick={() => {
+                  brainstormPending.hold();
+                  close();
+                  submitIntent("brainstorm");
+                }}
+                className={`${itemClass} gap-1.5 disabled:text-muted-foreground`}
               >
                 {brainstormPending.pending ? (
                   <IconSpinner className="h-3.5 w-3.5 animate-spin" />
                 ) : null}
                 {brainstormPending.pending ? "実行中…" : "ブレスト"}
               </button>
-            </brainstormFetcher.Form>
-            <evaluateFetcher.Form
-              method="post"
-              action={`/app/ideas/${idea.id}`}
-              onSubmit={() => {
-                evaluatePending.hold();
-                closeMenu();
-              }}
-            >
-              <input type="hidden" name="intent" value="evaluate" />
               <button
-                type="submit"
+                type="button"
+                role="menuitem"
                 disabled={evaluatePending.pending}
-                aria-busy={evaluatePending.pending}
-                className="flex min-h-11 w-full items-center gap-1.5 px-3 text-left text-[13px] text-foreground hover:bg-row-hover disabled:text-muted-foreground md:min-h-9"
+                onClick={() => {
+                  evaluatePending.hold();
+                  close();
+                  submitIntent("evaluate");
+                }}
+                className={`${itemClass} gap-1.5 disabled:text-muted-foreground`}
               >
                 {evaluatePending.pending ? (
                   <IconSpinner className="h-3.5 w-3.5 animate-spin" />
                 ) : null}
                 {evaluatePending.pending ? "実行中…" : "AI評価"}
               </button>
-            </evaluateFetcher.Form>
-          </>
-        ) : (
-          <p className="cursor-not-allowed px-3 py-2 text-[13px] text-muted-foreground">
-            リサーチ / ブレスト / AI評価
-            <span className="mt-0.5 block text-[11px] leading-snug">
-              アーカイブでは実行できません
-            </span>
-          </p>
-        )}
-        <div className="border-t border-border my-1" />
-        <p className="px-3 py-1 font-mono text-[11px] text-muted-foreground">段階を変更</p>
-        {STAGES.map((stage) => (
-          <button
-            key={stage}
-            type="button"
-            onClick={() => setStage(stage)}
-            className="flex min-h-11 w-full items-center px-3 text-left text-[13px] text-foreground hover:bg-row-hover md:min-h-9"
+            </>
+          ) : (
+            <p className="cursor-not-allowed px-3 py-2 text-[13px] text-muted-foreground">
+              リサーチ / ブレスト / AI評価
+              <span className="mt-0.5 block text-[11px] leading-snug">
+                アーカイブでは実行できません
+              </span>
+            </p>
+          )}
+          <div className="my-1 border-t border-border" />
+          <p className="px-3 py-1 font-mono text-[11px] text-muted-foreground">段階を変更</p>
+          {STAGES.map((stage) => (
+            <button
+              key={stage}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                close();
+                setStage(stage);
+              }}
+              className={itemClass}
+            >
+              {STAGE_LABEL[stage]}
+            </button>
+          ))}
+          <div className="my-1 border-t border-border" />
+          <Link
+            role="menuitem"
+            to={`/app/merge?from=${idea.id}`}
+            className={itemClass}
+            onClick={close}
           >
-            {STAGE_LABEL[stage]}
-          </button>
-        ))}
-        <div className="border-t border-border my-1" />
-        <Link
-          to={`/app/merge?from=${idea.id}`}
-          className="flex min-h-11 items-center px-3 text-[13px] text-foreground no-underline hover:bg-row-hover md:min-h-9"
-        >
-          他のアイデアと融合
-        </Link>
-        <div className="border-t border-border my-1" />
-        {idea.stage !== "archived" ? (
+            他のアイデアと融合
+          </Link>
+          <div className="my-1 border-t border-border" />
+          {idea.stage !== "archived" ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                close();
+                setStage("archived");
+              }}
+              className={`${itemClass} text-muted-foreground`}
+            >
+              アーカイブ
+            </button>
+          ) : (
+            <p className="px-3 py-2 text-[12px] text-muted-foreground">すでにアーカイブです</p>
+          )}
           <button
             type="button"
-            onClick={() => setStage("archived")}
-            className="flex min-h-11 w-full items-center px-3 text-left text-[13px] text-muted-foreground hover:bg-row-hover md:min-h-9"
+            role="menuitem"
+            disabled={deletePending.pending}
+            onClick={() => {
+              close();
+              deleteIdeaRow();
+            }}
+            className={`${itemClass} text-danger hover:bg-[var(--danger-soft)]`}
           >
-            アーカイブ
+            {deletePending.pending ? "削除中…" : "削除"}
           </button>
-        ) : (
-          <p className="px-3 py-2 text-[12px] text-muted-foreground">すでにアーカイブです</p>
-        )}
-      </div>
-    </details>
+        </>
+      )}
+    </PopoverMenu>
   );
 }

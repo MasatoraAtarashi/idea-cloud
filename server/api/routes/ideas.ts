@@ -10,6 +10,7 @@ import {
   listCommentsForIdea,
 } from "../../../db/comments";
 import {
+  deleteIdea,
   getIdeaRow,
   IDEA_BODY_MAX,
   ideaJson,
@@ -158,6 +159,15 @@ export const ideasRoute = new Hono<AppEnv>()
       return c.json({ item: commentJson(created) }, 201);
     },
   )
+  .delete("/:id", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const deleted = await deleteIdea(db, id);
+    if (!deleted) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    return c.json({ ok: true });
+  })
   .get("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const db = createDb(c.env.DB);

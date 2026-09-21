@@ -1,0 +1,37 @@
+import { redirect, type ActionFunctionArgs } from "react-router";
+import { createDb } from "../../db/client";
+import { deleteIdea } from "../../db/ideas";
+import { LIST_PATH } from "./home-path";
+
+export type DeleteIdeaActionData = {
+  error: string;
+  intent: "delete";
+};
+
+export async function deleteIdeaAction({
+  params,
+  request,
+  context,
+}: ActionFunctionArgs): Promise<DeleteIdeaActionData | Response> {
+  const ideaId = Number(params.ideaId);
+  if (!Number.isInteger(ideaId) || ideaId <= 0) {
+    return { error: "見つかりません", intent: "delete" };
+  }
+  const form = await request.clone().formData();
+  const db = createDb(context.cloudflare.env.DB);
+  const deleted = await deleteIdea(db, ideaId);
+  if (!deleted) {
+    return { error: "見つかりません", intent: "delete" };
+  }
+  const redirectTo = String(form.get("redirectTo") ?? "").trim();
+  const ideaPath = `/app/ideas/${ideaId}`;
+  if (
+    redirectTo.startsWith("/app") &&
+    redirectTo !== ideaPath &&
+    !redirectTo.startsWith(`${ideaPath}?`) &&
+    !redirectTo.startsWith(`${ideaPath}#`)
+  ) {
+    return redirect(redirectTo);
+  }
+  return redirect(LIST_PATH);
+}
