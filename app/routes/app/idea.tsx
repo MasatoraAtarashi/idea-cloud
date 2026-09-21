@@ -7,8 +7,8 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
-import { IdeaAiMenu } from "../../components/idea-ai-menu";
 import { IdeaComments } from "../../components/idea-comments";
+import { IdeaDetailSwipe } from "../../components/idea-detail-swipe";
 import { IdeaBrainstormControls } from "../../components/idea-brainstorm";
 import { IdeaEditForm } from "../../components/idea-edit-form";
 import { IdeaEvaluateControls } from "../../components/idea-evaluate";
@@ -28,7 +28,7 @@ import { createDb } from "../../../db/client";
 import { listBrainstormsForIdea, toBrainstormView } from "../../../db/brainstorms";
 import { listCommentsForIdea, toCommentView } from "../../../db/comments";
 import { getIdeaView } from "../../../db/ideas";
-import { IconMerge, IconMore, IconShare, IconSpinner } from "../../components/icons";
+import { IconMerge, IconShare, IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
 
 export { ideaDetailAction as action };
@@ -243,33 +243,7 @@ function IdeaDetail({
               <span className="mx-2">/</span>
               {ideaPublicId(idea.id)}
             </p>
-            <div className="justify-self-end lg:hidden">
-              <IdeaAiMenu
-                idea={idea}
-                compact
-                label={<IconMore className="h-4 w-4" />}
-                ariaLabel="操作"
-                researchError={researchError}
-                brainstormError={brainstormError}
-                evaluateError={evaluateError}
-              >
-                <button
-                  type="button"
-                  onClick={() => setEditing((open) => !open)}
-                  className="ui-btn-ghost w-full justify-start px-3 text-[13px]"
-                >
-                  {editing ? "編集を閉じる" : "編集"}
-                </button>
-                <Link
-                  to={`/app/merge?from=${idea.id}`}
-                  className="ui-btn-ghost w-full justify-start px-3 text-[13px]"
-                >
-                  <IconMerge className="h-3.5 w-3.5" />
-                  融合
-                </Link>
-                <ArchiveButton idea={idea} ghost />
-              </IdeaAiMenu>
-            </div>
+            <span className="min-h-11 min-w-[3.5rem] lg:hidden" aria-hidden />
             <button
               type="button"
               onClick={() => setEditing((open) => !open)}
@@ -280,27 +254,36 @@ function IdeaDetail({
           </div>
         </header>
 
-        <div className="mt-3 lg:mt-4">
-          <IdeaMeta idea={idea} />
-        </div>
+        <IdeaDetailSwipe
+          idea={idea}
+          editing={editing}
+          onEdit={() => setEditing((open) => !open)}
+          researchError={researchError}
+          brainstormError={brainstormError}
+          evaluateError={evaluateError}
+        >
+          <div className="mt-3 lg:mt-4">
+            <IdeaMeta idea={idea} />
+          </div>
 
-        {editing ? (
-          <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
-        ) : (
-          <>
-            <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug lg:text-[23px] lg:leading-[1.4]">
-              {idea.title}
-            </h1>
-            <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground lg:mt-5 lg:text-[13.5px]">
-              {idea.body}
-            </p>
-            <IdeaTags idea={idea} />
-          </>
-        )}
+          {editing ? (
+            <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
+          ) : (
+            <>
+              <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug lg:text-[23px] lg:leading-[1.4]">
+                {idea.title}
+              </h1>
+              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground lg:mt-5 lg:text-[13.5px]">
+                {idea.body}
+              </p>
+              <IdeaTags idea={idea} />
+            </>
+          )}
 
-        <div className="mt-5 lg:hidden">
-          <StageAdvanceButton idea={idea} />
-        </div>
+          <div className="mt-5 lg:hidden">
+            <StageAdvanceButton idea={idea} />
+          </div>
+        </IdeaDetailSwipe>
 
         <div className="lg:hidden">
           <IdeaReviewPrompt idea={idea} compact showNextStage={false} />

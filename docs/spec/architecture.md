@@ -70,7 +70,7 @@ Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.
 
 ## Workers AI brainstorm (v1)
 
-Expand an idea into concrete angles / variants / next questions / related directions. Same Workers AI binding and model allowlist as research. Default preset is **standard**. Persist in `idea_brainstorms`; detail **履歴** lists every row (newest first). Archive 409 / 「アーカイブではブレストできません」. Fail-soft Japanese 502. UI: detail rail **ブレスト** + list menu + mobile ⋯ sheet, `#brainstorm`.
+Expand an idea into concrete angles / variants / next questions / related directions. Same Workers AI binding and model allowlist as research. Default preset is **standard**. Persist in `idea_brainstorms`; detail **履歴** lists every row (newest first). Archive 409 / 「アーカイブではブレストできません」. Fail-soft Japanese 502. UI: detail rail **ブレスト** + list menu + mobile detail swipe → AI panel, `#brainstorm`.
 
 ## TypeSafe Jev (System One)
 
