@@ -86,7 +86,7 @@ export function SwipeReveal({
         <div className={`absolute inset-y-0 right-0 flex ${hideClass}`}>
           {actions.map((action) => {
             const className = [
-              "flex min-h-11 shrink-0 items-center justify-center px-2 text-center text-[12px] font-medium leading-tight",
+              "flex min-h-11 shrink-0 items-center justify-center px-1 text-center text-[11px] font-medium leading-tight whitespace-nowrap",
               TONE_CLASS[action.tone ?? "default"],
             ].join(" ");
             if (action.href) {
