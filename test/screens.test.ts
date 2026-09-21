@@ -169,7 +169,12 @@ describe("responsive home and nav", () => {
       "/app/inspirations",
       "/app/analytics",
     ]);
-    expect(MOBILE_NAV.map((item) => item.to)).not.toContain("/app");
+    const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
+    const mobileLabels: readonly string[] = MOBILE_NAV.map((item) => item.label);
+    expect(mobileDestinations).not.toContain("/app");
+    expect(mobileDestinations).not.toContain("/app/settings");
+    expect(mobileLabels).not.toContain("新規");
+    expect(mobileLabels).not.toContain("設定");
     expect(WORKSPACE_NAV.map((item) => item.label)).toEqual([
       "アイデア",
       "インスピレーション",
@@ -183,8 +188,6 @@ describe("responsive home and nav", () => {
     expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("research"))).toBe(false);
-    expect(MOBILE_NAV.map((item) => item.label)).not.toContain("設定");
-    expect(MOBILE_NAV.map((item) => item.label)).not.toContain("新規");
   });
 
   it("keeps empty list chrome instead of hiding the view frame", () => {

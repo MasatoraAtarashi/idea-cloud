@@ -42,9 +42,12 @@ describe("nav destinations", () => {
       "インスピレーション",
       "アナリティクス",
     ]);
-    expect(MOBILE_NAV.map((item) => item.to)).not.toContain("/app");
-    expect(MOBILE_NAV.map((item) => item.label)).not.toContain("新規");
-    expect(MOBILE_NAV.map((item) => item.label)).not.toContain("設定");
+    const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
+    const mobileLabels: readonly string[] = MOBILE_NAV.map((item) => item.label);
+    expect(mobileDestinations).not.toContain("/app");
+    expect(mobileDestinations).not.toContain("/app/settings");
+    expect(mobileLabels).not.toContain("新規");
+    expect(mobileLabels).not.toContain("設定");
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
   });
 });
