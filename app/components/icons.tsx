@@ -156,6 +156,15 @@ export function IconClock(props: IconProps) {
   );
 }
 
+export function IconChart(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 19V5M4 19h16" />
+      <path d="M8 16v-5M12 16V8M16 16v-7" />
+    </Svg>
+  );
+}
+
 export function IconPin(props: IconProps) {
   return (
     <Svg {...props}>

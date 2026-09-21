@@ -12,7 +12,6 @@ import {
   STAGE_PILL_CLASS,
   STAGES,
   type MockIdea,
-  type Stage,
 } from "../data/mock";
 import { useCompose } from "../lib/compose";
 import { formatAgedDays, formatRelativeJa, ideaExcerpt } from "../lib/format";
@@ -28,6 +27,7 @@ import { IdeaReviewPrompt, ReviewStatusBadge } from "./idea-review";
 import { IdeaScoreChips } from "./idea-score";
 import { IdeaSwipeRow } from "./idea-swipe-row";
 import { ListSavedViews } from "./list-saved-views";
+import { SettingsIconLink } from "./settings-link";
 import { CountBadge, StagePill, TagList } from "./ui";
 
 const LIST_TAB_LABEL: Record<ListTab, string> = {
@@ -37,7 +37,12 @@ const LIST_TAB_LABEL: Record<ListTab, string> = {
   tried: "試したアイデア",
 };
 
-const MOBILE_STAGES: Stage[] = ["spark", "aging", "ripe", "selected"];
+const MOBILE_LIST_TAB_LABEL: Record<ListTab, string> = {
+  all: "すべて",
+  "aging-shelf": "熟成中",
+  candidates: "熟成候補",
+  tried: "試した",
+};
 
 function toggleValue<T>(current: T[], value: T): T[] {
   return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
@@ -103,17 +108,20 @@ export function IdeaListView({
       </header>
 
       <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <BrandMark className="h-5 w-5" />
           <span className="text-[13.5px] font-medium">アイデア</span>
         </div>
-        <button
-          type="button"
-          onClick={() => setMobileFiltersOpen((openState) => !openState)}
-          className="flex min-h-11 items-center px-2 text-[13.5px] text-muted-foreground"
-        >
-          絞り込み
-        </button>
+        <div className="flex items-center">
+          <SettingsIconLink />
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((openState) => !openState)}
+            className="flex min-h-11 items-center px-2 text-[13.5px] text-muted-foreground"
+          >
+            絞り込み
+          </button>
+        </div>
       </div>
 
       {mobileFiltersOpen ? (
@@ -326,8 +334,8 @@ export function IdeaListView({
         </div>
       </div>
 
-      <div className="px-4 pt-2 md:hidden">
-        <div className="flex gap-1.5 overflow-x-auto pb-2">
+      <div className="border-b border-border px-4 md:hidden">
+        <div className="flex gap-1 overflow-x-auto py-1">
           {(
             [
               ["all", null],
@@ -345,74 +353,13 @@ export function IdeaListView({
               preventScrollReset
               aria-current={tab === item ? "page" : undefined}
               className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[12.5px] font-medium no-underline ${
-                tab === item ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
+                tab === item ? "bg-foreground text-background" : "text-muted-foreground"
               }`}
             >
-              {LIST_TAB_LABEL[item]}
+              {MOBILE_LIST_TAB_LABEL[item]}
               {count != null ? <span className="font-mono text-[11px]">{count}</span> : null}
             </Link>
           ))}
-        </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-2">
-          <Link
-            to={hrefFor({ stages: [] })}
-            preventScrollReset
-            aria-current={stages.length === 0 ? "page" : undefined}
-            className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
-              stages.length === 0
-                ? "bg-foreground text-background"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            すべて
-          </Link>
-          {MOBILE_STAGES.map((stage) => (
-            <Link
-              key={stage}
-              to={hrefFor({ stages: [stage] })}
-              preventScrollReset
-              aria-current={stages.length === 1 && stages[0] === stage ? "page" : undefined}
-              className={`stage-pill flex min-h-11 shrink-0 items-center no-underline ${STAGE_PILL_CLASS[stage]} ${
-                stages.length === 1 && stages[0] === stage
-                  ? "ring-1 ring-foreground/20"
-                  : "opacity-80"
-              }`}
-            >
-              {STAGE_LABEL[stage]}
-            </Link>
-          ))}
-        </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-2">
-          <Link
-            to={hrefFor({ minDays: 0 })}
-            preventScrollReset
-            aria-current={minDays === 0 ? "page" : undefined}
-            className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
-              minDays === 0 ? "bg-muted text-foreground" : "text-muted-foreground"
-            }`}
-          >
-            熟成
-          </Link>
-          {AGED_DAY_PRESETS.map((days) => (
-            <Link
-              key={days}
-              to={hrefFor({ minDays: days })}
-              preventScrollReset
-              aria-current={minDays === days ? "page" : undefined}
-              className={`flex min-h-11 shrink-0 items-center rounded-full px-3 text-[12.5px] font-medium no-underline ${
-                minDays === days
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {days}日以上
-            </Link>
-          ))}
-          {minDays > 0 && !(AGED_DAY_PRESETS as readonly number[]).includes(minDays) ? (
-            <span className="flex min-h-11 shrink-0 items-center rounded-full bg-foreground px-3 text-[12.5px] font-medium text-background">
-              {minDays}日以上
-            </span>
-          ) : null}
         </div>
       </div>
 
@@ -432,7 +379,10 @@ export function IdeaListView({
                         prefetch="intent"
                         className="min-w-0 flex-1 no-underline"
                       >
-                        <div className="flex flex-wrap items-center gap-2 text-[12px]">
+                        <p className="idea-title-wrap ui-title line-clamp-3 text-[15px] leading-snug text-foreground">
+                          {idea.title}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                           <StagePill stage={idea.stage} />
                           <span
                             className={`font-mono text-[11px] ${
@@ -444,8 +394,13 @@ export function IdeaListView({
                             {formatAgedDays(idea.agedDays)}
                           </span>
                           <span className="font-mono text-[11px] text-muted-foreground">
-                            コメント {idea.commentCount}
+                            {formatRelativeJa(idea.updatedAt)}
                           </span>
+                          {idea.commentCount > 0 ? (
+                            <span className="font-mono text-[11px] text-muted-foreground">
+                              {idea.commentCount}
+                            </span>
+                          ) : null}
                           {idea.researchedAt || idea.researchNotes ? (
                             <span className="font-mono text-[11px] text-muted-foreground">
                               調査済
@@ -454,13 +409,7 @@ export function IdeaListView({
                           <IdeaScoreChips idea={idea} />
                           <ReviewStatusBadge idea={idea} />
                           <ReflectionBadge idea={idea} />
-                          <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-                            {formatRelativeJa(idea.updatedAt)}
-                          </span>
                         </div>
-                        <p className="idea-title-wrap ui-title mt-1 line-clamp-3 text-[13.5px] leading-snug text-foreground">
-                          {idea.title}
-                        </p>
                         {excerpt ? (
                           <p className="mt-0.5 line-clamp-1 text-[12px] leading-snug text-muted-foreground">
                             {excerpt}

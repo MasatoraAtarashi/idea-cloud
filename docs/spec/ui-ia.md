@@ -2,13 +2,13 @@
 
 Product UI copy is **Japanese**. This spec is English.
 
-Working screens: **login gate**, **idea list** (desktop home at `/app/list`), **kanban view**, **new idea compose** (mobile home at `/app`; desktop modal), idea detail, **settings** (team / access). Merge, research, and brainstorm exist as **per-idea actions** (deep links / detail rail), not primary destinations.
+Working screens: **login gate**, **idea list** (desktop home at `/app/list`), **kanban view**, **new idea compose** (mobile home at `/app`; desktop modal), idea detail, **inspirations**, **analytics**, **settings** (team / access). Merge, research, and brainstorm exist as **per-idea actions** (deep links / detail rail), not primary destinations.
 
 There is **no landing page**. `/` is the login gate.
 
 ## Visual language
 
-Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboard-first, settings for access/team), LiteLLM-thin chrome (white main, hairline borders, shadow only on modal/popover), Ideation Cloud pastel stage pills. Do **not** copy Relic’s logo, Relic’s blue marketing LP, or X dark mode. Do not put 融合 / リサーチ in the sidebar.
+Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboard-first, settings for access/team), LiteLLM-thin chrome (white main, hairline borders, shadow only on modal/popover), Ideation Cloud pastel stage pills. Do **not** copy Relic’s logo, Relic’s blue marketing LP, or X dark mode. Do not put 融合 / リサーチ in the sidebar. **インスピレーション** and **アナリティクス** are first-class destinations (sidebar + mobile tabs), not settings-adjacent.
 
 | Token        | Value                                                                                                                                                                 |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,14 +43,29 @@ Sidebar header, mobile list header, and login gate use the same mark + wordmark.
 
 ## Responsive homes
 
-| Viewport / UA                           | After login or `/app` | Primary nav                                  |
-| --------------------------------------- | --------------------- | -------------------------------------------- |
-| Mobile (`< md` **or** phone user-agent) | **New idea** `/app`   | Bottom nav: 一覧 + 新規 + 設定               |
-| Desktop (`md` and up, not a phone UA)   | **List** `/app/list`  | Sidebar: brand, 新規アイデア, アイデア, 設定 |
+| Viewport / UA                           | After login or `/app` | Primary nav                                                                                    |
+| --------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------- |
+| Mobile (`< md` **or** phone user-agent) | **New idea** `/app`   | Bottom tabs: 一覧 / インスピ / 新規 / 分析. Settings is a header gear, not a tab.              |
+| Desktop (`md` and up, not a phone UA)   | **List** `/app/list`  | Sidebar: brand, 新規アイデア, アイデア, インスピレーション, アナリティクス; 設定 at the bottom |
 
-`/app` is compose-only (mobile home, スマホ=登録トップ). Cold open, refresh, and `/app` stay on compose — no extra tap. Phone UA stays compose-first even if the viewport is wide. Desktop client-replaces to `/app/list`. `⌘N` and 一覧 / sidebar still open the list. Mobile 一覧 is `/app/list` with 絞り込み collapsed.
+`/app` is compose-only (mobile home, スマホ=登録トップ). Cold open, refresh, and `/app` stay on compose — no extra tap. Phone UA stays compose-first even if the viewport is wide. Desktop client-replaces to `/app/list`. `⌘N` and 一覧 / sidebar still open the list. Mobile 一覧 is `/app/list` with 絞り込み collapsed (stage / tag / 熟成日数 live in that drawer; one calm tab row stays: すべて / 熟成中 / 熟成候補 / 試した).
 
 Login has no app shell. Do not treat the gate as the product.
+
+### Mobile tab bar
+
+Four primary destinations. Short labels fit the bar; `aria-label` keeps the full name.
+
+| Tab     | Path                | Short label | `aria-label`       | Notes                                      |
+| ------- | ------------------- | ----------- | ------------------ | ------------------------------------------ |
+| List    | `/app/list`         | 一覧        | 一覧               | Desktop home; not highlighted on detail    |
+| Shelf   | `/app/inspirations` | インスピ    | インスピレーション | Gallery + OGP                              |
+| Compose | `/app`              | 新規        | 新規アイデア       | Primary CTA (filled plus). Cold-start home |
+| Counts  | `/app/analytics`    | 分析        | アナリティクス     | D1 idea-row counts                         |
+
+The tab bar stays on compose / list / inspirations / analytics. It **hides** on stack screens (idea detail, inspiration detail, settings, merge, research) so those screens can use a sticky title without stacked chrome. Settings is opened from the gear on list / inspirations / analytics headers.
+
+Helpers live in `app/nav.ts` (`isMobileNavActive`, `isWorkspaceNavActive`, `isMobileTabBarHidden`).
 
 ## Login (`/` and `/login`)
 
@@ -74,9 +89,21 @@ List view state is in the URL so Back/Forward and deep links work:
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
-Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ**. Detail rail puts those controls first; mobile detail uses a single **AI** disclosure (compact research / brainstorm / AI評価, plus 融合 and アーカイブ) instead of stacking every panel. Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails. Research notes stay on the idea row; brainstorm latest row is on detail (`#brainstorm`).
+Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ**. Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail rail puts run controls first. Mobile detail is a stack screen (tab bar hidden): sticky title (戻る + title, no ⋯), wrapping title + body, tags, one primary **次の段階へ**, compact 見直し, comments, then **履歴**. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail. Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
 
-Detail also has **編集** (title/body/tags/stage) and a **コメント** stream (oldest first, composer at the bottom). Successful comment create clears the composer. `intent=comment` inserts into `idea_comments`. Mock author is the session placeholder unless the API has an Access email. Mobile detail is a quiet stack (back, stage + aging, wrapping title + body, tags, one action row, compact human score, comments) — not a shrunk desktop rail. Claude Design has mobile list + compose only; there is no dedicated mobile-detail frame. Until one exists, follow those screens’ tokens rather than inventing denser chrome.
+### Idea detail 履歴
+
+One chronological **履歴** section (`#research`, also `#brainstorm` / `#evaluate` for deep links) lists stored AI/research output, newest first, expandable:
+
+| Kind     | Source                                                    | Persistence                                                                  |
+| -------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| リサーチ | `ideas.research_notes` + model + `researched_at`          | **Latest only** (overwrite). Marked 最新.                                    |
+| AI評価   | `ideas.ai_evaluation` + score + model + `ai_evaluated_at` | **Latest only** (overwrite). Marked 最新.                                    |
+| ブレスト | `idea_brainstorms` rows                                   | **Every run** (append). Fallback to the idea snapshot if no rows are passed. |
+
+Do not invent a new AI product or a new history table. Gaps: research and evaluation have no run log — only the current snapshot on the idea row. Helper: `app/lib/idea-history.ts` (`buildIdeaHistory`).
+
+Detail also has **編集** (title/body/tags/stage) and a **コメント** stream (oldest first, composer at the bottom). Successful comment create clears the composer. `intent=comment` inserts into `idea_comments`. Mock author is the session placeholder unless the API has an Access email. Mobile 振り返り is progressive disclosure; 見直し stays compact on the stack. Claude Design has mobile list + compose only; there is no dedicated mobile-detail frame. Until one exists, follow those screens’ tokens rather than inventing denser chrome.
 
 | Stage      | Japanese   | Role            |
 | ---------- | ---------- | --------------- |
@@ -86,7 +113,7 @@ Detail also has **編集** (title/body/tags/stage) and a **コメント** stream
 | `selected` | 採用       | Ready to act on |
 | `archived` | アーカイブ | Off the board   |
 
-Route: `app/routes/app/board.tsx` (loader reads D1 `ideas` + `saved_views`). Detail: `/app/ideas/:ideaId` (loader reads the saved row + latest brainstorm).
+Route: `app/routes/app/board.tsx` (loader reads D1 `ideas` + `saved_views`). Detail: `/app/ideas/:ideaId` (loader reads the saved row + all `idea_brainstorms` for 履歴).
 
 ## New idea (`/app`, `/app/capture`, desktop modal)
 
@@ -102,6 +129,6 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 ## Settings (`/app/settings`)
 
-Team and access live here — not a top-level 「アクセス」 section. `/app/team` redirects to settings. Settings shell has a secondary nav (members / general / team / stages / profile / notify / shortcuts). **Do not invent teammates.** Session placeholder (“ログイン中”) only. Default-visibility cards are visual chrome, not persisted.
+Team and access live here — not a top-level 「アクセス」 section. `/app/team` redirects to settings. Settings shell has a secondary nav (members / general / team / stages / profile / notify / shortcuts). **Do not invent teammates.** Session placeholder (“ログイン中”) only. Default-visibility cards are visual chrome, not persisted. On mobile, settings is a stack screen (gear from list / inspirations / analytics; tab bar hidden).
 
-List/detail data: D1 `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row; brainstorm from the latest `idea_brainstorms` row. **熟成候補** / **試したアイデア** are extra list tabs (URL `tab`). Detail has **見直し** and **振り返り**. `/app/analytics` is settings-adjacent counts. `/app/inspirations` is the inspiration **gallery** (card grid / masonry-like; 2-col on mobile). Cards prefer the cached `og:image`; fallback is a domain glyph + title + memo snippet. Detail repeats the rich preview and offers **再取得**. Previews: [../ui-previews/](../ui-previews/).
+List/detail data: D1 `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views`. Stage labels and empty merge/settings shells still use `app/data/mock.ts` (no seed rows). Research notes load from the idea row (latest only); brainstorms load every `idea_brainstorms` row into detail **履歴**. **熟成候補** / **試したアイデア** are extra list tabs (URL `tab`). Detail has **見直し** and **振り返り**. `/app/analytics` is a **top-level** destination (sidebar + mobile 分析 tab) summarizing D1 idea-row counts. `/app/inspirations` is the inspiration **gallery** (card grid / masonry-like; 2-col on mobile) and a **top-level** destination (sidebar + mobile インスピ tab). Cards prefer the cached `og:image`; fallback is a domain glyph + title + memo snippet. Detail repeats the rich preview and offers **再取得**. Previews: [../ui-previews/](../ui-previews/).

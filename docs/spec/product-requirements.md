@@ -13,7 +13,7 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 ## Goals (this first pass)
 
 1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
-2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via TypeSafe Jev when `TYPESAFE_API_KEY` is set, otherwise Workers AI (fast 8B), when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run **リサーチ**, **ブレスト**, and **AI評価** from the detail rail, a collapsed mobile **AI** menu, and the list ⋯ menu (text only; no web search). AI評価 prefers Jev scores when the TypeSafe key is present. Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage.
+2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via TypeSafe Jev when `TYPESAFE_API_KEY` is set, otherwise Workers AI (fast 8B), when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run **リサーチ**, **ブレスト**, and **AI評価** from the detail rail, a mobile detail swipe (AI action), and the list ⋯ menu (text only; no web search). Detail **履歴** lists those stored outputs. AI評価 prefers Jev scores when the TypeSafe key is present. Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage.
 3. Visual direction: quiet light console — Linear IA × LiteLLM-thin chrome × Ideation Cloud pastel stages (see [ui-ia.md](./ui-ia.md)). Not Relic’s logo or blue marketing LP.
 4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app` on mobile (compose-first) and `/app/list` on desktop. Auth is still mock — no Google OAuth / allowlist / Access work this pass.
 5. Keep the template CI (typecheck, lint, test, gitleaks, zizmor, audit, ASH).
@@ -30,15 +30,15 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 
 Rules that the UI must teach:
 
-- Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first).
+- Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first). Primary mobile destinations are 一覧 / インスピレーション / 新規 / アナリティクス (bottom tabs). Settings stays in a header gear.
 - Research, brainstorm, and AI evaluation may run from **着想** onward. **アーカイブ** stays blocked.
 - Discarding is a first-class ritual, not a silent delete.
-- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用) and **アーカイブ**. Mobile rows also swipe to those two actions.
+- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用) and **アーカイブ**. Mobile rows also swipe to those two actions. Mobile idea detail keeps **次の段階へ** as the on-page primary CTA and swipes to **編集** / **AI** / **融合** / **アーカイブ** (no header ⋯). Desktop keeps the rail and a visible **編集** button.
 - Titles wrap (2–3 lines on the list, full wrap on detail). Primary controls use ~44px mobile tap targets and show pending UI on the click tick (do not wait for Workers AI).
 
 ## Screens in scope
 
-See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone UA; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter), `/app/ideas/:id` (detail + edit + リサーチ / ブレスト / AI評価 / human score), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail), `/app/settings` (team / access; `/app/team` redirects).
+See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone UA; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter), `/app/ideas/:id` (detail + edit + 履歴 for リサーチ / ブレスト / AI評価 / human score), `/app/inspirations` (gallery; first-class nav), `/app/analytics` (counts; first-class nav), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail 履歴), `/app/settings` (team / access; `/app/team` redirects; not a mobile tab).
 
 ## Auto-tags (create)
 
@@ -50,11 +50,11 @@ Per-idea chronological notes. Composer + list on detail (`#comments`); optional 
 
 ## Research (v1)
 
-Per-idea only. **リサーチを実行** (detail rail, mobile AI sheet, list row menu) POSTs the idea action via `useFetcher` (no full-document wait on Workers AI). Available from **着想** / **熟成中** / **熟した** / **採用**. **アーカイブ** stays locked (**アーカイブではリサーチできません**). Presets **速い・安い** / **標準** / **じっくり**. Last notes + model + timestamp persist on the idea. AI failure returns a Japanese error and does not wipe existing notes. No web search in this version. Tests stub `setTestAiRun`. List shows **調査済** or **未実行**.
+Per-idea only. **リサーチを実行** (detail rail, mobile detail swipe → AI, list row menu) POSTs the idea action via `useFetcher` (no full-document wait on Workers AI). Available from **着想** / **熟成中** / **熟した** / **採用**. **アーカイブ** stays locked (**アーカイブではリサーチできません**). Presets **速い・安い** / **標準** / **じっくり**. Last notes + model + timestamp persist on the idea (latest only; **履歴** shows that snapshot). AI failure returns a Japanese error and does not wipe existing notes. No web search in this version. Tests stub `setTestAiRun`. List shows **調査済** or **未実行**.
 
 ## Brainstorm / expand (v1)
 
-Per-idea **ブレスト** next to research. Workers AI reads title + body + recent comments and returns 切り口 / 別案 / 次の問い / 関連する方向. Default preset is **標準**; fast/deep optional. Rows persist in D1 `idea_brainstorms` (queryable on detail; UI shows the latest). Archive is blocked. Fail-soft Japanese error. Tests stub the same AI runner.
+Per-idea **ブレスト** next to research. Workers AI reads title + body + recent comments and returns 切り口 / 別案 / 次の問い / 関連する方向. Default preset is **標準**; fast/deep optional. Rows persist in D1 `idea_brainstorms` (all rows listed in detail **履歴**; UI used to show only the latest). Archive is blocked. Fail-soft Japanese error. Tests stub the same AI runner.
 
 ## Evaluation (v1)
 
@@ -74,11 +74,11 @@ Optional reflection on an idea: `reflection_outcome` (やってみた結果), `r
 
 ## Analytics (v1 skeleton)
 
-`/app/analytics` counts from current D1 idea rows (no extra analytics table): stage totals, average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
+`/app/analytics` is a first-class destination (desktop sidebar + mobile 分析 tab). Counts from current D1 idea rows (no extra analytics table): stage totals, average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
 
 ## Inspiration shelf (gallery + OGP)
 
-D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags, plus cached Open Graph fields). `/app/inspirations` is a **mood-board gallery** (2-col mobile, masonry-like on desktop), not a table. Cards show `og:image` when present, otherwise a domain-glyph fallback. Detail shows the same preview prominently and can **再取得**. Saving a URL from the gallery or API fetches `og:title` / `og:description` / `og:image` / `og:site_name` (twitter:image fallback) with timeout, size cap, and SSRF blocks; fetch failure stores `og_status=failed` and does **not** fail the save. Images are hotlinked (`<img loading=lazy referrerpolicy=no-referrer>`); no R2 upload. **AIブレスト** still creates an idea; seed text may include `og_title`. Creating or editing an idea whose body contains http(s) URLs also upserts those URLs here (max 5, hostname/context title, fail-soft, no page fetch at save time). Auto-imported rows use the gallery glyph fallback until **再取得** or a later URL save fills OGP.
+D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags, plus cached Open Graph fields). `/app/inspirations` is a **mood-board gallery** (2-col mobile, masonry-like on desktop), not a table, and a **first-class nav destination** (desktop sidebar + mobile インスピ tab). Cards show `og:image` when present, otherwise a domain-glyph fallback. Detail shows the same preview prominently and can **再取得**. Saving a URL from the gallery or API fetches `og:title` / `og:description` / `og:image` / `og:site_name` (twitter:image fallback) with timeout, size cap, and SSRF blocks; fetch failure stores `og_status=failed` and does **not** fail the save. Images are hotlinked (`<img loading=lazy referrerpolicy=no-referrer>`); no R2 upload. **AIブレスト** still creates an idea; seed text may include `og_title`. Creating or editing an idea whose body contains http(s) URLs also upserts those URLs here (max 5, hostname/context title, fail-soft, no page fetch at save time). Auto-imported rows use the gallery glyph fallback until **再取得** or a later URL save fills OGP.
 
 ## Out of scope (this pass)
 

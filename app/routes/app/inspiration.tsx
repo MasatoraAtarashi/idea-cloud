@@ -70,21 +70,26 @@ function InspirationDetail({
   const { pending: refreshPending, hold: holdRefresh } = useInstantPending(refreshing);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-4 py-5 md:px-8">
-      <header className="flex items-center justify-between gap-3">
-        <Link
-          to={INSPIRATIONS_PATH}
-          className="text-[13.5px] text-muted-foreground no-underline hover:text-foreground"
-        >
-          棚
-        </Link>
-        <button
-          type="button"
-          onClick={() => setEditing((open) => !open)}
-          className="ui-btn-secondary px-3"
-        >
-          {editing ? "閉じる" : "編集"}
-        </button>
+    <div className="flex min-h-0 flex-1 flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] md:px-8 md:py-5">
+      <header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:backdrop-blur-none">
+        <div className="flex items-center justify-between gap-3 py-1 md:py-0">
+          <Link
+            to={INSPIRATIONS_PATH}
+            className="flex min-h-11 items-center text-[13.5px] text-muted-foreground no-underline hover:text-foreground"
+          >
+            戻る
+          </Link>
+          <h1 className="idea-title-wrap ui-title min-w-0 flex-1 truncate text-center text-[15px] md:hidden">
+            {item.title}
+          </h1>
+          <button
+            type="button"
+            onClick={() => setEditing((open) => !open)}
+            className="ui-btn-secondary min-w-[4.5rem] px-3"
+          >
+            {editing ? "閉じる" : "編集"}
+          </button>
+        </div>
       </header>
 
       {editing ? (
@@ -106,7 +111,7 @@ function InspirationDetail({
       ) : (
         <>
           <InspirationDetailPreview item={item} />
-          <h1 className="ui-title mt-4 text-[22px] leading-snug">{item.title}</h1>
+          <h1 className="ui-title mt-4 hidden text-[22px] leading-snug md:block">{item.title}</h1>
           {item.url ? (
             <a
               href={item.url}

@@ -1,9 +1,9 @@
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
+import { useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { STAGE_LABEL } from "../../data/mock";
 import { summarizeIdeaAnalytics } from "../../lib/analytics";
-import { LIST_PATH } from "../../lib/home-path";
 import { createDb } from "../../../db/client";
 import { listIdeaViews } from "../../../db/ideas";
+import { SettingsIconLink } from "../../components/settings-link";
 
 export function meta() {
   return [{ title: "アナリティクス — アイデアクラウド" }];
@@ -21,14 +21,9 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex h-[52px] shrink-0 items-center justify-between gap-3 border-b border-border px-4">
+      <header className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:h-[52px]">
         <h1 className="ui-title text-[16px]">アナリティクス</h1>
-        <Link
-          to={LIST_PATH}
-          className="text-[13px] text-muted-foreground no-underline hover:text-foreground"
-        >
-          一覧へ
-        </Link>
+        <SettingsIconLink className="md:hidden" />
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-8">
         <p className="max-w-2xl text-[13px] leading-relaxed text-muted-foreground">

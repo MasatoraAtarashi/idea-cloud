@@ -224,6 +224,14 @@ a {
     display: none;
   }
 
+  .idea-history details > summary {
+    list-style: none;
+  }
+
+  .idea-history details > summary::-webkit-details-marker {
+    display: none;
+  }
+
   @media (min-width: 768px) {
     details.inspiration-compose > summary {
       pointer-events: none;
