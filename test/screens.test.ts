@@ -179,7 +179,8 @@ describe("responsive home and nav", () => {
     expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
     expect(MOBILE_NAV.some((item) => item.to.includes("research"))).toBe(false);
-    expect(MOBILE_NAV.some((item) => item.label === "設定")).toBe(false);
+    const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
+    expect(mobileDestinations).not.toContain("/app/settings");
   });
 
   it("keeps empty list chrome instead of hiding the view frame", () => {

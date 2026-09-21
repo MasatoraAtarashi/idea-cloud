@@ -45,7 +45,8 @@ describe("nav destinations", () => {
       "アナリティクス",
     ]);
     expect(MOBILE_NAV[2]?.primary).toBe(true);
-    expect(MOBILE_NAV.some((item) => item.label === "設定")).toBe(false);
+    const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
+    expect(mobileDestinations).not.toContain("/app/settings");
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
   });
 });
