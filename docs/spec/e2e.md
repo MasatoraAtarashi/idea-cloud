@@ -25,7 +25,9 @@ CI installs Chromium with OS deps in `.github/workflows/pr.yml` (`E2E (Playwrigh
 
 ## What is asserted
 
-Happy paths: create idea, list, detail edit (desktop), stage advance, comment, mobile tabs, inspiration memo, analytics charts/counts.
+Happy paths: create idea (mobile `/app` compose or desktop header +), list, detail edit, stage advance, comment, mobile tabs (一覧 / インスピレーション / 分析), inspiration memo, analytics charts/counts.
+
+Creates fill a dummy `e2e` tag so create-time auto-tag AI is not required. Desktop compose retries the header + click until the dialog hydrates (SSR buttons are inert before React attaches).
 
 **Workers AI / TypeSafe Jev / live web search are not called with secrets.** Local Vite sets `remoteBindings: false`, and CI has no `TYPESAFE_API_KEY`. The research test clicks **リサーチを実行** and expects the Japanese fail-soft copy (`リサーチに失敗しました…`) plus the model-only callout — not a crash and not a paid API.
 

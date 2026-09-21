@@ -98,7 +98,11 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
                 {STAGE_LABEL[item]}
               </button>
             ))}
+            <label htmlFor="idea-mobile-tags" className="sr-only">
+              タグ
+            </label>
             <input
+              id="idea-mobile-tags"
               name="tags"
               value={tags}
               onChange={(event) => setTags(event.target.value)}
