@@ -179,8 +179,22 @@ a {
     color: var(--foreground);
   }
 
+  /* Root font is 13.5px, so Tailwind rem-11 is ~37px. Pin 44px CSS-pixel tap targets. */
+  .min-h-11 {
+    min-height: 44px;
+  }
+  .h-11 {
+    height: 44px;
+  }
+  .w-11 {
+    width: 44px;
+  }
+  .min-w-11 {
+    min-width: 44px;
+  }
+
   .mobile-tab-spacer {
-    height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    height: calc(44px + 12px + env(safe-area-inset-bottom, 0px));
   }
 
   .idea-title-wrap {

@@ -156,7 +156,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
                 to={item.to}
                 end={item.end}
                 aria-label={item.ariaLabel}
-                className={`flex min-h-11 flex-col items-center justify-center gap-0.5 py-1.5 no-underline ${
+                className={`flex min-h-11 flex-col items-center justify-center gap-0.5 no-underline ${
                   on ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
