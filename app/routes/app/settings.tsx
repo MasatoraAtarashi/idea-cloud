@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const [section, setSection] = useState<SectionId>("members");
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
       <header className="flex h-11 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
         <Link
           to={LIST_PATH}
@@ -64,7 +64,7 @@ export default function SettingsPage() {
           })}
         </nav>
       </aside>
-      <div className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-6">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
         {section === "members" ? <MembersPanel /> : <StubPanel section={section} />}
       </div>
     </div>

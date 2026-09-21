@@ -1,5 +1,6 @@
 import { STAGES, type Stage } from "../data/mock";
 import { LIST_PATH } from "./home-path";
+import { isDefaultListSort, parseListSort, type ListSortDir, type ListSortKey } from "./list-sort";
 import { CANDIDATE_DEFAULT_DAYS } from "./review";
 
 export type ListTab = "all" | "aging-shelf" | "candidates" | "tried";
@@ -20,6 +21,8 @@ export type SavedViewFilters = {
 
 export type ListViewSearch = SavedViewFilters & {
   savedViewId: number | null;
+  sortKey: ListSortKey;
+  sortDir: ListSortDir;
 };
 
 export type SavedViewItem = {
@@ -37,6 +40,8 @@ export const LIST_VIEW_DEFAULTS: ListViewSearch = {
   tags: [],
   minDays: 0,
   savedViewId: null,
+  sortKey: "updatedAt",
+  sortDir: "desc",
 };
 
 export const SAVED_VIEW_NAME_MAX = 40;
@@ -145,6 +150,7 @@ export function parseListViewSearch(params: URLSearchParams): ListViewSearch {
   const savedViewId =
     viewIdRaw && /^\d+$/.test(viewIdRaw) && Number(viewIdRaw) > 0 ? Number(viewIdRaw) : null;
   const minDaysRaw = normalizeMinDays(params.get(AGED_DAYS_PARAM));
+  const sort = parseListSort(params.get("sort"), params.get("dir"));
   return {
     tab,
     view,
@@ -153,10 +159,14 @@ export function parseListViewSearch(params: URLSearchParams): ListViewSearch {
     tags: readList(params, "tag"),
     minDays: tab === "candidates" && minDaysRaw === 0 ? CANDIDATE_DEFAULT_DAYS : minDaysRaw,
     savedViewId,
+    sortKey: sort.key,
+    sortDir: sort.dir,
   };
 }
 
-export function serializeListViewSearch(state: ListViewSearch): URLSearchParams {
+export function serializeListViewSearch(
+  state: SavedViewFilters & Partial<Pick<ListViewSearch, "savedViewId" | "sortKey" | "sortDir">>,
+): URLSearchParams {
   const params = new URLSearchParams();
   if (state.tab === "aging-shelf") params.set("tab", "aging");
   if (state.tab === "candidates") params.set("tab", "candidates");
@@ -166,11 +176,19 @@ export function serializeListViewSearch(state: ListViewSearch): URLSearchParams 
   if (state.stages.length > 0) params.set("stage", state.stages.join(","));
   if (state.tags.length > 0) params.set("tag", state.tags.join(","));
   if (state.minDays > 0) params.set(AGED_DAYS_PARAM, String(state.minDays));
+  const sortKey = state.sortKey;
+  const sortDir = state.sortDir;
+  if (sortKey && sortDir && !isDefaultListSort({ key: sortKey, dir: sortDir })) {
+    params.set("sort", sortKey);
+    params.set("dir", sortDir);
+  }
   if (state.savedViewId && state.savedViewId > 0) params.set("v", String(state.savedViewId));
   return params;
 }
 
-export function listViewHref(state: ListViewSearch): string {
+export function listViewHref(
+  state: SavedViewFilters & Partial<Pick<ListViewSearch, "savedViewId" | "sortKey" | "sortDir">>,
+): string {
   const search = serializeListViewSearch(state).toString();
   return search ? `${LIST_PATH}?${search}` : LIST_PATH;
 }

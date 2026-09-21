@@ -113,4 +113,24 @@ describe("ideas API", () => {
     expect(body.item.humanScoreNote).toBe("寝かせる");
     expect(body.item.humanScoredAt).toBeTruthy();
   });
+
+  it("hard-deletes an idea and 404s afterward", async () => {
+    const create = await api("/ideas", {
+      method: "POST",
+      body: JSON.stringify({ body: "消す" }),
+    });
+    const created = (await create.json()) as { item: { id: number } };
+    await api(`/ideas/${created.item.id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ body: "メモ" }),
+    });
+    const removed = await api(`/ideas/${created.item.id}`, { method: "DELETE" });
+    expect(removed.status).toBe(200);
+    const missing = await api(`/ideas/${created.item.id}`);
+    expect(missing.status).toBe(404);
+    const comments = await api(`/ideas/${created.item.id}/comments`);
+    expect(comments.status).toBe(404);
+    const gone = await api(`/ideas/${created.item.id}`, { method: "DELETE" });
+    expect(gone.status).toBe(404);
+  });
 });

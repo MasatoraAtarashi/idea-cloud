@@ -94,7 +94,7 @@ export function IdeaResearchControls({
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
       {compact ? null : (
         <p className="text-[11.5px] leading-snug text-muted-foreground">
-          着想から実行できます。保存した本文だけを分析します。ウェブ検索はありません。
+          着想から実行できます。保存した本文だけを分析します。ウェブ検索による先行事例はまだありません。
         </p>
       )}
     </fetcher.Form>

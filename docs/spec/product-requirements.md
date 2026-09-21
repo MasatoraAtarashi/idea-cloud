@@ -30,15 +30,15 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 
 Rules that the UI must teach:
 
-- Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first). Primary mobile destinations are 一覧 / インスピレーション / 新規 / アナリティクス (bottom tabs). Settings stays in a header gear.
+- Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first). Primary mobile destinations are 一覧 / インスピレーション / アナリティクス (bottom tabs). Create is a header **+**, not a tab. Settings stays in a header gear.
 - Research, brainstorm, and AI evaluation may run from **着想** onward. **アーカイブ** stays blocked.
 - Discarding is a first-class ritual, not a silent delete.
-- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用) and **アーカイブ**. Mobile rows also swipe to those two actions. Mobile idea detail keeps **次の段階へ** as the on-page primary CTA and swipes to **編集** / **AI** / **融合** / **アーカイブ** (no header ⋯). Desktop keeps the rail and a visible **編集** button.
+- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用), **アーカイブ**, and **削除** (confirm, hard delete). Mobile rows also swipe to the first two actions. Mobile idea detail keeps **次の段階へ** as the on-page primary CTA and swipes to **編集** / **AI** / **融合** / **アーカイブ** (no header ⋯). Desktop keeps the rail and a visible **編集** button. Detail content is tabbed (概要 / リサーチ / AI/履歴 / コメント).
 - Titles wrap (2–3 lines on the list, full wrap on detail). Primary controls use ~44px mobile tap targets and show pending UI on the click tick (do not wait for Workers AI).
 
 ## Screens in scope
 
-See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone UA; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter), `/app/ideas/:id` (detail + edit + 履歴 for リサーチ / ブレスト / AI評価 / human score), `/app/inspirations` (gallery; first-class nav), `/app/analytics` (counts; first-class nav), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail 履歴), `/app/settings` (team / access; `/app/team` redirects; not a mobile tab).
+See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone UA; desktop → `/app/list`), `/app/capture` (compose alias), `/app/list` (desktop list home / mobile 一覧; URL filters + named views + `days` aged filter + `sort`/`dir`), `/app/ideas/:id` (detail tabs 概要 / リサーチ / AI/履歴 / コメント + edit + 履歴 for リサーチ / ブレスト / AI評価 / human score), `/app/inspirations` (gallery; first-class nav; header +), `/app/analytics` (counts + created-per-day; first-class nav), `/app/merge` and `/app/research` (deep links; research `from` redirects to detail リサーチ tab), `/app/settings` (team / access; `/app/team` redirects; not a mobile tab).
 
 ## Auto-tags (create)
 
@@ -74,7 +74,7 @@ Optional reflection on an idea: `reflection_outcome` (やってみた結果), `r
 
 ## Analytics (v1 skeleton)
 
-`/app/analytics` is a first-class destination (desktop sidebar + mobile 分析 tab). Counts from current D1 idea rows (no extra analytics table): stage totals, average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
+`/app/analytics` is a first-class destination (desktop sidebar + mobile 分析 tab). Counts from current D1 idea rows (no extra analytics table): stage totals, ideas created per day (last 7/30 days), average/median aged days, human/AI score counts, reflection count, top tags. Numbers + compact bars only.
 
 ## Inspiration shelf (gallery + OGP)
 

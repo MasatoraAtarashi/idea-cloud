@@ -3,7 +3,7 @@ import { formatDateJa } from "../lib/format";
 
 export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
   return (
-    <section id="research" className="idea-history mt-8 max-w-2xl lg:mt-10">
+    <section className="idea-history max-w-2xl">
       <h2 className="text-[15px] font-medium lg:text-[16px]">履歴</h2>
       <p id="brainstorm" className="mt-1 text-[12.5px] text-muted-foreground">
         リサーチ・ブレスト・AI評価の記録です。ブレストは毎回残します。リサーチとAI評価は最新のみです。

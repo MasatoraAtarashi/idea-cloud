@@ -1,13 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   AGED_DAY_PRESETS,
   allTags,
   filterIdeas,
-  ideasByStage,
   isReviewCandidate,
   isTriedIdea,
-  STAGE_HINT,
   STAGE_LABEL,
   STAGE_PILL_CLASS,
   STAGES,
@@ -17,11 +15,21 @@ import { useCompose } from "../lib/compose";
 import { formatAgedDays, formatRelativeJa, ideaExcerpt } from "../lib/format";
 import { NEW_IDEA_PATH } from "../lib/home-path";
 import type { ListTab, SavedViewItem } from "../lib/list-view-search";
+import {
+  LIST_SORT_KEYS,
+  LIST_SORT_LABEL,
+  listSortSummary,
+  nextListSort,
+  sortIdeas,
+  type ListSortKey,
+} from "../lib/list-sort";
 import { CANDIDATE_DEFAULT_DAYS } from "../lib/review";
 import { useListViewSearch } from "../lib/use-list-view-search";
 import { BrandMark } from "./brand";
-import { IconPlus, IconSearch } from "./icons";
+import { IdeaHeaderCreateButton } from "./header-create";
+import { IconSearch } from "./icons";
 import { IdeaActionsMenu } from "./idea-actions";
+import { IdeaBoard } from "./idea-board";
 import { ReflectionBadge } from "./idea-reflection";
 import { IdeaReviewPrompt, ReviewStatusBadge } from "./idea-review";
 import { IdeaScoreChips } from "./idea-score";
@@ -57,24 +65,42 @@ export function IdeaListView({
 }) {
   const { open } = useCompose();
   const listState = useListViewSearch();
-  const { tab, view, query, stages, tags, minDays, savedViewId, hrefFor, update } = listState;
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const availableTags = allTags(ideas);
-  const candidateDays = minDays > 0 ? minDays : CANDIDATE_DEFAULT_DAYS;
-  const tabbed =
-    tab === "aging-shelf"
-      ? ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe")
-      : tab === "candidates"
-        ? ideas.filter((idea) => isReviewCandidate(idea, candidateDays))
-        : tab === "tried"
-          ? ideas.filter((idea) => isTriedIdea(idea))
-          : ideas;
-  const filtered = filterIdeas(tabbed, {
+  const {
+    tab,
+    view,
     query,
     stages,
     tags,
-    minDays: tab === "candidates" ? 0 : minDays,
-  });
+    minDays,
+    savedViewId,
+    sortKey,
+    sortDir,
+    hrefFor,
+    update,
+  } = listState;
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const availableTags = useMemo(() => allTags(ideas), [ideas]);
+  const candidateDays = minDays > 0 ? minDays : CANDIDATE_DEFAULT_DAYS;
+  const sort = { key: sortKey, dir: sortDir };
+  const filtered = useMemo(() => {
+    const tabbed =
+      tab === "aging-shelf"
+        ? ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe")
+        : tab === "candidates"
+          ? ideas.filter((idea) => isReviewCandidate(idea, candidateDays))
+          : tab === "tried"
+            ? ideas.filter((idea) => isTriedIdea(idea))
+            : ideas;
+    return sortIdeas(
+      filterIdeas(tabbed, {
+        query,
+        stages,
+        tags,
+        minDays: tab === "candidates" ? 0 : minDays,
+      }),
+      sort,
+    );
+  }, [ideas, tab, candidateDays, query, stages, tags, minDays, sortKey, sortDir]);
   const agingCount = ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe").length;
   const candidateCount = ideas.filter((idea) => isReviewCandidate(idea, candidateDays)).length;
   const triedCount = ideas.filter((idea) => isTriedIdea(idea)).length;
@@ -84,8 +110,20 @@ export function IdeaListView({
     return stages.map((stage) => STAGE_LABEL[stage]).join("・");
   }
 
+  function applySort(key: ListSortKey) {
+    const next = nextListSort(sort, key);
+    update({ sortKey: next.key, sortDir: next.dir, savedViewId });
+  }
+
+  const tabItems = [
+    ["all", null],
+    ["aging-shelf", agingCount],
+    ["candidates", candidateCount],
+    ["tried", triedCount],
+  ] as const;
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="hidden h-[52px] shrink-0 items-center gap-3 border-b border-border px-4 md:flex">
         <h1 className="ui-title flex items-center gap-2 text-[16px]">
           アイデア
@@ -101,32 +139,32 @@ export function IdeaListView({
             className="ui-input pl-8"
           />
         </label>
-        <button type="button" onClick={open} className="ui-btn hidden md:inline-flex">
-          <IconPlus className="h-3.5 w-3.5" />
-          新規アイデア
-        </button>
+        <IdeaHeaderCreateButton />
       </header>
 
-      <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
+      <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-border px-4 md:hidden">
         <div className="flex min-w-0 items-center gap-2">
           <BrandMark className="h-5 w-5" />
-          <span className="text-[13.5px] font-medium">アイデア</span>
+          <span className="text-[13.5px] font-medium text-foreground">アイデア</span>
         </div>
         <div className="flex items-center">
-          <SettingsIconLink />
           <button
             type="button"
             onClick={() => setMobileFiltersOpen((openState) => !openState)}
-            className="flex min-h-11 items-center px-2 text-[13.5px] text-muted-foreground"
+            className="flex min-h-11 items-center px-2 text-[13.5px] text-foreground"
           >
             絞り込み
           </button>
+          <SettingsIconLink />
+          <IdeaHeaderCreateButton />
         </div>
       </div>
 
       {mobileFiltersOpen ? (
         <div className="border-b border-border px-4 py-3 md:hidden">
-          <p className="font-mono text-[11px] text-muted-foreground">段階</p>
+          <p className="font-mono text-[11px] text-muted-foreground">並び順</p>
+          <SortButtons sortKey={sortKey} sortDir={sortDir} onSort={applySort} />
+          <p className="mt-3 font-mono text-[11px] text-muted-foreground">段階</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {STAGES.map((stage) => (
               <button
@@ -165,7 +203,7 @@ export function IdeaListView({
           <div className="mt-3">
             <ListSavedViews
               views={savedViews}
-              state={{ tab, view, query, stages, tags, minDays, savedViewId }}
+              state={{ tab, view, query, stages, tags, minDays, savedViewId, sortKey, sortDir }}
               nameFieldId="saved-view-name-mobile"
             />
             <p className="mt-3 font-mono text-[11px] text-muted-foreground">熟成日数</p>
@@ -176,14 +214,7 @@ export function IdeaListView({
 
       <div className="hidden h-11 shrink-0 items-center gap-4 border-b border-border px-4 md:flex">
         <div className="flex min-w-0 flex-1 items-center gap-4 overflow-x-auto">
-          {(
-            [
-              ["all", null],
-              ["aging-shelf", agingCount],
-              ["candidates", candidateCount],
-              ["tried", triedCount],
-            ] as const
-          ).map(([item, count]) => (
+          {tabItems.map(([item, count]) => (
             <Link
               key={item}
               to={hrefFor({
@@ -210,7 +241,7 @@ export function IdeaListView({
       <div className="hidden h-[46px] shrink-0 items-center gap-2 border-b border-border px-4 md:flex">
         <ListSavedViews
           views={savedViews}
-          state={{ tab, view, query, stages, tags, minDays, savedViewId }}
+          state={{ tab, view, query, stages, tags, minDays, savedViewId, sortKey, sortDir }}
           nameFieldId="saved-view-name-desktop"
         />
         <details className="ui-menu relative">
@@ -309,7 +340,28 @@ export function IdeaListView({
             </form>
           </div>
         </details>
-        <span className="ml-auto font-mono text-[11.5px] text-muted-foreground">更新順</span>
+        <details className="ui-menu relative ml-auto">
+          <summary
+            className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px]"
+            aria-label="並び順"
+          >
+            <span className="text-muted-foreground">並び順</span>
+            <span className="font-medium">{listSortSummary(sort)}</span>
+          </summary>
+          <div className="ui-float absolute right-0 z-20 mt-1 w-44 py-1">
+            {LIST_SORT_KEYS.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => applySort(key)}
+                className="block w-full px-3 py-1.5 text-left text-[13px] hover:bg-row-hover"
+              >
+                {LIST_SORT_LABEL[key]}
+                {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
+              </button>
+            ))}
+          </div>
+        </details>
         <div className="flex rounded-md border border-border-control p-0.5">
           <Link
             to={hrefFor({ view: "table" })}
@@ -336,14 +388,7 @@ export function IdeaListView({
 
       <div className="border-b border-border px-4 md:hidden">
         <div className="flex gap-1 overflow-x-auto py-1">
-          {(
-            [
-              ["all", null],
-              ["aging-shelf", agingCount],
-              ["candidates", candidateCount],
-              ["tried", triedCount],
-            ] as const
-          ).map(([item, count]) => (
+          {tabItems.map(([item, count]) => (
             <Link
               key={item}
               to={hrefFor({
@@ -363,7 +408,7 @@ export function IdeaListView({
         </div>
       </div>
 
-      <div className="md:hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto md:hidden">
         {filtered.length === 0 ? (
           <ListEmpty onCreate={open} />
         ) : (
@@ -430,24 +475,31 @@ export function IdeaListView({
         )}
       </div>
 
-      <div className="hidden min-h-0 flex-1 md:block">
+      <div className="hidden min-h-0 flex-1 flex-col overflow-hidden md:flex">
         {view === "table" ? (
           filtered.length === 0 ? (
-            <div className="flex min-h-[28rem] items-center justify-center">
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto">
               <ListEmpty onCreate={open} />
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="min-h-0 flex-1 overflow-auto">
               <table className="ui-table">
                 <thead>
                   <tr>
-                    <th className="min-w-0 w-[34%]">アイデア</th>
-                    <th>段階</th>
+                    <SortTh
+                      label="アイデア"
+                      sortKey="title"
+                      current={sort}
+                      onSort={applySort}
+                      className="min-w-0 w-[34%]"
+                    />
+                    <SortTh label="段階" sortKey="stage" current={sort} onSort={applySort} />
                     <th>タグ</th>
                     <th className="text-right">コメント</th>
                     <th>リサーチ</th>
                     <th>評価</th>
-                    <th>更新</th>
+                    <SortTh label="更新" sortKey="updatedAt" current={sort} onSort={applySort} />
+                    <SortTh label="作成" sortKey="createdAt" current={sort} onSort={applySort} />
                     <th className="text-right">熟成日数</th>
                     <th className="w-10">
                       <span className="sr-only">操作</span>
@@ -497,6 +549,9 @@ export function IdeaListView({
                         <td className="font-mono text-[11px] text-muted-foreground">
                           {formatRelativeJa(idea.updatedAt)}
                         </td>
+                        <td className="font-mono text-[11px] text-muted-foreground">
+                          {formatRelativeJa(idea.createdAt)}
+                        </td>
                         <td
                           className={`text-right font-mono text-[11px] ${
                             idea.agedDays > 30
@@ -520,71 +575,67 @@ export function IdeaListView({
             </div>
           )
         ) : (
-          <div className="flex gap-3 overflow-x-auto p-4">
-            {STAGES.map((stage) => {
-              const cards = ideasByStage(stage, filtered);
-              return (
-                <section key={stage} className="w-64 shrink-0">
-                  <header className="mb-2 flex items-center justify-between">
-                    <h2 className="ui-title flex items-center gap-2 text-[13.5px]">
-                      <StagePill stage={stage} />
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        {cards.length}
-                      </span>
-                    </h2>
-                  </header>
-                  <p className="mb-2 text-[11px] leading-relaxed text-muted-foreground">
-                    {STAGE_HINT[stage]}
-                  </p>
-                  {cards.length === 0 ? (
-                    <p className="rounded-md border border-dashed border-border px-2 py-6 text-center text-[11px] text-muted-foreground">
-                      まだありません
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-1.5">
-                      {cards.map((idea) => (
-                        <div
-                          key={idea.id}
-                          className="rounded-[10px] border border-border bg-card px-2.5 py-2 hover:bg-row-hover"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <Link
-                              to={`/app/ideas/${idea.id}`}
-                              prefetch="intent"
-                              className="min-w-0 flex-1 no-underline"
-                            >
-                              <p className="idea-title-wrap ui-title line-clamp-3 text-[13px] leading-snug text-foreground">
-                                {idea.title}
-                              </p>
-                              <div className="mt-1">
-                                <TagList tags={idea.tags} limit={2} />
-                              </div>
-                              <p className="mt-1 flex flex-wrap gap-x-2 font-mono text-[11px] text-muted-foreground">
-                                <span>{formatAgedDays(idea.agedDays)}</span>
-                                <span>コメント {idea.commentCount}</span>
-                                {idea.researchedAt || idea.researchNotes ? (
-                                  <span>調査済</span>
-                                ) : null}
-                                <IdeaScoreChips idea={idea} />
-                                <ReviewStatusBadge idea={idea} />
-                                <ReflectionBadge idea={idea} />
-                              </p>
-                              {tab === "candidates" ? (
-                                <IdeaReviewPrompt idea={idea} compact />
-                              ) : null}
-                            </Link>
-                            <IdeaActionsMenu idea={idea} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-          </div>
+          <IdeaBoard ideas={filtered} showReview={tab === "candidates"} />
         )}
       </div>
+    </div>
+  );
+}
+
+function SortTh({
+  label,
+  sortKey,
+  current,
+  onSort,
+  className = "",
+}: {
+  label: string;
+  sortKey: ListSortKey;
+  current: { key: ListSortKey; dir: "asc" | "desc" };
+  onSort: (key: ListSortKey) => void;
+  className?: string;
+}) {
+  const active = current.key === sortKey;
+  return (
+    <th className={className}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`inline-flex items-center gap-1 ${active ? "text-foreground" : "text-muted-foreground"}`}
+      >
+        {label}
+        <span className="font-mono text-[11px]">
+          {active ? (current.dir === "asc" ? "↑" : "↓") : ""}
+        </span>
+      </button>
+    </th>
+  );
+}
+
+function SortButtons({
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  sortKey: ListSortKey;
+  sortDir: "asc" | "desc";
+  onSort: (key: ListSortKey) => void;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {LIST_SORT_KEYS.map((key) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onSort(key)}
+          className={`flex min-h-11 items-center rounded-full px-3 text-[12px] ${
+            sortKey === key ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {LIST_SORT_LABEL[key]}
+          {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
+        </button>
+      ))}
     </div>
   );
 }
