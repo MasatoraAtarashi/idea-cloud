@@ -48,7 +48,7 @@ export function LoginGate() {
         <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{LOGIN_TAGLINE}</p>
         <Link
           to={continueTo}
-          className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-border-control bg-card text-[14px] font-medium text-foreground no-underline hover:bg-row-hover"
+          className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-border-control bg-card text-[14px] font-semibold text-foreground no-underline hover:bg-row-hover"
         >
           <GoogleMark />
           {GOOGLE_LOGIN_CTA}

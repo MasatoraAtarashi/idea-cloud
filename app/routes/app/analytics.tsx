@@ -46,7 +46,7 @@ export default function AnalyticsPage() {
 
         <section className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-[13.5px] font-medium">日別の作成</h2>
+            <h2 className="text-[13.5px] font-semibold">日別の作成</h2>
             <div className="flex rounded-md border border-border-control p-0.5">
               <button
                 type="button"
@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="text-[13.5px] font-medium">段階</h2>
+          <h2 className="text-[13.5px] font-semibold">段階</h2>
           <div className="mt-3 space-y-2">
             {analytics.byStage.map((row) => (
               <div key={row.stage} className="flex items-center gap-3">
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="text-[13.5px] font-medium">よく使うタグ</h2>
+          <h2 className="text-[13.5px] font-semibold">よく使うタグ</h2>
           {analytics.topTags.length === 0 ? (
             <p className="mt-3 text-[13px] text-muted-foreground">まだタグがありません</p>
           ) : (
@@ -150,7 +150,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-[10px] border border-border bg-card px-3 py-3">
       <dt className="text-[12px] text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-[18px] font-medium text-foreground">{value}</dd>
+      <dd className="mt-1 font-mono text-[18px] font-semibold text-foreground">{value}</dd>
     </div>
   );
 }

@@ -87,7 +87,7 @@ export default function InspirationsPage() {
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:grid md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:gap-8 md:px-8">
         <section className={composeOpen ? "block" : "hidden md:block"}>
-          <h2 className="text-[13.5px] font-medium">メモを残す</h2>
+          <h2 className="text-[13.5px] font-semibold">メモを残す</h2>
           <div className="mt-2">
             <ComposeForm error={error} autoFocus={composeOpen && items.length > 0} />
           </div>

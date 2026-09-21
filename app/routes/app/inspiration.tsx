@@ -123,7 +123,7 @@ function InspirationDetail({
             </a>
           ) : null}
           {item.memo ? (
-            <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground">
+            <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] font-medium leading-relaxed text-foreground">
               {item.memo}
             </p>
           ) : (

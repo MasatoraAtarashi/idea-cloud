@@ -145,7 +145,7 @@ export function IdeaListView({
       <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-border px-4 md:hidden">
         <div className="flex min-w-0 items-center gap-2">
           <BrandMark className="h-5 w-5" />
-          <span className="text-[13.5px] font-medium text-foreground">アイデア</span>
+          <span className="text-[13.5px] font-semibold text-foreground">アイデア</span>
         </div>
         <div className="flex items-center">
           <button
@@ -223,10 +223,8 @@ export function IdeaListView({
               })}
               preventScrollReset
               aria-current={tab === item ? "page" : undefined}
-              className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] no-underline ${
-                tab === item
-                  ? "border-b-2 border-foreground font-medium text-foreground"
-                  : "text-muted-foreground"
+              className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] font-semibold text-foreground no-underline ${
+                tab === item ? "border-b-2 border-foreground" : ""
               }`}
             >
               {LIST_TAB_LABEL[item]}
@@ -397,8 +395,8 @@ export function IdeaListView({
               })}
               preventScrollReset
               aria-current={tab === item ? "page" : undefined}
-              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[12.5px] font-medium no-underline ${
-                tab === item ? "bg-foreground text-background" : "text-muted-foreground"
+              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[12.5px] font-semibold no-underline ${
+                tab === item ? "bg-foreground text-background" : "text-foreground"
               }`}
             >
               {MOBILE_LIST_TAB_LABEL[item]}
@@ -601,7 +599,7 @@ function SortTh({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 ${active ? "text-foreground" : "text-muted-foreground"}`}
+        className="inline-flex items-center gap-1 font-semibold text-foreground"
       >
         {label}
         <span className="font-mono text-[11px]">

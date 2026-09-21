@@ -69,7 +69,7 @@ export function ComposeDialog() {
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="stage-pill stage-spark">{COMPOSE_TITLE}</span>
-            <h2 id="new-idea-title" className="text-[12.5px] text-muted-foreground">
+            <h2 id="new-idea-title" className="text-[12.5px] font-semibold text-foreground">
               新しいアイデア
             </h2>
           </div>
@@ -112,7 +112,7 @@ export function ComposeDialog() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={COMPOSE_PLACEHOLDER}
-            className="mt-2 h-auto w-full resize-none border-0 bg-transparent text-[13.5px] leading-relaxed text-muted-foreground outline-none placeholder:text-muted-foreground/80"
+            className="mt-2 h-auto w-full resize-none border-0 bg-transparent text-[13.5px] font-medium leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/80"
             onKeyDown={(event) => {
               if (!isSubmitShortcut(event)) return;
               event.preventDefault();

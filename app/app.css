@@ -6,18 +6,18 @@
  */
 :root {
   --background: #ffffff;
-  --foreground: #0f1217;
+  --foreground: #0a0a0a;
   --card: #ffffff;
   --muted: #f4f5f8;
   --muted-foreground: #3a424e;
   --primary: #3b6ef6;
   --primary-foreground: #ffffff;
-  --border: #c5cad3;
-  --border-control: #b8bfc9;
+  --border: #d4d8e0;
+  --border-control: #c8ced7;
   --ring: #3b6ef6;
   --sidebar: #fafafb;
   --accent: #eef2fd;
-  --accent-foreground: #0f1217;
+  --accent-foreground: #0a0a0a;
   --row-hover: #f8fafe;
   --table-head: #f4f5f7;
   --brand: #3b6ef6;
@@ -26,7 +26,7 @@
   --danger-soft: #fef2f2;
   --radius: 0.4375rem;
   --radius-panel: 0.75rem;
-  --shadow-float: 0 16px 40px rgba(15, 18, 23, 0.14), 0 0 0 1px var(--border);
+  --shadow-float: 0 16px 40px rgba(10, 10, 10, 0.12), 0 0 0 1px var(--border);
 
   --stage-spark-bg: #f3f0ff; /* STAGE_PILL_HEX.spark */
   --stage-spark-fg: #6d28d9;
@@ -76,7 +76,7 @@ body {
   font-size: 13.5px;
   line-height: 1.5;
   letter-spacing: 0;
-  font-weight: 400;
+  font-weight: 500;
   font-synthesis: none;
   font-optical-sizing: auto;
   font-feature-settings:
@@ -113,7 +113,7 @@ a {
   }
 
   .ui-btn {
-    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-[13.5px] font-medium text-primary-foreground no-underline disabled:opacity-40 md:h-8 md:min-h-8;
+    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-[13.5px] font-semibold text-primary-foreground no-underline disabled:opacity-40 md:h-8 md:min-h-8;
     box-shadow: none;
   }
 
@@ -123,7 +123,7 @@ a {
 
   .ui-btn-secondary,
   .ui-btn-ghost {
-    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border border-border-control bg-card px-3 text-[13.5px] font-medium text-foreground no-underline hover:bg-row-hover disabled:opacity-40 md:h-8 md:min-h-8;
+    @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md border border-border-control bg-card px-3 text-[13.5px] font-semibold text-foreground no-underline hover:bg-row-hover disabled:opacity-40 md:h-8 md:min-h-8;
     box-shadow: none;
   }
 
@@ -132,7 +132,7 @@ a {
   }
 
   .ui-btn-danger {
-    @apply inline-flex h-8 items-center justify-center rounded-md px-3 text-[13.5px] font-medium text-danger no-underline hover:bg-[var(--danger-soft)];
+    @apply inline-flex h-8 items-center justify-center rounded-md px-3 text-[13.5px] font-semibold text-danger no-underline hover:bg-[var(--danger-soft)];
   }
 
   .ui-input {
@@ -145,7 +145,7 @@ a {
   }
 
   .ui-link {
-    @apply text-[13.5px] font-medium text-foreground no-underline hover:underline;
+    @apply text-[13.5px] font-semibold text-foreground no-underline hover:underline;
   }
 
   .ui-table {
@@ -153,7 +153,7 @@ a {
   }
 
   .ui-table th {
-    @apply border-b border-border px-3 text-left text-[12.5px] font-medium text-foreground;
+    @apply border-b border-border px-3 text-left text-[12.5px] font-semibold text-foreground;
     background: var(--table-head);
     height: 36px;
   }
@@ -172,7 +172,8 @@ a {
   }
 
   .ui-title {
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--foreground);
     letter-spacing: -0.02em;
     overflow-wrap: anywhere;
   }

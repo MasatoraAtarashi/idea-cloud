@@ -71,7 +71,7 @@ export default function IdeaPage() {
   if (!idea) {
     return (
       <div className="px-6 py-6">
-        <h1 className="text-[16px] font-medium tracking-tight">アイデア</h1>
+        <h1 className="ui-title text-[16px] tracking-tight">アイデア</h1>
         <div className="mt-4">
           <EmptyState title="まだありません" />
         </div>
@@ -243,10 +243,8 @@ function IdeaDetailTabs({
           type="button"
           onClick={() => onTab(id)}
           aria-current={tab === id ? "page" : undefined}
-          className={`flex min-h-11 shrink-0 items-center px-3 text-[13px] ${
-            tab === id
-              ? "border-b-2 border-foreground font-medium text-foreground"
-              : "text-muted-foreground"
+          className={`flex min-h-11 shrink-0 items-center px-3 text-[13px] font-semibold text-foreground ${
+            tab === id ? "border-b-2 border-foreground" : ""
           }`}
         >
           {IDEA_DETAIL_TAB_LABEL[id]}
@@ -354,7 +352,7 @@ function IdeaDetail({
                 <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug lg:text-[23px] lg:leading-[1.4]">
                   {idea.title}
                 </h1>
-                <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-foreground lg:mt-5 lg:text-[13.5px]">
+                <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] font-medium leading-relaxed text-foreground lg:mt-5 lg:text-[13.5px]">
                   {idea.body}
                 </p>
                 <IdeaTags idea={idea} />
@@ -427,7 +425,7 @@ function IdeaDetail({
             共有
           </span>
         </div>
-        <h2 className="text-[13.5px] font-medium">このアイデアの操作</h2>
+        <h2 className="text-[13.5px] font-semibold">このアイデアの操作</h2>
         <div className="mt-2 flex flex-col gap-1.5">
           <IdeaResearchControls idea={idea} error={researchError} />
           <IdeaBrainstormControls idea={idea} error={brainstormError} />

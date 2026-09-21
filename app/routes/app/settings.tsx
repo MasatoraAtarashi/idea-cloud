@@ -32,11 +32,11 @@ export default function SettingsPage() {
         >
           戻る
         </Link>
-        <h1 className="text-[13.5px] font-medium">設定</h1>
+        <h1 className="text-[13.5px] font-semibold">設定</h1>
         <span className="min-w-[3.5rem]" />
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
-        <p className="hidden px-2 text-[16px] font-medium md:block">設定</p>
+        <p className="hidden px-2 text-[16px] font-semibold md:block">設定</p>
         <nav className="mt-3 flex gap-1 overflow-x-auto md:mt-4 md:flex-col">
           {SECTIONS.map((item, index) => {
             const prev = SECTIONS[index - 1];
@@ -51,10 +51,8 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setSection(item.id)}
-                  className={`shrink-0 rounded-md px-2 py-1.5 text-left text-[13px] ${
-                    section === item.id
-                      ? "bg-accent font-medium text-foreground"
-                      : "text-muted-foreground hover:bg-row-hover hover:text-foreground"
+                  className={`shrink-0 rounded-md px-2 py-1.5 text-left text-[13px] font-semibold text-foreground ${
+                    section === item.id ? "bg-accent" : "hover:bg-row-hover"
                   }`}
                 >
                   {item.label}
@@ -81,7 +79,7 @@ function MembersPanel() {
     <div className="mx-auto max-w-3xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-medium">メンバーとアクセス</h2>
+          <h2 className="text-[16px] font-semibold">メンバーとアクセス</h2>
           <p className="mt-1 text-[12.5px] text-muted-foreground">
             アイデアの閲覧・編集範囲はチーム単位で決まります。
           </p>
@@ -108,7 +106,7 @@ function MembersPanel() {
                       {initialsFromLabel(member.name)}
                     </span>
                     <span>
-                      <span className="block text-[13.5px] font-medium">{member.name}</span>
+                      <span className="block text-[13.5px] font-semibold">{member.name}</span>
                       {member.email ? (
                         <span className="font-mono text-[11px] text-muted-foreground">
                           {member.email}
@@ -127,7 +125,7 @@ function MembersPanel() {
         </table>
       </div>
       <section className="mt-8">
-        <h3 className="text-[16px] font-medium">既定の公開範囲</h3>
+        <h3 className="text-[16px] font-semibold">既定の公開範囲</h3>
         <div className="mt-3 grid gap-2 md:grid-cols-3">
           <div className="rounded-[10px] border border-primary/30 bg-accent p-3">
             <p className="text-[13.5px] font-medium">チーム全体</p>
@@ -154,7 +152,7 @@ function StubPanel({ section }: { section: SectionId }) {
   const label = SECTIONS.find((item) => item.id === section)?.label ?? "設定";
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-medium">{label}</h2>
+      <h2 className="text-[16px] font-semibold">{label}</h2>
       <p className="mt-3 text-[13.5px] text-muted-foreground">まだありません。</p>
     </div>
   );

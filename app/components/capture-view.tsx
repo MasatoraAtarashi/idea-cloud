@@ -42,7 +42,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             <Link to={LIST_PATH} className="text-[13.5px] text-muted-foreground no-underline">
               閉じる
             </Link>
-            <p className="text-[13.5px] font-medium tracking-tight">{COMPOSE_TITLE}</p>
+            <p className="text-[13.5px] font-semibold tracking-tight">{COMPOSE_TITLE}</p>
             <button
               type="submit"
               disabled={!canSubmit}
@@ -78,7 +78,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={onComposeKeyDown}
               placeholder={COMPOSE_PLACEHOLDER}
-              className="mt-3 min-h-[8.5rem] w-full flex-1 resize-none border-0 bg-transparent text-[15px] leading-relaxed text-muted-foreground outline-none placeholder:text-muted-foreground"
+              className="mt-3 min-h-[8.5rem] w-full flex-1 resize-none border-0 bg-transparent text-[15px] font-medium leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
 
@@ -127,7 +127,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
       </div>
 
       <div className="mx-auto hidden max-w-2xl px-6 py-8 md:block">
-        <h1 className="text-[16px] font-medium tracking-tight">{COMPOSE_TITLE}</h1>
+        <h1 className="ui-title text-[16px] tracking-tight">{COMPOSE_TITLE}</h1>
         <Form method="post" className="ui-panel mt-4 p-4" onSubmit={hold}>
           <input
             name="title"
