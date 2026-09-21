@@ -365,7 +365,7 @@ describe("desktop compose shortcuts and brand", () => {
     expect(src).toContain("IBM+Plex+Mono");
     expect(src).toContain("stage-spark");
     expect(src).toContain("ui-title");
-    expect(src).toContain("font-weight: 600");
+    expect(src).toContain("font-semibold");
     expect(src).toContain("px-4 py-2");
     expect(src).not.toContain("height: 52px");
     expect(DESIGN_TOKENS.accent).toBe("#3b6ef6");
