@@ -6,7 +6,7 @@ export const DESIGN_TOKENS = {
   border: "#c5cad3",
   borderControl: "#b8bfc9",
   accent: "#3b6ef6",
-  body: "#0f1217",
+  body: "#0a0a0a",
   muted: "#3a424e",
   rowHover: "#f8fafe",
   selection: "#eef2fd",

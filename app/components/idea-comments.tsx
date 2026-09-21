@@ -59,9 +59,11 @@ export function IdeaComments({
   }, [fetcher.data, fetcher.formData, fetcher.state]);
 
   return (
-    <section id="comments" className={compact ? "mt-8" : "mt-8 max-w-2xl lg:mt-10"}>
+    <section id="comments" className={compact ? "mt-8" : "mt-4 max-w-2xl lg:mt-10"}>
       <h2
-        className={compact ? "text-[15px] font-medium" : "text-[15px] font-medium lg:text-[16px]"}
+        className={
+          compact ? "text-[15px] font-semibold" : "text-[15px] font-semibold lg:text-[16px]"
+        }
       >
         コメント
         <span className="ml-2 font-mono text-[11.5px] font-normal text-muted-foreground">

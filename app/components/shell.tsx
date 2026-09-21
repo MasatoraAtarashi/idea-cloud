@@ -27,7 +27,7 @@ const ICONS = {
 
 function navClass(isActive: boolean) {
   return [
-    "flex items-center gap-2 rounded-md px-2 py-[7px] text-[13.5px] font-medium no-underline",
+    "flex items-center gap-2 rounded-md px-2 py-[7px] text-[13.5px] font-semibold no-underline",
     isActive
       ? "bg-accent text-foreground"
       : "text-muted-foreground hover:bg-row-hover hover:text-foreground",
@@ -102,7 +102,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
             <Link to={LIST_PATH} className="min-w-0 no-underline text-foreground">
               <Brand
                 compact
-                wordmarkClassName="truncate text-[13.5px] font-medium tracking-tight"
+                wordmarkClassName="truncate text-[13.5px] font-semibold tracking-tight"
               />
             </Link>
           </div>
@@ -139,12 +139,12 @@ function ShellFrame({ children }: { children: ReactNode }) {
         </aside>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
-          {hideTabBar ? null : <div className="h-16 shrink-0 md:hidden" />}
+          {hideTabBar ? null : <div className="mobile-tab-spacer shrink-0 md:hidden" />}
         </div>
       </div>
       {hideTabBar ? null : (
         <nav
-          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
           aria-label="メイン"
         >
           {MOBILE_NAV.map((item) => {
@@ -157,11 +157,11 @@ function ShellFrame({ children }: { children: ReactNode }) {
                 end={item.end}
                 aria-label={item.ariaLabel}
                 className={`flex min-h-11 flex-col items-center justify-center gap-0.5 py-1.5 no-underline ${
-                  on ? "text-primary" : "text-muted-foreground"
+                  on ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
-                <Icon className={`h-5 w-5 ${on ? "text-foreground" : ""}`} />
-                <span className={`text-[10px] ${on ? "font-medium text-foreground" : ""}`}>
+                <Icon className="h-5 w-5" strokeWidth={on ? 2.15 : 1.75} />
+                <span className={`text-[11px] ${on ? "font-semibold" : "font-medium"}`}>
                   {item.label}
                 </span>
               </NavLink>

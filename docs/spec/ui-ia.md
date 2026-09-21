@@ -10,20 +10,20 @@ There is **no landing page**. `/` is the login gate.
 
 Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboard-first, settings for access/team), LiteLLM-thin chrome (white main, hairline borders, shadow only on modal/popover), Ideation Cloud pastel stage pills. Do **not** copy Relic’s logo, Relic’s blue marketing LP, or X dark mode. Do not put 融合 / リサーチ in the sidebar. **インスピレーション** and **アナリティクス** are first-class destinations (sidebar + mobile tabs), not settings-adjacent.
 
-| Token        | Value                                                                                                                                                                 |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Surface      | `#FFFFFF`                                                                                                                                                             |
-| Sidebar      | `#FAFAFB`                                                                                                                                                             |
-| Table header | `#F4F5F7`                                                                                                                                                             |
-| Border       | `#C5CAD3` (controls `#B8BFC9`)                                                                                                                                        |
-| Accent       | `#3B6EF6`                                                                                                                                                             |
-| Body         | `#0F1217` (muted labels `#3A424E`)                                                                                                                                    |
-| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                       |
-| Density      | Row ~40px, filter 46px, table header 36px; 1px dividers, not zebra. Rows stay compact but filled: tags, stage, relative updated, aging, comment count, research mark. |
-| Radius       | 6–7px controls, 9–12px panels                                                                                                                                         |
-| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–500); IBM Plex Mono for meta only. Titles `font-weight: 500` with slightly tight tracking.                             |
-| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                             |
-| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                          |
+| Token        | Value                                                                                                                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surface      | `#FFFFFF`                                                                                                                                                                                           |
+| Sidebar      | `#FAFAFB`                                                                                                                                                                                           |
+| Table header | `#F4F5F7`                                                                                                                                                                                           |
+| Border       | `#C5CAD3` (controls `#B8BFC9`)                                                                                                                                                                      |
+| Accent       | `#3B6EF6`                                                                                                                                                                                           |
+| Body         | `#0A0A0A` (muted labels `#3A424E`)                                                                                                                                                                  |
+| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                                                     |
+| Density      | Row ~40px desktop / slightly airier mobile cards; filter 46px, table header 36px; 1px dividers, not zebra. Rows stay filled: tags, stage, relative updated, aging, comment count, research mark.    |
+| Radius       | 6–7px controls, 9–12px panels                                                                                                                                                                       |
+| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–600); IBM Plex Mono for meta only. Titles and primary nav `font-weight: 600`, near-black. Compose/detail **本文** uses primary text, not muted gray. |
+| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                                                           |
+| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                                                        |
 
 Stage pill hex (background / foreground):
 
@@ -62,7 +62,7 @@ Three primary destinations. Create lives in the top-right **+**, not in the tab 
 | Shelf  | `/app/inspirations` | インスピ    | インスピレーション | Gallery + OGP; header **+** adds a card |
 | Counts | `/app/analytics`    | 分析        | アナリティクス     | D1 idea-row counts                      |
 
-The tab bar stays on list / inspirations / analytics. It **hides** on stack screens (compose, idea detail, inspiration detail, settings, merge, research) so those screens can use a sticky title without stacked chrome. Settings is opened from the gear on list / inspirations / analytics headers. Compose is `/app` via the header **+**.
+The tab bar stays on list / inspirations / analytics. It **hides** on stack screens (compose, idea detail, inspiration detail, settings, merge, research) so those screens can use a sticky title without stacked chrome. Settings is opened from the gear on list / inspirations / analytics headers. Compose is `/app` via the header **+**. Mobile headers and the tab spacer include `safe-area-inset` so content does not sit under the home indicator. Primary taps are ≥44px (`min-h-11`).
 
 Helpers live in `app/nav.ts` (`isMobileNavActive`, `isWorkspaceNavActive`, `isMobileTabBarHidden`).
 
@@ -90,7 +90,7 @@ List view state is in the URL so Back/Forward and deep links work:
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
-Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ** and **削除** (browser confirm; hard-deletes the row and its comments/brainstorms). Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail is tabbed: **概要 | リサーチ | AI/履歴 | コメント** (`#research` / `#history` / `#brainstorm` / `#evaluate` / `#comments`). 概要 keeps wrapping title + body, tags, one primary **次の段階へ**, compact 見直し. リサーチ shows run controls + notes and a model-only callout (no live web search). AI/履歴 is `buildIdeaHistory`. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail (including **削除**). Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
+Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ** and **削除** (browser confirm; hard-deletes the row and its comments/brainstorms). Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail is tabbed: **概要 | リサーチ | AI/履歴 | コメント** (`#research` / `#history` / `#brainstorm` / `#evaluate` / `#comments`). 概要 keeps wrapping title + body, tags, one primary **次の段階へ**, compact 見直し. リサーチ shows run controls + notes and a model-only callout (no live web search). AI/履歴 is `buildIdeaHistory`. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. Mobile also keeps a 44px **編集** in the sticky header (not a ⋯ menu). **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail (including **削除**). Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
 
 ### Idea detail 履歴
 
