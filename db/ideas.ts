@@ -6,7 +6,7 @@ import { parseReviewStatus, type ReviewStatus } from "../app/lib/review";
 import { getLatestBrainstorm, type IdeaBrainstorm } from "./brainstorms";
 import { commentCountsByIdeaIds } from "./comments";
 import type { Db } from "./client";
-import { ideas, type Idea } from "./schema";
+import { ideaBrainstorms, ideaComments, ideas, type Idea } from "./schema";
 
 export type { Idea };
 
@@ -263,6 +263,15 @@ export async function saveIdeaReview(
     .where(eq(ideas.id, id))
     .returning();
   return updated;
+}
+
+export async function deleteIdea(db: Db, id: number): Promise<boolean> {
+  const existing = await getIdeaRow(db, id);
+  if (!existing) return false;
+  await db.delete(ideaComments).where(eq(ideaComments.ideaId, id));
+  await db.delete(ideaBrainstorms).where(eq(ideaBrainstorms.ideaId, id));
+  await db.delete(ideas).where(eq(ideas.id, id));
+  return true;
 }
 
 export async function saveIdeaReflection(

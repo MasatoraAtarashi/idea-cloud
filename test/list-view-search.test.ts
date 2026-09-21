@@ -16,6 +16,8 @@ describe("list view search params", () => {
       tags: [],
       minDays: 0,
       savedViewId: null,
+      sortKey: "updatedAt",
+      sortDir: "desc",
     });
     expect(serializeListViewSearch(parseListViewSearch(new URLSearchParams())).toString()).toBe("");
     expect(listViewHref(parseListViewSearch(new URLSearchParams()))).toBe("/app/list");
@@ -34,6 +36,8 @@ describe("list view search params", () => {
       tags: ["音声", "朝"],
       minDays: 14,
       savedViewId: 4,
+      sortKey: "updatedAt",
+      sortDir: "desc",
     });
     expect(serializeListViewSearch(parsed).get("tab")).toBe("aging");
     expect(serializeListViewSearch(parsed).get("view")).toBe("board");
@@ -94,5 +98,17 @@ describe("list view search params", () => {
         }),
       ),
     ).toBe("/app/list?view=board&stage=ripe&v=9");
+  });
+
+  it("round-trips sort without treating it as a saved-view filter", () => {
+    const parsed = parseListViewSearch(new URLSearchParams("sort=title&dir=asc"));
+    expect(parsed.sortKey).toBe("title");
+    expect(parsed.sortDir).toBe("asc");
+    expect(serializeListViewSearch(parsed).get("sort")).toBe("title");
+    expect(serializeListViewSearch(parsed).get("dir")).toBe("asc");
+    expect(listViewHref(parsed)).toBe("/app/list?sort=title&dir=asc");
+    expect(listViewHref(patchListViewSearch(parsed, { view: "board", savedViewId: 3 }))).toBe(
+      "/app/list?view=board&sort=title&dir=asc&v=3",
+    );
   });
 });

@@ -4,6 +4,8 @@ import {
   useActionData,
   useFetcher,
   useLoaderData,
+  useLocation,
+  useNavigate,
   type LoaderFunctionArgs,
 } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
@@ -16,13 +18,21 @@ import { IdeaHistory } from "../../components/idea-history";
 import { IdeaReflectionForm } from "../../components/idea-reflection";
 import { IdeaReviewPrompt } from "../../components/idea-review";
 import { IdeaHumanScore } from "../../components/idea-score";
-import { IdeaResearchControls } from "../../components/idea-research";
+import { IdeaResearchControls, IdeaResearchNotes } from "../../components/idea-research";
 import { StageSelect } from "../../components/stage-select";
 import { SESSION_USER, STAGE_LABEL, nextStage } from "../../data/mock";
+import { confirmIdeaDelete } from "../../lib/idea-delete";
 import { formatAgedDays, formatDateJa, ideaPublicId } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
 import { buildIdeaHistory } from "../../lib/idea-history";
 import { ideaDetailAction } from "../../lib/idea-detail-action";
+import {
+  hashForIdeaDetailTab,
+  IDEA_DETAIL_TAB_IDS,
+  IDEA_DETAIL_TAB_LABEL,
+  ideaDetailTabFromHash,
+  type IdeaDetailTab,
+} from "../../lib/idea-detail-tabs";
 import { useInstantPending } from "../../lib/use-instant-pending";
 import { createDb } from "../../../db/client";
 import { listBrainstormsForIdea, toBrainstormView } from "../../../db/brainstorms";
@@ -191,6 +201,64 @@ function ArchiveButton({ idea, ghost = false }: { idea: MockIdea; ghost?: boolea
   );
 }
 
+function DeleteButton({ idea }: { idea: MockIdea }) {
+  const fetcher = useFetcher();
+  const busy = fetcher.state !== "idle";
+  const { pending, hold } = useInstantPending(busy);
+  return (
+    <fetcher.Form
+      method="post"
+      onSubmit={(event) => {
+        if (!confirmIdeaDelete(idea.title)) {
+          event.preventDefault();
+          return;
+        }
+        hold();
+      }}
+    >
+      <input type="hidden" name="intent" value="delete" />
+      <input type="hidden" name="redirectTo" value={LIST_PATH} />
+      <button type="submit" disabled={pending} className="ui-btn-danger w-full justify-start px-3">
+        {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+        {pending ? "削除中…" : "削除"}
+      </button>
+    </fetcher.Form>
+  );
+}
+
+function IdeaDetailTabs({
+  tab,
+  onTab,
+  commentCount,
+}: {
+  tab: IdeaDetailTab;
+  onTab: (next: IdeaDetailTab) => void;
+  commentCount: number;
+}) {
+  return (
+    <div className="flex gap-1 overflow-x-auto border-b border-border">
+      {IDEA_DETAIL_TAB_IDS.map((id) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onTab(id)}
+          aria-current={tab === id ? "page" : undefined}
+          className={`flex min-h-11 shrink-0 items-center px-3 text-[13px] ${
+            tab === id
+              ? "border-b-2 border-foreground font-medium text-foreground"
+              : "text-muted-foreground"
+          }`}
+        >
+          {IDEA_DETAIL_TAB_LABEL[id]}
+          {id === "comments" ? (
+            <span className="ml-1 font-mono text-[11px]">{commentCount}</span>
+          ) : null}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function IdeaDetail({
   idea,
   comments,
@@ -217,11 +285,22 @@ function IdeaDetail({
   reflectionError?: string;
 }) {
   const [editing, setEditing] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tab = ideaDetailTabFromHash(location.hash);
   const history = buildIdeaHistory(idea, brainstorms);
 
+  function setTab(next: IdeaDetailTab) {
+    const hash = hashForIdeaDetailTab(next);
+    navigate(
+      { pathname: location.pathname, search: location.search, hash },
+      { replace: true, preventScrollReset: true },
+    );
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-      <article className="flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] lg:px-8 lg:py-6">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+      <article className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] lg:px-8 lg:py-6">
         <header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none">
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 py-1 lg:flex lg:items-start lg:justify-between lg:py-0">
             <Link
@@ -252,61 +331,96 @@ function IdeaDetail({
               {editing ? "閉じる" : "編集"}
             </button>
           </div>
+          <IdeaDetailTabs tab={tab} onTab={setTab} commentCount={comments.length} />
         </header>
 
-        <IdeaDetailSwipe
-          idea={idea}
-          editing={editing}
-          onEdit={() => setEditing((open) => !open)}
-          researchError={researchError}
-          brainstormError={brainstormError}
-          evaluateError={evaluateError}
-        >
-          <div className="mt-3 lg:mt-4">
-            <IdeaMeta idea={idea} />
+        {tab === "overview" ? (
+          <IdeaDetailSwipe
+            idea={idea}
+            editing={editing}
+            onEdit={() => setEditing((open) => !open)}
+            researchError={researchError}
+            brainstormError={brainstormError}
+            evaluateError={evaluateError}
+          >
+            <div className="mt-3 lg:mt-4">
+              <IdeaMeta idea={idea} />
+            </div>
+
+            {editing ? (
+              <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
+            ) : (
+              <>
+                <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug lg:text-[23px] lg:leading-[1.4]">
+                  {idea.title}
+                </h1>
+                <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-foreground lg:mt-5 lg:text-[13.5px]">
+                  {idea.body}
+                </p>
+                <IdeaTags idea={idea} />
+              </>
+            )}
+
+            <div className="mt-5 lg:hidden">
+              <StageAdvanceButton idea={idea} />
+            </div>
+          </IdeaDetailSwipe>
+        ) : null}
+
+        {tab === "overview" ? (
+          <>
+            <div className="lg:hidden">
+              <IdeaReviewPrompt idea={idea} compact showNextStage={false} />
+            </div>
+            <div className="hidden lg:block">
+              <IdeaReviewPrompt idea={idea} />
+            </div>
+            {reviewError ? <p className="mt-1.5 text-[12.5px] text-danger">{reviewError}</p> : null}
+            <IdeaHumanScore idea={idea} error={scoreError} />
+            <details className="mt-6 lg:hidden">
+              <summary className="flex min-h-11 cursor-pointer items-center text-[13.5px] font-medium">
+                振り返り
+              </summary>
+              <IdeaReflectionForm idea={idea} error={reflectionError} />
+            </details>
+            <div className="hidden lg:block">
+              <IdeaReflectionForm idea={idea} error={reflectionError} />
+            </div>
+            <div className="mt-6 lg:hidden">
+              <DeleteButton idea={idea} />
+            </div>
+          </>
+        ) : null}
+
+        {tab === "research" ? (
+          <section id="research" className="mt-4 max-w-2xl">
+            <p className="rounded-md border border-border bg-muted/60 px-3 py-2 text-[12.5px] leading-relaxed text-foreground">
+              このリサーチはモデルのみです。ウェブ検索による先行事例はまだありません。
+            </p>
+            <div className="mt-4 lg:hidden">
+              <IdeaResearchControls idea={idea} error={researchError} />
+            </div>
+            <IdeaResearchNotes idea={idea} />
+          </section>
+        ) : null}
+
+        {tab === "ai" ? (
+          <div className="mt-4 max-w-2xl">
+            <span id="history" className="sr-only">
+              AI/履歴
+            </span>
+            <div className="mb-4 flex flex-col gap-2 lg:hidden">
+              <IdeaBrainstormControls idea={idea} error={brainstormError} />
+              <IdeaEvaluateControls idea={idea} error={evaluateError} />
+            </div>
+            <IdeaHistory items={history} />
           </div>
+        ) : null}
 
-          {editing ? (
-            <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
-          ) : (
-            <>
-              <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug lg:text-[23px] lg:leading-[1.4]">
-                {idea.title}
-              </h1>
-              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed text-muted-foreground lg:mt-5 lg:text-[13.5px]">
-                {idea.body}
-              </p>
-              <IdeaTags idea={idea} />
-            </>
-          )}
-
-          <div className="mt-5 lg:hidden">
-            <StageAdvanceButton idea={idea} />
-          </div>
-        </IdeaDetailSwipe>
-
-        <div className="lg:hidden">
-          <IdeaReviewPrompt idea={idea} compact showNextStage={false} />
-        </div>
-        <div className="hidden lg:block">
-          <IdeaReviewPrompt idea={idea} />
-        </div>
-        {reviewError ? <p className="mt-1.5 text-[12.5px] text-danger">{reviewError}</p> : null}
-        <IdeaHumanScore idea={idea} error={scoreError} />
-        <details className="mt-6 lg:hidden">
-          <summary className="flex min-h-11 cursor-pointer items-center text-[13.5px] font-medium">
-            振り返り
-          </summary>
-          <IdeaReflectionForm idea={idea} error={reflectionError} />
-        </details>
-        <div className="hidden lg:block">
-          <IdeaReflectionForm idea={idea} error={reflectionError} />
-        </div>
-        <IdeaComments comments={comments} error={commentError} />
-        <IdeaHistory items={history} />
+        {tab === "comments" ? <IdeaComments comments={comments} error={commentError} /> : null}
       </article>
 
-      <aside className="hidden w-72 shrink-0 border-l border-border px-4 py-6 lg:block">
+      <aside className="hidden w-72 shrink-0 overflow-y-auto border-l border-border px-4 py-6 lg:block">
         <div className="mb-4 flex items-center justify-end gap-2">
           <span className="ui-btn-secondary pointer-events-none h-8 opacity-60">
             <IconShare className="h-3.5 w-3.5" />
@@ -326,6 +440,7 @@ function IdeaDetail({
             他のアイデアと融合
           </Link>
           <ArchiveButton idea={idea} ghost />
+          <DeleteButton idea={idea} />
         </div>
 
         <dl className="mt-6 space-y-3 text-[13px]">

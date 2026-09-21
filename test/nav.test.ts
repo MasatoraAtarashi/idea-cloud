@@ -30,22 +30,21 @@ describe("nav destinations", () => {
     expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
   });
 
-  it("keeps compose/list/inspirations/analytics on the mobile tab bar", () => {
+  it("keeps list/inspirations/analytics on the mobile tab bar without 新規", () => {
     expect(MOBILE_NAV.map((item) => item.to)).toEqual([
       "/app/list",
       "/app/inspirations",
-      "/app",
       "/app/analytics",
     ]);
-    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "インスピ", "新規", "分析"]);
+    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "インスピ", "分析"]);
     expect(MOBILE_NAV.map((item) => item.ariaLabel)).toEqual([
       "一覧",
       "インスピレーション",
-      "新規アイデア",
       "アナリティクス",
     ]);
-    expect(MOBILE_NAV[2]?.primary).toBe(true);
-    expect(MOBILE_NAV.some((item) => item.label === "設定")).toBe(false);
+    expect(MOBILE_NAV.map((item) => item.to)).not.toContain("/app");
+    expect(MOBILE_NAV.map((item) => item.label)).not.toContain("新規");
+    expect(MOBILE_NAV.map((item) => item.label)).not.toContain("設定");
     expect(MOBILE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
   });
 });
@@ -71,12 +70,12 @@ describe("nav path helpers", () => {
     expect(isSettingsNavPath("/app/team")).toBe(true);
   });
 
-  it("hides the mobile tab bar on stack screens", () => {
-    expect(isMobileTabBarHidden("/app")).toBe(false);
+  it("hides the mobile tab bar on stack screens including compose", () => {
+    expect(isMobileTabBarHidden("/app")).toBe(true);
     expect(isMobileTabBarHidden("/app/list")).toBe(false);
     expect(isMobileTabBarHidden("/app/inspirations")).toBe(false);
     expect(isMobileTabBarHidden("/app/analytics")).toBe(false);
-    expect(isMobileTabBarHidden("/app/capture")).toBe(false);
+    expect(isMobileTabBarHidden("/app/capture")).toBe(true);
     expect(isMobileTabBarHidden("/app/ideas/3")).toBe(true);
     expect(isMobileTabBarHidden("/app/inspirations/9")).toBe(true);
     expect(isMobileTabBarHidden("/app/settings")).toBe(true);
@@ -87,15 +86,11 @@ describe("nav path helpers", () => {
   it("marks the matching mobile tab active", () => {
     const list = MOBILE_NAV[0]!;
     const inspirations = MOBILE_NAV[1]!;
-    const compose = MOBILE_NAV[2]!;
-    const analytics = MOBILE_NAV[3]!;
+    const analytics = MOBILE_NAV[2]!;
     expect(isMobileNavActive(list, "/app/list")).toBe(true);
     expect(isMobileNavActive(list, "/app/ideas/1")).toBe(false);
     expect(isMobileNavActive(inspirations, "/app/inspirations")).toBe(true);
     expect(isMobileNavActive(inspirations, "/app/inspirations/2")).toBe(true);
-    expect(isMobileNavActive(compose, "/app")).toBe(true);
-    expect(isMobileNavActive(compose, "/app/capture")).toBe(true);
-    expect(isMobileNavActive(compose, "/app/list")).toBe(false);
     expect(isMobileNavActive(analytics, "/app/analytics")).toBe(true);
     expect(isMobileNavActive(analytics, "/app/settings")).toBe(false);
   });

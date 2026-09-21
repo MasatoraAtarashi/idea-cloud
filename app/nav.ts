@@ -7,8 +7,7 @@ export const WORKSPACE_NAV = [
 export const SETTINGS_NAV = [{ to: "/app/settings", label: "設定", icon: "settings" }] as const;
 
 /**
- * Mobile primary destinations. Short labels fit a 4-tab bar;
- * `ariaLabel` keeps the full destination name for assistive tech.
+ * Mobile day-to-day destinations. Compose is a header + (cold-start still `/app`).
  * Settings stays out of the tab bar (header gear).
  */
 export const MOBILE_NAV = [
@@ -17,7 +16,6 @@ export const MOBILE_NAV = [
     label: "一覧",
     end: true,
     icon: "list",
-    primary: false,
     ariaLabel: "一覧",
   },
   {
@@ -25,23 +23,13 @@ export const MOBILE_NAV = [
     label: "インスピ",
     end: false,
     icon: "pin",
-    primary: false,
     ariaLabel: "インスピレーション",
-  },
-  {
-    to: "/app",
-    label: "新規",
-    end: true,
-    icon: "plus",
-    primary: true,
-    ariaLabel: "新規アイデア",
   },
   {
     to: "/app/analytics",
     label: "分析",
     end: false,
     icon: "chart",
-    primary: false,
     ariaLabel: "アナリティクス",
   },
 ] as const;
@@ -55,9 +43,10 @@ export function normalizeAppPath(pathname: string): string {
   return pathname || "/";
 }
 
-/** Stack screens: hide the tab bar so detail chrome can breathe. */
+/** Stack screens: hide the tab bar so detail / compose chrome can breathe. */
 export function isMobileTabBarHidden(pathname: string): boolean {
   const path = normalizeAppPath(pathname);
+  if (path === "/app" || path === "/app/capture") return true;
   if (path === "/app/settings" || path.startsWith("/app/settings/")) return true;
   if (path === "/app/team") return true;
   if (path.startsWith("/app/ideas/")) return true;
@@ -99,7 +88,6 @@ export function isSettingsNavPath(pathname: string): boolean {
 }
 
 export function isMobileNavActive(item: MobileNavItem, pathname: string): boolean {
-  if (item.primary) return isComposeNavPath(pathname);
   if (item.to === "/app/list") return normalizeAppPath(pathname) === "/app/list";
   if (item.to === "/app/inspirations") return isInspirationNavPath(pathname);
   if (item.to === "/app/analytics") return isAnalyticsNavPath(pathname);

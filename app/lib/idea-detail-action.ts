@@ -7,6 +7,7 @@ import { brainstormIdeaAction } from "./idea-brainstorm-action";
 import { editIdeaAction } from "./idea-edit-action";
 import { evaluateIdeaAction } from "./idea-evaluate-action";
 import { reflectionIdeaAction } from "./idea-reflection-action";
+import { deleteIdeaAction } from "./idea-delete-action";
 import { researchIdeaAction } from "./idea-research-action";
 import { reviewIdeaAction } from "./idea-review-action";
 import { humanScoreIdeaAction } from "./idea-score-action";
@@ -58,6 +59,9 @@ export async function ideaDetailAction(args: ActionFunctionArgs) {
   }
   if (intent === "reflection") {
     return reflectionIdeaAction(args);
+  }
+  if (intent === "delete") {
+    return deleteIdeaAction(args);
   }
   return researchIdeaAction(args);
 }
