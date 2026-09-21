@@ -1,5 +1,6 @@
 import type { IdeaHistoryItem } from "../lib/idea-history";
 import { formatDateJa } from "../lib/format";
+import { ResearchSourcesList } from "./idea-research";
 
 export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
   return (
@@ -50,10 +51,20 @@ export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
                       {item.model}
                     </p>
                   ) : null}
+                  {item.kind === "research" ? <ResearchSourcesList sources={item.sources} /> : null}
                   {item.body ? (
-                    <p className="mt-2 whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
-                      {item.body}
-                    </p>
+                    <div
+                      className={item.kind === "research" ? "mt-3 border-t border-border pt-3" : ""}
+                    >
+                      {item.kind === "research" ? (
+                        <h4 className="text-[12.5px] font-medium">AIコメント</h4>
+                      ) : null}
+                      <p
+                        className={`${item.kind === "research" ? "mt-1.5" : "mt-2"} whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground`}
+                      >
+                        {item.body}
+                      </p>
+                    </div>
                   ) : (
                     <p className="mt-2 text-[12.5px] text-muted-foreground">本文はありません。</p>
                   )}

@@ -17,5 +17,7 @@ declare global {
     FIELD_ENCRYPTION_KEY?: string;
     /** TypeSafe Jev (System One). When set, auto-tags and AI評価 prefer Jev. */
     TYPESAFE_API_KEY?: string;
+    /** Optional Brave Search API key. When unset, research uses HTML search pages. */
+    SEARCH_API_KEY?: string;
   }
 }

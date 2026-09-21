@@ -95,11 +95,11 @@ Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレス
 
 One chronological **履歴** section (`#research`, also `#brainstorm` / `#evaluate` for deep links) lists stored AI/research output, newest first, expandable:
 
-| Kind     | Source                                                    | Persistence                                                                  |
-| -------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| リサーチ | `ideas.research_notes` + model + `researched_at`          | **Latest only** (overwrite). Marked 最新.                                    |
-| AI評価   | `ideas.ai_evaluation` + score + model + `ai_evaluated_at` | **Latest only** (overwrite). Marked 最新.                                    |
-| ブレスト | `idea_brainstorms` rows                                   | **Every run** (append). Fallback to the idea snapshot if no rows are passed. |
+| Kind     | Source                                                                | Persistence                                                                                                   |
+| -------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| リサーチ | `ideas.research_notes` + model + `researched_at` + `research_sources` | **Latest only** (overwrite). Marked 最新. **先行事例** links (or **Web検索未取得**) sit above **AIコメント**. |
+| AI評価   | `ideas.ai_evaluation` + score + model + `ai_evaluated_at`             | **Latest only** (overwrite). Marked 最新.                                                                     |
+| ブレスト | `idea_brainstorms` rows                                               | **Every run** (append). Fallback to the idea snapshot if no rows are passed.                                  |
 
 Do not invent a new AI product or a new history table. Gaps: research and evaluation have no run log — only the current snapshot on the idea row. Helper: `app/lib/idea-history.ts` (`buildIdeaHistory`).
 
@@ -125,7 +125,7 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar (and `⌘N` / 
 
 ## Merge / research (not primary nav)
 
-`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research and brainstorm run on idea detail via Workers AI (no web search): the **リサーチを実行** / **ブレスト** controls are real POSTs, not hash stubs. `/app/research?from=:id` redirects to detail `#research`. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
+`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research and brainstorm run on idea detail via Workers AI: the **リサーチを実行** / **ブレスト** controls are real POSTs, not hash stubs. Research also fetches a few public web results for **先行事例** (fail-soft **Web検索未取得**). `/app/research?from=:id` redirects to detail `#research`. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
 
 ## Settings (`/app/settings`)
 

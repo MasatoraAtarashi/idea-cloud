@@ -36,7 +36,7 @@ import {
 } from "../../../app/lib/reflection";
 import { REVIEW_STATUSES } from "../../../app/lib/review";
 import { HUMAN_SCORE_NOTE_MAX } from "../../../app/lib/scores";
-import { bindResearchAi, researchIdea } from "../../ai/research";
+import { bindResearchAi, researchIdea, searchApiKeyFromEnv } from "../../ai/research";
 import { brainstormIdea } from "../../ai/brainstorm";
 import { evaluateIdea } from "../../ai/evaluate";
 import { resolveCreateTags } from "../../ai/tags";
@@ -275,6 +275,7 @@ export const ideasRoute = new Hono<AppEnv>()
       ideaId: id,
       preset: input.preset,
       model: input.model,
+      searchApiKey: searchApiKeyFromEnv(c.env),
     });
     if (!result.ok) {
       return c.json({ error: result.error }, result.status);

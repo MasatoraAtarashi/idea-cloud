@@ -227,6 +227,10 @@ describe("responsive home and nav", () => {
     expect(src).toContain("resolveCommentAuthor");
     expect(src).toContain('intent === "comment"');
     expect(src).toContain("着想から実行できます");
+    expect(src).toContain("先行事例");
+    expect(src).toContain("Web検索未取得");
+    expect(src).toContain("AIコメント");
+    expect(src).not.toContain("ウェブ検索はありません");
     expect(src).toContain("アーカイブではリサーチできません");
     expect(src).toContain("アーカイブではブレストできません");
     expect(src).toContain("アーカイブでは実行できません");

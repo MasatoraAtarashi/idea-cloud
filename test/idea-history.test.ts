@@ -51,6 +51,8 @@ describe("buildIdeaHistory", () => {
     expect(items[0]?.anchor).toBe("evaluate");
     expect(items[1]?.latestOnly).toBe(true);
     expect(items[1]?.id).toBe("research-latest");
+    expect(items[1]?.summary).toContain("Web検索未取得");
+    expect(items[1]?.sources?.status).toBe("failed");
   });
 
   it("lists every brainstorm row newest first", () => {
@@ -124,5 +126,27 @@ describe("buildIdeaHistory", () => {
       ],
     );
     expect(items.map((item) => item.kind)).toEqual(["evaluate", "brainstorm", "research"]);
+  });
+
+  it("lists 先行事例 on the research snapshot when URLs exist", () => {
+    const items = buildIdeaHistory(
+      idea({
+        researchNotes: "観点:\n- 既存",
+        researchedAt: "2026-09-21 10:00:00",
+        researchSources: {
+          status: "ok",
+          query: "既存 先行事例",
+          results: [
+            {
+              title: "事例",
+              url: "https://example.com/prior",
+              snippet: "短い説明",
+            },
+          ],
+        },
+      }),
+    );
+    expect(items[0]?.summary).toContain("先行事例1件");
+    expect(items[0]?.sources?.results[0]?.url).toBe("https://example.com/prior");
   });
 });

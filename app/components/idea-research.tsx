@@ -8,6 +8,13 @@ import {
   type ResearchPreset,
   presetFromModel,
 } from "../lib/research-models";
+import {
+  hasResearchSourceLinks,
+  researchSourcesForDisplay,
+  sourceHostname,
+  WEB_SEARCH_UNAVAILABLE_LABEL,
+  type ResearchSources,
+} from "../lib/research-sources";
 import type { ResearchIdeaActionData } from "../lib/idea-research-action";
 import { IconSearch, IconSpinner } from "./icons";
 
@@ -15,6 +22,52 @@ const PRESETS = Object.keys(RESEARCH_PRESET_LABEL) as ResearchPreset[];
 
 export function isResearchSubmitting(formData: FormData | undefined) {
   return formData?.get("intent") === "research";
+}
+
+export function ResearchSourcesList({
+  sources,
+  heading = "先行事例",
+}: {
+  sources: ResearchSources | null | undefined;
+  heading?: string;
+}) {
+  if (!sources) return null;
+  const links = hasResearchSourceLinks(sources) ? sources.results : [];
+
+  return (
+    <section className="mt-3">
+      <h4 className="text-[12.5px] font-medium">{heading}</h4>
+      {links.length > 0 ? (
+        <ul className="mt-1.5 space-y-2">
+          {links.map((source) => {
+            const host = sourceHostname(source.url);
+            return (
+              <li key={source.url}>
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-[12.5px] font-medium leading-snug text-foreground no-underline hover:underline"
+                >
+                  {source.title}
+                </a>
+                {host ? (
+                  <p className="font-mono text-[10.5px] text-muted-foreground">{host}</p>
+                ) : null}
+                {source.snippet ? (
+                  <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                    {source.snippet}
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="mt-1 text-[12.5px] text-muted-foreground">{WEB_SEARCH_UNAVAILABLE_LABEL}</p>
+      )}
+    </section>
+  );
 }
 
 export function IdeaResearchControls({
@@ -94,7 +147,7 @@ export function IdeaResearchControls({
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
       {compact ? null : (
         <p className="text-[11.5px] leading-snug text-muted-foreground">
-          着想から実行できます。保存した本文だけを分析します。ウェブ検索はありません。
+          着想から実行できます。ウェブで先行事例を数件取得し、本文と合わせて分析します。検索に失敗してもメモは残します。
         </p>
       )}
     </fetcher.Form>
@@ -104,11 +157,12 @@ export function IdeaResearchControls({
 export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
   const preset = presetFromModel(idea.researchModel);
   const modelLabel = preset ? RESEARCH_PRESET_LABEL[preset] : idea.researchModel;
+  const sources = researchSourcesForDisplay(idea);
 
   return (
     <section className="mt-6">
       <h3 className="text-[13.5px] font-medium">リサーチ</h3>
-      {idea.researchNotes ? (
+      {idea.researchNotes || idea.researchedAt ? (
         <div className="ui-panel mt-2 p-3">
           <p className="font-mono text-[11px] text-muted-foreground">
             {modelLabel}
@@ -119,9 +173,15 @@ export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
               {idea.researchModel}
             </p>
           ) : null}
-          <p className="mt-2 whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
-            {idea.researchNotes}
-          </p>
+          <ResearchSourcesList sources={sources} />
+          {idea.researchNotes ? (
+            <div className="mt-3 border-t border-border pt-3">
+              <h4 className="text-[12.5px] font-medium">AIコメント</h4>
+              <p className="mt-1.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
+                {idea.researchNotes}
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : canRunIdeaAi(idea.stage) ? (
         <p className="mt-2 text-[12.5px] text-muted-foreground">

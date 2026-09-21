@@ -17,7 +17,7 @@ Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app
 | API           | `server/api/` (`ideas` + template `todos`)       |
 | Auth on APIs  | `server/middleware/access-auth.ts`               |
 
-Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research, brainstorm, evaluation fallback, and auto-tag fallback). TypeSafe Jev is an outbound HTTPS call when `TYPESAFE_API_KEY` is set. No unused KV, R2, Queue, or Durable Object bindings.
+Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research, brainstorm, evaluation fallback, and auto-tag fallback). TypeSafe Jev is an outbound HTTPS call when `TYPESAFE_API_KEY` is set. Research also does outbound HTML/JSON search (DuckDuckGo / Bing, or Brave when `SEARCH_API_KEY` is set). No unused KV, R2, Queue, Browser Rendering, or Durable Object bindings.
 
 ```
 Browser
@@ -25,6 +25,7 @@ Browser
       → D1 binding `DB` (idea-cloud-db)
       → Workers AI binding `AI` (research + brainstorm; evaluation + auto-tags when Jev is unset)
       → TypeSafe System One (`POST https://api.typesafe.ai/v1/systemone`) when `TYPESAFE_API_KEY` is set
+      → Web search (DuckDuckGo HTML / Bing HTML / DuckDuckGo Instant Answer; Brave Search API when `SEARCH_API_KEY` is set)
       → secrets from wrangler / `.dev.vars` (never in git)
 ```
 
@@ -32,18 +33,18 @@ Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` 
 
 ## D1
 
-| Item               | Today                                                                                                                                                                                                                                                                  |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Database name      | `idea-cloud-db`                                                                                                                                                                                                                                                        |
-| Binding            | `DB`                                                                                                                                                                                                                                                                   |
-| Migrations         | `todos` (template) + `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views` + `inspirations` (+ OGP columns in `0007_inspiration_ogp.sql`)                                                                                                                     |
-| `ideas` columns    | `id`, `title`, `body`, `stage` (default `spark`), `tags` (JSON text `[]`), `created_at`, `updated_at`, research fields, evaluation fields, review (`last_reviewed_at` / `review_status`), reflection (`reflection_outcome` / `reflection_status` / `reflection_notes`) |
-| `idea_comments`    | `id`, `idea_id`, `body`, `author_id`, `author_name`, `created_at`. Chronological scrap-style notes. No threads.                                                                                                                                                        |
-| `idea_brainstorms` | `id`, `idea_id`, `notes`, `model`, `created_at`. All rows appear in idea-detail **履歴**; research/evaluation remain latest-only columns on `ideas`.                                                                                                                   |
-| `saved_views`      | `id`, `name`, `filters` (JSON including `minDays`), `created_at`. Named list filters.                                                                                                                                                                                  |
-| `inspirations`     | `id`, `title`, `url` (nullable), `memo`, `tags` (JSON text `[]`), `created_at`, `updated_at`, Open Graph cache (`og_title` / `og_description` / `og_image_url` / `og_site_name` / `og_fetched_at` / `og_status`). URL/memo shelf; OGP image is hotlinked, no R2.       |
-| Members table      | **Not created**                                                                                                                                                                                                                                                        |
-| Field encryption   | Helper exists; **not** applied to idea rows                                                                                                                                                                                                                            |
+| Item               | Today                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database name      | `idea-cloud-db`                                                                                                                                                                                                                                                                                                                                          |
+| Binding            | `DB`                                                                                                                                                                                                                                                                                                                                                     |
+| Migrations         | `todos` (template) + `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views` + `inspirations` (+ OGP columns in `0007_inspiration_ogp.sql`, `research_sources` in `0008_research_sources.sql`)                                                                                                                                                    |
+| `ideas` columns    | `id`, `title`, `body`, `stage` (default `spark`), `tags` (JSON text `[]`), `created_at`, `updated_at`, research fields (`research_notes` / `research_model` / `researched_at` / `research_sources` JSON), evaluation fields, review (`last_reviewed_at` / `review_status`), reflection (`reflection_outcome` / `reflection_status` / `reflection_notes`) |
+| `idea_comments`    | `id`, `idea_id`, `body`, `author_id`, `author_name`, `created_at`. Chronological scrap-style notes. No threads.                                                                                                                                                                                                                                          |
+| `idea_brainstorms` | `id`, `idea_id`, `notes`, `model`, `created_at`. All rows appear in idea-detail **履歴**; research/evaluation remain latest-only columns on `ideas`.                                                                                                                                                                                                     |
+| `saved_views`      | `id`, `name`, `filters` (JSON including `minDays`), `created_at`. Named list filters.                                                                                                                                                                                                                                                                    |
+| `inspirations`     | `id`, `title`, `url` (nullable), `memo`, `tags` (JSON text `[]`), `created_at`, `updated_at`, Open Graph cache (`og_title` / `og_description` / `og_image_url` / `og_site_name` / `og_fetched_at` / `og_status`). URL/memo shelf; OGP image is hotlinked, no R2.                                                                                         |
+| Members table      | **Not created**                                                                                                                                                                                                                                                                                                                                          |
+| Field encryption   | Helper exists; **not** applied to idea rows                                                                                                                                                                                                                                                                                                              |
 
 **作成** is a React Router action (`insert` into `ideas`, optional auto-tags via Jev or Workers AI). After insert (and after an edit that changes `body`), distinct http(s) URLs in the idea text are upserted into `inspirations` (max 5, no page fetch at save time; failures are ignored). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. List tabs/filters live in `/app/list` search params (`tab`, `view`, `stage`, `tag`, `q`, `days`, `v`). Named views persist in `saved_views`. Per-idea **コメント** / **編集** / **human-score** / **見直し** / **振り返り** / **リサーチ** / **ブレスト** / **AI評価** are React Router actions on the detail page; AI intents return `{ ok: true }` so `useFetcher` can revalidate in place instead of waiting on a document navigation. Detail **履歴** (`buildIdeaHistory`) concatenates the idea’s latest research/evaluation snapshot with every `idea_brainstorms` row (newest first). `/app/analytics` and `/app/inspirations` are first-class nav destinations (desktop sidebar + mobile tabs). `/app/inspirations` is a gallery CRUD for the memo shelf; create/update refetch OGP when the URL changes (`POST /api/inspirations/:id/ogp` to refresh). **AIブレスト** inserts an idea then reuses `brainstormIdea`. Hono `GET/POST /api/ideas`, `PATCH /api/ideas/:id`, `GET/POST /api/ideas/:id/comments`, `POST /api/ideas/:id/research`, `GET/POST /api/ideas/:id/brainstorm(s)`, `POST /api/ideas/:id/evaluate`, `GET/POST/PATCH /api/inspirations`, `POST /api/inspirations/:id/ogp`, `POST /api/inspirations/:id/brainstorm`, and `GET/POST/DELETE /api/saved-views` follow the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
 
@@ -55,18 +56,19 @@ Outbound HTML fetch on inspiration create/update when the URL changes, plus `POS
 
 ## Workers AI research (v1)
 
-Summarize / analyze one idea’s stored text. **No web search**, Browser Rendering, embeddings, or merge-AI.
+Summarize / analyze one idea’s stored text **and** a small set of live web results. No Browser Rendering, embeddings, or merge-AI. Cloudflare AI Search is for indexed own-content, so this path uses the same Worker HTML fetch style as OGP: DuckDuckGo HTML, Bing HTML, DuckDuckGo Instant Answer JSON. Optional Brave Search API when `SEARCH_API_KEY` is set.
 
-| Item     | Today                                                                                                                                                                                            |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local. Tests stub `setTestAiRun` / `setTestTagAiRun` / `setTestSystemOneRun`. |
-| Gate     | Idea `stage` must not be `archived`. Otherwise 409 / 「アーカイブではリサーチできません」. 着想 / 熟成中 / 熟した / 採用 are allowed.                                                            |
-| UI       | Idea detail rail + list row menu POST `intent=research` (above 段階). Locked copy only for archive. `#research` is the **履歴** section. `/app/research?from=:id` redirects there                |
-| Persist  | `ideas.research_notes`, `research_model`, `researched_at`                                                                                                                                        |
-| Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast`                                           |
-| Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                                                                 |
+| Item     | Today                                                                                                                                                                                                                               |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Binding  | `AI` in `wrangler.jsonc`. Local Vite uses `remoteBindings: false` (no AI simulator). Vitest omits `AI` so CI stays local. Tests stub `setTestAiRun` / `setTestTagAiRun` / `setTestSystemOneRun` / `setTestWebSearch`.               |
+| Gate     | Idea `stage` must not be `archived`. Otherwise 409 / 「アーカイブではリサーチできません」. 着想 / 熟成中 / 熟した / 採用 are allowed.                                                                                               |
+| UI       | Idea detail rail + list row menu POST `intent=research` (above 段階). Locked copy only for archive. `#research` **履歴** shows **先行事例** (outbound links) separate from **AIコメント**. `/app/research?from=:id` redirects there |
+| Persist  | `ideas.research_notes`, `research_model`, `researched_at`, `research_sources` (JSON `{ status, query, results: [{ title, url, snippet }] }`)                                                                                        |
+| Search   | Fail-soft. Empty/blocked search still saves notes and stores `status: failed` so the UI can show **Web検索未取得**. Never invent URLs.                                                                                              |
+| Presets  | `fast` (default) `@cf/meta/llama-3.1-8b-instruct-fp8-fast`; `standard` `@cf/qwen/qwen3-30b-a3b-fp8`; `deep` `@cf/meta/llama-3.3-70b-instruct-fp8-fast`                                                                              |
+| Override | Optional `model` query/body, allowlisted to those three IDs only                                                                                                                                                                    |
 
-Prompt: Japanese bullets for 観点 / リスク / 次の一手. Tests stub `env.AI.run` via a thin wrapper. Vite `pnpm dev` does not open a remote Workers AI session.
+Prompt: Japanese bullets for 観点 / リスク / 次の一手, with the fetched titles/URLs as the only allowed citations. Tests stub `env.AI.run` via a thin wrapper. Vite `pnpm dev` does not open a remote Workers AI session.
 
 ## Workers AI brainstorm (v1)
 
@@ -80,9 +82,9 @@ When `TYPESAFE_API_KEY` is set (`.dev.vars` locally, `wrangler secret put` in pr
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | Create auto-tags    | One `choice` over a curated Japanese tag set; 2–5 tags from the probability distribution                                                                         | Workers AI fast 8B, then `[]`         |
 | AI評価              | Score axes (novelty / impact / feasibility / clarity / risk) + `noul` (pursue) + `choice` (next action), combined in code to a 1–5 `ai_score` and Japanese notes | Existing Workers AI evaluation prompt |
-| リサーチ / ブレスト | Unchanged                                                                                                                                                        | Workers AI (要約・考察 prose)         |
+| リサーチ / ブレスト | リサーチ adds fail-soft web results as 先行事例; brainstorm still Workers AI prose                                                                               | Workers AI (要約・考察 prose)         |
 
-User-supplied tags still win. Archive still 409. Persist evaluation on the same idea columns (`ai_score`, `ai_evaluation`, `ai_evaluated_at`, `ai_evaluation_model` = `jev-latest`). List chips and detail **AI評価** already render those fields. Web-search research is still out of scope.
+User-supplied tags still win. Archive still 409. Persist evaluation on the same idea columns (`ai_score`, `ai_evaluation`, `ai_evaluated_at`, `ai_evaluation_model` = `jev-latest`). List chips and detail **AI評価** already render those fields.
 
 ## Workers AI evaluation (fallback)
 
@@ -123,11 +125,11 @@ D1 `saved_views`. Filter JSON matches list URL state (`tab`, `view`, `query`, `s
 
 ## Storage map (product, mostly future)
 
-| Need                 | Service                                              |
-| -------------------- | ---------------------------------------------------- |
-| Ideas (SQL)          | **D1** `ideas` (plaintext, including research notes) |
-| Members              | Not created                                          |
-| Profile / flags      | Workers KV (not added)                               |
-| Uploads              | R2 (not added)                                       |
-| Multiplayer / agents | Durable Objects (not this pass)                      |
-| Background jobs      | Queues + DLQ (not this pass)                         |
+| Need                 | Service                                                              |
+| -------------------- | -------------------------------------------------------------------- |
+| Ideas (SQL)          | **D1** `ideas` (plaintext, including research notes + 先行事例 JSON) |
+| Members              | Not created                                                          |
+| Profile / flags      | Workers KV (not added)                                               |
+| Uploads              | R2 (not added)                                                       |
+| Multiplayer / agents | Durable Objects (not this pass)                                      |
+| Background jobs      | Queues + DLQ (not this pass)                                         |

@@ -18,7 +18,7 @@ Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only (still us
 
 Team settings show the allowlist in a **disabled** textarea so the mock cannot pretend to write secrets.
 
-Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only. Do not log `TYPESAFE_API_KEY`.
+Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only. Do not log `TYPESAFE_API_KEY` or `SEARCH_API_KEY`.
 
 ## Field encryption
 
@@ -49,3 +49,7 @@ Same-origin UI. No wide CORS on APIs. `/` and `/login` are the unauthenticated l
 ## Outbound OGP fetch
 
 When an inspiration URL is saved from the gallery or API (create/update/再取得), the Worker fetches the HTML to read Open Graph / Twitter meta. Idea-body URL upsert does not fetch at save time. The page URL (and every redirect hop) must be public http(s): no credentials, no localhost / `.local` / `.internal`, no private or link-local IPs (including `169.254.169.254`). Timeout 5s, HTML cap 512KB, max 3 redirects. `og:image` is stored only if it is public **https**. Fetch failure is fail-soft (`og_status=failed`); it must not fail idea/inspiration save. Images are hotlinked in the UI; there is no open image proxy.
+
+## Outbound research web search
+
+Per-idea **リサーチ** fetches a few public search-result pages (DuckDuckGo HTML, Bing HTML, DuckDuckGo Instant Answer JSON) or Brave Search (`SEARCH_API_KEY`, wrangler secret / `.dev.vars` only). Result URLs are kept only when they are public http(s) and not search-engine hosts; private/localhost URLs are dropped. Timeout 5s, HTML cap 256KB. Search failure must not fail the research action: persist notes and show **Web検索未取得**. Do not log the Brave key. Do not invent citations.

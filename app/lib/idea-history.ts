@@ -1,5 +1,11 @@
 import type { MockIdea } from "../data/mock";
 import { evaluationModelLabel, presetFromModel, RESEARCH_PRESET_LABEL } from "./research-models";
+import {
+  hasResearchSourceLinks,
+  researchSourcesForDisplay,
+  WEB_SEARCH_UNAVAILABLE_LABEL,
+  type ResearchSources,
+} from "./research-sources";
 
 export const IDEA_HISTORY_KIND_LABEL = {
   research: "リサーチ",
@@ -28,6 +34,7 @@ export type IdeaHistoryItem = {
   score?: number | null;
   latestOnly: boolean;
   anchor?: "brainstorm" | "evaluate";
+  sources?: ResearchSources | null;
 };
 
 export function historyExcerpt(body: string, max = 72): string {
@@ -62,6 +69,7 @@ export function buildIdeaHistory(
     | "researchNotes"
     | "researchModel"
     | "researchedAt"
+    | "researchSources"
     | "brainstormNotes"
     | "brainstormModel"
     | "brainstormedAt"
@@ -76,6 +84,12 @@ export function buildIdeaHistory(
 
   if (idea.researchNotes?.trim() || idea.researchedAt) {
     const body = idea.researchNotes?.trim() ?? "";
+    const sources = researchSourcesForDisplay(idea);
+    const sourceHint = hasResearchSourceLinks(sources)
+      ? `先行事例${sources.results.length}件`
+      : sources
+        ? WEB_SEARCH_UNAVAILABLE_LABEL
+        : "";
     items.push({
       id: "research-latest",
       kind: "research",
@@ -84,8 +98,9 @@ export function buildIdeaHistory(
       model: idea.researchModel ?? null,
       modelLabel: researchModelLabel(idea.researchModel),
       body,
-      summary: historyExcerpt(body) || "調査メモ",
+      summary: [historyExcerpt(body) || "調査メモ", sourceHint].filter(Boolean).join(" · "),
       latestOnly: true,
+      sources,
     });
   }
 

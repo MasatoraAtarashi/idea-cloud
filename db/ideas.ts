@@ -2,6 +2,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { STAGES } from "../app/data/mock";
 import { parseReflectionStatus, type ReflectionStatus } from "../app/lib/reflection";
+import { parseResearchSources } from "../app/lib/research-sources";
 import { parseReviewStatus, type ReviewStatus } from "../app/lib/review";
 import { getLatestBrainstorm, type IdeaBrainstorm } from "./brainstorms";
 import { commentCountsByIdeaIds } from "./comments";
@@ -60,6 +61,7 @@ export function toIdeaView(
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
+    researchSources: parseResearchSources(row.researchSources),
     brainstormNotes: extras?.brainstorm?.notes ?? null,
     brainstormModel: extras?.brainstorm?.model ?? null,
     brainstormedAt: extras?.brainstorm?.createdAt ?? null,
@@ -95,6 +97,7 @@ export function ideaJson(
     researchNotes: row.researchNotes,
     researchModel: row.researchModel,
     researchedAt: row.researchedAt,
+    researchSources: parseResearchSources(row.researchSources),
     brainstormNotes: extras?.brainstorm?.notes ?? null,
     brainstormModel: extras?.brainstorm?.model ?? null,
     brainstormedAt: extras?.brainstorm?.createdAt ?? null,
@@ -171,7 +174,7 @@ export async function updateIdeaStage(db: Db, id: number, stage: Stage): Promise
 export async function saveIdeaResearch(
   db: Db,
   id: number,
-  data: { notes: string; model: string },
+  data: { notes: string; model: string; sources?: string | null },
 ): Promise<Idea> {
   const [updated] = await db
     .update(ideas)
@@ -179,6 +182,7 @@ export async function saveIdeaResearch(
       researchNotes: data.notes,
       researchModel: data.model,
       researchedAt: sql`(datetime('now'))`,
+      researchSources: data.sources ?? null,
       updatedAt: sql`(datetime('now'))`,
     })
     .where(eq(ideas.id, id))
