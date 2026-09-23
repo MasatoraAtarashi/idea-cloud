@@ -9,6 +9,7 @@ import { asStage, getIdeaRow } from "../../db/ideas";
 import { insertIdeaBrainstorm, type IdeaBrainstorm } from "../../db/brainstorms";
 import { listCommentsForIdea, type IdeaComment } from "../../db/comments";
 import type { Db } from "../../db/client";
+import { errorClass, logDiag } from "../diag";
 import { resolveAiRun, type ResearchAi } from "./research";
 
 export const BRAINSTORM_FAIL_MESSAGE = "ブレストに失敗しました。時間をおいて再度お試しください。";
@@ -84,6 +85,13 @@ export async function brainstormIdea(opts: {
     return { ok: false, status: 404, error: "見つかりません" };
   }
   if (!canRunIdeaAi(asStage(idea.stage))) {
+    logDiag("info", "ai brainstorm", {
+      step: "brainstorm",
+      outcome: "skipped",
+      reason: "archived",
+      ideaId: idea.id,
+      status: 409,
+    });
     return { ok: false, status: 409, error: BRAINSTORM_ARCHIVE_ERROR };
   }
 
@@ -93,10 +101,25 @@ export async function brainstormIdea(opts: {
     body: idea.body,
     comments,
   });
+  logDiag("info", "ai brainstorm", {
+    step: "brainstorm",
+    outcome: "start",
+    ideaId: idea.id,
+    model: resolved.model,
+    count: comments.length,
+  });
   let notes: string;
   try {
     notes = await generateBrainstormNotes(opts.ai, resolved.model, ideaText);
-  } catch {
+  } catch (error) {
+    logDiag("warn", "workers ai call", {
+      step: "brainstorm",
+      provider: "workers_ai",
+      outcome: "fail",
+      ideaId: idea.id,
+      model: resolved.model,
+      error: errorClass(error),
+    });
     return { ok: false, status: 502, error: BRAINSTORM_FAIL_MESSAGE };
   }
 

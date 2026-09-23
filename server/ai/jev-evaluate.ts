@@ -164,11 +164,15 @@ export async function evaluateIdeaWithJev(
   apiKey: string | undefined,
   ideaText: string,
 ): Promise<JevEvaluateMapped> {
-  const result = await runSystemOne(apiKey, {
-    state: { idea: ideaText },
-    model: JEV_MODEL,
-    questions: EVALUATE_QUESTIONS,
-  });
+  const result = await runSystemOne(
+    apiKey,
+    {
+      state: { idea: ideaText },
+      model: JEV_MODEL,
+      questions: EVALUATE_QUESTIONS,
+    },
+    "evaluate",
+  );
   const axes = parseJevEvaluationAnswers(result.answers);
   return mapJevEvaluation(axes, result.model || JEV_MODEL);
 }

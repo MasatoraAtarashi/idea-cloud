@@ -2,6 +2,7 @@ import { redirect, type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { asStage, IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
 import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
+import { logCreatePrerequisites } from "../../server/diag";
 import { scheduleCreateEvaluation } from "../../server/ai/evaluate";
 import { bindResearchAi } from "../../server/ai/research";
 import { resolveCreateTags } from "../../server/ai/tags";
@@ -56,6 +57,7 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
     return { error: "長すぎます", title, body: bodyField } satisfies CreateIdeaActionData;
   }
   const db = createDb(context.cloudflare.env.DB);
+  logCreatePrerequisites(context.cloudflare.env);
   const resolvedTags = await resolveCreateTags({
     ai: bindResearchAi(context.cloudflare.env.AI),
     text,

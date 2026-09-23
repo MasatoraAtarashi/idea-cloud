@@ -1,4 +1,5 @@
 import { JEV_MODEL } from "../../app/lib/jev";
+import { errorClass, logDiag, statusFromError } from "../diag";
 
 export const TYPESAFE_SYSTEM_ONE_URL = "https://api.typesafe.ai/v1/systemone";
 export const TYPESAFE_TIMEOUT_MS = 15_000;
@@ -61,6 +62,8 @@ export type SystemOneResult = {
 
 export type SystemOneRun = (request: SystemOneRequest) => Promise<SystemOneResult>;
 
+export type SystemOneStep = "evaluate" | "tags";
+
 let testSystemOneRun: SystemOneRun | undefined;
 
 /** Test-only. Production always POSTs to TypeSafe when a key is present. */
@@ -98,19 +101,58 @@ export function noul(
 export async function runSystemOne(
   apiKey: string | undefined,
   request: SystemOneRequest,
+  step: SystemOneStep = "evaluate",
 ): Promise<SystemOneResult> {
+  const hasTypesafeApiKey = Boolean(apiKey?.trim());
+  const questionCount = Object.keys(request.questions).length;
+  logDiag("info", "typesafe call", {
+    step,
+    provider: "typesafe",
+    outcome: "start",
+    hasTypesafeApiKey,
+    count: questionCount,
+    transport: testSystemOneRun ? "stub" : "http",
+  });
   if (testSystemOneRun) {
     try {
-      return await testSystemOneRun(request);
-    } catch {
+      const result = await testSystemOneRun(request);
+      logDiag("info", "typesafe call", {
+        step,
+        provider: "typesafe",
+        outcome: "success",
+        hasTypesafeApiKey,
+        status: 200,
+        count: Object.keys(result.answers).length,
+        transport: "stub",
+      });
+      return result;
+    } catch (error) {
+      logDiag("warn", "typesafe call", {
+        step,
+        provider: "typesafe",
+        outcome: "fail",
+        hasTypesafeApiKey,
+        error: errorClass(error),
+        status: null,
+        transport: "stub",
+      });
       throw new Error("TypeSafe request failed");
     }
   }
   const key = apiKey?.trim();
   if (!key) {
+    logDiag("warn", "typesafe call", {
+      step,
+      provider: "typesafe",
+      outcome: "fail",
+      hasTypesafeApiKey: false,
+      error: "missing_key",
+      status: null,
+      transport: "http",
+    });
     throw new Error("TYPESAFE_API_KEY is missing");
   }
-  return postSystemOne(key, request);
+  return postSystemOne(key, request, step);
 }
 
 export function parseSystemOneResult(raw: unknown): SystemOneResult {
@@ -196,9 +238,17 @@ function asStringRecord(raw: unknown): Record<string, string> {
   return out;
 }
 
-async function postSystemOne(apiKey: string, request: SystemOneRequest): Promise<SystemOneResult> {
+async function postSystemOne(
+  apiKey: string,
+  request: SystemOneRequest,
+  step: SystemOneStep,
+): Promise<SystemOneResult> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TYPESAFE_TIMEOUT_MS);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, TYPESAFE_TIMEOUT_MS);
   let response: Response;
   try {
     response = await fetch(TYPESAFE_SYSTEM_ONE_URL, {
@@ -215,15 +265,32 @@ async function postSystemOne(apiKey: string, request: SystemOneRequest): Promise
       signal: controller.signal,
     });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("TypeSafe request timed out");
-    }
+    const timed = timedOut || (error instanceof Error && error.name === "AbortError");
+    logDiag("warn", "typesafe call", {
+      step,
+      provider: "typesafe",
+      outcome: "fail",
+      hasTypesafeApiKey: true,
+      error: timed ? "timeout" : "network",
+      status: null,
+      transport: "http",
+    });
+    if (timed) throw new Error("TypeSafe request timed out");
     throw new Error("TypeSafe request failed");
   } finally {
     clearTimeout(timer);
   }
 
   if (!response.ok) {
+    logDiag("warn", "typesafe call", {
+      step,
+      provider: "typesafe",
+      outcome: "fail",
+      hasTypesafeApiKey: true,
+      error: "http",
+      status: response.status,
+      transport: "http",
+    });
     throw new Error(`TypeSafe request failed (${response.status})`);
   }
 
@@ -231,7 +298,39 @@ async function postSystemOne(apiKey: string, request: SystemOneRequest): Promise
   try {
     raw = await response.json();
   } catch {
+    logDiag("warn", "typesafe call", {
+      step,
+      provider: "typesafe",
+      outcome: "fail",
+      hasTypesafeApiKey: true,
+      error: "parse",
+      status: response.status,
+      transport: "http",
+    });
     throw new Error("TypeSafe response is not JSON");
   }
-  return parseSystemOneResult(raw);
+  try {
+    const parsed = parseSystemOneResult(raw);
+    logDiag("info", "typesafe call", {
+      step,
+      provider: "typesafe",
+      outcome: "success",
+      hasTypesafeApiKey: true,
+      status: response.status,
+      count: Object.keys(parsed.answers).length,
+      transport: "http",
+    });
+    return parsed;
+  } catch (error) {
+    logDiag("warn", "typesafe call", {
+      step,
+      provider: "typesafe",
+      outcome: "fail",
+      hasTypesafeApiKey: true,
+      error: errorClass(error),
+      status: statusFromError(error) ?? response.status,
+      transport: "http",
+    });
+    throw error;
+  }
 }

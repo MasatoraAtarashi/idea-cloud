@@ -74,11 +74,15 @@ export async function suggestIdeaTagsWithJev(
 ): Promise<string[]> {
   const ideaText = text.trim();
   if (!ideaText) return [];
-  const result = await runSystemOne(apiKey, {
-    state: { idea: ideaText },
-    model: JEV_MODEL,
-    questions: { tag: JEV_TAG_QUESTION },
-  });
+  const result = await runSystemOne(
+    apiKey,
+    {
+      state: { idea: ideaText },
+      model: JEV_MODEL,
+      questions: { tag: JEV_TAG_QUESTION },
+    },
+    "tags",
+  );
   const answer = result.answers.tag;
   if (!answer || answer.type !== "choice") return [];
   return tagsFromChoiceAnswer(answer);

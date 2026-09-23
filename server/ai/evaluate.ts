@@ -8,7 +8,7 @@ import { canRunIdeaAi, EVALUATE_ARCHIVE_ERROR } from "../../app/lib/idea-ai";
 import { parseAiScore } from "../../app/lib/scores";
 import { asStage, getIdeaRow, saveAiEvaluation, type Idea } from "../../db/ideas";
 import type { Db } from "../../db/client";
-import { logger } from "../logger";
+import { errorClass, logDiag, statusFromError } from "../diag";
 import { evaluateIdeaWithJev } from "./jev-evaluate";
 import { resolveAiRun, type ResearchAi } from "./research";
 import { hasTypesafeApiKey } from "./typesafe";
@@ -58,10 +58,25 @@ export async function evaluateIdea(opts: {
     return { ok: false, status: 404, error: "見つかりません" };
   }
   if (!canRunIdeaAi(asStage(idea.stage))) {
+    logDiag("info", "ai evaluate", {
+      step: "evaluate",
+      outcome: "skipped",
+      reason: "archived",
+      ideaId: idea.id,
+      status: 409,
+    });
     return { ok: false, status: 409, error: EVALUATE_ARCHIVE_ERROR };
   }
 
+  const hasTypesafeKey = Boolean(opts.typesafeApiKey?.trim());
   const ideaText = [idea.title, idea.body].filter((part) => part.trim().length > 0).join("\n");
+  logDiag("info", "ai evaluate", {
+    step: "evaluate",
+    outcome: "start",
+    ideaId: idea.id,
+    hasTypesafeApiKey: hasTypesafeKey,
+    provider: hasTypesafeApiKey(opts.typesafeApiKey) ? "jev" : "workers_ai",
+  });
   if (hasTypesafeApiKey(opts.typesafeApiKey)) {
     try {
       const jev = await evaluateIdeaWithJev(opts.typesafeApiKey, ideaText);
@@ -70,9 +85,24 @@ export async function evaluateIdea(opts: {
         notes: jev.notes,
         model: jev.model,
       });
+      logDiag("info", "ai evaluate", {
+        step: "evaluate",
+        outcome: "success",
+        ideaId: idea.id,
+        provider: "jev",
+        hasTypesafeApiKey: hasTypesafeKey,
+      });
       return { ok: true, idea: saved };
-    } catch {
-      // fall through to Workers AI
+    } catch (error) {
+      logDiag("warn", "ai evaluate", {
+        step: "evaluate",
+        outcome: "fallback",
+        ideaId: idea.id,
+        provider: "workers_ai",
+        hasTypesafeApiKey: hasTypesafeKey,
+        error: errorClass(error),
+        status: statusFromError(error),
+      });
     }
   }
 
@@ -88,7 +118,15 @@ export async function evaluateIdea(opts: {
   let notes: string;
   try {
     notes = await generateAiEvaluation(opts.ai, resolved.model, ideaText);
-  } catch {
+  } catch (error) {
+    logDiag("warn", "workers ai call", {
+      step: "evaluate",
+      provider: "workers_ai",
+      outcome: "fail",
+      ideaId: idea.id,
+      model: resolved.model,
+      error: errorClass(error),
+    });
     return { ok: false, status: 502, error: EVALUATE_FAIL_MESSAGE };
   }
 
@@ -96,6 +134,14 @@ export async function evaluateIdea(opts: {
     score: parseAiScore(notes),
     notes,
     model: resolved.model,
+  });
+  logDiag("info", "ai evaluate", {
+    step: "evaluate",
+    outcome: "success",
+    ideaId: idea.id,
+    provider: "workers_ai",
+    model: resolved.model,
+    hasTypesafeApiKey: hasTypesafeKey,
   });
   return { ok: true, idea: saved };
 }
@@ -123,8 +169,26 @@ export function scheduleCreateEvaluation(opts: {
   stage: string;
   typesafeApiKey?: string;
 }): void {
-  if (!canRunIdeaAi(asStage(opts.stage))) return;
+  const hasTypesafeKey = Boolean(opts.typesafeApiKey?.trim());
+  if (!canRunIdeaAi(asStage(opts.stage))) {
+    logDiag("info", "create auto-evaluate", {
+      step: "evaluate",
+      outcome: "skipped",
+      reason: "archived",
+      ideaId: opts.ideaId,
+      stage: opts.stage,
+      hasTypesafeApiKey: hasTypesafeKey,
+    });
+    return;
+  }
 
+  logDiag("info", "create auto-evaluate", {
+    step: "evaluate",
+    outcome: "scheduled",
+    ideaId: opts.ideaId,
+    stage: opts.stage,
+    hasTypesafeApiKey: hasTypesafeKey,
+  });
   const task = runCreateEvaluation(opts);
   scheduledCreateEvaluations.push(task);
   opts.waitUntil?.(task);
@@ -148,15 +212,28 @@ async function runCreateEvaluation(opts: {
       typesafeApiKey: opts.typesafeApiKey,
     });
     if (!result.ok) {
-      logger.warn("create auto-evaluate failed", {
+      logDiag("warn", "create auto-evaluate", {
+        step: "evaluate",
+        outcome: "fail",
         ideaId: opts.ideaId,
         status: result.status,
+        error: "rejected",
       });
+      return;
     }
-  } catch (error) {
-    logger.warn("create auto-evaluate failed", {
+    logDiag("info", "create auto-evaluate", {
+      step: "evaluate",
+      outcome: "success",
       ideaId: opts.ideaId,
-      error: error instanceof Error ? error.name : "error",
+      status: 200,
+    });
+  } catch (error) {
+    logDiag("warn", "create auto-evaluate", {
+      step: "evaluate",
+      outcome: "fail",
+      ideaId: opts.ideaId,
+      error: errorClass(error),
+      status: null,
     });
   }
 }

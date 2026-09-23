@@ -1,3 +1,4 @@
+import { errorClass, hostOnly, logDiag, statusFromError } from "../diag";
 import { parseOpenGraphHtml, type ParsedOpenGraph } from "./parse";
 import { assertPublicHttpUrl, PublicUrlRejectedError } from "./url";
 
@@ -166,14 +167,30 @@ export async function fetchOpenGraph(rawUrl: string | null | undefined): Promise
   if (testOgpFetch) {
     try {
       return await testOgpFetch(url);
-    } catch {
+    } catch (error) {
+      logDiag("warn", "ogp fetch", {
+        step: "ogp",
+        provider: "ogp",
+        outcome: "fail",
+        error: errorClass(error),
+        status: statusFromError(error),
+        host: hostOnly(url),
+      });
       return failed();
     }
   }
 
   try {
     assertPublicHttpUrl(url);
-  } catch {
+  } catch (error) {
+    logDiag("warn", "ogp fetch", {
+      step: "ogp",
+      provider: "ogp",
+      outcome: "fail",
+      error: errorClass(error),
+      status: null,
+      host: hostOnly(url),
+    });
     return failed();
   }
 
@@ -183,6 +200,16 @@ export async function fetchOpenGraph(rawUrl: string | null | undefined): Promise
     const hasAnything = Boolean(
       parsed.title || parsed.description || parsed.imageUrl || parsed.siteName,
     );
+    if (!hasAnything) {
+      logDiag("warn", "ogp fetch", {
+        step: "ogp",
+        provider: "ogp",
+        outcome: "fail",
+        error: "empty",
+        status: 200,
+        host: hostOnly(finalUrl),
+      });
+    }
     return {
       status: hasAnything ? "ok" : "failed",
       title: parsed.title,
@@ -191,7 +218,15 @@ export async function fetchOpenGraph(rawUrl: string | null | undefined): Promise
       siteName: parsed.siteName,
       fetchedAt: nowStamp(),
     };
-  } catch {
+  } catch (error) {
+    logDiag("warn", "ogp fetch", {
+      step: "ogp",
+      provider: "ogp",
+      outcome: "fail",
+      error: errorClass(error),
+      status: statusFromError(error),
+      host: hostOnly(url),
+    });
     return failed();
   }
 }

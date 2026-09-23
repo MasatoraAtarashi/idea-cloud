@@ -1,3 +1,5 @@
+import { logDiag } from "../diag";
+
 /** Shared-secret bearer gate for `/mcp`. Not OAuth and not the mock Google session. */
 
 const REALM = "idea-cloud";
@@ -40,9 +42,21 @@ export function timingSafeEqualString(a: string, b: string): boolean {
 
 /** `null` when the bearer matches the configured secret. Otherwise a 401 response. */
 export function authorizeMcpRequest(request: Request, env: Env): Response | null {
+  const hasMcpApiKey = Boolean(env.MCP_API_KEY?.trim());
+  const hasMcpToken = Boolean(env.MCP_TOKEN?.trim());
   const secret = mcpSharedSecret(env);
   const token = bearerToken(request.headers.get("authorization"));
   if (!secret || token == null || !timingSafeEqualString(token, secret)) {
+    const error = !secret ? "missing_key" : token == null ? "missing_bearer" : "mismatch";
+    logDiag("warn", "mcp auth", {
+      step: "mcp",
+      provider: "mcp",
+      outcome: "fail",
+      error,
+      status: 401,
+      hasMcpApiKey,
+      hasMcpToken,
+    });
     return unauthorizedMcpResponse();
   }
   return null;

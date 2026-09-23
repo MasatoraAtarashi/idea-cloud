@@ -19,6 +19,8 @@ const LITE_HTML = `
 </table>
 `;
 
+const headerValue = "aaaa";
+
 const BRAVE_JSON = JSON.stringify({
   web: {
     results: [{ title: "Brave hit", url: "https://example.com/brave", description: "from brave" }],
@@ -115,13 +117,12 @@ describe("web search provider logs", () => {
 
   it("logs a Brave HTTP miss without the key, then accepts DuckDuckGo Lite", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const secret = "brave-test-token";
     setTestWebSearch();
     setTestSearchFetch(async (url, init) => {
       const headers = new Headers(init.headers);
       expect(headers.get("accept-language")).toContain("ja");
       if (url.includes("api.search.brave.com")) {
-        expect(headers.get("x-subscription-token")).toBe(secret);
+        expect(headers.get("x-subscription-token")).toBe(headerValue);
         return new Response("nope", { status: 401 });
       }
       if (url === DUCKDUCKGO_LITE_URL) {
@@ -132,7 +133,7 @@ describe("web search provider logs", () => {
       return new Response("", { status: 500 });
     });
 
-    const sources = await searchWebSources({ query: "音声メモ", apiKey: secret });
+    const sources = await searchWebSources({ query: "音声メモ", apiKey: headerValue });
     expect(sources.status).toBe("ok");
     expect(sources.results[0]?.url).toBe("https://example.com/memo");
     expect(sources.providersTried).toEqual(["brave", "duckduckgo_lite"]);
@@ -147,7 +148,7 @@ describe("web search provider logs", () => {
         }),
       ]),
     );
-    expect(JSON.stringify(warnings)).not.toContain(secret);
+    expect(JSON.stringify(warnings)).not.toContain(headerValue);
   });
 
   it("logs timeout when a provider aborts", async () => {
@@ -166,7 +167,7 @@ describe("web search provider logs", () => {
       return new Response("", { status: 500 });
     });
 
-    const sources = await searchWebSources({ query: "音声メモ", apiKey: "brave-test-token" });
+    const sources = await searchWebSources({ query: "音声メモ", apiKey: headerValue });
     expect(sources.results[0]?.url).toBe("https://example.com/memo");
     expect(warnPayloads(warn)).toEqual(
       expect.arrayContaining([
@@ -184,7 +185,7 @@ describe("web search provider logs", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     setTestWebSearch();
     setTestSearchFetch(async () => new Response(BRAVE_JSON, { status: 200 }));
-    const sources = await searchWebSources({ query: "音声メモ", apiKey: "brave-test-token" });
+    const sources = await searchWebSources({ query: "音声メモ", apiKey: headerValue });
     expect(sources.status).toBe("ok");
     expect(sources.results[0]?.url).toBe("https://example.com/brave");
     expect(sources.providersTried).toEqual(["brave"]);

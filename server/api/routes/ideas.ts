@@ -42,6 +42,7 @@ import { brainstormIdea } from "../../ai/brainstorm";
 import { evaluateIdea, scheduleCreateEvaluation } from "../../ai/evaluate";
 import { resolveCreateTags } from "../../ai/tags";
 import { typesafeApiKeyFromEnv } from "../../ai/typesafe";
+import { logCreatePrerequisites } from "../../diag";
 import type { AppEnv } from "../../env";
 
 const createIdeaSchema = z.object({
@@ -186,6 +187,7 @@ export const ideasRoute = new Hono<AppEnv>()
   })
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
     const { body, stage, tags } = c.req.valid("json");
+    logCreatePrerequisites(c.env);
     const db = createDb(c.env.DB);
     const resolvedTags = await resolveCreateTags({
       ai: bindResearchAi(c.env.AI),

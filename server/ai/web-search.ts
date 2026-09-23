@@ -294,6 +294,7 @@ export async function searchWebSources(opts: {
       provider: PROVIDER.brave,
       reason: "missing_api_key",
       resultCount: 0,
+      hasSearchApiKey: false,
     });
   }
 
@@ -314,6 +315,7 @@ export async function searchWebSources(opts: {
     providersTried: [...tried],
     resultCount: 0,
     reason,
+    hasSearchApiKey: Boolean(apiKey),
   });
   return {
     ...emptyResearchSources(query, "failed"),
