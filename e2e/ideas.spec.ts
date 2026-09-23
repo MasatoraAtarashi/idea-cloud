@@ -48,12 +48,21 @@ test("adds a comment on detail", async ({ page }, testInfo) => {
 
 test("opens the discuss tab on idea detail", async ({ page }, testInfo) => {
   const title = uniqueLabel("E2E相談");
+  const note = uniqueLabel("E2E質問");
   await createIdea(page, testInfo.project.name, title, "相談タブを開きます。");
   await openIdeaFromList(page, title, testInfo.project.name);
   await visible(page.getByRole("button", { name: "相談", exact: true })).click();
   await expect(visible(page.getByRole("heading", { name: "AIと話す" }))).toBeVisible();
   await expect(visible(page.getByRole("button", { name: "LPにするなら" }))).toBeVisible();
   await expect(visible(page.getByRole("button", { name: "法的リスクは？" }))).toBeVisible();
+  await page.locator("#idea-discuss").fill(note);
+  await visible(page.getByRole("button", { name: "送信", exact: true })).click();
+  await expect(
+    visible(page.getByText("相談の返信に失敗しました。時間をおいて再度お試しください。")),
+  ).toBeVisible({ timeout: 30_000 });
+  await page.reload();
+  await visible(page.getByRole("button", { name: "相談", exact: true })).click();
+  await expect(visible(page.getByText(note))).toBeVisible();
 });
 
 test("research control is present and fails softly without paid APIs", async ({

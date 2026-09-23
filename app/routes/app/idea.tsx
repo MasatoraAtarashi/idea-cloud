@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   useActionData,
@@ -302,7 +302,12 @@ function IdeaDetail({
   const [editing, setEditing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const tab = ideaDetailTabFromHash(location.hash);
+  // The URL hash is not sent to the server, so the first paint stays on 概要.
+  const [hashReady, setHashReady] = useState(false);
+  useEffect(() => {
+    setHashReady(true);
+  }, []);
+  const tab = hashReady ? ideaDetailTabFromHash(location.hash) : "overview";
   const history = buildIdeaHistory(idea, brainstorms);
 
   function setTab(next: IdeaDetailTab) {
