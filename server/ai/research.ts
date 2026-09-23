@@ -12,6 +12,7 @@ import {
 import { canRunIdeaAi, RESEARCH_ARCHIVE_ERROR } from "../../app/lib/idea-ai";
 import { asStage, getIdeaRow, saveIdeaResearch, type Idea } from "../../db/ideas";
 import type { Db } from "../../db/client";
+import { errorClass, logDiag } from "../diag";
 import { searchApiKeyFromEnv, searchWebSources } from "./web-search";
 
 export const RESEARCH_FAIL_MESSAGE = "リサーチに失敗しました。時間をおいて再度お試しください。";
@@ -100,9 +101,24 @@ export async function researchIdea(opts: {
     return { ok: false, status: 404, error: "見つかりません" };
   }
   if (!canRunIdeaAi(asStage(idea.stage))) {
+    logDiag("info", "ai research", {
+      step: "research",
+      outcome: "skipped",
+      reason: "archived",
+      ideaId: idea.id,
+      status: 409,
+    });
     return { ok: false, status: 409, error: RESEARCH_ARCHIVE_ERROR };
   }
 
+  const hasSearchApiKey = Boolean(opts.searchApiKey?.trim());
+  logDiag("info", "ai research", {
+    step: "research",
+    outcome: "start",
+    ideaId: idea.id,
+    model: resolved.model,
+    hasSearchApiKey,
+  });
   const ideaText = [idea.title, idea.body].filter((part) => part.trim().length > 0).join("\n");
   const query = buildSearchQuery(idea.title, idea.body);
   const sources = await searchWebSources({
@@ -113,7 +129,15 @@ export async function researchIdea(opts: {
   let notes: string;
   try {
     notes = await generateResearchNotes(opts.ai, resolved.model, ideaText, sources);
-  } catch {
+  } catch (error) {
+    logDiag("warn", "workers ai call", {
+      step: "research",
+      provider: "workers_ai",
+      outcome: "fail",
+      ideaId: idea.id,
+      model: resolved.model,
+      error: errorClass(error),
+    });
     return { ok: false, status: 502, error: RESEARCH_FAIL_MESSAGE };
   }
 

@@ -5,6 +5,7 @@ import { ideaDetailAction } from "../app/lib/idea-detail-action";
 import { BRAINSTORM_ARCHIVE_ERROR } from "../app/lib/idea-ai";
 import { RESEARCH_PRESETS } from "../app/lib/research-models";
 import { BRAINSTORM_FAIL_MESSAGE, formatBrainstormUserText } from "../server/ai/brainstorm";
+import { flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { setTestAiRun } from "../server/ai/research";
 
 const authHeaders = {
@@ -95,12 +96,13 @@ describe("ideas brainstorm API", () => {
   });
 
   it("includes comments in the model prompt", async () => {
+    const id = await createIdea("コメント付き");
+    await flushScheduledCreateEvaluations();
     let captured = "";
     setTestAiRun(async (_model, inputs) => {
       captured = inputs.messages.find((message) => message.role === "user")?.content ?? "";
       return { response: "切り口:\n- コメント込み" };
     });
-    const id = await createIdea("コメント付き");
     await api(`/ideas/${id}/comments`, {
       method: "POST",
       body: JSON.stringify({ body: "朝の観点" }),

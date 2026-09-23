@@ -1,4 +1,5 @@
 import { extractAiText, RESEARCH_PRESETS } from "../../app/lib/research-models";
+import { errorClass, logDiag } from "../diag";
 import { suggestIdeaTagsWithJev } from "./jev-tags";
 import type { ResearchAi, ResearchAiRun } from "./research";
 import { hasTypesafeApiKey } from "./typesafe";
@@ -86,7 +87,14 @@ export async function suggestIdeaTags(ai: ResearchAi, text: string): Promise<str
       max_tokens: 96,
     });
     return parseTagSuggestions(extractAiText(result));
-  } catch {
+  } catch (error) {
+    logDiag("warn", "workers ai call", {
+      step: "tags",
+      provider: "workers_ai",
+      outcome: "fail",
+      model: AUTO_TAG_MODEL,
+      error: errorClass(error),
+    });
     return [];
   }
 }
@@ -98,18 +106,79 @@ export async function resolveCreateTags(opts: {
   tags: string[];
   typesafeApiKey?: string;
 }): Promise<string[]> {
+  const hasTypesafeKey = Boolean(opts.typesafeApiKey?.trim());
   const provided = sanitizeTags(opts.tags, USER_TAG_MAX);
-  if (provided.length > 0) return provided;
+  if (provided.length > 0) {
+    logDiag("info", "create auto-tag", {
+      step: "tags",
+      outcome: "skipped",
+      reason: "user_tags",
+      count: provided.length,
+      hasTypesafeApiKey: hasTypesafeKey,
+    });
+    return provided;
+  }
   if (hasTypesafeApiKey(opts.typesafeApiKey)) {
     try {
       const jevTags = sanitizeTags(
         await suggestIdeaTagsWithJev(opts.typesafeApiKey, opts.text),
         AUTO_TAG_MAX,
       );
-      if (jevTags.length > 0) return jevTags;
-    } catch {
-      // fall through to Workers AI
+      if (jevTags.length > 0) {
+        logDiag("info", "create auto-tag", {
+          step: "tags",
+          outcome: "success",
+          provider: "jev",
+          count: jevTags.length,
+          hasTypesafeApiKey: hasTypesafeKey,
+        });
+        return jevTags;
+      }
+      logDiag("info", "create auto-tag", {
+        step: "tags",
+        outcome: "fallback",
+        reason: "empty",
+        provider: "workers_ai",
+        hasTypesafeApiKey: hasTypesafeKey,
+        count: 0,
+      });
+    } catch (error) {
+      logDiag("warn", "create auto-tag", {
+        step: "tags",
+        outcome: "fallback",
+        reason: "jev_failed",
+        provider: "workers_ai",
+        hasTypesafeApiKey: hasTypesafeKey,
+        error: errorClass(error),
+      });
     }
+  } else {
+    logDiag("info", "create auto-tag", {
+      step: "tags",
+      outcome: "fallback",
+      reason: "missing_key",
+      provider: "workers_ai",
+      hasTypesafeApiKey: false,
+    });
   }
-  return suggestIdeaTags(opts.ai, opts.text);
+  const tags = await suggestIdeaTags(opts.ai, opts.text);
+  if (tags.length === 0) {
+    logDiag("warn", "create auto-tag", {
+      step: "tags",
+      outcome: "fail",
+      provider: "workers_ai",
+      error: "empty",
+      count: 0,
+      hasTypesafeApiKey: hasTypesafeKey,
+    });
+    return tags;
+  }
+  logDiag("info", "create auto-tag", {
+    step: "tags",
+    outcome: "success",
+    provider: "workers_ai",
+    count: tags.length,
+    hasTypesafeApiKey: hasTypesafeKey,
+  });
+  return tags;
 }

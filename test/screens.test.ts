@@ -84,6 +84,7 @@ describe("empty workspace data", () => {
     expect(src).toContain("getIdeaView");
     expect(src).toContain("createIdeaAction");
     expect(src).toContain("resolveCreateTags");
+    expect(src).toContain("scheduleCreateEvaluation");
     expect(src).toContain("listCommentsForIdea");
     expect(src).toContain("insertIdeaComment");
   });
