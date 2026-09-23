@@ -18,7 +18,7 @@ Quiet login gate plus a working create/list/detail loop. Ideas persist to D1. Lo
 | [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Screens, IA, visual language                                  |
 | [docs/spec/e2e.md](docs/spec/e2e.md)                                   | Playwright against local D1 (mocked auth)                     |
 | [docs/spec/security.md](docs/spec/security.md)                         | In-app Google OAuth + allowlist, field crypto                 |
-| [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, D1 checklist                                    |
+| [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, live D1 id, Access deferred until URL           |
 | [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Follow-up: replace Access middleware with real Google OAuth   |
 | [docs/spec/mcp.md](docs/spec/mcp.md)                                   | Remote MCP for agents (`/mcp`, bearer token, nine data tools) |
 
@@ -82,7 +82,7 @@ Env template: `.dev.vars.example`. Do not commit secret values. Production: `wra
 - Team purpose (`team-admin`) is coming soon; `personal-fullstack` is the closest ready template
 - Auth in code today is still the template **Cloudflare Access** middleware. Production model is **in-app Google OAuth** + allowlist ([app-template#28](https://github.com/MasatoraAtarashi/app-template/issues/28))
 - Cloudflare GitHub OIDC for wrangler deploy is not available; deploy CI uses `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
-- Generated `wrangler.jsonc` D1 id is a dummy until first create
+- Production `wrangler.jsonc` uses live D1 `idea-cloud-db` (`c49e0fd3-b7e4-422e-b3fc-019bf0264dab`). `wrangler.vitest.jsonc` keeps a dummy id for tests
 - ASH / zizmor run in app CI; local pre-commit gitleaks / zizmor depend on tools on the developer machine
 
 ## Remote MCP
@@ -93,8 +93,8 @@ Agents read and write the same D1 ideas over `POST /mcp` (Streamable HTTP). Set 
 
 See [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md). Short version:
 
-1. Put a Cloudflare API token (Workers Scripts: Edit) and Account ID in GitHub secrets
-2. Create D1 and patch `wrangler.jsonc` `database_id`
-3. `pnpm db:migrate:remote` (also runs in `deploy.yml` before `wrangler deploy`)
-4. After visual sign-off, wire in-app Google OAuth (do not invent client secrets). Access middleware comes out in that swap.
-5. Push to `main` runs `deploy.yml`. PRs get a preview URL from `preview.yml` when secrets exist
+1. Put a Cloudflare API token (Workers Scripts: Edit + D1 Edit) and Account ID in GitHub secrets
+2. D1 `idea-cloud-db` id is already in `wrangler.jsonc`. Do not create a second database of the same name
+3. `pnpm db:migrate:remote` (also runs in `deploy.yml` before `wrangler deploy`; wrangler-action does not run `pnpm predeploy`)
+4. After visual sign-off, wire in-app Google OAuth (do not invent client secrets). Access middleware comes out in that swap. Cloudflare Access waits until a workers.dev URL is copied from a successful deploy log
+5. Push to `main` runs `deploy.yml` (or Actions → Deploy → Run workflow on `main`). PRs get a preview URL from `preview.yml` when secrets exist

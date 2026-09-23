@@ -32,3 +32,10 @@ global_settings:
       reason: rulesync が展開する外部スキルのため
     - path: migrations/meta/**
       reason: drizzle-kit が生成するマイグレーションメタデータ（JSON）のため
+  suppressions:
+    - path: docs/spec/deploy-and-access.md
+      rule_id: SECRET-Secret-Keyword
+      reason: Lists GitHub and wrangler secret names only. No secret values are committed.
+    - path: wrangler.vitest.jsonc
+      rule_id: SECRET-Secret-Keyword
+      reason: Vitest fixture MCP_API_KEY is a local test value, not a production credential.

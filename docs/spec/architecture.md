@@ -36,7 +36,7 @@ MCP client
       → same D1 binding `DB`
 ```
 
-Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to that server and local D1 with mocked login; see [e2e.md](./e2e.md). Production: `.github/workflows/deploy.yml` on push to `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`).
+Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to that server and local D1 with mocked login; see [e2e.md](./e2e.md). Production: `.github/workflows/deploy.yml` on push to `main` or `workflow_dispatch` on `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`). Worker script name: `idea-cloud`.
 
 ## D1
 
@@ -44,6 +44,7 @@ Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to t
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Database name      | `idea-cloud-db`                                                                                                                                                                                                                                                                                                                                          |
 | Binding            | `DB`                                                                                                                                                                                                                                                                                                                                                     |
+| `database_id`      | `c49e0fd3-b7e4-422e-b3fc-019bf0264dab` (live, APAC). Vitest keeps a dummy id in `wrangler.vitest.jsonc`.                                                                                                                                                                                                                                                 |
 | Migrations         | `todos` (template) + `ideas` + `idea_comments` + `idea_brainstorms` + `saved_views` + `inspirations` (+ OGP columns in `0007_inspiration_ogp.sql`, `research_sources` in `0008_research_sources.sql`)                                                                                                                                                    |
 | `ideas` columns    | `id`, `title`, `body`, `stage` (default `spark`), `tags` (JSON text `[]`), `created_at`, `updated_at`, research fields (`research_notes` / `research_model` / `researched_at` / `research_sources` JSON), evaluation fields, review (`last_reviewed_at` / `review_status`), reflection (`reflection_outcome` / `reflection_status` / `reflection_notes`) |
 | `idea_comments`    | `id`, `idea_id`, `body`, `author_id`, `author_name`, `created_at`. Chronological scrap-style notes. No threads.                                                                                                                                                                                                                                          |
