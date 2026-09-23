@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,6 +15,8 @@ concurrency:
 jobs:
   deploy:
     name: Build & Deploy to Cloudflare Workers
+    # workflow_dispatch can be started from any ref in the UI; only main may publish.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -26,8 +29,8 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node
-        # v4, main-push-only trigger, SHA-pinned action: cache-poisoning risk accepted
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # zizmor: ignore[cache-poisoning] main-push-only + SHA-pinned
+        # SHA-pinned, no cache. Job is main-ref gated (push + workflow_dispatch).
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # zizmor: ignore[cache-poisoning] main-only + SHA-pinned
         with:
           node-version: 22
           # Deploy job does not use an explicit cache
@@ -38,8 +41,11 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # wrangler-action runs `wrangler <command>`, not `pnpm deploy`, so the
+      # package.json predeploy hook never fires. Apply D1 migrations explicitly.
+      # Wrangler v4 defaults to local mode; --remote is required.
       # API token auth (Cloudflare has no wrangler-deploy OIDC as of 2026-08).
-      # Token should be least-privilege: Workers Scripts Edit + D1 edit (migrations).
+      # Token should be least-privilege: Workers Scripts Edit + D1 Edit.
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:

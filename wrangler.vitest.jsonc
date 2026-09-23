@@ -1,6 +1,7 @@
 /**
  * テスト用の wrangler 設定（vitest-pool-workers が読む）。
  * 本番の wrangler.jsonc とバインディング構成を揃えること。
+ * database_id is a dummy on purpose. The live id belongs only in wrangler.jsonc.
  * Workers AI is omitted: the binding forces a remote proxy session, and CI
  * stubs env.AI.run (research, brainstorm) and TypeSafe System One (auto-tags /
  * evaluation) instead of calling models. TYPESAFE_API_KEY and SEARCH_API_KEY
