@@ -22,6 +22,7 @@ export async function researchIdeaAction({ request, params, context }: ActionFun
     ideaId,
     preset: String(form.get("preset") ?? ""),
     model: String(form.get("model") ?? ""),
+    searchApiKey: context.cloudflare.env.SEARCH_API_KEY,
   });
   if (!result.ok) {
     return { error: result.error, intent: "research" } satisfies ResearchIdeaActionData;

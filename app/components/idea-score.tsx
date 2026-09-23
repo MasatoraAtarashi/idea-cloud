@@ -43,7 +43,7 @@ export function IdeaHumanScore({
     <section className="mt-5 lg:mt-6">
       {compact ? null : (
         <div className="hidden lg:block">
-          <h3 className="text-[13.5px] font-medium">評価</h3>
+          <h3 className="text-[13.5px] font-semibold">評価</h3>
           <p className="mt-1 text-[12px] text-muted-foreground">
             1–5 の点数。任意で短いメモを残せます。
           </p>

@@ -105,7 +105,7 @@ export function IdeaBrainstormNotes({ idea, id }: { idea: MockIdea; id?: string 
 
   return (
     <section id={id} className="mt-6">
-      <h3 className="text-[13.5px] font-medium">ブレスト</h3>
+      <h3 className="text-[13.5px] font-semibold">ブレスト</h3>
       {idea.brainstormNotes ? (
         <div className="ui-panel mt-2 p-3">
           <p className="font-mono text-[11px] text-muted-foreground">

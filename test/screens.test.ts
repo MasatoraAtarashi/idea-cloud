@@ -236,7 +236,9 @@ describe("responsive home and nav", () => {
     expect(src).toContain("confirmIdeaDelete");
     expect(src).toContain("PopoverMenu");
     expect(src).toContain("grid-cols-3");
-    expect(src).toContain("ウェブ検索による先行事例はまだありません");
+    expect(src).toContain("ウェブで先行事例を数件取得し");
+    expect(src).not.toContain("ウェブ検索による先行事例はまだありません");
+    expect(src).not.toContain("このリサーチはモデルのみです");
     expect(src).toContain("自動タグなし");
     expect(src).toContain("自動タグは付きませんでした");
     expect(src).toContain("空なら自動タグ");
@@ -247,6 +249,10 @@ describe("responsive home and nav", () => {
     expect(src).toContain("resolveCommentAuthor");
     expect(src).toContain('intent === "comment"');
     expect(src).toContain("着想から実行できます");
+    expect(src).toContain("先行事例");
+    expect(src).toContain("Web検索未取得");
+    expect(src).toContain("AIコメント");
+    expect(src).not.toContain("ウェブ検索はありません");
     expect(src).toContain("アーカイブではリサーチできません");
     expect(src).toContain("アーカイブではブレストできません");
     expect(src).toContain("アーカイブでは実行できません");
@@ -376,7 +382,8 @@ describe("desktop compose shortcuts and brand", () => {
     expect(DESIGN_TOKENS.sidebar).toBe("#fafafb");
     expect(DESIGN_TOKENS.body).toBe("#0a0a0a");
     expect(DESIGN_TOKENS.muted).toBe("#3a424e");
-    expect(DESIGN_TOKENS.border).toBe("#c5cad3");
+    expect(DESIGN_TOKENS.border).toBe("#d4d8e0");
+    expect(DESIGN_TOKENS.borderControl).toBe("#c8ced7");
     expect(DESIGN_TOKENS.rowHeight).toBe(40);
     expect(STAGE_PILL_HEX.spark.bg).toBe("#f3f0ff");
     expect(STAGE_PILL_HEX.aging.fg).toBe("#b45309");

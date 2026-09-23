@@ -21,5 +21,7 @@ declare global {
     MCP_API_KEY?: string;
     /** Accepted only when MCP_API_KEY is unset. */
     MCP_TOKEN?: string;
+    /** Optional Brave Search API key. When unset, research uses HTML search pages. */
+    SEARCH_API_KEY?: string;
   }
 }

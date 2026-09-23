@@ -17,3 +17,8 @@ TYPESAFE_API_KEY=
 # Production: `wrangler secret put MCP_API_KEY`. MCP_TOKEN is used only when MCP_API_KEY is unset.
 # Never commit a real key. See docs/spec/mcp.md.
 MCP_API_KEY=
+
+# Optional Brave Search API key for リサーチ 先行事例.
+# When unset, research fetches DuckDuckGo/Bing HTML (and DuckDuckGo Instant Answer JSON).
+# Production: `wrangler secret put SEARCH_API_KEY`. Never commit a real key.
+SEARCH_API_KEY=
