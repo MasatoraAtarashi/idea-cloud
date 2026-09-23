@@ -29,7 +29,7 @@ Browser
       → secrets from wrangler / `.dev.vars` (never in git)
 ```
 
-Local: `pnpm dev` (Vite + wrangler). Production: `.github/workflows/deploy.yml` on push to `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`).
+Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to that server and local D1 with mocked login; see [e2e.md](./e2e.md). Production: `.github/workflows/deploy.yml` on push to `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`).
 
 ## D1
 

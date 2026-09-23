@@ -59,7 +59,7 @@ export function IdeaEditForm({
         value={body}
         onChange={(event) => setBody(event.target.value)}
         disabled={pending}
-        className="mt-3 min-h-[7rem] w-full resize-y border-0 bg-transparent text-[15px] leading-relaxed text-muted-foreground outline-none lg:text-[13.5px]"
+        className="mt-3 min-h-[7rem] w-full resize-y border-0 bg-transparent text-[15px] leading-relaxed text-foreground outline-none lg:text-[13.5px]"
       />
       <p className="mt-2 text-[11.5px] text-muted-foreground">{COMPOSE_URL_HINT}</p>
       <label

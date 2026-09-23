@@ -112,7 +112,7 @@ export function ComposeDialog() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={COMPOSE_PLACEHOLDER}
-            className="mt-2 h-auto w-full resize-none border-0 bg-transparent text-[13.5px] leading-relaxed text-muted-foreground outline-none placeholder:text-muted-foreground/80"
+            className="mt-2 h-auto w-full resize-none border-0 bg-transparent text-[13.5px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/80"
             onKeyDown={(event) => {
               if (!isSubmitShortcut(event)) return;
               event.preventDefault();

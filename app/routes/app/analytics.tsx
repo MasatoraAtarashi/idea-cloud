@@ -5,6 +5,7 @@ import { summarizeIdeaAnalytics, type CreatedDayCount } from "../../lib/analytic
 import { createDb } from "../../../db/client";
 import { listIdeaViews } from "../../../db/ideas";
 import { SettingsIconLink } from "../../components/settings-link";
+import { MobileScreenHeader } from "../../components/mobile-header";
 
 export function meta() {
   return [{ title: "アナリティクス — アイデアクラウド" }];
@@ -25,12 +26,15 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:h-[52px]">
+      <header className="hidden h-[52px] shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:flex">
         <h1 className="ui-title text-[16px]">アナリティクス</h1>
-        <SettingsIconLink className="md:hidden" />
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-8">
-        <p className="max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+      <MobileScreenHeader
+        title={<h1 className="ui-title truncate text-[15px]">アナリティクス</h1>}
+        trailing={<SettingsIconLink />}
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pb-5">
+        <p className="max-w-2xl text-[13.5px] leading-relaxed text-foreground">
           D1のアイデア行から数えた棚の様子です。チャートはまだなく、件数と短い棒だけです。
         </p>
         <dl className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -46,13 +50,13 @@ export default function AnalyticsPage() {
 
         <section className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-[13.5px] font-medium">日別の作成</h2>
+            <h2 className="text-[13.5px] font-semibold">日別の作成</h2>
             <div className="flex rounded-md border border-border-control p-0.5">
               <button
                 type="button"
                 onClick={() => setSpan(7)}
-                className={`rounded-sm px-2.5 py-1 text-[12.5px] ${
-                  span === 7 ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
+                className={`flex min-h-11 items-center rounded-sm px-3 text-[13px] md:min-h-0 md:px-2.5 md:py-1 md:text-[12.5px] ${
+                  span === 7 ? "bg-muted font-semibold text-foreground" : "text-muted-foreground"
                 }`}
               >
                 7日
@@ -60,8 +64,8 @@ export default function AnalyticsPage() {
               <button
                 type="button"
                 onClick={() => setSpan(30)}
-                className={`rounded-sm px-2.5 py-1 text-[12.5px] ${
-                  span === 30 ? "bg-muted font-medium text-foreground" : "text-muted-foreground"
+                className={`flex min-h-11 items-center rounded-sm px-3 text-[13px] md:min-h-0 md:px-2.5 md:py-1 md:text-[12.5px] ${
+                  span === 30 ? "bg-muted font-semibold text-foreground" : "text-muted-foreground"
                 }`}
               >
                 30日
@@ -75,7 +79,7 @@ export default function AnalyticsPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="text-[13.5px] font-medium">段階</h2>
+          <h2 className="text-[13.5px] font-semibold">段階</h2>
           <div className="mt-3 space-y-2">
             {analytics.byStage.map((row) => (
               <div key={row.stage} className="flex items-center gap-3">
@@ -97,7 +101,7 @@ export default function AnalyticsPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="text-[13.5px] font-medium">よく使うタグ</h2>
+          <h2 className="text-[13.5px] font-semibold">よく使うタグ</h2>
           {analytics.topTags.length === 0 ? (
             <p className="mt-3 text-[13px] text-muted-foreground">まだタグがありません</p>
           ) : (
@@ -149,8 +153,8 @@ function CreatedBars({ rows }: { rows: CreatedDayCount[] }) {
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-[10px] border border-border bg-card px-3 py-3">
-      <dt className="text-[12px] text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-[18px] font-medium text-foreground">{value}</dd>
+      <dt className="text-[12px] font-medium text-muted-foreground">{label}</dt>
+      <dd className="mt-1 font-mono text-[20px] font-semibold text-foreground">{value}</dd>
     </div>
   );
 }

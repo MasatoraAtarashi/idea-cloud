@@ -16,6 +16,7 @@ Quiet login gate plus a working create/list/detail loop. Ideas persist to D1. Lo
 | [docs/spec/product-requirements.md](docs/spec/product-requirements.md) | Product goals, stages, out of scope                         |
 | [docs/spec/architecture.md](docs/spec/architecture.md)                 | Stack, bindings, what came from the template                |
 | [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Screens, IA, visual language                                |
+| [docs/spec/e2e.md](docs/spec/e2e.md)                                   | Playwright against local D1 (mocked auth)                   |
 | [docs/spec/security.md](docs/spec/security.md)                         | In-app Google OAuth + allowlist, field crypto               |
 | [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, D1 checklist                                  |
 | [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Follow-up: replace Access middleware with real Google OAuth |
@@ -32,6 +33,8 @@ pnpm dev
 ```
 
 http://localhost:5173/app is new-idea compose on a phone (viewport or mobile UA). Desktop `/app` replaces to `/app/list`. Idea bodies with http(s) URLs also land on the inspiration shelf.
+
+Playwright (mocked auth, local D1): `pnpm test:e2e`. See [docs/spec/e2e.md](docs/spec/e2e.md).
 
 | Path                | Screen (Japanese UI)                                                                                                                                            |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -57,7 +60,7 @@ Included:
 - React Router v7 (SSR) + Tailwind CSS 4 + Hono on Cloudflare Workers
 - D1 + Drizzle (`ideas` for the product UI; sample `todos` API kept)
 - Cloudflare Access middleware (`Cf-Access-Authenticated-User-Email`) — leftover; product auth is in-app Google OAuth
-- CI: typecheck / lint / test + gitleaks / zizmor / pnpm audit / ASH (`.github/workflows/pr.yml`)
+- CI: typecheck / lint / test + Playwright e2e + gitleaks / zizmor / pnpm audit / ASH (`.github/workflows/pr.yml`)
 - lefthook, Dependabot, observability on by default
 
 ## Stubs / not wired

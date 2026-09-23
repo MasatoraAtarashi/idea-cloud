@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Form, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { HeaderPlusButton } from "../../components/header-create";
 import { InspirationGallery } from "../../components/inspiration-gallery";
+import { MobileScreenHeader } from "../../components/mobile-header";
 import { SettingsIconLink } from "../../components/settings-link";
 import { createInspirationAction } from "../../lib/inspiration-action";
 import { createDb } from "../../../db/client";
@@ -77,17 +78,42 @@ export default function InspirationsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-border px-4 md:h-[52px]">
+      <header className="hidden h-[52px] shrink-0 items-center gap-2 border-b border-border px-4 md:flex">
         <h1 className="ui-title text-[16px]">インスピレーション</h1>
         <span className="font-mono text-[11px] text-muted-foreground">{items.length}</span>
         <div className="ml-auto flex items-center">
-          <SettingsIconLink className="md:hidden" />
           <HeaderPlusButton label="インスピレーションを追加" onClick={() => setComposeOpen(true)} />
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:grid md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:gap-8 md:px-8">
+      <MobileScreenHeader
+        title={
+          <div className="flex min-w-0 items-center gap-2">
+            <h1 className="ui-title truncate text-[15px]">インスピレーション</h1>
+            <span className="font-mono text-[11px] text-muted-foreground">{items.length}</span>
+          </div>
+        }
+        trailing={
+          <>
+            {composeOpen ? (
+              <button
+                type="button"
+                onClick={() => setComposeOpen(false)}
+                className="flex min-h-11 items-center px-2 text-[13.5px] font-medium text-foreground"
+              >
+                閉じる
+              </button>
+            ) : null}
+            <SettingsIconLink />
+            <HeaderPlusButton
+              label="インスピレーションを追加"
+              onClick={() => setComposeOpen(true)}
+            />
+          </>
+        }
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:grid md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:gap-8 md:px-8 md:pb-5">
         <section className={composeOpen ? "block" : "hidden md:block"}>
-          <h2 className="text-[13.5px] font-medium">メモを残す</h2>
+          <h2 className="text-[13.5px] font-semibold">メモを残す</h2>
           <div className="mt-2">
             <ComposeForm error={error} autoFocus={composeOpen && items.length > 0} />
           </div>
