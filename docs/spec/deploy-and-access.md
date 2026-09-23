@@ -29,7 +29,7 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 | `CLOUDFLARE_API_TOKEN`  | Wrangler deploy. Least privilege: Workers Scripts **Edit**, plus D1 **Edit** so CI can apply migrations |
 | `CLOUDFLARE_ACCOUNT_ID` | Account for that token                                                                                  |
 
-Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; HTML search is the default when unset). OAuth swap later: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; without it HTML fallbacks often return nothing from Workers). OAuth swap later: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 
 Do not invent or commit these values. Production: GitHub Actions secrets for deploy; `wrangler secret put` for Worker runtime secrets.
 
@@ -54,7 +54,7 @@ Notes:
 3. Wrangler v4 defaults to local mode; CI **must** pass `--remote`.
 4. Local: `pnpm db:migrate:local`. Remote (with a real token): `pnpm db:migrate:remote`.
 
-Workers AI research uses the `AI` binding. No extra wrangler secret for that path. Auto-tags and AI評価 prefer TypeSafe Jev when `TYPESAFE_API_KEY` is set. Optional `SEARCH_API_KEY` uses Brave Search for 先行事例; otherwise the Worker fetches DuckDuckGo/Bing HTML. The deploy token needs permission to run Workers AI in production.
+Workers AI research uses the `AI` binding. No extra wrangler secret for that path. Auto-tags and AI評価 prefer TypeSafe Jev when `TYPESAFE_API_KEY` is set. Optional `SEARCH_API_KEY` uses Brave Search for 先行事例. Without it the Worker tries DuckDuckGo Lite, DuckDuckGo HTML, Bing HTML, then Instant Answer; those scrapers often return nothing from Workers (bot walls / empty HTML). Each miss is a structured log (`web search provider miss`: provider, http status or timeout/abort, result count) and the saved sources JSON may include `providersTried` and `reason` (`no_search_api_key` or `all_providers_missed`). The UI still shows **Web検索未取得** when status is failed. The API key is never logged. The deploy token needs permission to run Workers AI in production.
 
 ## Workflows
 

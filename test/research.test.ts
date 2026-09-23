@@ -4,6 +4,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { ideaDetailAction } from "../app/lib/idea-detail-action";
 import { extractAiText, RESEARCH_PRESETS, resolveResearchModel } from "../app/lib/research-models";
 import { RESEARCH_ARCHIVE_ERROR } from "../app/lib/idea-ai";
+import { flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { RESEARCH_FAIL_MESSAGE, setTestAiRun } from "../server/ai/research";
 import { setTestWebSearch } from "../server/ai/web-search";
 
@@ -250,13 +251,14 @@ describe("ideas research API", () => {
         },
       ],
     }));
+    const id = await createIdea("通勤の音声メモ");
+    await flushScheduledCreateEvaluations();
     setTestAiRun(async (_model, inputs) => {
       const user = inputs.messages.find((message) => message.role === "user")?.content ?? "";
       expect(user).toContain("https://example.com/voice-memo");
       expect(user).not.toContain("https://invented.example");
       return { response: "観点:\n- 事例あり\nリスク:\n- なし\n次の一手:\n- 読む" };
     });
-    const id = await createIdea("通勤の音声メモ");
     const res = await api(`/ideas/${id}/research`, {
       method: "POST",
       body: JSON.stringify({}),
@@ -285,12 +287,13 @@ describe("ideas research API", () => {
   });
 
   it("still saves notes when web search fails", async () => {
+    const id = await createIdea("検索なしでもメモ");
+    await flushScheduledCreateEvaluations();
     setTestAiRun(async (_model, inputs) => {
       const user = inputs.messages.find((message) => message.role === "user")?.content ?? "";
       expect(user).toContain("取得できませんでした");
       return { response: "観点:\n- 本文のみ\nリスク:\n- なし\n次の一手:\n- 続ける" };
     });
-    const id = await createIdea("検索なしでもメモ");
     const res = await api(`/ideas/${id}/research`, {
       method: "POST",
       body: JSON.stringify({}),

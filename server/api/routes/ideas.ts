@@ -39,7 +39,7 @@ import { REVIEW_STATUSES } from "../../../app/lib/review";
 import { HUMAN_SCORE_NOTE_MAX } from "../../../app/lib/scores";
 import { bindResearchAi, researchIdea, searchApiKeyFromEnv } from "../../ai/research";
 import { brainstormIdea } from "../../ai/brainstorm";
-import { evaluateIdea } from "../../ai/evaluate";
+import { evaluateIdea, scheduleCreateEvaluation } from "../../ai/evaluate";
 import { resolveCreateTags } from "../../ai/tags";
 import { typesafeApiKeyFromEnv } from "../../ai/typesafe";
 import type { AppEnv } from "../../env";
@@ -195,6 +195,14 @@ export const ideasRoute = new Hono<AppEnv>()
     });
     const created = await insertIdea(db, body, { stage, tags: resolvedTags });
     await safeUpsertInspirationsFromIdeaText(db, body);
+    scheduleCreateEvaluation({
+      waitUntil: (promise) => c.executionCtx.waitUntil(promise),
+      db,
+      ai: bindResearchAi(c.env.AI),
+      ideaId: created.id,
+      stage: created.stage,
+      typesafeApiKey: typesafeApiKeyFromEnv(c.env),
+    });
     return c.json({ item: ideaJson(created) }, 201);
   })
   .patch(

@@ -18,6 +18,10 @@ export type ResearchSources = {
   status: ResearchSearchStatus;
   query: string;
   results: ResearchSource[];
+  /** Providers actually called, including the one that succeeded. Diagnostic only. */
+  providersTried?: string[];
+  /** Short failure code such as `no_search_api_key`. Diagnostic only. */
+  reason?: string;
 };
 
 const SEARCH_ENGINE_HOSTS = new Set([
@@ -164,10 +168,14 @@ export function parseResearchSources(raw: string | null | undefined): ResearchSo
           }),
         ])
       : [];
+    const providersTried = readProvidersTried(record.providersTried);
+    const reason = readSearchReason(record.reason);
     return {
       status: status === "ok" && results.length === 0 ? "failed" : status,
       query,
       results,
+      ...(providersTried ? { providersTried } : {}),
+      ...(reason ? { reason } : {}),
     };
   } catch {
     return null;
@@ -178,11 +186,36 @@ export function serializeResearchSources(value: ResearchSources): string {
   const results = mergeResearchSources([value.results]);
   const status: ResearchSearchStatus =
     value.status === "ok" && results.length > 0 ? "ok" : "failed";
+  const providersTried = readProvidersTried(value.providersTried);
+  const reason = readSearchReason(value.reason);
   return JSON.stringify({
     status,
     query: clip(value.query, RESEARCH_QUERY_MAX),
     results,
+    ...(providersTried ? { providersTried } : {}),
+    ...(reason ? { reason } : {}),
   });
+}
+
+const PROVIDER_NAME_MAX = 40;
+const PROVIDERS_TRIED_MAX = 8;
+const SEARCH_REASON_MAX = 80;
+
+function readProvidersTried(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const names = raw
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0 && item.length <= PROVIDER_NAME_MAX)
+    .slice(0, PROVIDERS_TRIED_MAX);
+  return names.length > 0 ? names : undefined;
+}
+
+function readSearchReason(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const reason = raw.replace(/\s+/g, " ").trim();
+  if (!reason || reason.length > SEARCH_REASON_MAX) return undefined;
+  return reason;
 }
 
 export function hasResearchSourceLinks(
@@ -262,6 +295,29 @@ export function parseDuckDuckGoHtml(html: string): ResearchSource[] {
       /<a\b[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>|<div\b[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
     );
     const snippet = stripTags(snippetMatch?.[1] ?? snippetMatch?.[2] ?? "");
+    const source = sanitizeResearchSource({ title, url: href, snippet });
+    if (source) results.push(source);
+  }
+  return mergeResearchSources([results]);
+}
+
+export function parseDuckDuckGoLiteHtml(html: string): ResearchSource[] {
+  const results: ResearchSource[] = [];
+  const linkRe = /<a\b[^>]*>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = linkRe.exec(html))) {
+    const open = match[0] ?? "";
+    if (!classList(open).includes(" result-link ")) continue;
+    const closeAt = html.indexOf("</a>", match.index);
+    if (closeAt < 0) continue;
+    const inner = html.slice(match.index + open.length, closeAt);
+    const href = attr(open, "href");
+    const title = stripTags(inner);
+    const after = html.slice(closeAt, closeAt + 1500);
+    const snippetMatch = after.match(
+      /<td\b[^>]*class=["'][^"']*result-snippet[^"']*["'][^>]*>([\s\S]*?)<\/td>/i,
+    );
+    const snippet = stripTags(snippetMatch?.[1] ?? "");
     const source = sanitizeResearchSource({ title, url: href, snippet });
     if (source) results.push(source);
   }

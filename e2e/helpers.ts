@@ -51,6 +51,7 @@ async function openDesktopCompose(page: Page) {
 /**
  * Create via the real chrome: mobile compose (`/app`) or desktop header +.
  * Tags are set so create-time auto-tag AI is skipped (no secrets in CI).
+ * AI評価 is scheduled after insert and must not block this redirect.
  */
 export async function createIdea(page: Page, projectName: string, title: string, body: string) {
   if (isMobileProject(projectName)) {

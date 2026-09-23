@@ -27,8 +27,9 @@
     },
   ],
   // Per-idea research + brainstorm stay on Workers AI. Research also fetches a
-  // few public web results (DuckDuckGo/Bing HTML, or Brave when SEARCH_API_KEY
-  // is set). Auto-tags + AI評価 prefer TypeSafe Jev when TYPESAFE_API_KEY is set
+  // few public web results (DuckDuckGo Lite/HTML, Bing, or Brave when
+  // SEARCH_API_KEY is set). Auto-tags + create-time AI評価 prefer TypeSafe Jev
+  // when TYPESAFE_API_KEY is set
   // (wrangler secret / .dev.vars; never in git).
   // Local `pnpm dev` disables remote bindings in vite.config.ts so this does not
   // open an OAuth session. Production deploy uses the real Workers AI service.

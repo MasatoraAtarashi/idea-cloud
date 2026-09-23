@@ -8,6 +8,7 @@ import { canRunIdeaAi, EVALUATE_ARCHIVE_ERROR } from "../../app/lib/idea-ai";
 import { parseAiScore } from "../../app/lib/scores";
 import { asStage, getIdeaRow, saveAiEvaluation, type Idea } from "../../db/ideas";
 import type { Db } from "../../db/client";
+import { logger } from "../logger";
 import { evaluateIdeaWithJev } from "./jev-evaluate";
 import { resolveAiRun, type ResearchAi } from "./research";
 import { hasTypesafeApiKey } from "./typesafe";
@@ -97,4 +98,65 @@ export async function evaluateIdea(opts: {
     model: resolved.model,
   });
   return { ok: true, idea: saved };
+}
+
+const scheduledCreateEvaluations: Promise<void>[] = [];
+
+/** Test helper. Production create paths do not await evaluation. */
+export async function flushScheduledCreateEvaluations(): Promise<void> {
+  while (scheduledCreateEvaluations.length > 0) {
+    const batch = scheduledCreateEvaluations.splice(0, scheduledCreateEvaluations.length);
+    await Promise.all(batch);
+  }
+}
+
+/**
+ * Run AI評価 after create without holding the response.
+ * Prefers TypeSafe Jev when a key (or the test stub) is present, else Workers AI.
+ * Archive is skipped. Failures are logged and do not reject.
+ */
+export function scheduleCreateEvaluation(opts: {
+  waitUntil?: (promise: Promise<unknown>) => void;
+  db: Db;
+  ai: ResearchAi;
+  ideaId: number;
+  stage: string;
+  typesafeApiKey?: string;
+}): void {
+  if (!canRunIdeaAi(asStage(opts.stage))) return;
+
+  const task = runCreateEvaluation(opts);
+  scheduledCreateEvaluations.push(task);
+  opts.waitUntil?.(task);
+  void task.finally(() => {
+    const index = scheduledCreateEvaluations.indexOf(task);
+    if (index >= 0) scheduledCreateEvaluations.splice(index, 1);
+  });
+}
+
+async function runCreateEvaluation(opts: {
+  db: Db;
+  ai: ResearchAi;
+  ideaId: number;
+  typesafeApiKey?: string;
+}): Promise<void> {
+  try {
+    const result = await evaluateIdea({
+      db: opts.db,
+      ai: opts.ai,
+      ideaId: opts.ideaId,
+      typesafeApiKey: opts.typesafeApiKey,
+    });
+    if (!result.ok) {
+      logger.warn("create auto-evaluate failed", {
+        ideaId: opts.ideaId,
+        status: result.status,
+      });
+    }
+  } catch (error) {
+    logger.warn("create auto-evaluate failed", {
+      ideaId: opts.ideaId,
+      error: error instanceof Error ? error.name : "error",
+    });
+  }
 }

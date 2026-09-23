@@ -6,8 +6,10 @@ import {
   mergeResearchSources,
   parseBingHtml,
   parseBraveWebSearch,
+  hasResearchSourceLinks,
   parseDuckDuckGoHtml,
   parseDuckDuckGoInstantAnswer,
+  parseDuckDuckGoLiteHtml,
   parseResearchSources,
   researchSourcesForDisplay,
   sanitizeResearchSource,
@@ -73,6 +75,35 @@ describe("research source parse / merge helpers", () => {
         title: "別のノートアプリ",
         url: "https://example.org/notes",
         snippet: "チーム向けのノート。",
+      },
+    ]);
+  });
+
+  it("parses DuckDuckGo Lite HTML", () => {
+    const html = `
+      <table>
+        <tr>
+          <td>1.&nbsp;</td>
+          <td>
+            <a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fmemo" class='result-link'>音声メモの事例</a>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class='result-snippet'>朝に構造化する。</td>
+        </tr>
+        <tr>
+          <td>
+            <a class="result-link" href="https://lite.duckduckgo.com/lite/">検索自身</a>
+          </td>
+        </tr>
+      </table>
+    `;
+    expect(parseDuckDuckGoLiteHtml(html)).toEqual([
+      {
+        title: "音声メモの事例",
+        url: "https://example.com/memo",
+        snippet: "朝に構造化する。",
       },
     ]);
   });
@@ -171,5 +202,38 @@ describe("research source parse / merge helpers", () => {
       })?.status,
     ).toBe("failed");
     expect(WEB_SEARCH_UNAVAILABLE_LABEL).toBe("Web検索未取得");
+  });
+
+  it("keeps a failed search with diagnostic fields and no links", () => {
+    const raw = JSON.stringify({
+      status: "failed",
+      query: "音声メモ 先行事例",
+      results: [],
+      providersTried: ["duckduckgo_lite", "duckduckgo_html", "bing", "duckduckgo_instant"],
+      reason: "no_search_api_key",
+      ignored: true,
+    });
+    const parsed = parseResearchSources(raw);
+    expect(parsed?.status).toBe("failed");
+    expect(parsed?.results).toEqual([]);
+    expect(parsed?.providersTried).toEqual([
+      "duckduckgo_lite",
+      "duckduckgo_html",
+      "bing",
+      "duckduckgo_instant",
+    ]);
+    expect(parsed?.reason).toBe("no_search_api_key");
+    expect(hasResearchSourceLinks(parsed)).toBe(false);
+    expect(JSON.parse(serializeResearchSources(parsed!))).toMatchObject({
+      status: "failed",
+      reason: "no_search_api_key",
+    });
+    expect(
+      researchSourcesForDisplay({
+        researchedAt: "2026-09-23",
+        researchNotes: "観点",
+        researchSources: parsed,
+      })?.status,
+    ).toBe("failed");
   });
 });

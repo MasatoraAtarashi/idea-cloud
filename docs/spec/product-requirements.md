@@ -60,6 +60,8 @@ Per-idea **ブレスト** next to research. Workers AI reads title + body + rece
 
 Per-idea **human 1–5** (`human_score`, optional note, timestamp) plus **AI評価**. When `TYPESAFE_API_KEY` is set, Jev scores novelty / impact / feasibility / clarity / risk, a pursue `noul`, and a next-action `choice`; code maps the composite onto 1–5 and Japanese 強み / リスク / 新規性 / 次の一手 notes. Otherwise Workers AI (default **標準**) writes the same headings plus `スコア: N`. Persist `ai_score`, `ai_evaluation`, `ai_evaluated_at`, `ai_evaluation_model` (`jev-latest` or a Workers AI id). Archive blocked. Compact `人N` / `AIN` chips on the list. Not Relic multi-axis / S/A/B scoring.
 
+**作成** (form action and `POST /api/ideas`) schedules that same evaluation with `waitUntil` after the row is inserted, so the response is not held for the model. **アーカイブ** is skipped. If Jev and Workers AI both fail, the idea still exists and the create response stays successful.
+
 ## Saved list views (v1)
 
 Named filters on `/app/list`: at least stage + tag/category, plus current search/tab/layout and aged-days (`days=7|14|30`). Stored in D1 `saved_views` (`name` + filter JSON). Chrome: **ビュー** menu to switch, save, or delete. URL keeps `tab` / `view` / `stage` / `tag` / `q` / `days` and adds `v` (saved view id) so Back/Forward works. Not a full Linear view builder.
