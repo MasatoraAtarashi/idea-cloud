@@ -18,7 +18,19 @@ Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only (still us
 
 Team settings show the allowlist in a **disabled** textarea so the mock cannot pretend to write secrets.
 
-Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only. Do not log `TYPESAFE_API_KEY` or `SEARCH_API_KEY`.
+Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only. Do not log `TYPESAFE_API_KEY`, `MCP_API_KEY`, or `SEARCH_API_KEY`.
+
+## Remote MCP
+
+`/mcp` is a shared-secret API for agents. See [mcp.md](./mcp.md).
+
+| Item             | Rule                                                                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Secret           | `MCP_API_KEY` (`MCP_TOKEN` only when the first is unset). `.dev.vars` locally, `wrangler secret put MCP_API_KEY` in production. Never in git. |
+| Request          | `Authorization: Bearer <secret>`. Missing, blank, or wrong token → `401`. Unset secret → `401` for every call.                                |
+| Not a substitute | Cloudflare Access email and the mock Google session do not authorize `/mcp`. `/api/*` still uses Access middleware.                           |
+| Access in front  | If Zero Trust covers the hostname, bypass `/mcp` or clients never reach the bearer check.                                                     |
+| Logging          | Do not log the token or `Authorization`.                                                                                                      |
 
 ## Field encryption
 

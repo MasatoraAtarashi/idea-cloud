@@ -14,7 +14,7 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare credentials.**
 | `CLOUDFLARE_API_TOKEN`  | Wrangler deploy. Workers Scripts: Edit, plus D1 edit if migrations run in CI |
 | `CLOUDFLARE_ACCOUNT_ID` | Account for that token                                                       |
 
-Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; HTML search is the default when unset).
+Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; HTML search is the default when unset).
 
 ## D1
 
@@ -45,7 +45,7 @@ Workers AI research uses the `AI` binding. No extra wrangler secret for that pat
 2. Include the production hostname.
 3. Identity: Google.
 4. Policy: allow listed emails only (Atarashi Lab).
-5. **Path policy:** `/` and `/login` are the public login gate. Require Access (or later in-app OAuth) for `/app` and `/api`.
+5. **Path policy:** `/` and `/login` are the public login gate. Require Access (or later in-app OAuth) for `/app` and `/api`. Bypass `/mcp` so MCP clients can present `Authorization: Bearer` (`MCP_API_KEY`) without an Access session.
 6. After Access, optional app-level `ACCESS_ALLOWED_EMAILS` matches the same set.
 
 ## First successful URL

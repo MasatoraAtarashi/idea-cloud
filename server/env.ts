@@ -17,6 +17,10 @@ declare global {
     FIELD_ENCRYPTION_KEY?: string;
     /** TypeSafe Jev (System One). When set, auto-tags and AI評価 prefer Jev. */
     TYPESAFE_API_KEY?: string;
+    /** Shared secret for `Authorization: Bearer` on `/mcp`. Prefer this over MCP_TOKEN. */
+    MCP_API_KEY?: string;
+    /** Accepted only when MCP_API_KEY is unset. */
+    MCP_TOKEN?: string;
     /** Optional Brave Search API key. When unset, research uses HTML search pages. */
     SEARCH_API_KEY?: string;
   }

@@ -147,19 +147,28 @@ export async function getIdeaView(db: Db, id: string | undefined): Promise<MockI
   });
 }
 
+export async function insertIdeaRow(
+  db: Db,
+  data: { title: string; body: string; stage?: Stage; tags?: string[] },
+): Promise<Idea> {
+  const title = data.title.trim().slice(0, 200) || "無題";
+  const body = data.body;
+  const stage = data.stage ?? "spark";
+  const tags = JSON.stringify(data.tags ?? []);
+  const [created] = await db.insert(ideas).values({ title, body, stage, tags }).returning();
+  if (!created) {
+    throw new Error("Failed to insert idea");
+  }
+  return created;
+}
+
 export async function insertIdea(
   db: Db,
   text: string,
   extras?: { stage?: Stage; tags?: string[] },
 ): Promise<Idea> {
   const { title, body } = splitTitleBody(text);
-  const stage = extras?.stage ?? "spark";
-  const tags = JSON.stringify(extras?.tags ?? []);
-  const [created] = await db.insert(ideas).values({ title, body, stage, tags }).returning();
-  if (!created) {
-    throw new Error("Failed to insert idea");
-  }
-  return created;
+  return insertIdeaRow(db, { title, body, stage: extras?.stage, tags: extras?.tags });
 }
 
 export async function updateIdeaStage(db: Db, id: number, stage: Stage): Promise<Idea | undefined> {
