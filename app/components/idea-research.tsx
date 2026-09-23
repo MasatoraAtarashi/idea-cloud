@@ -161,7 +161,7 @@ export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
 
   return (
     <section className="mt-6">
-      <h3 className="text-[13.5px] font-medium">リサーチ</h3>
+      <h3 className="text-[13.5px] font-semibold">リサーチ</h3>
       {idea.researchNotes || idea.researchedAt ? (
         <div className="ui-panel mt-2 p-3">
           <p className="font-mono text-[11px] text-muted-foreground">

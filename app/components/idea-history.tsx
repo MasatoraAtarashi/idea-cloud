@@ -5,7 +5,7 @@ import { ResearchSourcesList } from "./idea-research";
 export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
   return (
     <section className="idea-history max-w-2xl">
-      <h2 className="text-[15px] font-medium lg:text-[16px]">履歴</h2>
+      <h2 className="text-[15px] font-semibold lg:text-[16px]">履歴</h2>
       <p id="brainstorm" className="mt-1 text-[12.5px] text-muted-foreground">
         リサーチ・ブレスト・AI評価の記録です。ブレストは毎回残します。リサーチとAI評価は最新のみです。
       </p>
@@ -21,7 +21,7 @@ export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
               <details>
                 <summary className="flex min-h-11 cursor-pointer flex-col justify-center gap-0.5 py-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-medium">{item.label}</span>
+                    <span className="text-[13.5px] font-semibold">{item.label}</span>
                     {item.score ? (
                       <span className="font-mono text-[11px] text-muted-foreground">
                         AI {item.score}

@@ -156,7 +156,7 @@ export function IdeaListView({
               type="button"
               onClick={() => setMobileFiltersOpen((openState) => !openState)}
               aria-expanded={mobileFiltersOpen}
-              className="flex min-h-11 items-center px-2 text-[13.5px] font-medium text-foreground"
+              className="flex min-h-11 items-center px-2 text-[13.5px] font-semibold text-foreground"
             >
               絞り込み
             </button>
@@ -239,10 +239,8 @@ export function IdeaListView({
               })}
               preventScrollReset
               aria-current={tab === item ? "page" : undefined}
-              className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] no-underline ${
-                tab === item
-                  ? "border-b-2 border-foreground font-medium text-foreground"
-                  : "text-muted-foreground"
+              className={`flex shrink-0 items-center gap-1.5 pb-2 text-[13.5px] font-semibold text-foreground no-underline ${
+                tab === item ? "border-b-2 border-foreground" : ""
               }`}
             >
               {LIST_TAB_LABEL[item]}
@@ -413,9 +411,9 @@ export function IdeaListView({
               })}
               preventScrollReset
               aria-current={tab === item ? "page" : undefined}
-              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[13px] font-semibold no-underline ${
+              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[13px] no-underline ${
                 tab === item
-                  ? "bg-foreground text-background"
+                  ? "bg-foreground font-semibold text-background"
                   : "bg-muted/70 font-medium text-muted-foreground"
               }`}
             >
@@ -619,7 +617,7 @@ function SortTh({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 ${active ? "text-foreground" : "text-muted-foreground"}`}
+        className="inline-flex items-center gap-1 font-semibold text-foreground"
       >
         {label}
         <span className="font-mono text-[11px]">

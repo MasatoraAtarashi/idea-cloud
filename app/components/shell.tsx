@@ -27,10 +27,8 @@ const ICONS = {
 
 function navClass(isActive: boolean) {
   return [
-    "flex items-center gap-2 rounded-md px-2 py-[7px] text-[13.5px] font-semibold no-underline",
-    isActive
-      ? "bg-accent text-foreground"
-      : "text-muted-foreground hover:bg-row-hover hover:text-foreground",
+    "flex items-center gap-2 rounded-md px-2 py-[7px] text-[13.5px] font-semibold text-foreground no-underline",
+    isActive ? "bg-accent" : "hover:bg-row-hover",
   ].join(" ");
 }
 
@@ -109,7 +107,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={open}
-            className="mx-2 mt-3 flex min-h-11 items-center gap-2 rounded-md border border-border-control bg-card px-2.5 text-[13.5px] font-medium text-foreground hover:bg-row-hover md:h-[34px] md:min-h-[34px]"
+            className="mx-2 mt-3 flex min-h-11 items-center gap-2 rounded-md border border-border-control bg-card px-2.5 text-[13.5px] font-semibold text-foreground hover:bg-row-hover md:h-[34px] md:min-h-[34px]"
             aria-label="新規アイデア"
             title="新規アイデア (⌘N)"
           >
@@ -124,7 +122,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
                 {initialsFromLabel(SESSION_USER.label)}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-[13.5px] font-medium text-foreground">
+                <p className="truncate text-[13.5px] font-semibold text-foreground">
                   {SESSION_USER.label}
                 </p>
                 <a
