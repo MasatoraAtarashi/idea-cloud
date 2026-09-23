@@ -11,15 +11,16 @@ Quiet login gate plus a working create/list/detail loop. Ideas persist to D1. Lo
 
 ## Specs
 
-| Doc                                                                    | What it covers                                              |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [docs/spec/product-requirements.md](docs/spec/product-requirements.md) | Product goals, stages, out of scope                         |
-| [docs/spec/architecture.md](docs/spec/architecture.md)                 | Stack, bindings, what came from the template                |
-| [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Screens, IA, visual language                                |
-| [docs/spec/e2e.md](docs/spec/e2e.md)                                   | Playwright against local D1 (mocked auth)                   |
-| [docs/spec/security.md](docs/spec/security.md)                         | In-app Google OAuth + allowlist, field crypto               |
-| [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, D1 checklist                                  |
-| [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Follow-up: replace Access middleware with real Google OAuth |
+| Doc                                                                    | What it covers                                                |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [docs/spec/product-requirements.md](docs/spec/product-requirements.md) | Product goals, stages, out of scope                           |
+| [docs/spec/architecture.md](docs/spec/architecture.md)                 | Stack, bindings, what came from the template                  |
+| [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Screens, IA, visual language                                  |
+| [docs/spec/e2e.md](docs/spec/e2e.md)                                   | Playwright against local D1 (mocked auth)                     |
+| [docs/spec/security.md](docs/spec/security.md)                         | In-app Google OAuth + allowlist, field crypto                 |
+| [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, D1 checklist                                    |
+| [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Follow-up: replace Access middleware with real Google OAuth   |
+| [docs/spec/mcp.md](docs/spec/mcp.md)                                   | Remote MCP for agents (`/mcp`, bearer token, nine data tools) |
 
 UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previews/).
 
@@ -83,6 +84,10 @@ Env template: `.dev.vars.example`. Do not commit secret values. Production: `wra
 - Cloudflare GitHub OIDC for wrangler deploy is not available; deploy CI uses `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
 - Generated `wrangler.jsonc` D1 id is a dummy until first create
 - ASH / zizmor run in app CI; local pre-commit gitleaks / zizmor depend on tools on the developer machine
+
+## Remote MCP
+
+Agents read and write the same D1 ideas over `POST /mcp` (Streamable HTTP). Set `MCP_API_KEY` in `.dev.vars` locally and with `wrangler secret put MCP_API_KEY` in production. The web login stays mocked; MCP does not use it. Tools and client config: [docs/spec/mcp.md](docs/spec/mcp.md).
 
 ## Deploy
 

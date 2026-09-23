@@ -6,18 +6,21 @@ Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app
 
 ## Cloudflare Workers
 
-| Piece         | Path / setting                                   |
-| ------------- | ------------------------------------------------ |
-| Worker entry  | `workers/app.ts`                                 |
-| Config        | `wrangler.jsonc` (not `wrangler.toml`)           |
-| Compat        | `"compatibility_flags": ["nodejs_compat"]`       |
-| Observability | `observability.enabled`, `head_sampling_rate: 1` |
-| Source maps   | `upload_source_maps: true`                       |
-| UI routes     | `app/routes.ts` → `app/routes/*`                 |
-| API           | `server/api/` (`ideas` + template `todos`)       |
-| Auth on APIs  | `server/middleware/access-auth.ts`               |
+| Piece         | Path / setting                                    |
+| ------------- | ------------------------------------------------- |
+| Worker entry  | `workers/app.ts`                                  |
+| Config        | `wrangler.jsonc` (not `wrangler.toml`)            |
+| Compat        | `"compatibility_flags": ["nodejs_compat"]`        |
+| Observability | `observability.enabled`, `head_sampling_rate: 1`  |
+| Source maps   | `upload_source_maps: true`                        |
+| UI routes     | `app/routes.ts` → `app/routes/*`                  |
+| API           | `server/api/` (`ideas` + template `todos`)        |
+| Auth on APIs  | `server/middleware/access-auth.ts`                |
+| Remote MCP    | `POST /mcp` (`server/mcp/`), bearer `MCP_API_KEY` |
 
 Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research, brainstorm, evaluation fallback, and auto-tag fallback). TypeSafe Jev is an outbound HTTPS call when `TYPESAFE_API_KEY` is set. No unused KV, R2, Queue, or Durable Object bindings.
+
+Remote MCP is the same Worker: stateless Streamable HTTP at `/mcp` (`server/mcp/`, `createMcpHandler` from `@modelcontextprotocol/server`). Tools call the existing Drizzle helpers and D1. Auth is `Authorization: Bearer` with `MCP_API_KEY` (or `MCP_TOKEN` when that is unset), not Access and not the mock Google login. See [mcp.md](./mcp.md).
 
 ```
 Browser
@@ -26,6 +29,10 @@ Browser
       → Workers AI binding `AI` (research + brainstorm; evaluation + auto-tags when Jev is unset)
       → TypeSafe System One (`POST https://api.typesafe.ai/v1/systemone`) when `TYPESAFE_API_KEY` is set
       → secrets from wrangler / `.dev.vars` (never in git)
+
+MCP client
+  → POST /mcp (Bearer MCP_API_KEY)
+      → same D1 binding `DB`
 ```
 
 Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to that server and local D1 with mocked login; see [e2e.md](./e2e.md). Production: `.github/workflows/deploy.yml` on push to `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`).
