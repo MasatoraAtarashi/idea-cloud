@@ -25,10 +25,10 @@ export default function SettingsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
-      <header className="flex h-11 items-center justify-between gap-3 border-b border-border px-4 md:hidden">
+      <header className="flex min-h-11 items-center justify-between gap-3 border-b border-border px-4 pt-[env(safe-area-inset-top)] md:hidden">
         <Link
           to={LIST_PATH}
-          className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] text-muted-foreground no-underline"
+          className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] font-medium text-foreground no-underline"
         >
           戻る
         </Link>
@@ -51,8 +51,10 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setSection(item.id)}
-                  className={`shrink-0 rounded-md px-2 py-1.5 text-left text-[13px] font-semibold text-foreground ${
-                    section === item.id ? "bg-accent" : "hover:bg-row-hover"
+                  className={`flex min-h-11 shrink-0 items-center rounded-md px-3 text-left text-[13px] md:min-h-0 md:px-2 md:py-1.5 ${
+                    section === item.id
+                      ? "bg-accent font-semibold text-foreground"
+                      : "font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
                   }`}
                 >
                   {item.label}

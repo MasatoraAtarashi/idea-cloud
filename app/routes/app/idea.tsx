@@ -243,8 +243,10 @@ function IdeaDetailTabs({
           type="button"
           onClick={() => onTab(id)}
           aria-current={tab === id ? "page" : undefined}
-          className={`flex min-h-11 shrink-0 items-center px-3 text-[13px] font-semibold text-foreground ${
-            tab === id ? "border-b-2 border-foreground" : ""
+          className={`flex min-h-11 shrink-0 items-center px-3 text-[13.5px] ${
+            tab === id
+              ? "border-b-2 border-foreground font-semibold text-foreground"
+              : "font-medium text-muted-foreground"
           }`}
         >
           {IDEA_DETAIL_TAB_LABEL[id]}
@@ -303,11 +305,11 @@ function IdeaDetail({
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 py-1 lg:flex lg:items-start lg:justify-between lg:py-0">
             <Link
               to={LIST_PATH}
-              className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] text-muted-foreground no-underline lg:hidden"
+              className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] font-medium text-foreground no-underline lg:hidden"
             >
               戻る
             </Link>
-            <p className="idea-title-wrap ui-title line-clamp-2 text-center text-[15px] leading-snug lg:hidden">
+            <p className="idea-title-wrap ui-title line-clamp-2 text-center text-[15px] font-semibold leading-snug lg:hidden">
               {idea.title}
             </p>
             <p className="hidden font-mono text-[11.5px] text-muted-foreground lg:block">
@@ -320,7 +322,13 @@ function IdeaDetail({
               <span className="mx-2">/</span>
               {ideaPublicId(idea.id)}
             </p>
-            <span className="min-h-11 min-w-[3.5rem] lg:hidden" aria-hidden />
+            <button
+              type="button"
+              onClick={() => setEditing((open) => !open)}
+              className="flex min-h-11 min-w-[3.5rem] items-center justify-end text-[13.5px] font-medium text-foreground lg:hidden"
+            >
+              {editing ? "閉じる" : "編集"}
+            </button>
             <button
               type="button"
               onClick={() => setEditing((open) => !open)}

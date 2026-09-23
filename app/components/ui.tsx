@@ -39,8 +39,10 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-      <p className="text-[13.5px] font-semibold text-foreground">{title}</p>
-      {body ? <p className="mt-1.5 max-w-sm text-[12.5px] text-muted-foreground">{body}</p> : null}
+      <p className="ui-title text-[15px]">{title}</p>
+      {body ? (
+        <p className="mt-1.5 max-w-sm text-[13px] leading-relaxed text-muted-foreground">{body}</p>
+      ) : null}
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );

@@ -4,7 +4,7 @@ import { NEW_IDEA_PATH } from "../lib/home-path";
 import { IconPlus } from "./icons";
 
 const plusClass =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline hover:brightness-95";
+  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground no-underline hover:brightness-95 md:h-9 md:w-9";
 
 export function IdeaHeaderCreateButton() {
   const { open } = useCompose();

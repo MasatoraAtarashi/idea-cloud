@@ -137,12 +137,12 @@ function ShellFrame({ children }: { children: ReactNode }) {
         </aside>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
-          {hideTabBar ? null : <div className="h-16 shrink-0 md:hidden" />}
+          {hideTabBar ? null : <div className="mobile-tab-spacer shrink-0 md:hidden" />}
         </div>
       </div>
       {hideTabBar ? null : (
         <nav
-          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
           aria-label="メイン"
         >
           {MOBILE_NAV.map((item) => {
@@ -154,10 +154,14 @@ function ShellFrame({ children }: { children: ReactNode }) {
                 to={item.to}
                 end={item.end}
                 aria-label={item.ariaLabel}
-                className="flex min-h-11 flex-col items-center justify-center gap-0.5 py-1.5 text-foreground no-underline"
+                className={`flex min-h-11 flex-col items-center justify-center gap-0.5 no-underline ${
+                  on ? "text-foreground" : "text-muted-foreground"
+                }`}
               >
-                <Icon className={`h-5 w-5 ${on ? "text-foreground" : "text-muted-foreground"}`} />
-                <span className="text-[10px] font-semibold">{item.label}</span>
+                <Icon className="h-5 w-5" strokeWidth={on ? 2.15 : 1.75} />
+                <span className={`text-[11px] ${on ? "font-semibold" : "font-medium"}`}>
+                  {item.label}
+                </span>
               </NavLink>
             );
           })}

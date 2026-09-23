@@ -27,6 +27,7 @@ import { CANDIDATE_DEFAULT_DAYS } from "../lib/review";
 import { useListViewSearch } from "../lib/use-list-view-search";
 import { BrandMark } from "./brand";
 import { IdeaHeaderCreateButton } from "./header-create";
+import { MobileScreenHeader } from "./mobile-header";
 import { IconSearch } from "./icons";
 import { IdeaActionsMenu } from "./idea-actions";
 import { IdeaBoard } from "./idea-board";
@@ -142,27 +143,42 @@ export function IdeaListView({
         <IdeaHeaderCreateButton />
       </header>
 
-      <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-border px-4 md:hidden">
-        <div className="flex min-w-0 items-center gap-2">
-          <BrandMark className="h-5 w-5" />
-          <span className="text-[13.5px] font-semibold text-foreground">アイデア</span>
-        </div>
-        <div className="flex items-center">
-          <button
-            type="button"
-            onClick={() => setMobileFiltersOpen((openState) => !openState)}
-            className="flex min-h-11 items-center px-2 text-[13.5px] text-foreground"
-          >
-            絞り込み
-          </button>
-          <SettingsIconLink />
-          <IdeaHeaderCreateButton />
-        </div>
-      </div>
+      <MobileScreenHeader
+        title={
+          <div className="flex min-w-0 items-center gap-2">
+            <BrandMark className="h-5 w-5" />
+            <span className="text-[15px] font-semibold text-foreground">アイデア</span>
+          </div>
+        }
+        trailing={
+          <>
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen((openState) => !openState)}
+              aria-expanded={mobileFiltersOpen}
+              className="flex min-h-11 items-center px-2 text-[13.5px] font-semibold text-foreground"
+            >
+              絞り込み
+            </button>
+            <SettingsIconLink />
+            <IdeaHeaderCreateButton />
+          </>
+        }
+      />
 
       {mobileFiltersOpen ? (
         <div className="border-b border-border px-4 py-3 md:hidden">
-          <p className="font-mono text-[11px] text-muted-foreground">並び順</p>
+          <label className="relative block">
+            <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => update({ query: event.target.value }, { replace: true })}
+              placeholder="アイデアを検索"
+              className="ui-input pl-8"
+            />
+          </label>
+          <p className="mt-3 font-mono text-[11px] text-muted-foreground">並び順</p>
           <SortButtons sortKey={sortKey} sortDir={sortDir} onSort={applySort} />
           <p className="mt-3 font-mono text-[11px] text-muted-foreground">段階</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -395,8 +411,10 @@ export function IdeaListView({
               })}
               preventScrollReset
               aria-current={tab === item ? "page" : undefined}
-              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[12.5px] font-semibold no-underline ${
-                tab === item ? "bg-foreground text-background" : "text-foreground"
+              className={`flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[13px] no-underline ${
+                tab === item
+                  ? "bg-foreground font-semibold text-background"
+                  : "bg-muted/70 font-medium text-muted-foreground"
               }`}
             >
               {MOBILE_LIST_TAB_LABEL[item]}
@@ -416,13 +434,13 @@ export function IdeaListView({
               return (
                 <li key={idea.id}>
                   <IdeaSwipeRow idea={idea}>
-                    <div className="flex items-start gap-1 px-4 py-2">
+                    <div className="flex items-start gap-1 px-4 py-2.5">
                       <Link
                         to={`/app/ideas/${idea.id}`}
                         prefetch="intent"
                         className="min-w-0 flex-1 no-underline"
                       >
-                        <p className="idea-title-wrap ui-title line-clamp-3 text-[15px] leading-snug text-foreground">
+                        <p className="idea-title-wrap ui-title line-clamp-3 text-[16px] leading-snug text-foreground">
                           {idea.title}
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -640,10 +658,10 @@ function SortButtons({
 
 function ListEmpty({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
+    <div className="flex flex-col items-center justify-center px-4 py-16 text-center md:py-20">
       <BrandMark className="h-10 w-10 opacity-70" />
-      <p className="ui-title mt-4 text-[15px]">まだアイデアがありません</p>
-      <p className="mt-1.5 max-w-sm text-[12.5px] leading-relaxed text-muted-foreground">
+      <p className="ui-title mt-4 text-[16px]">まだアイデアがありません</p>
+      <p className="mt-1.5 max-w-sm text-[13px] leading-relaxed text-muted-foreground">
         思いついた時点の粗さを残します。預けて寝かせ、熟した頃に見返します。
       </p>
       <Link to={NEW_IDEA_PATH} className="ui-btn-secondary mt-5 md:hidden">

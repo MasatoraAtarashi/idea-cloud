@@ -41,7 +41,7 @@ export function LoginGate() {
   }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div className="flex w-full max-w-[22rem] flex-col items-center text-center">
         <BrandMark className="h-11 w-11" />
         <BrandWordmark className="ui-title mt-5 text-[22px]" />

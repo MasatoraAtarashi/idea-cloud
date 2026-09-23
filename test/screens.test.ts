@@ -271,6 +271,8 @@ describe("responsive home and nav", () => {
     expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-3");
     expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-2");
     expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-3");
+    expect(listSrc).toContain("MobileScreenHeader");
+    expect(listSrc).toContain("px-4 py-2.5");
     expect(detailSrc).toContain("idea-title-wrap");
     expect(detailSrc).not.toMatch(/<h1[^>]*line-clamp/);
     expect(src).toContain("IdeaSwipeRow");
@@ -327,7 +329,7 @@ describe("responsive home and nav", () => {
     expect(appSources["../app/components/idea-swipe-row.tsx"]).not.toContain("hideFrom");
     expect(src).toContain("作成中");
     expect(src).toContain('media="print"');
-    expect(appSources["../app/components/idea-list-view.tsx"]).toContain("px-4 py-2");
+    expect(appSources["../app/components/idea-list-view.tsx"]).toContain("px-4 py-2.5");
   });
 
   it("keeps named list views next to stage and tag filters", () => {
@@ -366,7 +368,9 @@ describe("desktop compose shortcuts and brand", () => {
     expect(src).toContain("stage-spark");
     expect(src).toContain("ui-title");
     expect(src).toContain("font-semibold");
-    expect(src).toContain("px-4 py-2");
+    expect(src).toContain("mobile-tab-spacer");
+    expect(src).toContain("MobileScreenHeader");
+    expect(src).toContain("px-4 py-2.5");
     expect(src).not.toContain("height: 52px");
     expect(DESIGN_TOKENS.accent).toBe("#3b6ef6");
     expect(DESIGN_TOKENS.sidebar).toBe("#fafafb");

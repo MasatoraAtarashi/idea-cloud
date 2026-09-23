@@ -75,7 +75,7 @@ function InspirationDetail({
         <div className="flex items-center justify-between gap-3 py-1 md:py-0">
           <Link
             to={INSPIRATIONS_PATH}
-            className="flex min-h-11 items-center text-[13.5px] text-muted-foreground no-underline hover:text-foreground"
+            className="flex min-h-11 items-center text-[13.5px] font-medium text-foreground no-underline hover:text-foreground"
           >
             戻る
           </Link>
