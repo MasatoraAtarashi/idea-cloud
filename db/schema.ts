@@ -31,6 +31,8 @@ export const ideas = sqliteTable("ideas", {
   researchNotes: text("research_notes"),
   researchModel: text("research_model"),
   researchedAt: text("researched_at"),
+  /** JSON `{ status, query, results: [{ title, url, snippet }] }`. Latest research only. */
+  researchSources: text("research_sources"),
   humanScore: integer("human_score"),
   humanScoreNote: text("human_score_note"),
   humanScoredAt: text("human_scored_at"),

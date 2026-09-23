@@ -53,7 +53,14 @@ test("research control is present and fails softly without paid APIs", async ({
   await createIdea(page, testInfo.project.name, title, "リサーチ導線を確認します。");
   await openIdeaFromList(page, title, testInfo.project.name);
   await visible(page.getByRole("button", { name: "リサーチ", exact: true })).click();
-  await expect(visible(page.getByText("このリサーチはモデルのみです"))).toBeVisible();
+  await expect(
+    visible(
+      page.getByText(
+        "ウェブで先行事例を数件取得し、本文と合わせて分析します。検索に失敗してもメモは残します。",
+        { exact: true },
+      ),
+    ),
+  ).toBeVisible();
   await visible(page.getByRole("button", { name: "リサーチを実行" })).click();
   await expect(
     visible(page.getByText("リサーチに失敗しました。時間をおいて再度お試しください。")),

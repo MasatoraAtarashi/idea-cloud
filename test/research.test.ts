@@ -5,6 +5,7 @@ import { ideaDetailAction } from "../app/lib/idea-detail-action";
 import { extractAiText, RESEARCH_PRESETS, resolveResearchModel } from "../app/lib/research-models";
 import { RESEARCH_ARCHIVE_ERROR } from "../app/lib/idea-ai";
 import { RESEARCH_FAIL_MESSAGE, setTestAiRun } from "../server/ai/research";
+import { setTestWebSearch } from "../server/ai/web-search";
 
 const authHeaders = {
   "cf-access-authenticated-user-email": "test@example.com",
@@ -200,6 +201,11 @@ describe("ideas research API", () => {
   });
 
   it("keeps saved notes when a later run fails", async () => {
+    setTestWebSearch(async (query) => ({
+      status: "ok",
+      query,
+      results: [{ title: "残す事例", url: "https://example.com/keep", snippet: "keep" }],
+    }));
     setTestAiRun(async () => ({ response: "観点:\n- 残す\nリスク:\n- なし\n次の一手:\n- 続ける" }));
     const id = await createIdea("メモを残す");
     const first = await api(`/ideas/${id}/research`, {
@@ -221,10 +227,84 @@ describe("ideas research API", () => {
 
     const reload = await api(`/ideas/${id}`);
     const reloaded = (await reload.json()) as {
-      item: { researchNotes: string; researchModel: string };
+      item: {
+        researchNotes: string;
+        researchModel: string;
+        researchSources: { results: { url: string }[] };
+      };
     };
     expect(reloaded.item.researchNotes).toContain("残す");
     expect(reloaded.item.researchModel).toBe(RESEARCH_PRESETS.fast);
+    expect(reloaded.item.researchSources.results[0]?.url).toBe("https://example.com/keep");
+  });
+
+  it("persists real web results next to notes", async () => {
+    setTestWebSearch(async (query) => ({
+      status: "ok",
+      query,
+      results: [
+        {
+          title: "音声メモの事例",
+          url: "https://example.com/voice-memo",
+          snippet: "朝に整理するアプリ",
+        },
+      ],
+    }));
+    setTestAiRun(async (_model, inputs) => {
+      const user = inputs.messages.find((message) => message.role === "user")?.content ?? "";
+      expect(user).toContain("https://example.com/voice-memo");
+      expect(user).not.toContain("https://invented.example");
+      return { response: "観点:\n- 事例あり\nリスク:\n- なし\n次の一手:\n- 読む" };
+    });
+    const id = await createIdea("通勤の音声メモ");
+    const res = await api(`/ideas/${id}/research`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      item: {
+        researchNotes: string;
+        researchSources: {
+          status: string;
+          query: string;
+          results: { title: string; url: string; snippet: string }[];
+        };
+      };
+    };
+    expect(body.item.researchNotes).toContain("事例あり");
+    expect(body.item.researchSources.status).toBe("ok");
+    expect(body.item.researchSources.query).toContain("先行事例");
+    expect(body.item.researchSources.results).toEqual([
+      {
+        title: "音声メモの事例",
+        url: "https://example.com/voice-memo",
+        snippet: "朝に整理するアプリ",
+      },
+    ]);
+  });
+
+  it("still saves notes when web search fails", async () => {
+    setTestAiRun(async (_model, inputs) => {
+      const user = inputs.messages.find((message) => message.role === "user")?.content ?? "";
+      expect(user).toContain("取得できませんでした");
+      return { response: "観点:\n- 本文のみ\nリスク:\n- なし\n次の一手:\n- 続ける" };
+    });
+    const id = await createIdea("検索なしでもメモ");
+    const res = await api(`/ideas/${id}/research`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      item: {
+        researchNotes: string;
+        researchSources: { status: string; results: unknown[] };
+      };
+    };
+    expect(body.item.researchNotes).toContain("本文のみ");
+    expect(body.item.researchSources.status).toBe("failed");
+    expect(body.item.researchSources.results).toEqual([]);
   });
 });
 

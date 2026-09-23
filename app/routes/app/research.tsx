@@ -23,7 +23,7 @@ export default function ResearchPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-6">
-      <h1 className="text-[16px] font-medium tracking-tight">リサーチ</h1>
+      <h1 className="ui-title text-[16px] tracking-tight">リサーチ</h1>
       {selected.length === 0 ? (
         <div className="mt-6">
           <EmptyState title="まだありません" />

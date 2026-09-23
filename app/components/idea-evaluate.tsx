@@ -105,7 +105,7 @@ export function IdeaEvaluateNotes({ idea, id }: { idea: MockIdea; id?: string })
 
   return (
     <section id={id} className="mt-6">
-      <h3 className="text-[13.5px] font-medium">AI評価</h3>
+      <h3 className="text-[13.5px] font-semibold">AI評価</h3>
       {idea.aiEvaluation ? (
         <div className="ui-panel mt-2 p-3">
           <p className="font-mono text-[11px] text-muted-foreground">

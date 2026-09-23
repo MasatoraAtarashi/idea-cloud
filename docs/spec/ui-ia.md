@@ -10,20 +10,20 @@ There is **no landing page**. `/` is the login gate.
 
 Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboard-first, settings for access/team), LiteLLM-thin chrome (white main, hairline borders, shadow only on modal/popover), Ideation Cloud pastel stage pills. Do **not** copy Relic’s logo, Relic’s blue marketing LP, or X dark mode. Do not put 融合 / リサーチ in the sidebar. **インスピレーション** and **アナリティクス** are first-class destinations (sidebar + mobile tabs), not settings-adjacent.
 
-| Token        | Value                                                                                                                                                                                               |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Surface      | `#FFFFFF`                                                                                                                                                                                           |
-| Sidebar      | `#FAFAFB`                                                                                                                                                                                           |
-| Table header | `#F4F5F7`                                                                                                                                                                                           |
-| Border       | `#C5CAD3` (controls `#B8BFC9`)                                                                                                                                                                      |
-| Accent       | `#3B6EF6`                                                                                                                                                                                           |
-| Body         | `#0A0A0A` (muted labels `#3A424E`)                                                                                                                                                                  |
-| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                                                     |
-| Density      | Row ~40px desktop / slightly airier mobile cards; filter 46px, table header 36px; 1px dividers, not zebra. Rows stay filled: tags, stage, relative updated, aging, comment count, research mark.    |
-| Radius       | 6–7px controls, 9–12px panels                                                                                                                                                                       |
-| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–600); IBM Plex Mono for meta only. Titles and primary nav `font-weight: 600`, near-black. Compose/detail **本文** uses primary text, not muted gray. |
-| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                                                           |
-| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                                                        |
+| Token        | Value                                                                                                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surface      | `#FFFFFF`                                                                                                                                                                                                                       |
+| Sidebar      | `#FAFAFB`                                                                                                                                                                                                                       |
+| Table header | `#F4F5F7`                                                                                                                                                                                                                       |
+| Border       | `#D4D8E0` (controls `#C8CED7`) — readable frames, softer than the post-#37 `#C5CAD3` / `#B8BFC9` treatment                                                                                                                      |
+| Accent       | `#3B6EF6`                                                                                                                                                                                                                       |
+| Body         | `#0A0A0A` near-black for headings, body, list titles, and nav labels (muted meta `#3A424E`)                                                                                                                                     |
+| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                                                                                 |
+| Density      | Row ~40px desktop / slightly airier mobile cards; filter 46px, table header 36px; 1px dividers, not zebra. Rows stay filled: tags, stage, relative updated, aging, comment count, research mark.                                |
+| Radius       | 6–7px controls, 9–12px panels                                                                                                                                                                                                   |
+| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–600); IBM Plex Mono for meta only. Default UI `500`; titles, buttons, and primary nav `font-weight: 600`, near-black. Compose/detail **本文** uses primary text, not muted gray. |
+| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                                                                                       |
+| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                                                                                    |
 
 Stage pill hex (background / foreground):
 
@@ -90,17 +90,17 @@ List view state is in the URL so Back/Forward and deep links work:
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
-Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ** and **削除** (browser confirm; hard-deletes the row and its comments/brainstorms). Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail is tabbed: **概要 | リサーチ | AI/履歴 | コメント** (`#research` / `#history` / `#brainstorm` / `#evaluate` / `#comments`). 概要 keeps wrapping title + body, tags, one primary **次の段階へ**, compact 見直し. リサーチ shows run controls + notes and a model-only callout (no live web search). AI/履歴 is `buildIdeaHistory`. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. Mobile also keeps a 44px **編集** in the sticky header (not a ⋯ menu). **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail (including **削除**). Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
+Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **アーカイブ** and **削除** (browser confirm; hard-deletes the row and its comments/brainstorms). Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail is tabbed: **概要 | リサーチ | AI/履歴 | コメント** (`#research` / `#history` / `#brainstorm` / `#evaluate` / `#comments`). 概要 keeps wrapping title + body, tags, one primary **次の段階へ**, compact 見直し. リサーチ shows run controls + **先行事例** links (or **Web検索未取得**) above **AIコメント**. AI/履歴 is `buildIdeaHistory` and repeats the latest research snapshot. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. Mobile also keeps a 44px **編集** in the sticky header (not a ⋯ menu). **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail (including **削除**). Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません**. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
 
 ### Idea detail 履歴
 
 One chronological **履歴** section (detail tab **AI/履歴**, hashes `#history` / `#brainstorm` / `#evaluate`; `#research` opens the リサーチ tab) lists stored AI/research output, newest first, expandable:
 
-| Kind     | Source                                                    | Persistence                                                                  |
-| -------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| リサーチ | `ideas.research_notes` + model + `researched_at`          | **Latest only** (overwrite). Marked 最新.                                    |
-| AI評価   | `ideas.ai_evaluation` + score + model + `ai_evaluated_at` | **Latest only** (overwrite). Marked 最新.                                    |
-| ブレスト | `idea_brainstorms` rows                                   | **Every run** (append). Fallback to the idea snapshot if no rows are passed. |
+| Kind     | Source                                                                | Persistence                                                                                                   |
+| -------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| リサーチ | `ideas.research_notes` + model + `researched_at` + `research_sources` | **Latest only** (overwrite). Marked 最新. **先行事例** links (or **Web検索未取得**) sit above **AIコメント**. |
+| AI評価   | `ideas.ai_evaluation` + score + model + `ai_evaluated_at`             | **Latest only** (overwrite). Marked 最新.                                                                     |
+| ブレスト | `idea_brainstorms` rows                                               | **Every run** (append). Fallback to the idea snapshot if no rows are passed.                                  |
 
 Do not invent a new AI product or a new history table. Gaps: research and evaluation have no run log — only the current snapshot on the idea row. Helper: `app/lib/idea-history.ts` (`buildIdeaHistory`).
 
@@ -126,7 +126,7 @@ Not a desktop nav tab. Desktop: 新規アイデア in the sidebar and a header *
 
 ## Merge / research (not primary nav)
 
-`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research and brainstorm run on idea detail via Workers AI (no web search): the **リサーチを実行** / **ブレスト** controls are real POSTs, not hash stubs. The リサーチ tab states clearly that results are model-only until web search ships. `/app/research?from=:id` redirects to detail `#research`. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
+`/app/merge` and `/app/research` are deep links from idea actions only. Do not advertise them in the sidebar or mobile bottom nav. Research and brainstorm run on idea detail via Workers AI: the **リサーチを実行** / **ブレスト** controls are real POSTs, not hash stubs. Research also fetches a few public web results for **先行事例** (fail-soft **Web検索未取得**) and shows them on the リサーチ tab. `/app/research?from=:id` redirects to detail `#research`. Empty `/app/research` when there is no `from` param. Empty merge when there is nothing to merge.
 
 ## Settings (`/app/settings`)
 

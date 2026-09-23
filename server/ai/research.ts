@@ -3,16 +3,24 @@ import {
   resolveResearchModel,
   type ResearchModelId,
 } from "../../app/lib/research-models";
+import {
+  buildSearchQuery,
+  formatResearchUserText,
+  serializeResearchSources,
+  type ResearchSources,
+} from "../../app/lib/research-sources";
 import { canRunIdeaAi, RESEARCH_ARCHIVE_ERROR } from "../../app/lib/idea-ai";
 import { asStage, getIdeaRow, saveIdeaResearch, type Idea } from "../../db/ideas";
 import type { Db } from "../../db/client";
+import { searchApiKeyFromEnv, searchWebSources } from "./web-search";
 
 export const RESEARCH_FAIL_MESSAGE = "リサーチに失敗しました。時間をおいて再度お試しください。";
 
 export const RESEARCH_SYSTEM_PROMPT = [
-  "あなたはアイデアのリサーチ助手です。ウェブ検索はしません。",
-  "与えられたアイデア本文だけを読み、日本語で短く箇条書きにしてください。",
+  "あなたはアイデアのリサーチ助手です。",
+  "与えられたアイデア本文とウェブ検索結果だけを読み、日本語で短く箇条書きにしてください。",
   "見出しは「観点」「リスク」「次の一手」の3つ。前置きや締めの文は不要です。",
+  "検索結果に含まれるタイトルとURL以外の出典を作ってはいけません。URLが無いときはURLを書かないでください。",
 ].join("");
 
 export type ResearchAiInputs = {
@@ -54,12 +62,13 @@ export async function generateResearchNotes(
   ai: ResearchAi,
   model: ResearchModelId,
   ideaText: string,
+  sources?: ResearchSources | null,
 ): Promise<string> {
   const run = resolveAiRun(ai);
   const result = await run(model, {
     messages: [
       { role: "system", content: RESEARCH_SYSTEM_PROMPT },
-      { role: "user", content: ideaText },
+      { role: "user", content: formatResearchUserText(ideaText, sources) },
     ],
     max_tokens: 512,
   });
@@ -79,6 +88,7 @@ export async function researchIdea(opts: {
   ideaId: number;
   preset?: string | null;
   model?: string | null;
+  searchApiKey?: string | null;
 }): Promise<ResearchIdeaResult> {
   const resolved = resolveResearchModel({ preset: opts.preset, model: opts.model });
   if (!resolved.ok) {
@@ -94,9 +104,15 @@ export async function researchIdea(opts: {
   }
 
   const ideaText = [idea.title, idea.body].filter((part) => part.trim().length > 0).join("\n");
+  const query = buildSearchQuery(idea.title, idea.body);
+  const sources = await searchWebSources({
+    query,
+    apiKey: opts.searchApiKey ?? undefined,
+  });
+
   let notes: string;
   try {
-    notes = await generateResearchNotes(opts.ai, resolved.model, ideaText);
+    notes = await generateResearchNotes(opts.ai, resolved.model, ideaText, sources);
   } catch {
     return { ok: false, status: 502, error: RESEARCH_FAIL_MESSAGE };
   }
@@ -104,6 +120,9 @@ export async function researchIdea(opts: {
   const saved = await saveIdeaResearch(opts.db, idea.id, {
     notes,
     model: resolved.model,
+    sources: serializeResearchSources(sources),
   });
   return { ok: true, idea: saved };
 }
+
+export { searchApiKeyFromEnv };
