@@ -29,6 +29,6 @@ Happy paths: create idea (mobile `/app` compose or desktop header +), list, deta
 
 Creates fill a dummy `e2e` tag so create-time auto-tag AI is not required. Desktop compose retries the header + click until the dialog hydrates (SSR buttons are inert before React attaches).
 
-**Workers AI / TypeSafe Jev / live web search are not called with secrets.** Local Vite sets `remoteBindings: false`, and CI has no `TYPESAFE_API_KEY`. The research test clicks **リサーチを実行** and expects the Japanese fail-soft copy (`リサーチに失敗しました…`) plus the model-only callout — not a crash and not a paid API.
+**Workers AI / TypeSafe Jev / Brave Search are not called with secrets.** Local Vite sets `remoteBindings: false`, and CI has no `TYPESAFE_API_KEY` or `SEARCH_API_KEY`. The research test opens the リサーチ tab (live-search callout) and expects the Japanese fail-soft copy (`リサーチに失敗しました…`) when Workers AI is unavailable. Public HTML search may run and fail soft; the test must not crash or call a paid API.
 
 Reports: `playwright-report/` (HTML) and `test-results/` on failure. Both are gitignored.

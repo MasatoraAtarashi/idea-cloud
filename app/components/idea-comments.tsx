@@ -83,7 +83,7 @@ export function IdeaComments({
           {comments.map((comment) => (
             <li key={comment.id} className="border-b border-border pb-3 last:border-b-0 last:pb-0">
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-[13px] font-medium text-foreground">
+                <span className="text-[13px] font-semibold text-foreground">
                   {comment.authorName}
                 </span>
                 <time

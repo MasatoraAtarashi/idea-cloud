@@ -11,15 +11,16 @@ Quiet login gate plus a working create/list/detail loop. Ideas persist to D1. Lo
 
 ## Specs
 
-| Doc                                                                    | What it covers                                              |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [docs/spec/product-requirements.md](docs/spec/product-requirements.md) | Product goals, stages, out of scope                         |
-| [docs/spec/architecture.md](docs/spec/architecture.md)                 | Stack, bindings, what came from the template                |
-| [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Screens, IA, visual language                                |
-| [docs/spec/e2e.md](docs/spec/e2e.md)                                   | Playwright against local D1 (mocked auth)                   |
-| [docs/spec/security.md](docs/spec/security.md)                         | In-app Google OAuth + allowlist, field crypto               |
-| [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, D1 checklist                                  |
-| [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Follow-up: replace Access middleware with real Google OAuth |
+| Doc                                                                    | What it covers                                                |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [docs/spec/product-requirements.md](docs/spec/product-requirements.md) | Product goals, stages, out of scope                           |
+| [docs/spec/architecture.md](docs/spec/architecture.md)                 | Stack, bindings, what came from the template                  |
+| [docs/spec/ui-ia.md](docs/spec/ui-ia.md)                               | Screens, IA, visual language                                  |
+| [docs/spec/e2e.md](docs/spec/e2e.md)                                   | Playwright against local D1 (mocked auth)                     |
+| [docs/spec/security.md](docs/spec/security.md)                         | In-app Google OAuth + allowlist, field crypto                 |
+| [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, D1 checklist                                    |
+| [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Follow-up: replace Access middleware with real Google OAuth   |
+| [docs/spec/mcp.md](docs/spec/mcp.md)                                   | Remote MCP for agents (`/mcp`, bearer token, nine data tools) |
 
 UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previews/).
 
@@ -28,7 +29,7 @@ UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previ
 ```bash
 pnpm install
 cp .dev.vars.example .dev.vars   # set LOCAL_DEV_USER_EMAIL to your address
-pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms / saved views / inspirations
+pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms / saved views / inspirations / research_sources
 pnpm dev
 ```
 
@@ -69,7 +70,7 @@ Included:
 - **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. Settings shows a stub, not a working Access editor.
 - **Ideas:** D1 `ideas` table. **作成** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption. Detail **コメント** persist in `idea_comments` (mock author). List rows show tags, stage, updated, aging, comment count, and research. Named **ビュー** persist in `saved_views`.
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. Not applied to idea rows.
-- **Workers AI / Jev:** per-idea research and brainstorm on `/app/ideas/:id` from **着想** onward stay on Workers AI (summarize/analyze or expand stored text; no web search). **AI評価** and **作成** auto-tags prefer TypeSafe Jev (`jev-latest`) when `TYPESAFE_API_KEY` is set, else the Workers AI fast/standard models. Archive stays blocked. Failures still create the idea and show **自動タグなし**. Binding `AI` in `wrangler.jsonc`. Relation / evolution still copy-only.
+- **Workers AI / Jev:** per-idea research and brainstorm on `/app/ideas/:id` from **着想** onward stay on Workers AI. **リサーチ** also fetches a few public web results for **先行事例** (DuckDuckGo/Bing HTML by default; Brave Search when `SEARCH_API_KEY` is set). Search failure is fail-soft (**Web検索未取得**) and still saves model notes. **AI評価** and **作成** auto-tags prefer TypeSafe Jev (`jev-latest`) when `TYPESAFE_API_KEY` is set, else the Workers AI fast/standard models. Archive stays blocked. Failures still create the idea and show **自動タグなし**. Binding `AI` in `wrangler.jsonc`. Relation / evolution still copy-only.
 - Sample `/api/todos` remains for template verification. `/api/ideas` mirrors that CRUD style (Access middleware still on `/api`).
 
 Env template: `.dev.vars.example`. Do not commit secret values. Production: `wrangler secret put`.
@@ -83,6 +84,10 @@ Env template: `.dev.vars.example`. Do not commit secret values. Production: `wra
 - Cloudflare GitHub OIDC for wrangler deploy is not available; deploy CI uses `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`
 - Generated `wrangler.jsonc` D1 id is a dummy until first create
 - ASH / zizmor run in app CI; local pre-commit gitleaks / zizmor depend on tools on the developer machine
+
+## Remote MCP
+
+Agents read and write the same D1 ideas over `POST /mcp` (Streamable HTTP). Set `MCP_API_KEY` in `.dev.vars` locally and with `wrangler secret put MCP_API_KEY` in production. The web login stays mocked; MCP does not use it. Tools and client config: [docs/spec/mcp.md](docs/spec/mcp.md).
 
 ## Deploy
 

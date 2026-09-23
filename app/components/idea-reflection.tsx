@@ -42,7 +42,7 @@ export function IdeaReflectionForm({ idea, error }: { idea: MockIdea; error?: st
 
   return (
     <section className="mt-6">
-      <h3 className="text-[13.5px] font-medium">振り返り</h3>
+      <h3 className="text-[13.5px] font-semibold">振り返り</h3>
       <p className="mt-1 text-[12px] text-muted-foreground">
         試したあとの結果だけ残します。AIにはまだ使いません。
       </p>
