@@ -40,7 +40,8 @@ import { listBrainstormsForIdea, toBrainstormView } from "../../../db/brainstorm
 import { listCommentsForIdea, toCommentView } from "../../../db/comments";
 import { listChatMessagesForIdea, toChatMessageView } from "../../../db/discussions";
 import { getIdeaView } from "../../../db/ideas";
-import { IconMerge, IconShare, IconSpinner } from "../../components/icons";
+import { IdeaCopyButton } from "../../components/idea-copy-button";
+import { IconMerge, IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
 
 export { ideaDetailAction as action };
@@ -360,6 +361,10 @@ function IdeaDetail({
           <IdeaDetailTabs tab={tab} onTab={setTab} commentCount={comments.length} />
         </header>
 
+        <div className="mt-3 lg:hidden">
+          <IdeaCopyButton idea={idea} />
+        </div>
+
         {tab === "overview" ? (
           <IdeaDetailSwipe
             idea={idea}
@@ -451,11 +456,8 @@ function IdeaDetail({
       </article>
 
       <aside className="hidden w-72 shrink-0 overflow-y-auto border-l border-border px-4 py-6 lg:block">
-        <div className="mb-4 flex items-center justify-end gap-2">
-          <span className="ui-btn-secondary pointer-events-none h-8 opacity-60">
-            <IconShare className="h-3.5 w-3.5" />
-            共有
-          </span>
+        <div className="mb-4">
+          <IdeaCopyButton idea={idea} />
         </div>
         <h2 className="text-[13.5px] font-semibold">このアイデアの操作</h2>
         <div className="mt-2 flex flex-col gap-1.5">

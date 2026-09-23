@@ -33,7 +33,7 @@ Rules that the UI must teach:
 - Mobile (viewport `< md` or a phone user-agent) is for composing a new idea — login / `/app` / refresh open compose directly. Desktop is for judgment (list-first). Primary mobile destinations are 一覧 / インスピレーション / アナリティクス (bottom tabs). Create is a header **+**, not a tab. Settings stays in a header gear.
 - Research, brainstorm, AI evaluation, and discuss may run from **着想** onward. **アーカイブ** stays blocked.
 - Discarding is a first-class ritual, not a silent delete.
-- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用), **アーカイブ**, and **削除** (confirm, hard delete). Mobile rows also swipe to the first two actions. Mobile idea detail keeps **次の段階へ** as the on-page primary CTA and swipes to **編集** / **AI** / **融合** / **アーカイブ** (no header ⋯). Desktop keeps the rail and a visible **編集** button. Detail content is tabbed (概要 / リサーチ / AI/履歴 / 相談 / コメント). The list ⋯ menu also links **AIと話す**.
+- List ⋯ includes **次の段階へ** (着想→熟成中→熟した→採用), **コピー**, **アーカイブ**, and **削除** (confirm, hard delete). Mobile rows also swipe to the first two actions. Mobile idea detail keeps **次の段階へ** as the on-page primary CTA and swipes to **編集** / **AI** / **融合** / **アーカイブ** (no header ⋯). Desktop keeps the rail and a visible **編集** button. Detail content is tabbed (概要 / リサーチ / AI/履歴 / 相談 / コメント). The list ⋯ menu also links **AIと話す**.
 - Titles wrap (2–3 lines on the list, full wrap on detail). Primary controls use ~44px mobile tap targets and show pending UI on the click tick (do not wait for Workers AI).
 
 ## Screens in scope
@@ -43,6 +43,10 @@ See [ui-ia.md](./ui-ia.md). Paths: `/app` (mobile new-idea home, including phone
 ## Auto-tags (create)
 
 On **作成** (form action and `POST /api/ideas`), if tags are empty, prefer TypeSafe Jev (`jev-latest`) when `TYPESAFE_API_KEY` is set: one `choice` over a curated Japanese tag/category vocabulary, then take 2–5 labels from the probability distribution. If the key is missing or Jev fails, call Workers AI with the same fast model as research 「速い・安い」 (`@cf/meta/llama-3.1-8b-instruct-fp8-fast`). Persist short Japanese tags. Fail soft: missing binding, model error, or empty parse → create with `[]` (or keep user-provided tags). The compose field says **空なら自動タグ**; list/detail show **自動タグなし** / **自動タグは付きませんでした** when the array is empty so the feature is visible even on failure. Tests stub `setTestSystemOneRun` / `setTestTagAiRun`; CI does not call live TypeSafe or Workers AI.
+
+## Copy for sharing
+
+Detail and the list ⋯ menu have **コピー** (accessible name **説明を含めてコピー**). It writes plain text to the clipboard: title, body, then `段階:` and `タグ:` when tags exist. No idea id and no secrets. Feedback is **コピーしました**, or **コピーできませんでした** if the clipboard is blocked. There is no share-link product; the old inert **共有** control on the desktop rail is this copy action. No new API.
 
 ## Comments (Zenn scrap style)
 

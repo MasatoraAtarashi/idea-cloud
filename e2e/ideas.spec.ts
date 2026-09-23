@@ -46,6 +46,20 @@ test("adds a comment on detail", async ({ page }, testInfo) => {
   await expect(visible(page.getByText(note))).toBeVisible();
 });
 
+test("copies the idea title and body", async ({ page }, testInfo) => {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  const title = uniqueLabel("E2Eコピー");
+  const body = "説明文です。";
+  await createIdea(page, testInfo.project.name, title, body);
+  await openIdeaFromList(page, title, testInfo.project.name);
+  await visible(page.getByRole("button", { name: "説明を含めてコピー" })).click();
+  await expect(visible(page.getByText("コピーしました", { exact: true }))).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain(title);
+  expect(copied).toContain(body);
+  expect(copied).toContain("段階: 着想");
+});
+
 test("opens the discuss tab on idea detail", async ({ page }, testInfo) => {
   const title = uniqueLabel("E2E相談");
   const note = uniqueLabel("E2E質問");

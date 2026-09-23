@@ -7,6 +7,7 @@ import { useInstantPending } from "../lib/use-instant-pending";
 import { isBrainstormSubmitting } from "./idea-brainstorm";
 import { isEvaluateSubmitting } from "./idea-evaluate";
 import { isResearchSubmitting } from "./idea-research";
+import { IdeaCopyButton } from "./idea-copy-button";
 import { IconMore, IconSpinner } from "./icons";
 import { PopoverMenu } from "./popover-menu";
 
@@ -83,6 +84,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
           >
             AIと話す
           </Link>
+          <IdeaCopyButton idea={idea} menuitem className={itemClass} onDone={close} />
           {next ? (
             <button
               type="button"

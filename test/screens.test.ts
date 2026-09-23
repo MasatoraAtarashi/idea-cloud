@@ -234,6 +234,8 @@ describe("responsive home and nav", () => {
     expect(src).toContain("AI/履歴");
     expect(src).toContain("相談");
     expect(src).toContain("AIと話す");
+    expect(src).toContain("説明を含めてコピー");
+    expect(src).toContain("コピーしました");
     expect(src).toContain("ideaDetailTabFromHash");
     expect(src).toContain("削除");
     expect(src).toContain("confirmIdeaDelete");
