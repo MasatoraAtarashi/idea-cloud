@@ -8,6 +8,7 @@ import {
   useNavigate,
   type LoaderFunctionArgs,
 } from "react-router";
+import { CategoryLabel } from "../../components/category-field";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
 import { IdeaComments } from "../../components/idea-comments";
 import { IdeaDiscuss, IdeaDiscussLink } from "../../components/idea-discuss";
@@ -139,6 +140,7 @@ function IdeaMeta({ idea }: { idea: MockIdea }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <StagePill stage={idea.stage} />
+      <CategoryLabel name={idea.categoryName} />
       <span
         className={`font-mono text-[11.5px] ${
           idea.agedDays > 30 ? "text-[var(--stage-aging-fg)]" : "text-muted-foreground"

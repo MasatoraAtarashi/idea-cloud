@@ -13,7 +13,7 @@ export function IdeaCopyButton({
   menuitem = false,
   onDone,
 }: {
-  idea: { title: string; body: string; stage: Stage; tags: string[] };
+  idea: { title: string; body: string; stage: Stage; tags: string[]; categoryName?: string | null };
   className?: string;
   menuitem?: boolean;
   onDone?: () => void;

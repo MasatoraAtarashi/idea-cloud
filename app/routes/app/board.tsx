@@ -1,4 +1,5 @@
-import { useLoaderData, redirect, type LoaderFunctionArgs } from "react-router";
+import { useLoaderData, useOutletContext, redirect, type LoaderFunctionArgs } from "react-router";
+import type { AppData } from "./layout";
 import { IdeaListView } from "../../components/idea-list-view";
 import { createDb } from "../../../db/client";
 import { listIdeaViews } from "../../../db/ideas";
@@ -33,5 +34,6 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export default function IdeasPage() {
   const { ideas, savedViews } = useLoaderData<typeof loader>();
-  return <IdeaListView ideas={ideas} savedViews={savedViews} />;
+  const { categories } = useOutletContext<AppData>();
+  return <IdeaListView ideas={ideas} savedViews={savedViews} categories={categories} />;
 }

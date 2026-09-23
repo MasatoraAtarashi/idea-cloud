@@ -41,6 +41,7 @@ export function ListSavedViews({
             stages: [],
             tags: [],
             minDays: 0,
+            categoryId: null,
             savedViewId: null,
           })}
           preventScrollReset

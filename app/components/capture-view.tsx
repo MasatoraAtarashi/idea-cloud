@@ -1,5 +1,7 @@
 import { useState, type KeyboardEvent } from "react";
-import { Form, Link, useActionData, useNavigation } from "react-router";
+import { Form, Link, useActionData, useNavigation, useOutletContext } from "react-router";
+import { CategoryField } from "./category-field";
+import type { AppData } from "../routes/app/layout";
 import {
   COMPOSE_PLACEHOLDER,
   COMPOSE_SUBMIT,
@@ -16,6 +18,7 @@ import { IconSpinner } from "./icons";
 import { StageSelect } from "./stage-select";
 
 export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
+  const { categories } = useOutletContext<AppData>();
   const actionData = useActionData() as CreateIdeaActionData | undefined;
   const navigation = useNavigation();
   const submitting = navigation.state !== "idle";
@@ -109,6 +112,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
               placeholder="空なら自動タグ"
               className="min-h-11 min-w-[7.5rem] flex-1 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
             />
+            <CategoryField categories={categories} idPrefix="idea-mobile" />
           </div>
           <p className="pb-2 text-[12px] leading-relaxed text-muted-foreground">
             タグを空のまま作成すると自動で付けます。失敗しても残ります。
@@ -149,6 +153,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
                 placeholder="空なら自動タグ"
                 className="h-8 min-w-[8rem] flex-1 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[12.5px] outline-none placeholder:text-muted-foreground"
               />
+              <CategoryField categories={categories} idPrefix="idea-desktop" />
             </div>
             <button type="submit" disabled={!canSubmit} aria-busy={pending} className="ui-btn px-4">
               {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}

@@ -13,11 +13,13 @@ import { NEW_IDEA_PATH } from "../lib/home-path";
 import type { CreateIdeaActionData } from "../lib/idea-action";
 import { isSubmitShortcut } from "../lib/shortcuts";
 import { useInstantPending } from "../lib/use-instant-pending";
+import type { IdeaCategory } from "../lib/category";
 import { SESSION_USER } from "../data/mock";
+import { CategoryField } from "./category-field";
 import { IconClose, IconSpinner } from "./icons";
 import { StageSelect } from "./stage-select";
 
-export function ComposeDialog() {
+export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
   const { isOpen, close } = useCompose();
   const fetcher = useFetcher<CreateIdeaActionData>();
   const [title, setTitle] = useState("");
@@ -128,6 +130,7 @@ export function ComposeDialog() {
               placeholder="空なら自動タグ"
               className="h-8 w-40 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground"
             />
+            <CategoryField categories={categories} idPrefix="idea-dialog" />
             <StageSelect defaultValue="spark" />
             <span className="inline-flex h-8 items-center rounded-full border border-border-control px-2.5 text-[12.5px] text-muted-foreground">
               {SESSION_USER.label}

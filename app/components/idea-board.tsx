@@ -5,6 +5,7 @@ import { IdeaActionsMenu } from "./idea-actions";
 import { ReflectionBadge } from "./idea-reflection";
 import { IdeaReviewPrompt, ReviewStatusBadge } from "./idea-review";
 import { IdeaScoreChips } from "./idea-score";
+import { CategoryLabel } from "./category-field";
 import { CountBadge, StagePill, TagList } from "./ui";
 
 export function IdeaBoard({
@@ -53,7 +54,8 @@ export function IdeaBoard({
                           <p className="idea-title-wrap ui-title line-clamp-3 text-[13px] leading-snug text-foreground">
                             {idea.title}
                           </p>
-                          <div className="mt-1">
+                          <div className="mt-1 flex flex-wrap items-center gap-1">
+                            <CategoryLabel name={idea.categoryName} />
                             <TagList tags={idea.tags} limit={2} />
                           </div>
                           <p className="mt-1 flex flex-wrap gap-x-2 font-mono text-[11px] text-muted-foreground">

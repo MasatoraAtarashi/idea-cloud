@@ -108,6 +108,7 @@ describe("list view save action", () => {
         stages: ["spark", "aging"],
         tags: ["朝"],
         minDays: 0,
+        categoryId: null,
         savedViewId: saved!.id,
       }),
     );

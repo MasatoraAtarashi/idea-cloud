@@ -8,12 +8,15 @@ export function formatIdeaCopyText(idea: {
   body: string;
   stage: Stage;
   tags: string[];
+  categoryName?: string | null;
 }): string {
   const title = idea.title.trim() || "無題";
   const body = idea.body.trim();
+  const category = idea.categoryName?.trim() ?? "";
   const lines = [title];
   if (body) lines.push("", body);
   lines.push("", `段階: ${STAGE_LABEL[idea.stage]}`);
+  if (category) lines.push(`カテゴリ: ${category}`);
   if (idea.tags.length > 0) {
     lines.push(`タグ: ${idea.tags.join(", ")}`);
   }

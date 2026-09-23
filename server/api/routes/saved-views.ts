@@ -25,6 +25,7 @@ const createSavedViewSchema = z.object({
       query: z.string().max(200).optional(),
       stages: z.array(z.enum(STAGES)).optional(),
       tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+      categoryId: z.number().int().positive().nullable().optional(),
     })
     .optional(),
 });

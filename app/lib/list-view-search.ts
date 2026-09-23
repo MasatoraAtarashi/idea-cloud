@@ -17,6 +17,7 @@ export type SavedViewFilters = {
   stages: Stage[];
   tags: string[];
   minDays: number;
+  categoryId: number | null;
 };
 
 export type ListViewSearch = SavedViewFilters & {
@@ -39,6 +40,7 @@ export const LIST_VIEW_DEFAULTS: ListViewSearch = {
   stages: [],
   tags: [],
   minDays: 0,
+  categoryId: null,
   savedViewId: null,
   sortKey: "updatedAt",
   sortDir: "desc",
@@ -99,7 +101,14 @@ export function normalizeSavedViewFilters(input: Partial<SavedViewFilters>): Sav
     stages: unique((input.stages ?? []).filter(isStage)),
     tags: unique((input.tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length > 0)),
     minDays: tab === "candidates" && minDays === 0 ? CANDIDATE_DEFAULT_DAYS : minDays,
+    categoryId: normalizeCategoryId(input.categoryId),
   };
+}
+
+function normalizeCategoryId(value: unknown): number | null {
+  const n = typeof value === "number" ? value : Number(String(value ?? "").trim());
+  if (!Number.isInteger(n) || n <= 0) return null;
+  return n;
 }
 
 function normalizeMinDays(value: unknown): number {
@@ -128,6 +137,7 @@ export function parseSavedViewFilters(raw: unknown): SavedViewFilters {
     stages: asStringArray(rec.stages).filter(isStage),
     tags: asStringArray(rec.tags),
     minDays: normalizeMinDays(rec.minDays ?? rec.days),
+    categoryId: normalizeCategoryId(rec.categoryId),
   });
 }
 
@@ -139,6 +149,7 @@ export function omitSavedViewId(state: ListViewSearch): SavedViewFilters {
     stages: state.stages,
     tags: state.tags,
     minDays: state.minDays,
+    categoryId: state.categoryId,
   };
 }
 
@@ -158,6 +169,7 @@ export function parseListViewSearch(params: URLSearchParams): ListViewSearch {
     stages: readList(params, "stage").filter(isStage),
     tags: readList(params, "tag"),
     minDays: tab === "candidates" && minDaysRaw === 0 ? CANDIDATE_DEFAULT_DAYS : minDaysRaw,
+    categoryId: normalizeCategoryId(params.get("category")),
     savedViewId,
     sortKey: sort.key,
     sortDir: sort.dir,
@@ -176,6 +188,7 @@ export function serializeListViewSearch(
   if (state.stages.length > 0) params.set("stage", state.stages.join(","));
   if (state.tags.length > 0) params.set("tag", state.tags.join(","));
   if (state.minDays > 0) params.set(AGED_DAYS_PARAM, String(state.minDays));
+  if (state.categoryId && state.categoryId > 0) params.set("category", String(state.categoryId));
   const sortKey = state.sortKey;
   const sortDir = state.sortDir;
   if (sortKey && sortDir && !isDefaultListSort({ key: sortKey, dir: sortDir })) {

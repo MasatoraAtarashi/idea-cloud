@@ -70,6 +70,7 @@ describe("empty workspace data", () => {
     expect(src).toContain("いま思いついたこと");
     expect(src).toContain("新規アイデア");
     expect(src).toContain("作成");
+    expect(src).toContain("新しいカテゴリ…");
     expect(src).toContain("閉じる");
     expect(src).toContain('method="post"');
     expect(src).not.toContain("キャプチャ");

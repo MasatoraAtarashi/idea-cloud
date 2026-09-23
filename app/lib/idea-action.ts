@@ -1,4 +1,5 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
+import { resolveCategoryId } from "../../db/categories";
 import { createDb } from "../../db/client";
 import { asStage, IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
 import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
@@ -28,12 +29,20 @@ function parseStage(raw: string): Stage {
   return (STAGES as readonly string[]).includes(raw) ? asStage(raw) : "spark";
 }
 
+function parseCategoryId(raw: string): number | null {
+  if (!/^\d+$/.test(raw.trim())) return null;
+  const id = Number(raw);
+  return id > 0 ? id : null;
+}
+
 export function composeBodyFromForm(form: FormData): {
   title: string;
   bodyField: string;
   text: string;
   stage: Stage;
   tags: string[];
+  categoryId: number | null;
+  categoryName: string;
 } {
   const title = String(form.get("title") ?? "").trim();
   const bodyField = String(form.get("body") ?? "").trim();
@@ -44,12 +53,15 @@ export function composeBodyFromForm(form: FormData): {
     text,
     stage: parseStage(String(form.get("stage") ?? "spark")),
     tags: parseTags(String(form.get("tags") ?? "")),
+    categoryId: parseCategoryId(String(form.get("categoryId") ?? "")),
+    categoryName: String(form.get("categoryName") ?? ""),
   };
 }
 
 export async function createIdeaAction({ request, context }: ActionFunctionArgs) {
   const form = await request.formData();
-  const { title, bodyField, text, stage, tags } = composeBodyFromForm(form);
+  const { title, bodyField, text, stage, tags, categoryId, categoryName } =
+    composeBodyFromForm(form);
   if (!text) {
     return { error: "入力してください", title, body: bodyField } satisfies CreateIdeaActionData;
   }
@@ -57,6 +69,10 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
     return { error: "長すぎます", title, body: bodyField } satisfies CreateIdeaActionData;
   }
   const db = createDb(context.cloudflare.env.DB);
+  const category = await resolveCategoryId(db, { categoryId, categoryName });
+  if ("error" in category) {
+    return { error: category.error, title, body: bodyField } satisfies CreateIdeaActionData;
+  }
   logCreatePrerequisites(context.cloudflare.env);
   const resolvedTags = await resolveCreateTags({
     ai: bindResearchAi(context.cloudflare.env.AI),
@@ -64,7 +80,11 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
     tags,
     typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
   });
-  const created = await insertIdea(db, text, { stage, tags: resolvedTags });
+  const created = await insertIdea(db, text, {
+    stage,
+    tags: resolvedTags,
+    categoryId: category.id,
+  });
   await safeUpsertInspirationsFromIdeaText(db, text);
   scheduleCreateEvaluation({
     waitUntil: (promise) => context.cloudflare.ctx.waitUntil(promise),

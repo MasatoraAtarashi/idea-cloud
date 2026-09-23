@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useOutletContext } from "react-router";
+import { CategoryField } from "./category-field";
 import { STAGE_LABEL, STAGES, type MockIdea, type Stage } from "../data/mock";
 import { COMPOSE_URL_HINT } from "../lib/compose";
 import { tagsInputValue, type EditIdeaActionData } from "../lib/idea-edit-action";
 import { useInstantPending } from "../lib/use-instant-pending";
+import type { AppData } from "../routes/app/layout";
 import { IconSpinner } from "./icons";
 
 export function IdeaEditForm({
@@ -15,6 +17,7 @@ export function IdeaEditForm({
   onCancel: () => void;
   error?: string;
 }) {
+  const { categories } = useOutletContext<AppData>();
   const fetcher = useFetcher<EditIdeaActionData>();
   const busy = fetcher.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
@@ -77,6 +80,15 @@ export function IdeaEditForm({
         placeholder="カンマまたは読点で区切る"
         className="ui-input mt-1"
       />
+      <p className="mt-3 font-mono text-[11px] text-muted-foreground">カテゴリ</p>
+      <div className="mt-1">
+        <CategoryField
+          categories={categories}
+          defaultId={idea.categoryId}
+          disabled={pending}
+          idPrefix="idea-edit"
+        />
+      </div>
       <label
         htmlFor="idea-edit-stage"
         className="mt-3 block font-mono text-[11px] text-muted-foreground"
