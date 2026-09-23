@@ -1,4 +1,5 @@
 import { hasReflection, type ReflectionStatus } from "../lib/reflection";
+import type { ResearchSources } from "../lib/research-sources";
 import { CANDIDATE_DEFAULT_DAYS, type ReviewStatus } from "../lib/review";
 
 export const STAGES = ["spark", "aging", "ripe", "selected", "archived"] as const;
@@ -77,6 +78,7 @@ export interface MockIdea {
   researchNotes?: string | null;
   researchModel?: string | null;
   researchedAt?: string | null;
+  researchSources?: ResearchSources | null;
   brainstormNotes?: string | null;
   brainstormModel?: string | null;
   brainstormedAt?: string | null;

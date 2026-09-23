@@ -1,5 +1,7 @@
-import { beforeAll } from "vitest";
+import { beforeAll, beforeEach } from "vitest";
 import { env } from "cloudflare:workers";
+import { emptyResearchSources } from "../app/lib/research-sources";
+import { setTestSearchFetch, setTestWebSearch } from "../server/ai/web-search";
 
 // migrations/*.sql を読み込み順に適用して、テスト用 D1 をマイグレーション済み状態にする
 const migrations = import.meta.glob("../migrations/*.sql", {
@@ -25,4 +27,9 @@ beforeAll(async () => {
   await env.DB.exec("DELETE FROM inspirations;");
   await env.DB.exec("DELETE FROM todos;");
   await env.DB.exec("DELETE FROM ideas;");
+});
+
+beforeEach(() => {
+  setTestWebSearch(async (query) => emptyResearchSources(query, "failed"));
+  setTestSearchFetch();
 });

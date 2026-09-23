@@ -401,7 +401,7 @@ function IdeaDetail({
         {tab === "research" ? (
           <section id="research" className="mt-4 max-w-2xl">
             <p className="rounded-md border border-border bg-muted/60 px-3 py-2 text-[12.5px] leading-relaxed text-foreground">
-              このリサーチはモデルのみです。ウェブ検索による先行事例はまだありません。
+              ウェブで先行事例を数件取得し、本文と合わせて分析します。検索に失敗してもメモは残します。
             </p>
             <div className="mt-4 lg:hidden">
               <IdeaResearchControls idea={idea} error={researchError} />

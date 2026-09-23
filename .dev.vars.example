@@ -12,3 +12,8 @@ LOCAL_DEV_USER_EMAIL=you@example.com
 # TypeSafe Jev (System One). When set, create-time auto-tags and AI評価 prefer Jev
 # over Workers AI. Production: `wrangler secret put TYPESAFE_API_KEY`. Never commit a real key.
 TYPESAFE_API_KEY=
+
+# Optional Brave Search API key for リサーチ 先行事例.
+# When unset, research fetches DuckDuckGo/Bing HTML (and DuckDuckGo Instant Answer JSON).
+# Production: `wrangler secret put SEARCH_API_KEY`. Never commit a real key.
+SEARCH_API_KEY=
