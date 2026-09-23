@@ -55,11 +55,21 @@ async function openDesktopCompose(page: Page) {
 export async function createIdea(page: Page, projectName: string, title: string, body: string) {
   if (isMobileProject(projectName)) {
     await page.goto("/app");
-    await expect(visible(page.getByRole("button", { name: "作成" }))).toBeVisible();
-    await page.locator("#idea-mobile-title").fill(title);
-    await page.locator("#idea-mobile").fill(body);
+    const submit = visible(page.getByRole("button", { name: "作成" }));
+    await expect(submit).toBeVisible();
+    const titleInput = page.locator("#idea-mobile-title");
+    const bodyInput = page.locator("#idea-mobile");
+    // Mobile compose is controlled. A fill that lands before hydration is
+    // reset to empty state, which leaves 作成 disabled (Vite 8 hydrates later).
+    await expect(async () => {
+      await titleInput.fill(title);
+      await bodyInput.fill(body);
+      await expect(titleInput).toHaveValue(title);
+      await expect(bodyInput).toHaveValue(body);
+      await expect(submit).toBeEnabled();
+    }).toPass({ timeout: 20_000 });
     await page.locator("#idea-mobile-tags").fill("e2e");
-    await visible(page.getByRole("button", { name: "作成" })).click();
+    await submit.click();
   } else {
     await openDesktopCompose(page);
     const dialog = page.getByRole("dialog");
