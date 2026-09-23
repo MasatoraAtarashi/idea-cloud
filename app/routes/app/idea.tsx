@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   useActionData,
@@ -8,8 +8,10 @@ import {
   useNavigate,
   type LoaderFunctionArgs,
 } from "react-router";
+import { CategoryLabel } from "../../components/category-field";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
 import { IdeaComments } from "../../components/idea-comments";
+import { IdeaDiscuss, IdeaDiscussLink } from "../../components/idea-discuss";
 import { IdeaDetailSwipe } from "../../components/idea-detail-swipe";
 import { IdeaBrainstormControls } from "../../components/idea-brainstorm";
 import { IdeaEditForm } from "../../components/idea-edit-form";
@@ -37,8 +39,10 @@ import { useInstantPending } from "../../lib/use-instant-pending";
 import { createDb } from "../../../db/client";
 import { listBrainstormsForIdea, toBrainstormView } from "../../../db/brainstorms";
 import { listCommentsForIdea, toCommentView } from "../../../db/comments";
+import { listChatMessagesForIdea, toChatMessageView } from "../../../db/discussions";
 import { getIdeaView } from "../../../db/ideas";
-import { IconMerge, IconShare, IconSpinner } from "../../components/icons";
+import { IdeaCopyButton } from "../../components/idea-copy-button";
+import { IconMerge, IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
 
 export { ideaDetailAction as action };
@@ -51,21 +55,26 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
   const db = createDb(context.cloudflare.env.DB);
   const idea = await getIdeaView(db, params.ideaId);
   if (!idea) {
-    return { idea: undefined, comments: [], brainstorms: [] };
+    return { idea: undefined, comments: [], brainstorms: [], discussions: [] };
   }
-  const [comments, brainstorms] = await Promise.all([
+  const [comments, brainstorms, discussions] = await Promise.all([
     listCommentsForIdea(db, Number(idea.id)),
     listBrainstormsForIdea(db, Number(idea.id)),
+    listChatMessagesForIdea(db, Number(idea.id)),
   ]);
   return {
     idea,
     comments: comments.map(toCommentView),
     brainstorms: brainstorms.map(toBrainstormView),
+    discussions: discussions.flatMap((row) => {
+      const view = toChatMessageView(row);
+      return view ? [view] : [];
+    }),
   };
 }
 
 export default function IdeaPage() {
-  const { idea, comments, brainstorms } = useLoaderData<typeof loader>();
+  const { idea, comments, brainstorms, discussions } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof ideaDetailAction>();
 
   if (!idea) {
@@ -91,6 +100,7 @@ export default function IdeaPage() {
   const commentError = actionIntent === "comment" ? actionError : undefined;
   const brainstormError = actionIntent === "brainstorm" ? actionError : undefined;
   const evaluateError = actionIntent === "evaluate" ? actionError : undefined;
+  const discussError = actionIntent === "discuss" ? actionError : undefined;
   const editError = actionIntent === "edit" ? actionError : undefined;
   const scoreError = actionIntent === "human-score" ? actionError : undefined;
   const reviewError = actionIntent === "review" ? actionError : undefined;
@@ -99,6 +109,7 @@ export default function IdeaPage() {
     commentError ||
     brainstormError ||
     evaluateError ||
+    discussError ||
     editError ||
     scoreError ||
     reviewError ||
@@ -111,10 +122,12 @@ export default function IdeaPage() {
       idea={idea}
       comments={comments}
       brainstorms={brainstorms}
+      discussions={discussions}
       commentError={commentError}
       researchError={researchError}
       brainstormError={brainstormError}
       evaluateError={evaluateError}
+      discussError={discussError}
       editError={editError}
       scoreError={scoreError}
       reviewError={reviewError}
@@ -127,6 +140,7 @@ function IdeaMeta({ idea }: { idea: MockIdea }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <StagePill stage={idea.stage} />
+      <CategoryLabel name={idea.categoryName} />
       <span
         className={`font-mono text-[11.5px] ${
           idea.agedDays > 30 ? "text-[var(--stage-aging-fg)]" : "text-muted-foreground"
@@ -263,10 +277,12 @@ function IdeaDetail({
   idea,
   comments,
   brainstorms,
+  discussions,
   commentError,
   researchError,
   brainstormError,
   evaluateError,
+  discussError,
   editError,
   scoreError,
   reviewError,
@@ -275,10 +291,12 @@ function IdeaDetail({
   idea: MockIdea;
   comments: ReturnType<typeof toCommentView>[];
   brainstorms: ReturnType<typeof toBrainstormView>[];
+  discussions: NonNullable<ReturnType<typeof toChatMessageView>>[];
   commentError?: string;
   researchError?: string;
   brainstormError?: string;
   evaluateError?: string;
+  discussError?: string;
   editError?: string;
   scoreError?: string;
   reviewError?: string;
@@ -287,7 +305,12 @@ function IdeaDetail({
   const [editing, setEditing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const tab = ideaDetailTabFromHash(location.hash);
+  // The URL hash is not sent to the server, so the first paint stays on 概要.
+  const [hashReady, setHashReady] = useState(false);
+  useEffect(() => {
+    setHashReady(true);
+  }, []);
+  const tab = hashReady ? ideaDetailTabFromHash(location.hash) : "overview";
   const history = buildIdeaHistory(idea, brainstorms);
 
   function setTab(next: IdeaDetailTab) {
@@ -339,6 +362,10 @@ function IdeaDetail({
           </div>
           <IdeaDetailTabs tab={tab} onTab={setTab} commentCount={comments.length} />
         </header>
+
+        <div className="mt-3 lg:hidden">
+          <IdeaCopyButton idea={idea} />
+        </div>
 
         {tab === "overview" ? (
           <IdeaDetailSwipe
@@ -423,21 +450,23 @@ function IdeaDetail({
           </div>
         ) : null}
 
+        {tab === "discuss" ? (
+          <IdeaDiscuss idea={idea} messages={discussions} error={discussError} />
+        ) : null}
+
         {tab === "comments" ? <IdeaComments comments={comments} error={commentError} /> : null}
       </article>
 
       <aside className="hidden w-72 shrink-0 overflow-y-auto border-l border-border px-4 py-6 lg:block">
-        <div className="mb-4 flex items-center justify-end gap-2">
-          <span className="ui-btn-secondary pointer-events-none h-8 opacity-60">
-            <IconShare className="h-3.5 w-3.5" />
-            共有
-          </span>
+        <div className="mb-4">
+          <IdeaCopyButton idea={idea} />
         </div>
         <h2 className="text-[13.5px] font-semibold">このアイデアの操作</h2>
         <div className="mt-2 flex flex-col gap-1.5">
           <IdeaResearchControls idea={idea} error={researchError} />
           <IdeaBrainstormControls idea={idea} error={brainstormError} />
           <IdeaEvaluateControls idea={idea} error={evaluateError} />
+          <IdeaDiscussLink ideaId={idea.id} />
           <Link
             to={`/app/merge?from=${idea.id}`}
             className="ui-btn-secondary justify-start px-3 text-[13px]"

@@ -29,7 +29,7 @@ UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previ
 ```bash
 pnpm install
 cp .dev.vars.example .dev.vars   # set LOCAL_DEV_USER_EMAIL to your address
-pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms / saved views / inspirations / research_sources
+pnpm db:migrate:local            # D1 `todos` + `ideas` + comments / brainstorms / chat / saved views / inspirations / research_sources
 pnpm dev
 ```
 
@@ -42,7 +42,7 @@ Playwright (mocked auth, local D1): `pnpm test:e2e`. See [docs/spec/e2e.md](docs
 | `/app`              | Mobile home: 新規アイデア. Desktop → `/app/list`                                                                                                                |
 | `/app/capture`      | Compose alias (desktop opens the list modal)                                                                                                                    |
 | `/app/list`         | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?tab=candidates`, `?tab=tried`, `?view=board`, `?stage=`, `?tag=`, `?q=`, `?v=`, `?sort=`, `?dir=` |
-| `/app/ideas/:id`    | Idea detail tabs 概要 / リサーチ / AI/履歴 / コメント; 融合 as a per-idea action                                                                                |
+| `/app/ideas/:id`    | Idea detail tabs 概要 / リサーチ / AI/履歴 / 相談 / コメント; 融合 as a per-idea action                                                                         |
 | `/app/inspirations` | Inspiration gallery (URL / memo + OGP preview). First-class nav (mobile インスピ tab). Header **+** adds a card. Detail can kick **AIブレスト** into a new idea |
 | `/app/analytics`    | Light counts from D1 idea rows (stage + created per day). First-class nav (mobile 分析 tab)                                                                     |
 | `/app/merge`        | Merge deep link (not in primary nav)                                                                                                                            |
@@ -70,7 +70,7 @@ Included:
 - **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity. Settings shows a stub, not a working Access editor.
 - **Ideas:** D1 `ideas` table. **作成** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption. Detail **コメント** persist in `idea_comments` (mock author). List rows show tags, stage, updated, aging, comment count, and research. Named **ビュー** persist in `saved_views`.
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. Not applied to idea rows.
-- **Workers AI / Jev:** per-idea research and brainstorm on `/app/ideas/:id` from **着想** onward stay on Workers AI. **リサーチ** also fetches a few public web results for **先行事例** (DuckDuckGo Lite / HTML, Bing, Instant Answer; Brave Search when `SEARCH_API_KEY` is set). Search failure is fail-soft (**Web検索未取得**) and still saves model notes; misses are structured logs and do not include the API key. **作成** auto-tags and, in the background, **AI評価** prefer TypeSafe Jev (`jev-latest`) when `TYPESAFE_API_KEY` is set, else the Workers AI fast/standard models. Evaluation failure does not fail create. Archive stays blocked. Failures still create the idea and show **自動タグなし**. Binding `AI` in `wrangler.jsonc`. Relation / evolution still copy-only.
+- **Workers AI / Jev:** per-idea research, brainstorm, and **相談** (AIと話す) on `/app/ideas/:id` from **着想** onward stay on Workers AI. Discuss is not a Jev path and is not an MCP tool. **リサーチ** also fetches a few public web results for **先行事例** (DuckDuckGo Lite / HTML, Bing, Instant Answer; Brave Search when `SEARCH_API_KEY` is set). Search failure is fail-soft (**Web検索未取得**) and still saves model notes; misses are structured logs and do not include the API key. **作成** auto-tags and, in the background, **AI評価** prefer TypeSafe Jev (`jev-latest`) when `TYPESAFE_API_KEY` is set, else the Workers AI fast/standard models. Evaluation failure does not fail create. Archive stays blocked. Failures still create the idea and show **自動タグなし**. Binding `AI` in `wrangler.jsonc`. Relation / evolution still copy-only.
 - Sample `/api/todos` remains for template verification. `/api/ideas` mirrors that CRUD style (Access middleware still on `/api`).
 
 Env template: `.dev.vars.example`. Do not commit secret values. Production: `wrangler secret put`.

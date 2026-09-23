@@ -46,6 +46,39 @@ test("adds a comment on detail", async ({ page }, testInfo) => {
   await expect(visible(page.getByText(note))).toBeVisible();
 });
 
+test("copies the idea title and body", async ({ page }, testInfo) => {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  const title = uniqueLabel("E2Eコピー");
+  const body = "説明文です。";
+  await createIdea(page, testInfo.project.name, title, body);
+  await openIdeaFromList(page, title, testInfo.project.name);
+  await visible(page.getByRole("button", { name: "説明を含めてコピー" })).click();
+  await expect(visible(page.getByText("コピーしました", { exact: true }))).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain(title);
+  expect(copied).toContain(body);
+  expect(copied).toContain("段階: 着想");
+});
+
+test("opens the discuss tab on idea detail", async ({ page }, testInfo) => {
+  const title = uniqueLabel("E2E相談");
+  const note = uniqueLabel("E2E質問");
+  await createIdea(page, testInfo.project.name, title, "相談タブを開きます。");
+  await openIdeaFromList(page, title, testInfo.project.name);
+  await visible(page.getByRole("button", { name: "相談", exact: true })).click();
+  await expect(visible(page.getByRole("heading", { name: "AIと話す" }))).toBeVisible();
+  await expect(visible(page.getByRole("button", { name: "LPにするなら" }))).toBeVisible();
+  await expect(visible(page.getByRole("button", { name: "法的リスクは？" }))).toBeVisible();
+  await page.locator("#idea-discuss").fill(note);
+  await visible(page.getByRole("button", { name: "送信", exact: true })).click();
+  await expect(
+    visible(page.getByText("相談の返信に失敗しました。時間をおいて再度お試しください。")),
+  ).toBeVisible({ timeout: 30_000 });
+  await page.reload();
+  await visible(page.getByRole("button", { name: "相談", exact: true })).click();
+  await expect(visible(page.getByText(note))).toBeVisible();
+});
+
 test("research control is present and fails softly without paid APIs", async ({
   page,
 }, testInfo) => {

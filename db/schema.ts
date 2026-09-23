@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // テンプレート由来のサンプル CRUD。アイデア本文の暗号化保存（field-crypto）は未配線。
 
@@ -15,6 +15,23 @@ export const todos = sqliteTable("todos", {
 export type Todo = typeof todos.$inferSelect;
 export type NewTodo = typeof todos.$inferInsert;
 
+/** Coarse buckets (執筆 / 事業 / 組織改善, plus names added from the picker). Not tags. */
+export const categories = sqliteTable(
+  "categories",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [uniqueIndex("categories_name_unique").on(table.name)],
+);
+
+export type Category = typeof categories.$inferSelect;
+export type NewCategory = typeof categories.$inferInsert;
+
 /** Shared workspace ideas. No per-user ownership, no field encryption this pass. */
 export const ideas = sqliteTable("ideas", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -22,6 +39,7 @@ export const ideas = sqliteTable("ideas", {
   body: text("body").notNull().default(""),
   stage: text("stage").notNull().default("spark"),
   tags: text("tags").notNull().default("[]"),
+  categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
@@ -90,6 +108,27 @@ export const ideaBrainstorms = sqliteTable(
 
 export type IdeaBrainstorm = typeof ideaBrainstorms.$inferSelect;
 export type NewIdeaBrainstorm = typeof ideaBrainstorms.$inferInsert;
+
+/** Per-idea chat with Workers AI. Chronological user / assistant turns. */
+export const ideaChatMessages = sqliteTable(
+  "idea_chat_messages",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    ideaId: integer("idea_id")
+      .notNull()
+      .references(() => ideas.id),
+    role: text("role").notNull(),
+    body: text("body").notNull(),
+    model: text("model"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [index("idea_chat_messages_idea_created_idx").on(table.ideaId, table.createdAt)],
+);
+
+export type IdeaChatMessage = typeof ideaChatMessages.$inferSelect;
+export type NewIdeaChatMessage = typeof ideaChatMessages.$inferInsert;
 
 /** Named list filters (stage / tag / query / tab / layout). JSON in `filters`. */
 export const savedViews = sqliteTable("saved_views", {

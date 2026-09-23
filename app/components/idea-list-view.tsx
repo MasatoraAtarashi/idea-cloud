@@ -25,7 +25,9 @@ import {
 } from "../lib/list-sort";
 import { CANDIDATE_DEFAULT_DAYS } from "../lib/review";
 import { useListViewSearch } from "../lib/use-list-view-search";
+import type { IdeaCategory } from "../lib/category";
 import { BrandMark } from "./brand";
+import { CategoryLabel } from "./category-field";
 import { IdeaHeaderCreateButton } from "./header-create";
 import { MobileScreenHeader } from "./mobile-header";
 import { IconSearch } from "./icons";
@@ -60,9 +62,11 @@ function toggleValue<T>(current: T[], value: T): T[] {
 export function IdeaListView({
   ideas,
   savedViews = [],
+  categories = [],
 }: {
   ideas: MockIdea[];
   savedViews?: SavedViewItem[];
+  categories?: IdeaCategory[];
 }) {
   const { open } = useCompose();
   const listState = useListViewSearch();
@@ -73,6 +77,7 @@ export function IdeaListView({
     stages,
     tags,
     minDays,
+    categoryId,
     savedViewId,
     sortKey,
     sortDir,
@@ -98,13 +103,17 @@ export function IdeaListView({
         stages,
         tags,
         minDays: tab === "candidates" ? 0 : minDays,
+        categoryId,
       }),
       sort,
     );
-  }, [ideas, tab, candidateDays, query, stages, tags, minDays, sortKey, sortDir]);
+  }, [ideas, tab, candidateDays, query, stages, tags, minDays, categoryId, sortKey, sortDir]);
   const agingCount = ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe").length;
   const candidateCount = ideas.filter((idea) => isReviewCandidate(idea, candidateDays)).length;
   const triedCount = ideas.filter((idea) => isTriedIdea(idea)).length;
+
+  const categoryFilterLabel =
+    categories.find((category) => category.id === categoryId)?.name ?? "すべて";
 
   function stageFilterLabel() {
     if (stages.length === 0) return "すべて";
@@ -195,6 +204,40 @@ export function IdeaListView({
               </button>
             ))}
           </div>
+          {categories.length > 0 ? (
+            <>
+              <p className="mt-3 font-mono text-[11px] text-muted-foreground">カテゴリ</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => update({ categoryId: null })}
+                  className={`min-h-11 rounded-full px-3 text-[12.5px] ${
+                    categoryId == null
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  すべて
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() =>
+                      update({ categoryId: categoryId === category.id ? null : category.id })
+                    }
+                    className={`min-h-11 rounded-full border px-3 text-[12.5px] ${
+                      categoryId === category.id
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border-control bg-card text-foreground"
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
           {availableTags.length > 0 ? (
             <>
               <p className="mt-3 font-mono text-[11px] text-muted-foreground">タグ</p>
@@ -219,7 +262,18 @@ export function IdeaListView({
           <div className="mt-3">
             <ListSavedViews
               views={savedViews}
-              state={{ tab, view, query, stages, tags, minDays, savedViewId, sortKey, sortDir }}
+              state={{
+                tab,
+                view,
+                query,
+                stages,
+                tags,
+                minDays,
+                categoryId,
+                savedViewId,
+                sortKey,
+                sortDir,
+              }}
               nameFieldId="saved-view-name-mobile"
             />
             <p className="mt-3 font-mono text-[11px] text-muted-foreground">熟成日数</p>
@@ -255,7 +309,18 @@ export function IdeaListView({
       <div className="hidden h-[46px] shrink-0 items-center gap-2 border-b border-border px-4 md:flex">
         <ListSavedViews
           views={savedViews}
-          state={{ tab, view, query, stages, tags, minDays, savedViewId, sortKey, sortDir }}
+          state={{
+            tab,
+            view,
+            query,
+            stages,
+            tags,
+            minDays,
+            categoryId,
+            savedViewId,
+            sortKey,
+            sortDir,
+          }}
           nameFieldId="saved-view-name-desktop"
         />
         <details className="ui-menu relative">
@@ -283,6 +348,35 @@ export function IdeaListView({
             ))}
           </div>
         </details>
+        {categories.length > 0 ? (
+          <details className="ui-menu relative">
+            <summary className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px]">
+              <span className="text-muted-foreground">カテゴリ</span>
+              <span className="font-medium">{categoryFilterLabel}</span>
+            </summary>
+            <div className="ui-float absolute left-0 z-20 mt-1 w-52 py-1">
+              <button
+                type="button"
+                onClick={() => update({ categoryId: null })}
+                className="block w-full px-3 py-1.5 text-left text-[13px] hover:bg-row-hover"
+              >
+                すべて
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() =>
+                    update({ categoryId: categoryId === category.id ? null : category.id })
+                  }
+                  className="block w-full px-3 py-1.5 text-left text-[13px] hover:bg-row-hover"
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </details>
+        ) : null}
         {availableTags.length > 0 ? (
           <details className="ui-menu relative">
             <summary className="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px]">
@@ -445,6 +539,7 @@ export function IdeaListView({
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                           <StagePill stage={idea.stage} />
+                          <CategoryLabel name={idea.categoryName} />
                           <span
                             className={`font-mono text-[11px] ${
                               idea.agedDays > 30
@@ -536,6 +631,11 @@ export function IdeaListView({
                             <p className="idea-title-wrap ui-title line-clamp-2 text-[13px] leading-snug text-foreground">
                               {idea.title}
                             </p>
+                            {idea.categoryName ? (
+                              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                {idea.categoryName}
+                              </p>
+                            ) : null}
                             {excerpt ? (
                               <p className="mt-px line-clamp-1 text-[11.5px] leading-tight text-muted-foreground">
                                 {excerpt}

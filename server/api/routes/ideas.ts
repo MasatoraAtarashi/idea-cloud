@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import { categoryNameMap, resolveCategoryId } from "../../../db/categories";
 import { createDb } from "../../../db/client";
 import {
   COMMENT_BODY_MAX,
@@ -14,6 +15,7 @@ import {
   getIdeaRow,
   IDEA_BODY_MAX,
   ideaJson,
+  ideaJsonWithCategory,
   insertIdea,
   listIdeaRows,
   saveHumanScore,
@@ -28,6 +30,11 @@ import {
   getLatestBrainstorm,
   listBrainstormsForIdea,
 } from "../../../db/brainstorms";
+import {
+  chatMessageJson,
+  DISCUSS_BODY_MAX,
+  listChatMessagesForIdea,
+} from "../../../db/discussions";
 import { resolveCommentAuthor, STAGES } from "../../../app/data/mock";
 import {
   parseReflectionStatus,
@@ -39,6 +46,7 @@ import { REVIEW_STATUSES } from "../../../app/lib/review";
 import { HUMAN_SCORE_NOTE_MAX } from "../../../app/lib/scores";
 import { bindResearchAi, researchIdea, searchApiKeyFromEnv } from "../../ai/research";
 import { brainstormIdea } from "../../ai/brainstorm";
+import { discussIdea } from "../../ai/discuss";
 import { evaluateIdea, scheduleCreateEvaluation } from "../../ai/evaluate";
 import { resolveCreateTags } from "../../ai/tags";
 import { typesafeApiKeyFromEnv } from "../../ai/typesafe";
@@ -49,6 +57,8 @@ const createIdeaSchema = z.object({
   body: z.string().trim().min(1).max(IDEA_BODY_MAX),
   stage: z.enum(STAGES).optional(),
   tags: z.array(z.string().trim().min(1)).max(8).optional(),
+  categoryId: z.number().int().positive().nullable().optional(),
+  categoryName: z.string().optional(),
 });
 
 const updateIdeaSchema = z
@@ -57,6 +67,8 @@ const updateIdeaSchema = z
     title: z.string().trim().min(1).max(200).optional(),
     body: z.string().max(IDEA_BODY_MAX).optional(),
     tags: z.array(z.string().trim().min(1)).max(8).optional(),
+    categoryId: z.number().int().positive().nullable().optional(),
+    categoryName: z.string().optional(),
     humanScore: z.number().int().min(1).max(5).optional(),
     humanScoreNote: z.string().max(HUMAN_SCORE_NOTE_MAX).optional(),
     reviewStatus: z.enum(REVIEW_STATUSES).optional(),
@@ -70,6 +82,8 @@ const updateIdeaSchema = z
       value.title !== undefined ||
       value.body !== undefined ||
       value.tags !== undefined ||
+      value.categoryId !== undefined ||
+      value.categoryName !== undefined ||
       value.humanScore !== undefined ||
       value.reviewStatus !== undefined ||
       value.reflectionStatus !== undefined ||
@@ -125,8 +139,14 @@ export const ideasRoute = new Hono<AppEnv>()
       db,
       rows.map((row) => row.id),
     );
+    const names = await categoryNameMap(db);
     return c.json({
-      items: rows.map((row) => ideaJson(row, { commentCount: counts.get(row.id) ?? 0 })),
+      items: rows.map((row) =>
+        ideaJson(row, {
+          commentCount: counts.get(row.id) ?? 0,
+          categoryName: row.categoryId != null ? (names.get(row.categoryId) ?? null) : null,
+        }),
+      ),
     });
   })
   .get("/:id/comments", zValidator("param", idParamSchema), async (c) => {
@@ -179,23 +199,31 @@ export const ideasRoute = new Hono<AppEnv>()
     const counts = await commentCountsByIdeaIds(db, [id]);
     const brainstorm = await getLatestBrainstorm(db, id);
     return c.json({
-      item: ideaJson(row, {
+      item: await ideaJsonWithCategory(db, row, {
         commentCount: counts.get(id) ?? 0,
         brainstorm: brainstorm ?? null,
       }),
     });
   })
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
-    const { body, stage, tags } = c.req.valid("json");
+    const { body, stage, tags, categoryId, categoryName } = c.req.valid("json");
     logCreatePrerequisites(c.env);
     const db = createDb(c.env.DB);
+    const category = await resolveCategoryId(db, { categoryId, categoryName });
+    if ("error" in category) {
+      return c.json({ error: category.error }, 400);
+    }
     const resolvedTags = await resolveCreateTags({
       ai: bindResearchAi(c.env.AI),
       text: body,
       tags: tags ?? [],
       typesafeApiKey: typesafeApiKeyFromEnv(c.env),
     });
-    const created = await insertIdea(db, body, { stage, tags: resolvedTags });
+    const created = await insertIdea(db, body, {
+      stage,
+      tags: resolvedTags,
+      categoryId: category.id,
+    });
     await safeUpsertInspirationsFromIdeaText(db, body);
     scheduleCreateEvaluation({
       waitUntil: (promise) => c.executionCtx.waitUntil(promise),
@@ -205,7 +233,7 @@ export const ideasRoute = new Hono<AppEnv>()
       stage: created.stage,
       typesafeApiKey: typesafeApiKeyFromEnv(c.env),
     });
-    return c.json({ item: ideaJson(created) }, 201);
+    return c.json({ item: await ideaJsonWithCategory(db, created) }, 201);
   })
   .patch(
     "/:id",
@@ -250,16 +278,32 @@ export const ideasRoute = new Hono<AppEnv>()
         patch.stage !== undefined ||
         patch.title !== undefined ||
         patch.body !== undefined ||
-        patch.tags !== undefined
+        patch.tags !== undefined ||
+        patch.categoryId !== undefined ||
+        patch.categoryName !== undefined
       ) {
+        const category =
+          patch.categoryId !== undefined || patch.categoryName !== undefined
+            ? await resolveCategoryId(db, {
+                categoryId: patch.categoryId,
+                categoryName: patch.categoryName,
+              })
+            : undefined;
+        if (category && "error" in category) {
+          return c.json({ error: category.error }, 400);
+        }
         const current = await getIdeaRow(db, id);
         const updated =
-          patch.title !== undefined || patch.body !== undefined || patch.tags !== undefined
+          patch.title !== undefined ||
+          patch.body !== undefined ||
+          patch.tags !== undefined ||
+          category
             ? await updateIdeaFields(db, id, {
                 title: patch.title,
                 body: patch.body,
                 tags: patch.tags,
                 stage: patch.stage,
+                ...(category ? { categoryId: category.id } : {}),
               })
             : patch.stage !== undefined
               ? await updateIdeaStage(db, id, patch.stage)
@@ -273,13 +317,13 @@ export const ideasRoute = new Hono<AppEnv>()
             [updated.title, updated.body].filter(Boolean).join("\n"),
           );
         }
-        return c.json({ item: ideaJson(updated) });
+        return c.json({ item: await ideaJsonWithCategory(db, updated) });
       }
       const row = await getIdeaRow(db, id);
       if (!row) {
         return c.json({ error: "Not Found" }, 404);
       }
-      return c.json({ item: ideaJson(row) });
+      return c.json({ item: await ideaJsonWithCategory(db, row) });
     },
   )
   .post("/:id/research", zValidator("param", idParamSchema), async (c) => {
@@ -300,7 +344,7 @@ export const ideasRoute = new Hono<AppEnv>()
     if (!result.ok) {
       return c.json({ error: result.error }, result.status);
     }
-    return c.json({ item: ideaJson(result.idea) });
+    return c.json({ item: await ideaJsonWithCategory(db, result.idea) });
   })
   .get("/:id/brainstorms", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
@@ -335,12 +379,48 @@ export const ideasRoute = new Hono<AppEnv>()
     }
     const counts = await commentCountsByIdeaIds(db, [id]);
     return c.json({
-      item: ideaJson(row, {
+      item: await ideaJsonWithCategory(db, row, {
         commentCount: counts.get(id) ?? 0,
         brainstorm: result.brainstorm,
       }),
       brainstorm: brainstormJson(result.brainstorm),
     });
+  })
+  .get("/:id/discussions", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const row = await getIdeaRow(db, id);
+    if (!row) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    const items = await listChatMessagesForIdea(db, id);
+    return c.json({ items: items.map(chatMessageJson) });
+  })
+  .post("/:id/discuss", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    let payload: { body?: unknown; preset?: unknown; model?: unknown } = {};
+    try {
+      payload = (await c.req.json()) as typeof payload;
+    } catch {
+      return c.json({ error: "Bad Request" }, 400);
+    }
+    const body = typeof payload.body === "string" ? payload.body : "";
+    if (body.trim().length > DISCUSS_BODY_MAX) {
+      return c.json({ error: "長すぎます" }, 400);
+    }
+    const db = createDb(c.env.DB);
+    const result = await discussIdea({
+      db,
+      ai: bindResearchAi(c.env.AI),
+      ideaId: id,
+      body,
+      preset: typeof payload.preset === "string" ? payload.preset : undefined,
+      model: typeof payload.model === "string" ? payload.model : undefined,
+    });
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json({ items: result.messages.map(chatMessageJson) });
   })
   .post("/:id/evaluate", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
@@ -360,5 +440,5 @@ export const ideasRoute = new Hono<AppEnv>()
     if (!result.ok) {
       return c.json({ error: result.error }, result.status);
     }
-    return c.json({ item: ideaJson(result.idea) });
+    return c.json({ item: await ideaJsonWithCategory(db, result.idea) });
   });

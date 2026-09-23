@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs } from "react-router";
+import { resolveCategoryId } from "../../db/categories";
 import { createDb } from "../../db/client";
 import { getIdeaRow, IDEA_BODY_MAX, updateIdeaFields } from "../../db/ideas";
 import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
@@ -42,14 +43,22 @@ export async function editIdeaAction({
     .map((tag) => tag.trim())
     .filter((tag) => tag.length > 0)
     .slice(0, 8);
+  const categoryIdRaw = String(form.get("categoryId") ?? "").trim();
+  const categoryId = /^\d+$/.test(categoryIdRaw) ? Number(categoryIdRaw) : null;
+  const categoryName = String(form.get("categoryName") ?? "");
 
   const db = createDb(context.cloudflare.env.DB);
+  const category = await resolveCategoryId(db, { categoryId, categoryName });
+  if ("error" in category) {
+    return { error: category.error, intent: "edit" } satisfies EditIdeaActionData;
+  }
   const current = await getIdeaRow(db, ideaId);
   const updated = await updateIdeaFields(db, ideaId, {
     title: title || body.slice(0, 200) || "無題",
     body: body || title,
     tags,
     stage,
+    categoryId: category.id,
   });
   if (!updated) {
     return { error: "見つかりません", intent: "edit" } satisfies EditIdeaActionData;

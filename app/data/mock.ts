@@ -68,6 +68,9 @@ export interface MockIdea {
   body: string;
   stage: Stage;
   tags: string[];
+  /** Optional coarse bucket. Absent on older fixtures. */
+  categoryId?: number | null;
+  categoryName?: string | null;
   author: string;
   team: string;
   createdAt: string;
@@ -167,17 +170,26 @@ export function isTriedIdea(idea: MockIdea): boolean {
 
 export function filterIdeas(
   ideas: MockIdea[],
-  opts: { query: string; stages: Stage[]; tags: string[]; minDays?: number },
+  opts: {
+    query: string;
+    stages: Stage[];
+    tags: string[];
+    minDays?: number;
+    categoryId?: number | null;
+  },
 ): MockIdea[] {
   const query = opts.query.trim().toLowerCase();
   const minDays = opts.minDays && opts.minDays > 0 ? opts.minDays : 0;
+  const categoryId = opts.categoryId && opts.categoryId > 0 ? opts.categoryId : 0;
   return ideas.filter((idea) => {
     if (query) {
-      const haystack = `${idea.title} ${idea.body} ${idea.tags.join(" ")}`.toLowerCase();
+      const haystack =
+        `${idea.title} ${idea.body} ${idea.categoryName ?? ""} ${idea.tags.join(" ")}`.toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     if (opts.stages.length > 0 && !opts.stages.includes(idea.stage)) return false;
     if (opts.tags.length > 0 && !opts.tags.some((tag) => idea.tags.includes(tag))) return false;
+    if (categoryId > 0 && idea.categoryId !== categoryId) return false;
     if (minDays > 0 && idea.agedDays < minDays) return false;
     return true;
   });

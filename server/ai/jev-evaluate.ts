@@ -111,7 +111,7 @@ export function formatJevEvaluationNotes(axes: JevEvaluateAxes, aiScore: number)
     "",
     "リスク",
     `- 大きさ: ${formatScoreLine(axes.risk)}`,
-    `- 進める価値: ${axes.pursue.noul.toFixed(2)}`,
+    `- 進める価値: ${formatPursue(axes.pursue.noul)}`,
     "",
     "新規性",
     `- ${formatScoreLine(axes.novelty)}`,
@@ -124,9 +124,14 @@ export function formatJevEvaluationNotes(axes: JevEvaluateAxes, aiScore: number)
 }
 
 function formatScoreLine(answer: ScoreAnswer): string {
-  const label = scoreLevelLabel(answer);
-  const value = answer.score.toFixed(1);
-  return label ? `${label}（${value}）` : value;
+  return scoreLevelLabel(answer) || "判定なし";
+}
+
+function formatPursue(noul: number): string {
+  if (!Number.isFinite(noul)) return "不明";
+  if (noul >= 0.67) return "高め";
+  if (noul >= 0.34) return "ふつう";
+  return "低め";
 }
 
 export function mapJevEvaluation(axes: JevEvaluateAxes, model = JEV_MODEL): JevEvaluateMapped {

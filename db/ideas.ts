@@ -5,9 +5,10 @@ import { parseReflectionStatus, type ReflectionStatus } from "../app/lib/reflect
 import { parseResearchSources } from "../app/lib/research-sources";
 import { parseReviewStatus, type ReviewStatus } from "../app/lib/review";
 import { getLatestBrainstorm, type IdeaBrainstorm } from "./brainstorms";
+import { categoryNameFor, categoryNameMap } from "./categories";
 import { commentCountsByIdeaIds } from "./comments";
 import type { Db } from "./client";
-import { ideaBrainstorms, ideaComments, ideas, type Idea } from "./schema";
+import { ideaBrainstorms, ideaChatMessages, ideaComments, ideas, type Idea } from "./schema";
 
 export type { Idea };
 
@@ -43,7 +44,11 @@ export function splitTitleBody(text: string): { title: string; body: string } {
 
 export function toIdeaView(
   row: Idea,
-  extras?: { commentCount?: number; brainstorm?: IdeaBrainstorm | null },
+  extras?: {
+    commentCount?: number;
+    brainstorm?: IdeaBrainstorm | null;
+    categoryName?: string | null;
+  },
 ): MockIdea {
   return {
     id: String(row.id),
@@ -51,6 +56,8 @@ export function toIdeaView(
     body: row.body,
     stage: asStage(row.stage),
     tags: parseTags(row.tags),
+    categoryId: row.categoryId ?? null,
+    categoryName: extras?.categoryName ?? null,
     author: "",
     team: "",
     createdAt: row.createdAt,
@@ -82,7 +89,11 @@ export function toIdeaView(
 
 export function ideaJson(
   row: Idea,
-  extras?: { commentCount?: number; brainstorm?: IdeaBrainstorm | null },
+  extras?: {
+    commentCount?: number;
+    brainstorm?: IdeaBrainstorm | null;
+    categoryName?: string | null;
+  },
 ) {
   return {
     id: row.id,
@@ -90,6 +101,8 @@ export function ideaJson(
     body: row.body,
     stage: asStage(row.stage),
     tags: parseTags(row.tags),
+    categoryId: row.categoryId ?? null,
+    categoryName: extras?.categoryName ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt || row.createdAt,
     commentCount: extras?.commentCount ?? 0,
@@ -116,17 +129,36 @@ export function ideaJson(
   };
 }
 
+export async function ideaJsonWithCategory(
+  db: Db,
+  row: Idea,
+  extras?: { commentCount?: number; brainstorm?: IdeaBrainstorm | null },
+) {
+  return ideaJson(row, {
+    ...extras,
+    categoryName: await categoryNameFor(db, row.categoryId),
+  });
+}
+
 export async function listIdeaRows(db: Db): Promise<Idea[]> {
   return db.select().from(ideas).orderBy(desc(ideas.id));
 }
 
 export async function listIdeaViews(db: Db): Promise<MockIdea[]> {
   const rows = await listIdeaRows(db);
-  const counts = await commentCountsByIdeaIds(
-    db,
-    rows.map((row) => row.id),
+  const [counts, names] = await Promise.all([
+    commentCountsByIdeaIds(
+      db,
+      rows.map((row) => row.id),
+    ),
+    categoryNameMap(db),
+  ]);
+  return rows.map((row) =>
+    toIdeaView(row, {
+      commentCount: counts.get(row.id) ?? 0,
+      categoryName: row.categoryId != null ? (names.get(row.categoryId) ?? null) : null,
+    }),
   );
-  return rows.map((row) => toIdeaView(row, { commentCount: counts.get(row.id) ?? 0 }));
 }
 
 export async function getIdeaRow(db: Db, id: number): Promise<Idea | undefined> {
@@ -144,18 +176,28 @@ export async function getIdeaView(db: Db, id: string | undefined): Promise<MockI
   return toIdeaView(row, {
     commentCount: counts.get(row.id) ?? 0,
     brainstorm: brainstorm ?? null,
+    categoryName: await categoryNameFor(db, row.categoryId),
   });
 }
 
 export async function insertIdeaRow(
   db: Db,
-  data: { title: string; body: string; stage?: Stage; tags?: string[] },
+  data: { title: string; body: string; stage?: Stage; tags?: string[]; categoryId?: number | null },
 ): Promise<Idea> {
   const title = data.title.trim().slice(0, 200) || "無題";
   const body = data.body;
   const stage = data.stage ?? "spark";
   const tags = JSON.stringify(data.tags ?? []);
-  const [created] = await db.insert(ideas).values({ title, body, stage, tags }).returning();
+  const [created] = await db
+    .insert(ideas)
+    .values({
+      title,
+      body,
+      stage,
+      tags,
+      ...(data.categoryId != null ? { categoryId: data.categoryId } : {}),
+    })
+    .returning();
   if (!created) {
     throw new Error("Failed to insert idea");
   }
@@ -165,10 +207,16 @@ export async function insertIdeaRow(
 export async function insertIdea(
   db: Db,
   text: string,
-  extras?: { stage?: Stage; tags?: string[] },
+  extras?: { stage?: Stage; tags?: string[]; categoryId?: number | null },
 ): Promise<Idea> {
   const { title, body } = splitTitleBody(text);
-  return insertIdeaRow(db, { title, body, stage: extras?.stage, tags: extras?.tags });
+  return insertIdeaRow(db, {
+    title,
+    body,
+    stage: extras?.stage,
+    tags: extras?.tags,
+    categoryId: extras?.categoryId,
+  });
 }
 
 export async function updateIdeaStage(db: Db, id: number, stage: Stage): Promise<Idea | undefined> {
@@ -205,7 +253,13 @@ export async function saveIdeaResearch(
 export async function updateIdeaFields(
   db: Db,
   id: number,
-  data: { title?: string; body?: string; tags?: string[]; stage?: Stage },
+  data: {
+    title?: string;
+    body?: string;
+    tags?: string[];
+    stage?: Stage;
+    categoryId?: number | null;
+  },
 ): Promise<Idea | undefined> {
   const [updated] = await db
     .update(ideas)
@@ -214,6 +268,7 @@ export async function updateIdeaFields(
       ...(data.body !== undefined ? { body: data.body } : {}),
       ...(data.tags !== undefined ? { tags: JSON.stringify(data.tags) } : {}),
       ...(data.stage !== undefined ? { stage: data.stage } : {}),
+      ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
       updatedAt: sql`(datetime('now'))`,
     })
     .where(eq(ideas.id, id))
@@ -283,6 +338,7 @@ export async function deleteIdea(db: Db, id: number): Promise<boolean> {
   if (!existing) return false;
   await db.delete(ideaComments).where(eq(ideaComments.ideaId, id));
   await db.delete(ideaBrainstorms).where(eq(ideaBrainstorms.ideaId, id));
+  await db.delete(ideaChatMessages).where(eq(ideaChatMessages.ideaId, id));
   await db.delete(ideas).where(eq(ideas.id, id));
   return true;
 }

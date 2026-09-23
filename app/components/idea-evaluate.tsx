@@ -1,6 +1,12 @@
 import { useFetcher } from "react-router";
 import type { MockIdea } from "../data/mock";
 import { canRunIdeaAi, EVALUATE_ARCHIVE_ERROR } from "../lib/idea-ai";
+import {
+  AI_SCORE_LABEL,
+  aiScoreMeaning,
+  parseEvaluationNotes,
+  type EvaluationSectionLabel,
+} from "../lib/evaluation-notes";
 import { formatDateJa } from "../lib/format";
 import { useInstantPending } from "../lib/use-instant-pending";
 import {
@@ -93,34 +99,96 @@ export function IdeaEvaluateControls({
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
       {compact ? null : (
         <p className="text-[11.5px] leading-snug text-muted-foreground">
-          強み・リスク・新規性・次の一手と 1–5 の点数です。Jev 利用時は分解スコアです。
+          強み・リスク・新規性・次の一手と、1–5 の{AI_SCORE_LABEL}です。
         </p>
       )}
     </fetcher.Form>
   );
 }
 
-export function IdeaEvaluateNotes({ idea, id }: { idea: MockIdea; id?: string }) {
-  const modelLabel = evaluationModelLabel(idea.aiEvaluationModel);
+const SECTION_TONE: Record<EvaluationSectionLabel, string> = {
+  強み: "bg-[var(--stage-ripe-bg)]",
+  リスク: "bg-[var(--stage-aging-bg)]",
+  新規性: "bg-[var(--stage-spark-bg)]",
+  次の一手: "bg-[var(--stage-selected-bg)]",
+};
 
+export function IdeaEvaluationView({
+  notes,
+  score,
+  model,
+  at,
+}: {
+  notes: string;
+  score?: number | null;
+  model?: string | null;
+  at?: string | null;
+}) {
+  const parsed = notes.trim() ? parseEvaluationNotes(notes) : null;
+  const shownScore = score ?? parsed?.score ?? null;
+  const meaning = aiScoreMeaning(shownScore);
+  const modelLabel = evaluationModelLabel(model);
+
+  return (
+    <div>
+      {shownScore ? (
+        <div className="flex items-center gap-3">
+          <p className="flex h-12 w-12 items-center justify-center rounded-md bg-[var(--stage-spark-bg)] text-[22px] font-semibold tabular-nums text-[var(--stage-spark-fg)]">
+            {shownScore}
+          </p>
+          <div>
+            <p className="text-[13.5px] font-semibold">
+              {AI_SCORE_LABEL}
+              <span className="ml-1 font-normal text-muted-foreground">/ 5</span>
+            </p>
+            {meaning ? <p className="text-[12.5px] text-muted-foreground">{meaning}</p> : null}
+          </div>
+        </div>
+      ) : null}
+      {parsed ? (
+        <div className={`${shownScore ? "mt-3" : ""} space-y-2`}>
+          {parsed.sections.map((section) => (
+            <section
+              key={section.label}
+              className={`rounded-md px-3 py-2.5 ${SECTION_TONE[section.label]}`}
+            >
+              <h4 className="text-[12.5px] font-semibold">{section.label}</h4>
+              <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
+                {section.body}
+              </p>
+            </section>
+          ))}
+        </div>
+      ) : notes.trim() ? (
+        <p
+          className={`${shownScore ? "mt-3" : ""} whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground`}
+        >
+          {notes}
+        </p>
+      ) : (
+        <p className="text-[12.5px] text-muted-foreground">本文はありません。</p>
+      )}
+      {modelLabel || at ? (
+        <p className="mt-2 text-[11.5px] text-muted-foreground">
+          {[modelLabel, at ? formatDateJa(at) : ""].filter(Boolean).join(" · ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function IdeaEvaluateNotes({ idea, id }: { idea: MockIdea; id?: string }) {
   return (
     <section id={id} className="mt-6">
       <h3 className="text-[13.5px] font-semibold">AI評価</h3>
       {idea.aiEvaluation ? (
         <div className="ui-panel mt-2 p-3">
-          <p className="font-mono text-[11px] text-muted-foreground">
-            {idea.aiScore ? `AI ${idea.aiScore}` : "点数なし"}
-            {modelLabel ? ` · ${modelLabel}` : ""}
-            {idea.aiEvaluatedAt ? ` · ${formatDateJa(idea.aiEvaluatedAt)}` : ""}
-          </p>
-          {idea.aiEvaluationModel ? (
-            <p className="mt-0.5 font-mono text-[10.5px] text-muted-foreground">
-              {idea.aiEvaluationModel}
-            </p>
-          ) : null}
-          <p className="mt-2 whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground">
-            {idea.aiEvaluation}
-          </p>
+          <IdeaEvaluationView
+            notes={idea.aiEvaluation}
+            score={idea.aiScore}
+            model={idea.aiEvaluationModel}
+            at={idea.aiEvaluatedAt}
+          />
         </div>
       ) : canRunIdeaAi(idea.stage) ? (
         <p className="mt-2 text-[12.5px] text-muted-foreground">

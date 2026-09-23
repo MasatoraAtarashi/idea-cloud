@@ -15,6 +15,7 @@ describe("list view search params", () => {
       stages: [],
       tags: [],
       minDays: 0,
+      categoryId: null,
       savedViewId: null,
       sortKey: "updatedAt",
       sortDir: "desc",
@@ -35,6 +36,7 @@ describe("list view search params", () => {
       stages: ["ripe", "selected"],
       tags: ["音声", "朝"],
       minDays: 14,
+      categoryId: null,
       savedViewId: 4,
       sortKey: "updatedAt",
       sortDir: "desc",
@@ -45,9 +47,19 @@ describe("list view search params", () => {
     expect(serializeListViewSearch(parsed).get("stage")).toBe("ripe,selected");
     expect(serializeListViewSearch(parsed).get("tag")).toBe("音声,朝");
     expect(serializeListViewSearch(parsed).get("days")).toBe("14");
+    expect(serializeListViewSearch(parsed).get("category")).toBeNull();
     expect(serializeListViewSearch(parsed).get("v")).toBe("4");
     expect(parseListViewSearch(serializeListViewSearch(parsed))).toEqual(parsed);
     expect(listViewHref(parsed)).toContain("/app/list?");
+  });
+
+  it("round-trips an optional category id", () => {
+    const parsed = parseListViewSearch(new URLSearchParams("category=12"));
+    expect(parsed.categoryId).toBe(12);
+    expect(serializeListViewSearch(parsed).get("category")).toBe("12");
+    expect(listViewHref(parsed)).toBe("/app/list?category=12");
+    expect(parseListViewSearch(new URLSearchParams("category=nope")).categoryId).toBeNull();
+    expect(parseListViewSearch(serializeListViewSearch(parsed))).toEqual(parsed);
   });
 
   it("keeps a custom aged-days minimum in the URL", () => {

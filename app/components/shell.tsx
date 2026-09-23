@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { NavLink, Link, useLocation } from "react-router";
+import type { IdeaCategory } from "../lib/category";
 import { SESSION_USER } from "../data/mock";
 import { initialsFromLabel } from "../lib/format";
 import { ComposeProvider, useCompose } from "../lib/compose";
@@ -72,7 +73,7 @@ function SidebarNav() {
   );
 }
 
-function ShellFrame({ children }: { children: ReactNode }) {
+function ShellFrame({ children, categories }: { children: ReactNode; categories: IdeaCategory[] }) {
   const location = useLocation();
   const { open, close } = useCompose();
   const hideTabBar = isMobileTabBarHidden(location.pathname);
@@ -167,15 +168,21 @@ function ShellFrame({ children }: { children: ReactNode }) {
           })}
         </nav>
       )}
-      <ComposeDialog />
+      <ComposeDialog categories={categories} />
     </div>
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  categories,
+}: {
+  children: ReactNode;
+  categories: IdeaCategory[];
+}) {
   return (
     <ComposeProvider>
-      <ShellFrame>{children}</ShellFrame>
+      <ShellFrame categories={categories}>{children}</ShellFrame>
     </ComposeProvider>
   );
 }

@@ -64,6 +64,8 @@ describe("Jev evaluation mapping", () => {
     expect(mapped.notes).toContain("新規性");
     expect(mapped.notes).toContain("次の一手");
     expect(mapped.notes).toContain("リサーチで仮説を検証する");
+    expect(mapped.notes).toContain("進める価値: 高め");
+    expect(mapped.notes).not.toMatch(/\d+\.\d+/);
     expect(parseAiScore(mapped.notes)).toBe(mapped.score);
     expect(formatJevEvaluationNotes(axes, 4)).toContain("スコア: 4");
   });

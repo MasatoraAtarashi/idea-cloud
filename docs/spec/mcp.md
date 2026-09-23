@@ -2,7 +2,7 @@
 
 AI clients (Cursor, Claude Desktop, and anything else that speaks [Model Context Protocol](https://modelcontextprotocol.io)) can read and write the shared idea shelf. The server is the existing Cloudflare Worker and the existing D1 database. There is no second database and no Durable Object.
 
-Discussion stays in the client. MCP exposes data tools only. It does not summarize, brainstorm, auto-tag, research, evaluate, or delete.
+Discussion stays in the client. MCP exposes data tools only. It does not summarize, brainstorm, discuss, auto-tag, research, evaluate, or delete. Per-idea chat is the detail **相談** tab, not an MCP tool.
 
 ## Endpoint
 

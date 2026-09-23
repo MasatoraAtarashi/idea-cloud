@@ -70,6 +70,7 @@ describe("empty workspace data", () => {
     expect(src).toContain("いま思いついたこと");
     expect(src).toContain("新規アイデア");
     expect(src).toContain("作成");
+    expect(src).toContain("新しいカテゴリ…");
     expect(src).toContain("閉じる");
     expect(src).toContain('method="post"');
     expect(src).not.toContain("キャプチャ");
@@ -232,6 +233,10 @@ describe("responsive home and nav", () => {
     expect(src).toContain("履歴");
     expect(src).toContain("概要");
     expect(src).toContain("AI/履歴");
+    expect(src).toContain("相談");
+    expect(src).toContain("AIと話す");
+    expect(src).toContain("説明を含めてコピー");
+    expect(src).toContain("コピーしました");
     expect(src).toContain("ideaDetailTabFromHash");
     expect(src).toContain("削除");
     expect(src).toContain("confirmIdeaDelete");
@@ -323,7 +328,8 @@ describe("responsive home and nav", () => {
     expect(src).toContain("IdeaEditForm");
     expect(src).toContain("編集");
     expect(src).toContain("AI評価");
-    expect(src).toContain("Jev 利用時は分解スコアです");
+    expect(src).toContain("推し度");
+    expect(src).toContain("IdeaEvaluationView");
     expect(src).toContain("IdeaHumanScore");
     expect(src).toContain("IdeaScoreChips");
     expect(src).toContain("evaluateIdeaAction");
