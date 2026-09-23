@@ -74,6 +74,15 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
           >
             詳細を開く
           </Link>
+          <Link
+            role="menuitem"
+            to={`/app/ideas/${idea.id}#discuss`}
+            prefetch="intent"
+            className={itemClass}
+            onClick={close}
+          >
+            AIと話す
+          </Link>
           {next ? (
             <button
               type="button"

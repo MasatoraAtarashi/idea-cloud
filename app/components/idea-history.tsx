@@ -1,5 +1,6 @@
 import type { IdeaHistoryItem } from "../lib/idea-history";
 import { formatDateJa } from "../lib/format";
+import { IdeaEvaluationView } from "./idea-evaluate";
 import { ResearchSourcesList } from "./idea-research";
 
 export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
@@ -23,8 +24,8 @@ export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
                   <div className="flex items-center gap-2">
                     <span className="text-[13.5px] font-semibold">{item.label}</span>
                     {item.score ? (
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        AI {item.score}
+                      <span className="text-[11.5px] text-muted-foreground">
+                        推し度 {item.score}
                       </span>
                     ) : null}
                     {item.latestOnly ? (
@@ -41,32 +42,49 @@ export function IdeaHistory({ items }: { items: IdeaHistoryItem[] }) {
                   ) : null}
                 </summary>
                 <div className="ui-panel mb-3 p-3">
-                  {item.modelLabel || item.model ? (
-                    <p className="font-mono text-[11px] text-muted-foreground">
-                      {item.modelLabel || item.model}
-                    </p>
-                  ) : null}
-                  {item.model && item.modelLabel && item.model !== item.modelLabel ? (
-                    <p className="mt-0.5 font-mono text-[10.5px] text-muted-foreground">
-                      {item.model}
-                    </p>
-                  ) : null}
-                  {item.kind === "research" ? <ResearchSourcesList sources={item.sources} /> : null}
-                  {item.body ? (
-                    <div
-                      className={item.kind === "research" ? "mt-3 border-t border-border pt-3" : ""}
-                    >
-                      {item.kind === "research" ? (
-                        <h4 className="text-[12.5px] font-medium">AIコメント</h4>
-                      ) : null}
-                      <p
-                        className={`${item.kind === "research" ? "mt-1.5" : "mt-2"} whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground`}
-                      >
-                        {item.body}
-                      </p>
-                    </div>
+                  {item.kind === "evaluate" ? (
+                    <IdeaEvaluationView
+                      notes={item.body}
+                      score={item.score}
+                      model={item.model}
+                      at={item.at}
+                    />
                   ) : (
-                    <p className="mt-2 text-[12.5px] text-muted-foreground">本文はありません。</p>
+                    <>
+                      {item.modelLabel || item.model ? (
+                        <p className="font-mono text-[11px] text-muted-foreground">
+                          {item.modelLabel || item.model}
+                        </p>
+                      ) : null}
+                      {item.model && item.modelLabel && item.model !== item.modelLabel ? (
+                        <p className="mt-0.5 font-mono text-[10.5px] text-muted-foreground">
+                          {item.model}
+                        </p>
+                      ) : null}
+                      {item.kind === "research" ? (
+                        <ResearchSourcesList sources={item.sources} />
+                      ) : null}
+                      {item.body ? (
+                        <div
+                          className={
+                            item.kind === "research" ? "mt-3 border-t border-border pt-3" : ""
+                          }
+                        >
+                          {item.kind === "research" ? (
+                            <h4 className="text-[12.5px] font-medium">AIコメント</h4>
+                          ) : null}
+                          <p
+                            className={`${item.kind === "research" ? "mt-1.5" : "mt-2"} whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground`}
+                          >
+                            {item.body}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-[12.5px] text-muted-foreground">
+                          本文はありません。
+                        </p>
+                      )}
+                    </>
                   )}
                   {item.latestOnly ? (
                     <p className="mt-2 text-[11.5px] leading-snug text-muted-foreground">

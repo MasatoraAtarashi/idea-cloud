@@ -25,7 +25,7 @@ export const RESEARCH_SYSTEM_PROMPT = [
 ].join("");
 
 export type ResearchAiInputs = {
-  messages: { role: "system" | "user"; content: string }[];
+  messages: { role: "system" | "user" | "assistant"; content: string }[];
   max_tokens?: number;
 };
 

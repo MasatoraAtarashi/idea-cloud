@@ -28,6 +28,11 @@ import {
   getLatestBrainstorm,
   listBrainstormsForIdea,
 } from "../../../db/brainstorms";
+import {
+  chatMessageJson,
+  DISCUSS_BODY_MAX,
+  listChatMessagesForIdea,
+} from "../../../db/discussions";
 import { resolveCommentAuthor, STAGES } from "../../../app/data/mock";
 import {
   parseReflectionStatus,
@@ -39,6 +44,7 @@ import { REVIEW_STATUSES } from "../../../app/lib/review";
 import { HUMAN_SCORE_NOTE_MAX } from "../../../app/lib/scores";
 import { bindResearchAi, researchIdea, searchApiKeyFromEnv } from "../../ai/research";
 import { brainstormIdea } from "../../ai/brainstorm";
+import { discussIdea } from "../../ai/discuss";
 import { evaluateIdea, scheduleCreateEvaluation } from "../../ai/evaluate";
 import { resolveCreateTags } from "../../ai/tags";
 import { typesafeApiKeyFromEnv } from "../../ai/typesafe";
@@ -341,6 +347,42 @@ export const ideasRoute = new Hono<AppEnv>()
       }),
       brainstorm: brainstormJson(result.brainstorm),
     });
+  })
+  .get("/:id/discussions", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const row = await getIdeaRow(db, id);
+    if (!row) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    const items = await listChatMessagesForIdea(db, id);
+    return c.json({ items: items.map(chatMessageJson) });
+  })
+  .post("/:id/discuss", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    let payload: { body?: unknown; preset?: unknown; model?: unknown } = {};
+    try {
+      payload = (await c.req.json()) as typeof payload;
+    } catch {
+      return c.json({ error: "Bad Request" }, 400);
+    }
+    const body = typeof payload.body === "string" ? payload.body : "";
+    if (body.trim().length > DISCUSS_BODY_MAX) {
+      return c.json({ error: "長すぎます" }, 400);
+    }
+    const db = createDb(c.env.DB);
+    const result = await discussIdea({
+      db,
+      ai: bindResearchAi(c.env.AI),
+      ideaId: id,
+      body,
+      preset: typeof payload.preset === "string" ? payload.preset : undefined,
+      model: typeof payload.model === "string" ? payload.model : undefined,
+    });
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status);
+    }
+    return c.json({ items: result.messages.map(chatMessageJson) });
   })
   .post("/:id/evaluate", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");

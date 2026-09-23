@@ -5,6 +5,7 @@ import { canRunIdeaAi } from "../lib/idea-ai";
 import { DETAIL_SWIPE_BUTTON_WIDTH } from "../lib/swipe";
 import { useInstantPending } from "../lib/use-instant-pending";
 import { IdeaBrainstormControls } from "./idea-brainstorm";
+import { IdeaDiscussLink } from "./idea-discuss";
 import { IdeaEvaluateControls } from "./idea-evaluate";
 import { IdeaResearchControls } from "./idea-research";
 import { SwipeReveal, type SwipeRevealAction } from "./swipe-reveal";
@@ -99,6 +100,10 @@ export function IdeaDetailSwipe({
           <IdeaResearchControls idea={idea} error={researchError} compact />
           <IdeaBrainstormControls idea={idea} error={brainstormError} compact />
           <IdeaEvaluateControls idea={idea} error={evaluateError} compact />
+          <IdeaDiscussLink
+            ideaId={idea.id}
+            className="ui-btn-secondary min-h-11 w-full justify-start px-3 text-[13px]"
+          />
         </div>
       ) : null}
     </div>

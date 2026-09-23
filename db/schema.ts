@@ -91,6 +91,27 @@ export const ideaBrainstorms = sqliteTable(
 export type IdeaBrainstorm = typeof ideaBrainstorms.$inferSelect;
 export type NewIdeaBrainstorm = typeof ideaBrainstorms.$inferInsert;
 
+/** Per-idea chat with Workers AI. Chronological user / assistant turns. */
+export const ideaChatMessages = sqliteTable(
+  "idea_chat_messages",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    ideaId: integer("idea_id")
+      .notNull()
+      .references(() => ideas.id),
+    role: text("role").notNull(),
+    body: text("body").notNull(),
+    model: text("model"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => [index("idea_chat_messages_idea_created_idx").on(table.ideaId, table.createdAt)],
+);
+
+export type IdeaChatMessage = typeof ideaChatMessages.$inferSelect;
+export type NewIdeaChatMessage = typeof ideaChatMessages.$inferInsert;
+
 /** Named list filters (stage / tag / query / tab / layout). JSON in `filters`. */
 export const savedViews = sqliteTable("saved_views", {
   id: integer("id").primaryKey({ autoIncrement: true }),

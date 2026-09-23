@@ -1,4 +1,5 @@
 import type { MockIdea } from "../data/mock";
+import { AI_SCORE_LABEL, aiScoreMeaning } from "./evaluation-notes";
 import { evaluationModelLabel, presetFromModel, RESEARCH_PRESET_LABEL } from "./research-models";
 import {
   hasResearchSourceLinks,
@@ -114,7 +115,9 @@ export function buildIdeaHistory(
       model: idea.aiEvaluationModel ?? null,
       modelLabel: evaluationModelLabel(idea.aiEvaluationModel),
       body,
-      summary: historyExcerpt(body) || (idea.aiScore ? `AI ${idea.aiScore}` : "評価"),
+      summary: idea.aiScore
+        ? `${AI_SCORE_LABEL} ${idea.aiScore}${aiScoreMeaning(idea.aiScore) ? ` · ${aiScoreMeaning(idea.aiScore)}` : ""}`
+        : historyExcerpt(body) || "評価",
       score: idea.aiScore ?? null,
       latestOnly: true,
       anchor: "evaluate",

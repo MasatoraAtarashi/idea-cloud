@@ -10,6 +10,7 @@ import {
 } from "react-router";
 import { EmptyState, StagePill, TagPill } from "../../components/ui";
 import { IdeaComments } from "../../components/idea-comments";
+import { IdeaDiscuss, IdeaDiscussLink } from "../../components/idea-discuss";
 import { IdeaDetailSwipe } from "../../components/idea-detail-swipe";
 import { IdeaBrainstormControls } from "../../components/idea-brainstorm";
 import { IdeaEditForm } from "../../components/idea-edit-form";
@@ -37,6 +38,7 @@ import { useInstantPending } from "../../lib/use-instant-pending";
 import { createDb } from "../../../db/client";
 import { listBrainstormsForIdea, toBrainstormView } from "../../../db/brainstorms";
 import { listCommentsForIdea, toCommentView } from "../../../db/comments";
+import { listChatMessagesForIdea, toChatMessageView } from "../../../db/discussions";
 import { getIdeaView } from "../../../db/ideas";
 import { IconMerge, IconShare, IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
@@ -51,21 +53,26 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
   const db = createDb(context.cloudflare.env.DB);
   const idea = await getIdeaView(db, params.ideaId);
   if (!idea) {
-    return { idea: undefined, comments: [], brainstorms: [] };
+    return { idea: undefined, comments: [], brainstorms: [], discussions: [] };
   }
-  const [comments, brainstorms] = await Promise.all([
+  const [comments, brainstorms, discussions] = await Promise.all([
     listCommentsForIdea(db, Number(idea.id)),
     listBrainstormsForIdea(db, Number(idea.id)),
+    listChatMessagesForIdea(db, Number(idea.id)),
   ]);
   return {
     idea,
     comments: comments.map(toCommentView),
     brainstorms: brainstorms.map(toBrainstormView),
+    discussions: discussions.flatMap((row) => {
+      const view = toChatMessageView(row);
+      return view ? [view] : [];
+    }),
   };
 }
 
 export default function IdeaPage() {
-  const { idea, comments, brainstorms } = useLoaderData<typeof loader>();
+  const { idea, comments, brainstorms, discussions } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof ideaDetailAction>();
 
   if (!idea) {
@@ -91,6 +98,7 @@ export default function IdeaPage() {
   const commentError = actionIntent === "comment" ? actionError : undefined;
   const brainstormError = actionIntent === "brainstorm" ? actionError : undefined;
   const evaluateError = actionIntent === "evaluate" ? actionError : undefined;
+  const discussError = actionIntent === "discuss" ? actionError : undefined;
   const editError = actionIntent === "edit" ? actionError : undefined;
   const scoreError = actionIntent === "human-score" ? actionError : undefined;
   const reviewError = actionIntent === "review" ? actionError : undefined;
@@ -99,6 +107,7 @@ export default function IdeaPage() {
     commentError ||
     brainstormError ||
     evaluateError ||
+    discussError ||
     editError ||
     scoreError ||
     reviewError ||
@@ -111,10 +120,12 @@ export default function IdeaPage() {
       idea={idea}
       comments={comments}
       brainstorms={brainstorms}
+      discussions={discussions}
       commentError={commentError}
       researchError={researchError}
       brainstormError={brainstormError}
       evaluateError={evaluateError}
+      discussError={discussError}
       editError={editError}
       scoreError={scoreError}
       reviewError={reviewError}
@@ -263,10 +274,12 @@ function IdeaDetail({
   idea,
   comments,
   brainstorms,
+  discussions,
   commentError,
   researchError,
   brainstormError,
   evaluateError,
+  discussError,
   editError,
   scoreError,
   reviewError,
@@ -275,10 +288,12 @@ function IdeaDetail({
   idea: MockIdea;
   comments: ReturnType<typeof toCommentView>[];
   brainstorms: ReturnType<typeof toBrainstormView>[];
+  discussions: NonNullable<ReturnType<typeof toChatMessageView>>[];
   commentError?: string;
   researchError?: string;
   brainstormError?: string;
   evaluateError?: string;
+  discussError?: string;
   editError?: string;
   scoreError?: string;
   reviewError?: string;
@@ -423,6 +438,10 @@ function IdeaDetail({
           </div>
         ) : null}
 
+        {tab === "discuss" ? (
+          <IdeaDiscuss idea={idea} messages={discussions} error={discussError} />
+        ) : null}
+
         {tab === "comments" ? <IdeaComments comments={comments} error={commentError} /> : null}
       </article>
 
@@ -438,6 +457,7 @@ function IdeaDetail({
           <IdeaResearchControls idea={idea} error={researchError} />
           <IdeaBrainstormControls idea={idea} error={brainstormError} />
           <IdeaEvaluateControls idea={idea} error={evaluateError} />
+          <IdeaDiscussLink ideaId={idea.id} />
           <Link
             to={`/app/merge?from=${idea.id}`}
             className="ui-btn-secondary justify-start px-3 text-[13px]"

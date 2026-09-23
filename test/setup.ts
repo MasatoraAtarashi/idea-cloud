@@ -26,6 +26,7 @@ beforeAll(async () => {
     await env.DB.batch(statements.map((statement) => env.DB.prepare(statement)));
   }
   // テスト間の干渉を防ぐため、データを空にしてから始める
+  await env.DB.exec("DELETE FROM idea_chat_messages;");
   await env.DB.exec("DELETE FROM idea_brainstorms;");
   await env.DB.exec("DELETE FROM idea_comments;");
   await env.DB.exec("DELETE FROM saved_views;");

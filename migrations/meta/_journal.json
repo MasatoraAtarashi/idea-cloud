@@ -64,6 +64,13 @@
       "when": 1789932000000,
       "tag": "0008_research_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790171709347,
+      "tag": "0009_idea_chat_messages",
+      "breakpoints": true
     }
   ]
 }
