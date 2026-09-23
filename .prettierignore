@@ -5,6 +5,8 @@ dist/
 build/
 migrations/meta/
 worker-configuration.d.ts
+playwright-report/
+test-results/
 
 # rulesync 生成物（pnpm dlx rulesync generate で再生成される）
 .agents/

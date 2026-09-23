@@ -12,7 +12,7 @@ import { LIST_PATH } from "../lib/home-path";
 import { isSubmitShortcut } from "../lib/shortcuts";
 import { useInstantPending } from "../lib/use-instant-pending";
 import { STAGE_LABEL, STAGE_PILL_CLASS, STAGES, type Stage } from "../data/mock";
-import { IconHash, IconList, IconSpinner, IconType } from "./icons";
+import { IconSpinner } from "./icons";
 import { StageSelect } from "./stage-select";
 
 export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
@@ -35,14 +35,17 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col bg-background px-4 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
+      <div className="flex min-h-0 flex-1 flex-col bg-background px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] md:hidden">
         <Form method="post" className="flex min-h-0 flex-1 flex-col" onSubmit={hold}>
           <input type="hidden" name="stage" value={stage} />
-          <div className="flex items-center justify-between gap-3">
-            <Link to={LIST_PATH} className="text-[13.5px] text-muted-foreground no-underline">
+          <div className="flex min-h-11 items-center justify-between gap-3">
+            <Link
+              to={LIST_PATH}
+              className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] font-medium text-foreground no-underline"
+            >
               閉じる
             </Link>
-            <p className="text-[13.5px] font-medium tracking-tight">{COMPOSE_TITLE}</p>
+            <p className="text-[13.5px] font-semibold tracking-tight">{COMPOSE_TITLE}</p>
             <button
               type="submit"
               disabled={!canSubmit}
@@ -54,7 +57,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
             </button>
           </div>
 
-          <div className="mt-6 flex min-h-0 flex-1 flex-col">
+          <div className="mt-5 flex min-h-0 flex-1 flex-col">
             <label htmlFor="idea-mobile-title" className="sr-only">
               {COMPOSE_TITLE_PLACEHOLDER}
             </label>
@@ -78,7 +81,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={onComposeKeyDown}
               placeholder={COMPOSE_PLACEHOLDER}
-              className="mt-3 min-h-[8.5rem] w-full flex-1 resize-none border-0 bg-transparent text-[15px] leading-relaxed text-muted-foreground outline-none placeholder:text-muted-foreground"
+              className="mt-3 min-h-[8.5rem] w-full flex-1 resize-none border-0 bg-transparent text-[16px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
 
@@ -88,37 +91,32 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
                 key={item}
                 type="button"
                 onClick={() => setStage(item)}
-                className={`stage-pill ${STAGE_PILL_CLASS[item]} ${
-                  stage === item ? "ring-1 ring-foreground/15" : "opacity-70"
+                className={`stage-pill min-h-11 px-3 text-[12.5px] ${STAGE_PILL_CLASS[item]} ${
+                  stage === item ? "ring-1 ring-foreground/20" : "opacity-70"
                 }`}
               >
                 {STAGE_LABEL[item]}
               </button>
             ))}
+            <label htmlFor="idea-mobile-tags" className="sr-only">
+              タグ
+            </label>
             <input
+              id="idea-mobile-tags"
               name="tags"
               value={tags}
               onChange={(event) => setTags(event.target.value)}
               placeholder="空なら自動タグ"
-              className="h-7 min-w-[7.5rem] flex-1 rounded-full border border-dashed border-border-control bg-transparent px-2.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
+              className="min-h-11 min-w-[7.5rem] flex-1 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
-          <p className="pb-1 text-[11px] text-muted-foreground">
+          <p className="pb-2 text-[12px] leading-relaxed text-muted-foreground">
             タグを空のまま作成すると自動で付けます。失敗しても残ります。
             {COMPOSE_URL_HINT}
           </p>
 
-          <div className="flex items-center gap-1 border-t border-border py-2 text-muted-foreground">
-            <span className="flex h-9 w-9 items-center justify-center" aria-hidden="true">
-              <IconType className="h-4 w-4" />
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center" aria-hidden="true">
-              <IconList className="h-4 w-4" />
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center" aria-hidden="true">
-              <IconHash className="h-4 w-4" />
-            </span>
-            <span className="ml-auto font-mono text-[12px]">2週間寝かせる</span>
+          <div className="flex min-h-11 items-center justify-end border-t border-border text-muted-foreground">
+            <span className="font-mono text-[12px]">2週間寝かせる</span>
           </div>
           {actionData?.error ? (
             <p className="pb-4 text-xs text-muted-foreground">{actionData.error}</p>
