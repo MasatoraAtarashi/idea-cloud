@@ -10,20 +10,20 @@ There is **no landing page**. `/` is the login gate.
 
 Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboard-first, settings for access/team), LiteLLM-thin chrome (white main, hairline borders, shadow only on modal/popover), Ideation Cloud pastel stage pills. Do **not** copy Relic’s logo, Relic’s blue marketing LP, or X dark mode. Do not put 融合 / リサーチ in the sidebar. **インスピレーション** and **アナリティクス** are first-class destinations (sidebar + mobile tabs), not settings-adjacent.
 
-| Token        | Value                                                                                                                                                                                               |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Surface      | `#FFFFFF`                                                                                                                                                                                           |
-| Sidebar      | `#FAFAFB`                                                                                                                                                                                           |
-| Table header | `#F4F5F7`                                                                                                                                                                                           |
-| Border       | `#C5CAD3` (controls `#B8BFC9`)                                                                                                                                                                      |
-| Accent       | `#3B6EF6`                                                                                                                                                                                           |
-| Body         | `#0A0A0A` (muted labels `#3A424E`)                                                                                                                                                                  |
-| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                                                     |
-| Density      | Row ~40px desktop / slightly airier mobile cards; filter 46px, table header 36px; 1px dividers, not zebra. Rows stay filled: tags, stage, relative updated, aging, comment count, research mark.    |
-| Radius       | 6–7px controls, 9–12px panels                                                                                                                                                                       |
-| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–600); IBM Plex Mono for meta only. Titles and primary nav `font-weight: 600`, near-black. Compose/detail **本文** uses primary text, not muted gray. |
-| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                                                           |
-| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                                                        |
+| Token        | Value                                                                                                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Surface      | `#FFFFFF`                                                                                                                                                                                                                       |
+| Sidebar      | `#FAFAFB`                                                                                                                                                                                                                       |
+| Table header | `#F4F5F7`                                                                                                                                                                                                                       |
+| Border       | `#D4D8E0` (controls `#C8CED7`) — readable frames, softer than the post-#37 `#C5CAD3` / `#B8BFC9` treatment                                                                                                                      |
+| Accent       | `#3B6EF6`                                                                                                                                                                                                                       |
+| Body         | `#0A0A0A` near-black for headings, body, list titles, and nav labels (muted meta `#3A424E`)                                                                                                                                     |
+| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                                                                                 |
+| Density      | Row ~40px desktop / slightly airier mobile cards; filter 46px, table header 36px; 1px dividers, not zebra. Rows stay filled: tags, stage, relative updated, aging, comment count, research mark.                                |
+| Radius       | 6–7px controls, 9–12px panels                                                                                                                                                                                                   |
+| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–600); IBM Plex Mono for meta only. Default UI `500`; titles, buttons, and primary nav `font-weight: 600`, near-black. Compose/detail **本文** uses primary text, not muted gray. |
+| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                                                                                       |
+| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                                                                                    |
 
 Stage pill hex (background / foreground):
 

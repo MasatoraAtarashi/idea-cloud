@@ -47,7 +47,7 @@ export function IdeaReviewPrompt({
     >
       {compact ? null : (
         <div className="mb-2">
-          <p className="text-[13.5px] font-medium">見直し</p>
+          <p className="text-[13.5px] font-semibold">見直し</p>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
             寝かせたあと、進めるか一旦止めるかを決めます。
             {status !== "none" ? ` いまは${REVIEW_STATUS_LABEL[status]}。` : ""}

@@ -82,7 +82,7 @@ export function IdeaDetailSwipe({
       {aiOpen ? (
         <div className="mt-3 space-y-2 rounded-[10px] border border-border bg-card px-3 py-3 lg:hidden">
           <div className="flex min-h-11 items-center justify-between gap-2">
-            <p className="text-[13.5px] font-medium">AI</p>
+            <p className="text-[13.5px] font-semibold">AI</p>
             <button
               type="button"
               onClick={() => setAiOpen(false)}

@@ -18,7 +18,9 @@ export function BrandMark({ className = "h-6 w-6" }: MarkProps) {
   );
 }
 
-export function BrandWordmark({ className = "text-[13px] font-medium tracking-tight" }: MarkProps) {
+export function BrandWordmark({
+  className = "text-[13px] font-semibold tracking-tight",
+}: MarkProps) {
   return <span className={className}>アイデアクラウド</span>;
 }
 
