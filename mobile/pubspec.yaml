@@ -19,3 +19,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  fonts:
+    # Web 側（app/app.css の --font-sans）と同じ書体。
+    # 同梱しないと Flutter Web が CJK の字幅を測れず、チップのラベルが切れる。
+    - family: IBMPlexSansJP
+      fonts:
+        - asset: assets/fonts/IBMPlexSansJP-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansJP-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansJP-SemiBold.ttf
+          weight: 600

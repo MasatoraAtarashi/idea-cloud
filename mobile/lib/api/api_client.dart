@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../models/comment.dart';
 import '../models/idea.dart';
 import '../models/stage.dart';
+import 'idea_source.dart';
 import 'settings.dart';
 
 /// API が 2xx 以外を返したとき、または応答が読めなかったときに投げる。
@@ -25,7 +26,7 @@ class ApiException implements Exception {
 ///
 /// 認証は個人 API トークンの Bearer 一本。サーバ側は Cookie セッションと
 /// Bearer の両方を受ける（server/middleware/session-auth.ts）。
-class ApiClient {
+class ApiClient implements IdeaSource {
   ApiClient({required Settings settings, http.Client? httpClient})
       : _settings = settings,
         _http = httpClient ?? http.Client();
@@ -33,8 +34,12 @@ class ApiClient {
   final Settings _settings;
   final http.Client _http;
 
+  @override
+  bool get isMock => false;
+
   void close() => _http.close();
 
+  @override
   Future<List<Idea>> listIdeas() async {
     final json = await _send('GET', '/api/ideas');
     final items = json['items'] as List<dynamic>? ?? const [];
@@ -44,12 +49,14 @@ class ApiClient {
         .toList(growable: false);
   }
 
+  @override
   Future<Idea> getIdea(int id) async {
     final json = await _send('GET', '/api/ideas/$id');
     return Idea.fromJson(json['item'] as Map<String, dynamic>);
   }
 
   /// 本文の 1 行目がタイトルになる（サーバの splitTitleBody）。
+  @override
   Future<Idea> createIdea({required String body, Stage? stage, String? categoryName}) async {
     final json = await _send('POST', '/api/ideas', body: {
       'body': body,
@@ -59,13 +66,16 @@ class ApiClient {
     return Idea.fromJson(json['item'] as Map<String, dynamic>);
   }
 
+  @override
   Future<Idea> updateStage(int id, Stage stage) async {
     final json = await _send('PATCH', '/api/ideas/$id', body: {'stage': stage.wire});
     return Idea.fromJson(json['item'] as Map<String, dynamic>);
   }
 
+  @override
   Future<void> deleteIdea(int id) => _send('DELETE', '/api/ideas/$id');
 
+  @override
   Future<List<IdeaComment>> listComments(int ideaId) async {
     final json = await _send('GET', '/api/ideas/$ideaId/comments');
     final items = json['items'] as List<dynamic>? ?? const [];
@@ -75,12 +85,14 @@ class ApiClient {
         .toList(growable: false);
   }
 
+  @override
   Future<IdeaComment> addComment(int ideaId, String body) async {
     final json = await _send('POST', '/api/ideas/$ideaId/comments', body: {'body': body});
     return IdeaComment.fromJson(json['item'] as Map<String, dynamic>);
   }
 
   /// AI 評価。Workers 側で生成するので数十秒かかることがある。
+  @override
   Future<Idea> evaluate(int ideaId) async {
     final json = await _send('POST', '/api/ideas/$ideaId/evaluate', timeout: const Duration(seconds: 120));
     return Idea.fromJson(json['item'] as Map<String, dynamic>);

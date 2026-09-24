@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/settings.dart';
+import 'tokens.dart';
 
 /// 接続先 URL と個人 API トークンの入力。初回起動時と、401 が返ったときに出す。
 class SettingsPage extends StatefulWidget {
@@ -57,7 +58,13 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2.4, color: Tokens.mutedForeground),
+              ),
+            )
           : Form(
               key: _formKey,
               child: ListView(
@@ -99,7 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 24),
                   FilledButton(onPressed: _save, child: const Text('保存')),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   TextButton(
                     onPressed: () async {
                       await widget.settings.clear();
@@ -107,7 +114,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       _baseUrlController.clear();
                       _tokenController.clear();
                     },
-                    child: const Text('保存済みの値を消す'),
+                    child: const Text(
+                      '保存済みの値を消す',
+                      style: TextStyle(color: Tokens.textTertiary, fontSize: 13),
+                    ),
                   ),
                 ],
               ),

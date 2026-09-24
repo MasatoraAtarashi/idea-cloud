@@ -54,3 +54,25 @@ cd mobile && flutter test
 
 `lib/models/stage.dart` の `Stage` は `app/data/mock.ts` の `STAGES` / `STAGE_LABEL` の写し。
 ステージを増やしたら両方直す。
+
+## サーバなしで画面だけ見る
+
+`--dart-define=MOCK=true` を付けるとメモリ上の作り物を使う。Bearer 対応を待たずに触れる。
+
+```bash
+cd mobile && flutter run --dart-define=MOCK=true
+```
+
+iPhone の Safari から見るだけなら、Xcode なしで Web ビルドを同じ Wi-Fi に配る。
+
+```bash
+cd mobile && flutter build web --dart-define=MOCK=true && (cd build/web && python3 -m http.server 8123 --bind 0.0.0.0)
+```
+
+`http://<Mac の LAN IP>:8123` を iPhone で開く。共有 → ホーム画面に追加、で全画面になる。
+
+## 見た目
+
+Web の v2（`app/app.css` の cool grey）に合わせている。色は `lib/ui/tokens.dart`、
+書体は同梱の IBM Plex Sans JP。**フォントの同梱は見た目のためだけではない** —
+Flutter Web は同梱フォントがないと CJK の字幅を測れず、チップのラベルが途中で切れる。
