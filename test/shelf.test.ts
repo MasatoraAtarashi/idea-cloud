@@ -263,6 +263,59 @@ describe("inspirations API", () => {
       body: JSON.stringify({ title: "   " }),
     });
     expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("入力してください");
+    expect(body.error).not.toMatch(/貼って/);
+  });
+
+  it("saves a trimmed http URL with no title", async () => {
+    const sample = "http://www.sc-runner.com/2013/10/kinovea-tutorial.html";
+    setTestOgpFetch(async () => {
+      throw new Error("network");
+    });
+    const create = await api("/inspirations", {
+      method: "POST",
+      body: JSON.stringify({ title: "", url: `\n${sample} \u200B\n` }),
+    });
+    expect(create.status).toBe(201);
+    const created = (await create.json()) as {
+      item: { title: string; url: string; ogStatus: string };
+    };
+    expect(created.item.url).toBe(sample);
+    expect(created.item.title).toBe("kinovea tutorial");
+    expect(created.item.ogStatus).toBe("failed");
+  });
+
+  it("uses the page title for a URL-only create when Open Graph succeeds", async () => {
+    setTestOgpFetch(async () => ({
+      status: "ok",
+      title: "Kinovea チュートリアル",
+      description: "解説",
+      imageUrl: "",
+      siteName: "SC Runner",
+      fetchedAt: "2026-09-24 00:00:00",
+    }));
+    const create = await api("/inspirations", {
+      method: "POST",
+      body: JSON.stringify({
+        url: "www.sc-runner.com/2013/10/kinovea-tutorial.html",
+      }),
+    });
+    expect(create.status).toBe(201);
+    const created = (await create.json()) as { item: { title: string; url: string } };
+    expect(created.item.url).toBe("https://www.sc-runner.com/2013/10/kinovea-tutorial.html");
+    expect(created.item.title).toBe("Kinovea チュートリアル");
+  });
+
+  it("describes a bad URL instead of asking for a paste", async () => {
+    const res = await api("/inspirations", {
+      method: "POST",
+      body: JSON.stringify({ url: "これはURLではない", title: "" }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("URLの形式が正しくありません");
+    expect(body.error).not.toMatch(/貼って|タイトル/);
   });
 
   it("stores og_status=failed when fetch fails and still saves the row", async () => {

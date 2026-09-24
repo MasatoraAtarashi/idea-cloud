@@ -11,9 +11,11 @@ import { inspirations, type Inspiration } from "./schema";
 
 export type { Inspiration };
 
-export const INSPIRATION_TITLE_MAX = 200;
-export const INSPIRATION_MEMO_MAX = 4000;
-export const INSPIRATION_URL_MAX = 2000;
+export {
+  INSPIRATION_MEMO_MAX,
+  INSPIRATION_TITLE_MAX,
+  INSPIRATION_URL_MAX,
+} from "../app/lib/inspiration-input";
 
 export type OgStatus = "none" | "ok" | "failed";
 

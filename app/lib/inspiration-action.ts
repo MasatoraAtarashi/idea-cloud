@@ -2,18 +2,21 @@ import { redirect, type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { insertIdea } from "../../db/ideas";
 import {
-  INSPIRATION_MEMO_MAX,
-  INSPIRATION_TITLE_MAX,
-  INSPIRATION_URL_MAX,
   getInspirationRow,
   ideaTextFromInspiration,
-  insertInspiration,
   updateInspiration,
   urlsDiffer,
 } from "../../db/inspirations";
 import { brainstormIdea } from "../../server/ai/brainstorm";
 import { bindResearchAi } from "../../server/ai/research";
 import { enrichInspirationOgp } from "../../server/ogp/enrich";
+import { prepareInspirationInput } from "./inspiration-input";
+import {
+  applyFetchedTitle,
+  insertPreparedInspiration,
+  replaceDerivedTitleFromOgp,
+  titleForInspirationUpdate,
+} from "./inspiration-save";
 
 export const INSPIRATIONS_PATH = "/app/inspirations";
 
@@ -31,29 +34,13 @@ function parseTags(raw: string): string[] {
     .slice(0, 8);
 }
 
-function parseInspirationFields(form: FormData) {
-  return {
-    title: String(form.get("title") ?? "").trim(),
-    url: String(form.get("url") ?? "").trim(),
-    memo: String(form.get("memo") ?? "").trim(),
+function readInspirationForm(form: FormData) {
+  return prepareInspirationInput({
+    title: String(form.get("title") ?? ""),
+    url: String(form.get("url") ?? ""),
+    memo: String(form.get("memo") ?? ""),
     tags: parseTags(String(form.get("tags") ?? "")),
-  };
-}
-
-function validateInspiration(fields: ReturnType<typeof parseInspirationFields>): string | null {
-  if (!fields.title && !fields.memo && !fields.url) {
-    return "入力してください";
-  }
-  if (fields.title.length > INSPIRATION_TITLE_MAX) {
-    return "タイトルが長すぎます";
-  }
-  if (fields.memo.length > INSPIRATION_MEMO_MAX) {
-    return "メモが長すぎます";
-  }
-  if (fields.url.length > INSPIRATION_URL_MAX) {
-    return "URLが長すぎます";
-  }
-  return null;
+  });
 }
 
 export async function createInspirationAction({
@@ -61,21 +48,12 @@ export async function createInspirationAction({
   context,
 }: ActionFunctionArgs): Promise<Response | InspirationActionData> {
   const form = await request.formData();
-  const fields = parseInspirationFields(form);
-  const error = validateInspiration(fields);
-  if (error) {
-    return { error, intent: "create" } satisfies InspirationActionData;
+  const prepared = readInspirationForm(form);
+  if (!prepared.ok) {
+    return { error: prepared.error, intent: "create" } satisfies InspirationActionData;
   }
   const db = createDb(context.cloudflare.env.DB);
-  const created = await insertInspiration(db, {
-    title: fields.title || fields.memo.slice(0, 200) || fields.url || "無題",
-    url: fields.url || null,
-    memo: fields.memo,
-    tags: fields.tags,
-  });
-  if (created.url) {
-    await enrichInspirationOgp(db, created);
-  }
+  const created = await insertPreparedInspiration(db, prepared.value);
   return redirect(`${INSPIRATIONS_PATH}/${created.id}`);
 }
 
@@ -101,7 +79,8 @@ export async function inspirationDetailAction({
     if (!row.url?.trim()) {
       return { error: "URLがありません", intent: "refresh-ogp" } satisfies InspirationActionData;
     }
-    await enrichInspirationOgp(db, row);
+    const enriched = await enrichInspirationOgp(db, row);
+    await replaceDerivedTitleFromOgp(db, enriched);
     return { ok: true, intent: "refresh-ogp" } satisfies InspirationActionData;
   }
 
@@ -128,26 +107,26 @@ export async function inspirationDetailAction({
     return redirect(`/app/ideas/${created.id}#brainstorm`);
   }
 
-  const fields = parseInspirationFields(form);
-  const error = validateInspiration(fields);
-  if (error) {
-    return { error, intent: "edit" } satisfies InspirationActionData;
+  const prepared = readInspirationForm(form);
+  if (!prepared.ok) {
+    return { error: prepared.error, intent: "edit" } satisfies InspirationActionData;
   }
   const existing = await getInspirationRow(db, inspirationId);
   if (!existing) {
     return { error: "見つかりません", intent: "edit" } satisfies InspirationActionData;
   }
+  const urlChanged = urlsDiffer(existing.url, prepared.value.url);
   const updated = await updateInspiration(db, inspirationId, {
-    title: fields.title || fields.memo.slice(0, 200) || fields.url || "無題",
-    url: fields.url || null,
-    memo: fields.memo,
-    tags: fields.tags,
+    title: titleForInspirationUpdate(prepared.value, existing.ogTitle, urlChanged),
+    url: prepared.value.url,
+    memo: prepared.value.memo,
+    tags: prepared.value.tags,
   });
   if (!updated) {
     return { error: "見つかりません", intent: "edit" } satisfies InspirationActionData;
   }
-  if (urlsDiffer(existing.url, updated.url)) {
-    await enrichInspirationOgp(db, updated);
+  if (urlChanged) {
+    await applyFetchedTitle(db, updated, prepared.value.titleFromUser);
   }
   return { ok: true, intent: "edit" } satisfies InspirationActionData;
 }

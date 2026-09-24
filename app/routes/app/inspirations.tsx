@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Form, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { HeaderPlusButton } from "../../components/header-create";
 import { InspirationGallery } from "../../components/inspiration-gallery";
@@ -21,30 +21,41 @@ export async function loader({ context }: LoaderFunctionArgs) {
 }
 
 function ComposeForm({ error, autoFocus = false }: { error?: string; autoFocus?: boolean }) {
+  const urlRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (autoFocus) urlRef.current?.focus();
+  }, [autoFocus]);
+
   return (
     <>
       <p className="text-[12px] text-muted-foreground">
-        URL を入れるとプレビューが付きます。画像のアップロードはまだありません。
+        URLだけでも追加できます。タイトルは空で大丈夫です。プレビューが取れなくても保存されます。画像のアップロードはまだありません。
       </p>
       <Form method="post" className="mt-3 space-y-2">
-        <label className="sr-only" htmlFor="inspiration-title">
-          タイトル
-        </label>
-        <input
-          id="inspiration-title"
-          name="title"
-          placeholder="タイトル"
-          className="ui-input"
-          autoFocus={autoFocus}
-        />
         <label className="sr-only" htmlFor="inspiration-url">
           URL
         </label>
         <input
           id="inspiration-url"
           name="url"
-          type="url"
-          placeholder="https://"
+          type="text"
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          autoComplete="off"
+          placeholder="http:// または https://"
+          className="ui-input"
+          ref={urlRef}
+        />
+        <label className="sr-only" htmlFor="inspiration-title">
+          タイトル（任意）
+        </label>
+        <input
+          id="inspiration-title"
+          name="title"
+          placeholder="タイトル（空でも可）"
+          autoComplete="off"
           className="ui-input"
         />
         <label className="sr-only" htmlFor="inspiration-memo">
@@ -115,7 +126,7 @@ export default function InspirationsPage() {
         <section className={composeOpen ? "block" : "hidden md:block"}>
           <h2 className="text-[13.5px] font-semibold">メモを残す</h2>
           <div className="mt-2">
-            <ComposeForm error={error} autoFocus={composeOpen && items.length > 0} />
+            <ComposeForm error={error} autoFocus={composeOpen} />
           </div>
         </section>
         <section className="mt-6 md:mt-0">

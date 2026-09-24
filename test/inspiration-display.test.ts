@@ -24,6 +24,12 @@ describe("inspiration display helpers", () => {
         ogTitle: "駅の光",
       }),
     ).toBe("駅の光");
+    expect(
+      inspirationHeadline({
+        title: "http://www.sc-runner.com/2013/10/kinovea-tutorial.html",
+        url: "http://www.sc-runner.com/2013/10/kinovea-tutorial.html",
+      }),
+    ).toBe("kinovea tutorial");
   });
 
   it("uses memo before og:description and a domain glyph for fallbacks", () => {

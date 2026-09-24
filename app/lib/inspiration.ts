@@ -1,5 +1,6 @@
-import { STAGE_PILL_HEX } from "./tokens";
 import { hostnameFromUrl } from "../../server/ogp/url";
+import { fallbackTitleFromUrl } from "./inspiration-input";
+import { STAGE_PILL_HEX } from "./tokens";
 
 export type InspirationCardTone = {
   bg: string;
@@ -29,9 +30,15 @@ export function inspirationHeadline(item: {
   ogTitle?: string;
 }): string {
   const title = item.title.trim();
-  if (title && title !== "無題" && title !== (item.url ?? "").trim()) return title;
+  const url = (item.url ?? "").trim();
   const ogTitle = item.ogTitle?.trim() ?? "";
+  const placeholder = !title || title === "無題" || title === url;
+  if (!placeholder) return title;
   if (ogTitle) return ogTitle;
+  if (url) {
+    const fallback = fallbackTitleFromUrl(url);
+    if (fallback && fallback !== "無題") return fallback;
+  }
   return title || "無題";
 }
 

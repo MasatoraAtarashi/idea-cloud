@@ -25,3 +25,29 @@ test("adds an inspiration memo and shows it on the shelf", async ({ page }, test
   await page.goto("/app/inspirations");
   await expect(visible(page.getByRole("link", { name: title }))).toBeVisible();
 });
+
+test("saves a pasted http URL without a title", async ({ page }, testInfo) => {
+  const url = "http://www.sc-runner.com/2013/10/kinovea-tutorial.html";
+  await page.goto("/app/inspirations");
+
+  if (isMobileProject(testInfo.project.name)) {
+    const compose = visible(page.getByRole("heading", { name: "メモを残す" }));
+    if (!(await compose.isVisible())) {
+      await visible(page.getByRole("button", { name: "インスピレーションを追加" })).click();
+    }
+    await expect(compose).toBeVisible();
+  }
+
+  const urlInput = page.locator("#inspiration-url");
+  await expect(urlInput).toHaveAttribute("type", "text");
+  await expect(urlInput).toHaveAttribute("inputmode", "url");
+  await urlInput.evaluate((el, value) => {
+    const input = el as HTMLInputElement;
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }, ` \n${url}\n `);
+  await page.getByRole("button", { name: "追加", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/inspirations\/\d+/);
+  await expect(visible(page.getByRole("link", { name: url }))).toBeVisible();
+  await expect(page.getByText("URLの形式が正しくありません")).toHaveCount(0);
+});

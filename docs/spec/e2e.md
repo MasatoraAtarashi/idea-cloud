@@ -25,7 +25,7 @@ CI installs Chromium with OS deps in `.github/workflows/pr.yml` (`E2E (Playwrigh
 
 ## What is asserted
 
-Happy paths: create idea (mobile `/app` compose or desktop header +), list, detail edit, stage advance, comment, **コピー** (title and body on the clipboard), detail **相談** tab (heading **AIと話す**, starter chips, send, Japanese fail-soft when Workers AI is down, user turn still present after reload), mobile tabs (一覧 / インスピレーション / 分析), inspiration memo, analytics charts/counts.
+Happy paths: create idea (mobile `/app` compose or desktop header +), list, detail edit, stage advance, comment, **コピー** (title and body on the clipboard), detail **相談** tab (heading **AIと話す**, starter chips, send, Japanese fail-soft when Workers AI is down, user turn still present after reload), mobile tabs (一覧 / インスピレーション / 分析), inspiration memo, inspiration URL-only create (http paste, no title), analytics charts/counts.
 
 Creates fill a dummy `e2e` tag so create-time auto-tag AI is not required. Desktop compose retries the header + click until the dialog hydrates (SSR buttons are inert before React attaches).
 
