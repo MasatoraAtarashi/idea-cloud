@@ -7,6 +7,7 @@ import {
   INSPIRATION_MEMO_MAX,
   INSPIRATION_TITLE_MAX,
   INSPIRATION_URL_MAX,
+  deleteInspiration,
   getInspirationRow,
   ideaTextFromInspiration,
   inspirationJson,
@@ -116,6 +117,15 @@ export const inspirationsRoute = new Hono<AppEnv>()
       return c.json({ item: inspirationJson(enriched) });
     },
   )
+  .delete("/:id", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const deleted = await deleteInspiration(db, id);
+    if (!deleted) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    return c.json({ ok: true });
+  })
   .post("/:id/ogp", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const db = createDb(c.env.DB);
