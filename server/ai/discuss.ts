@@ -35,6 +35,17 @@ export const DISCUSS_SYSTEM_PROMPT = [
   "答えは日本語で600字以内にまとめ、途中で切れないよう必ず最後まで書き切ってください。",
 ].join("");
 
+export const DISCUSS_NO_ROOM_MESSAGE =
+  "考えているうちに返信の上限に達して、答えを書き切れませんでした。質問を短く区切って試してください。";
+
+/** The model used its whole budget before writing any answer. */
+export class DiscussNoRoomError extends Error {
+  constructor() {
+    super("discuss result truncated before any text");
+    this.name = "DiscussNoRoomError";
+  }
+}
+
 export const DISCUSS_TRUNCATED_NOTE =
   "（ここで返信の上限に達しました。「続き」と送ると続きを書きます。）";
 
@@ -101,12 +112,14 @@ export async function generateDiscussReply(
     max_tokens: DISCUSS_MAX_TOKENS,
   });
   const text = extractAiText(result).trim();
+  const cutOff = isAiTruncated(result, DISCUSS_MAX_TOKENS);
   if (!text) {
+    // qwen3 spends tokens on reasoning first, so a hard cut-off can leave the
+    // answer empty. That is not the same failure as the model erroring out.
+    if (cutOff) throw new DiscussNoRoomError();
     throw new Error("empty discuss result");
   }
-  const withNote = isAiTruncated(result, DISCUSS_MAX_TOKENS)
-    ? `${text}\n\n${DISCUSS_TRUNCATED_NOTE}`
-    : text;
+  const withNote = cutOff ? `${text}\n\n${DISCUSS_TRUNCATED_NOTE}` : text;
   return truncate(ensureLegalDisclaimer(opts.userText, withNote), REPLY_MAX);
 }
 
@@ -182,15 +195,20 @@ export async function discussIdea(opts: {
       userText,
     });
   } catch (error) {
+    const noRoom = error instanceof DiscussNoRoomError;
     logDiag("warn", "workers ai call", {
       step: "discuss",
       provider: "workers_ai",
-      outcome: "fail",
+      outcome: noRoom ? "truncated" : "fail",
       ideaId: idea.id,
       model: resolved.model,
       error: errorClass(error),
     });
-    return { ok: false, status: 502, error: DISCUSS_FAIL_MESSAGE };
+    return {
+      ok: false,
+      status: 502,
+      error: noRoom ? DISCUSS_NO_ROOM_MESSAGE : DISCUSS_FAIL_MESSAGE,
+    };
   }
 
   const assistant = await insertIdeaChatMessage(opts.db, idea.id, {

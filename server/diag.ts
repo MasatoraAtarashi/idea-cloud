@@ -22,6 +22,7 @@ export function logCreatePrerequisites(env: {
 export function errorClass(error: unknown): string {
   if (!(error instanceof Error)) return "error";
   if (error.name === "AbortError" || error.name === "TimeoutError") return "timeout";
+  if (error.name === "DiscussNoRoomError") return "truncated";
   if (error.name === "PublicUrlRejectedError") {
     const code = "code" in error && typeof error.code === "string" ? error.code : "";
     return code || "rejected_url";
