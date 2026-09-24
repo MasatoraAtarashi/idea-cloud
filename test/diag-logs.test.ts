@@ -5,10 +5,7 @@ import { authorizeMcpRequest } from "../server/mcp/auth";
 import { runSystemOne, setTestSystemOneRun } from "../server/ai/typesafe";
 import { flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { setTestAiRun } from "../server/ai/research";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 function jsonLogs(spy: { mock: { calls: unknown[][] } }): Record<string, unknown>[] {
   const rows: Record<string, unknown>[] = [];
@@ -37,7 +34,7 @@ describe("diagnostic logs", () => {
     const marker = "ああああああ";
     const create = await exports.default.fetch("https://example.com/api/ideas", {
       method: "POST",
-      headers: { ...authHeaders, "content-type": "application/json" },
+      headers: { ...(await authHeaders()), "content-type": "application/json" },
       body: JSON.stringify({ body: "しまって作る", stage: "archived", tags: ["手元"] }),
     });
     expect(create.status).toBe(201);
@@ -78,7 +75,7 @@ describe("diagnostic logs", () => {
     });
     const create = await exports.default.fetch("https://example.com/api/ideas", {
       method: "POST",
-      headers: { ...authHeaders, "content-type": "application/json" },
+      headers: { ...(await authHeaders()), "content-type": "application/json" },
       body: JSON.stringify({ body: "評価は落ちる", tags: ["手元"] }),
     });
     expect(create.status).toBe(201);

@@ -2,21 +2,24 @@
 
 Closed team. Least privilege. No secrets in git.
 
-**Production primary gate: in-app Google OAuth.** Second layer: email allowlist. Template Cloudflare Access middleware is still in the Worker until the OAuth swap; it is **not** the product auth model.
+**Primary gate: in-app Google OAuth** (implemented — [oauth-swap.md](./oauth-swap.md)). Second layer: email allowlist. The template Cloudflare Access middleware has been removed.
 
 ## Google auth + allowlist
 
 Two layers. Do not treat them as the same feature.
 
-| Layer                            | Mechanism                                                                                                          | Status                                                                                         |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| **In-app Google OAuth**          | Google identity + session inside the Worker. Login UI on `/login` matches Sign in with Google.                     | **Primary (decided).** UI is a mock this pass. Real OAuth is [oauth-swap.md](./oauth-swap.md). |
-| **Allowlist**                    | `ACCESS_ALLOWED_EMAILS` (comma-separated, lowercase). Empty = Google identity only. Set = identity plus app `403`. | **Stub wired** on APIs (`server/security/allowlist.ts`)                                        |
-| **Cloudflare Access** (template) | `Cf-Access-Authenticated-User-Email` middleware from `personal-fullstack`.                                         | **Remove in follow-up.** Do not block screenshots on this.                                     |
+| Layer                            | Mechanism                                                                                                          | Status                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| **In-app Google OAuth**          | Authorization code + PKCE on the Worker; signed httpOnly `ic_session` cookie. `/login` starts it.                  | **Primary, implemented.** `server/auth/`                                             |
+| **Allowlist**                    | `ACCESS_ALLOWED_EMAILS` (comma-separated, lowercase). Empty = Google identity only. Set = identity plus app `403`. | **Wired** on pages and APIs, re-checked per request (`server/security/allowlist.ts`) |
+| **App token**                    | `Authorization: Bearer <APP_API_TOKEN>` for the native app / scripts, attributed to `APP_API_TOKEN_EMAIL`.         | **Wired** (`server/auth/principal.ts`). Optional — unset means cookie-only           |
+| **Cloudflare Access** (template) | `Cf-Access-Authenticated-User-Email` middleware from `personal-fullstack`.                                         | **Removed.** A native client cannot hold an Access session, so it is not the gate.   |
 
-Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only (still used because OAuth is unwired). Missing identity in production APIs → `401` (today: missing Access header).
+Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only, and only while no Google client is configured (dev + Playwright). Unreachable on a real hostname. Missing credential on `/api/*` → `401`; identity outside the allowlist → `403` with no session set.
 
-Team settings show the allowlist in a **disabled** textarea so the mock cannot pretend to write secrets.
+Sessions are self-contained cookies with no `sessions` table: rotate `SESSION_SECRET` to revoke everything at once. Per-device sign-out is not built.
+
+Team settings show the allowlist in a **disabled** textarea so the UI cannot pretend to write secrets.
 
 Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only. Do not log `TYPESAFE_API_KEY`, `MCP_API_KEY`, or `SEARCH_API_KEY`.
 
@@ -28,7 +31,7 @@ Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secre
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Secret           | `MCP_API_KEY` (`MCP_TOKEN` only when the first is unset). `.dev.vars` locally, `wrangler secret put MCP_API_KEY` in production. Never in git. |
 | Request          | `Authorization: Bearer <secret>`. Missing, blank, or wrong token → `401`. Unset secret → `401` for every call.                                |
-| Not a substitute | Cloudflare Access email and the mock Google session do not authorize `/mcp`. `/api/*` still uses Access middleware.                           |
+| Not a substitute | A browser session cookie does not authorize `/mcp`, and `MCP_API_KEY` does not authorize `/api/*`.                                            |
 | Access in front  | If Zero Trust covers the hostname, bypass `/mcp` or clients never reach the bearer check.                                                     |
 | Logging          | Do not log the token or `Authorization`.                                                                                                      |
 
@@ -56,7 +59,7 @@ Also: Dependabot, lefthook (local), security headers middleware (`x-content-type
 
 ## Headers / CORS
 
-Same-origin UI. No wide CORS on APIs. `/` and `/login` are the unauthenticated login gate. `/app` is behind the mock Google continue (real OAuth later).
+Same-origin UI. No wide CORS on APIs. `/` and `/login` are the unauthenticated login gate; `/app/**` requires a session (`server/auth/page-gate.ts`). The session cookie is `httpOnly`, `SameSite=Lax`, and `Secure` off localhost.
 
 ## Outbound OGP fetch
 

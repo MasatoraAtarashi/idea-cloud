@@ -4,6 +4,7 @@ import { STAGES } from "../app/data/mock";
 import { createDb } from "../db/client";
 import { authorizeMcpRequest, mcpSharedSecret, timingSafeEqualString } from "../server/mcp/auth";
 import { parseToolJson } from "../server/mcp/result";
+import { authHeaders } from "./auth-helper";
 import {
   addComment,
   createIdea,
@@ -70,11 +71,12 @@ describe("MCP auth", () => {
     );
     expect(wrong.status).toBe(401);
 
-    const accessOnly = await mcp(
+    // A browser session is not a /mcp credential; /mcp only accepts its bearer.
+    const sessionOnly = await mcp(
       { jsonrpc: "2.0", id: 1, method: "tools/list" },
-      { "cf-access-authenticated-user-email": "test@example.com" },
+      await authHeaders(),
     );
-    expect(accessOnly.status).toBe(401);
+    expect(sessionOnly.status).toBe(401);
   });
 
   it("accepts MCP_API_KEY and falls back to MCP_TOKEN only when the primary secret is empty", () => {

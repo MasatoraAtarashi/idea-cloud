@@ -10,6 +10,8 @@ declare module "react-router" {
         passThroughOnException?: () => void;
       };
     };
+    /** Signed-in email from the session cookie. `null` on public pages (/login). */
+    userEmail: string | null;
   }
 }
 

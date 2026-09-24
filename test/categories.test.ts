@@ -4,15 +4,12 @@ import { filterIdeas, type MockIdea } from "../app/data/mock";
 import { DEFAULT_CATEGORY_NAMES } from "../app/lib/category";
 import { createDb } from "../db/client";
 import { listCategories } from "../db/categories";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 

@@ -12,10 +12,23 @@ export function visible(locator: Locator): Locator {
   return locator.filter({ visible: true });
 }
 
-/** Mock Google login — no OAuth. Mobile lands on compose; desktop on the list. */
-export async function continuePastLogin(page: Page) {
+/** Where auth.setup.ts stores the signed-in session for the test projects. */
+export const AUTH_STATE_PATH = "e2e/.auth/state.json";
+
+/**
+ * Real sign-in path. Locally GOOGLE_CLIENT_ID is unset, so /api/auth/google
+ * signs in LOCAL_DEV_USER_EMAIL directly and sets the session cookie.
+ */
+export async function signIn(page: Page) {
   await page.goto("/login");
   await visible(page.getByRole("link", { name: "Google で続行" })).click();
+  await page.waitForURL(/\/app/);
+}
+
+/** Starts at the login gate and follows it into the app. */
+export async function continuePastLogin(page: Page) {
+  await page.context().clearCookies();
+  await signIn(page);
 }
 
 export async function expectListChrome(page: Page) {
