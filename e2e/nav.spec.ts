@@ -5,13 +5,12 @@ test("mobile tabs reach 一覧, インスピレーション, and 分析", async 
   test.skip(!isMobileProject(testInfo.project.name), "Bottom tabs are phone chrome.");
   await continuePastLogin(page);
   await expect(page).toHaveURL(/\/app\/?$/);
-  await expect(visible(page.getByRole("button", { name: "作成" }))).toBeVisible();
-  await expect(visible(page.getByText("新規アイデア"))).toBeVisible();
+  await expect(visible(page.getByRole("heading", { name: "新しいアイデア" }))).toBeVisible();
+  await expect(visible(page.getByRole("button", { name: "作成する" }))).toBeVisible();
 
-  await visible(page.getByRole("link", { name: "閉じる" })).click();
+  await visible(page.getByRole("link", { name: "一覧", exact: true })).click();
   await expect(page).toHaveURL(/\/app\/list/);
   await expect(visible(page.getByRole("navigation", { name: "メイン" }))).toBeVisible();
-  await expect(visible(page.getByText("絞り込み"))).toBeVisible();
 
   await visible(page.getByRole("link", { name: "インスピレーション" })).click();
   await expect(page).toHaveURL(/\/app\/inspirations/);
@@ -30,6 +29,6 @@ test("desktop stays list-first after login", async ({ page }, testInfo) => {
   await continuePastLogin(page);
   await expect(page).toHaveURL(/\/app\/list/);
   await expect(visible(page.getByRole("heading", { name: "アイデア" }))).toBeVisible();
-  await expect(visible(page.getByRole("link", { name: "インスピレーション" }))).toBeVisible();
+  await expect(visible(page.getByRole("link", { name: /インスピレーション/ }))).toBeVisible();
   await expect(visible(page.getByRole("link", { name: "アナリティクス" }))).toBeVisible();
 });

@@ -69,7 +69,7 @@ async function openDesktopCompose(page: Page) {
 export async function createIdea(page: Page, projectName: string, title: string, body: string) {
   if (isMobileProject(projectName)) {
     await page.goto("/app");
-    const submit = visible(page.getByRole("button", { name: "作成" }));
+    const submit = visible(page.getByRole("button", { name: "作成する" }));
     await expect(submit).toBeVisible();
     const titleInput = page.locator("#idea-mobile-title");
     const bodyInput = page.locator("#idea-mobile");
@@ -97,4 +97,24 @@ export async function createIdea(page: Page, projectName: string, title: string,
   await expect(
     visible(page.locator('a[href^="/app/ideas/"]').filter({ hasText: title })),
   ).toBeVisible();
+}
+
+/**
+ * v2 detail splits the page: the idea itself, and the AI 作業台 with its own
+ * tabs. On desktop the 作業台 is a permanent sidebar; on phones it is the
+ * second top-level tab, so the workbench tabs only exist after switching.
+ */
+export async function openWorkbenchTab(page: Page, projectName: string, tab: string) {
+  if (isMobileProject(projectName)) {
+    await visible(page.getByRole("tab", { name: "AI 作業台" })).click();
+  }
+  await visible(page.getByRole("button", { name: tab, exact: true })).click();
+}
+
+/** The shelf compose form lives behind 「URLを貼る」 on both layouts. */
+export async function openInspirationCompose(page: Page) {
+  const urlInput = page.locator("#inspiration-url");
+  if (await urlInput.isVisible()) return;
+  await visible(page.getByRole("button", { name: /URLを貼る/ })).click();
+  await expect(urlInput).toBeVisible();
 }
