@@ -2,7 +2,7 @@
 
 Idea Cloud runs as **one Cloudflare Worker**: React Router v7 SSR for the UI and Hono for `/api/*`, same isolate. Relational data is **D1** (SQLite at the edge) via Drizzle.
 
-Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app`; `/api/*` still has template Access middleware).
+Product **ideas** persist to D1. Auth is in-app Google OAuth: `/login` → `/api/auth/google` → callback sets a signed httpOnly session cookie; `/app/**` and `/api/*` require it (`server/auth/`, [oauth-swap.md](./oauth-swap.md)).
 
 ## Cloudflare Workers
 
@@ -20,7 +20,7 @@ Product **ideas** persist to D1. Auth is still mock (UI login is a link to `/app
 
 Bindings declared only if used. Today that is **D1 `DB`** and **Workers AI `AI`** (per-idea research, brainstorm, discuss, evaluation fallback, and auto-tag fallback). TypeSafe Jev is an outbound HTTPS call when `TYPESAFE_API_KEY` is set. Research also does outbound HTML/JSON search (DuckDuckGo / Bing, or Brave when `SEARCH_API_KEY` is set). No unused KV, R2, Queue, Browser Rendering, or Durable Object bindings.
 
-Remote MCP is the same Worker: stateless Streamable HTTP at `/mcp` (`server/mcp/`, `createMcpHandler` from `@modelcontextprotocol/server`). Tools call the existing Drizzle helpers and D1. Auth is `Authorization: Bearer` with `MCP_API_KEY` (or `MCP_TOKEN` when that is unset), not Access and not the mock Google login. See [mcp.md](./mcp.md).
+Remote MCP is the same Worker: stateless Streamable HTTP at `/mcp` (`server/mcp/`, `createMcpHandler` from `@modelcontextprotocol/server`). Tools call the existing Drizzle helpers and D1. Auth is `Authorization: Bearer` with `MCP_API_KEY` (or `MCP_TOKEN` when that is unset), not the browser session cookie. See [mcp.md](./mcp.md).
 
 ```
 Browser
@@ -36,7 +36,7 @@ MCP client
       → same D1 binding `DB`
 ```
 
-Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to that server and local D1 with mocked login; see [e2e.md](./e2e.md). Production: `.github/workflows/deploy.yml` on push to `main` or `workflow_dispatch` on `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`). Worker script name: `idea-cloud`.
+Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to that server and local D1; a `setup` project signs in through the localhost dev path once and shares the session. See [e2e.md](./e2e.md). Production: `.github/workflows/deploy.yml` on push to `main` or `workflow_dispatch` on `main` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`). Worker script name: `idea-cloud`.
 
 ## D1
 
@@ -56,7 +56,7 @@ Local: `pnpm dev` (Vite + wrangler). Playwright e2e (`pnpm test:e2e`) talks to t
 | Members table        | **Not created**                                                                                                                                                                                                                                                                                                                                                                  |
 | Field encryption     | Helper exists; **not** applied to idea rows                                                                                                                                                                                                                                                                                                                                      |
 
-**作成** is a React Router action (`insert` into `ideas`, optional auto-tags via Jev or Workers AI, then AI評価 via `waitUntil` so the redirect is not held for the model; archive skips evaluation; eval failure does not fail create). After insert (and after an edit that changes `body`), distinct http(s) URLs in the idea text are upserted into `inspirations` (max 5, no page fetch at save time; failures are ignored). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. List tabs/filters live in `/app/list` search params (`tab`, `view`, `stage`, `tag`, `category`, `q`, `days`, `sort`, `dir`, `v`). Named views persist in `saved_views` (sort is URL-only, not part of a saved view). Per-idea **コメント** / **編集** / **human-score** / **見直し** / **振り返り** / **リサーチ** / **ブレスト** / **AI評価** / **相談** / **削除** are React Router actions on the detail page; AI intents return `{ ok: true }` so `useFetcher` can revalidate in place instead of waiting on a document navigation. **削除** hard-deletes the idea after removing `idea_comments`, `idea_brainstorms`, and `idea_chat_messages`. Detail tabs (`buildIdeaHistory` on **AI/履歴**) concatenate the idea’s latest research/evaluation snapshot with every `idea_brainstorms` row (newest first). `/app/analytics` and `/app/inspirations` are first-class nav destinations (desktop sidebar + mobile tabs; compose is a header +). `/app/inspirations` is a gallery CRUD for the memo shelf; create/update refetch OGP when the URL changes (`POST /api/inspirations/:id/ogp` to refresh). **AIブレスト** inserts an idea then reuses `brainstormIdea`. Hono `GET/POST /api/ideas`, `PATCH/DELETE /api/ideas/:id`, `GET/POST /api/ideas/:id/comments`, `POST /api/ideas/:id/research`, `GET/POST /api/ideas/:id/brainstorm(s)`, `POST /api/ideas/:id/evaluate`, `GET /api/ideas/:id/discussions`, `POST /api/ideas/:id/discuss`, `GET/POST/PATCH /api/inspirations`, `POST /api/inspirations/:id/ogp`, `POST /api/inspirations/:id/brainstorm`, and `GET/POST/DELETE /api/saved-views` follow the template `todos` pattern (still behind Access middleware). Shared workspace — no owner column.
+**作成** is a React Router action (`insert` into `ideas`, optional auto-tags via Jev or Workers AI, then AI評価 via `waitUntil` so the redirect is not held for the model; archive skips evaluation; eval failure does not fail create). After insert (and after an edit that changes `body`), distinct http(s) URLs in the idea text are upserted into `inspirations` (max 5, no page fetch at save time; failures are ignored). List (`/app/list`) and detail (`/app/ideas/:id`) load via route loaders. List tabs/filters live in `/app/list` search params (`tab`, `view`, `stage`, `tag`, `category`, `q`, `days`, `sort`, `dir`, `v`). Named views persist in `saved_views` (sort is URL-only, not part of a saved view). Per-idea **コメント** / **編集** / **human-score** / **見直し** / **振り返り** / **リサーチ** / **ブレスト** / **AI評価** / **相談** / **削除** are React Router actions on the detail page; AI intents return `{ ok: true }` so `useFetcher` can revalidate in place instead of waiting on a document navigation. **削除** hard-deletes the idea after removing `idea_comments`, `idea_brainstorms`, and `idea_chat_messages`. Detail tabs (`buildIdeaHistory` on **AI/履歴**) concatenate the idea’s latest research/evaluation snapshot with every `idea_brainstorms` row (newest first). `/app/analytics` and `/app/inspirations` are first-class nav destinations (desktop sidebar + mobile tabs; compose is a header +). `/app/inspirations` is a gallery CRUD for the memo shelf; create/update refetch OGP when the URL changes (`POST /api/inspirations/:id/ogp` to refresh). **AIブレスト** inserts an idea then reuses `brainstormIdea`. Hono `GET/POST /api/ideas`, `PATCH/DELETE /api/ideas/:id`, `GET/POST /api/ideas/:id/comments`, `POST /api/ideas/:id/research`, `GET/POST /api/ideas/:id/brainstorm(s)`, `POST /api/ideas/:id/evaluate`, `GET /api/ideas/:id/discussions`, `POST /api/ideas/:id/discuss`, `GET/POST/PATCH /api/inspirations`, `POST /api/inspirations/:id/ogp`, `POST /api/inspirations/:id/brainstorm`, and `GET/POST/DELETE /api/saved-views` follow the template `todos` pattern (behind the session / app-token gate). Shared workspace — no owner column.
 
 Intended later: idea bodies encrypted with AES-GCM _before_ insert. See [security.md](./security.md). First-deploy steps: [deploy-and-access.md](./deploy-and-access.md).
 
@@ -127,7 +127,7 @@ No Lighthouse CI in this environment (Chrome DevTools MCP is not attached). Easy
 
 ## Idea comments
 
-D1 `idea_comments` (FK to `ideas`). UI composer posts `intent=comment` with mock author `SESSION_USER` (`id: mock-user`, `label: ログイン中`). API uses Access `userEmail` when present. Insert bumps `ideas.updated_at`. Max 2000 characters. Oldest-first on detail.
+D1 `idea_comments` (FK to `ideas`). Both the UI composer (`intent=comment`, `context.userEmail`) and the API (`c.get("userEmail")`) attribute the comment to the signed-in email, falling back to `SESSION_USER` only when there is none. Insert bumps `ideas.updated_at`. Max 2000 characters. Oldest-first on detail.
 
 ## Saved list views
 
@@ -135,11 +135,11 @@ D1 `saved_views`. Filter JSON matches list URL state (`tab`, `view`, `query`, `s
 
 ## Provenance
 
-| Layer                                       | Source                                                                       |
-| ------------------------------------------- | ---------------------------------------------------------------------------- |
-| Worker, CI, Access middleware, sample todos | squat `personal-fullstack` from `MasatoraAtarashi/app-template`              |
-| Product routes, mock data, Japanese UI      | This repo                                                                    |
-| Visual tokens                               | Claude Design system frame (Linear IA × LiteLLM-thin chrome × pastel stages) |
+| Layer                                  | Source                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| Worker, CI, sample todos               | squat `personal-fullstack` from `MasatoraAtarashi/app-template`              |
+| Product routes, mock data, Japanese UI | This repo                                                                    |
+| Visual tokens                          | Claude Design system frame (Linear IA × LiteLLM-thin chrome × pastel stages) |
 
 `app-template` is a squat monorepo (`isTemplate: false`). Copied out; template repo not modified.
 

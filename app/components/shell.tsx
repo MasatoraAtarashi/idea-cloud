@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Form, NavLink, Link, useLocation } from "react-router";
 import type { IdeaCategory } from "../lib/category";
 import { SESSION_USER, type Stage } from "../data/mock";
+import { LOGOUT_PATH } from "../auth/google-login";
 import { initialsFromLabel } from "../lib/format";
 import { ComposeProvider, useCompose } from "../lib/compose";
 import { isDesktopViewport, LIST_PATH } from "../lib/home-path";
@@ -30,6 +31,8 @@ export type ShellNav = {
   savedViews: SavedViewItem[];
   /** Newest-updated first. Drives the detail sidebar's prev / next list. */
   ideas: SidebarIdea[];
+  /** Signed-in Google email. `null` only if the page gate was bypassed. */
+  userEmail: string | null;
 };
 
 function navCount(to: string, nav: ShellNav): number | null {
@@ -238,14 +241,32 @@ function Sidebar({ nav }: { nav: ShellNav }) {
             {item.label}
           </NavLink>
         ))}
-        <div className="flex items-center gap-2.5 px-2.5 py-1.5">
-          <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] font-medium text-secondary">
-            {initialsFromLabel(SESSION_USER.label)}
-          </span>
-          <span className="truncate text-[13px] text-secondary">{SESSION_USER.label}</span>
-        </div>
+        <AccountRow email={nav.userEmail} />
       </div>
     </aside>
+  );
+}
+
+/** Signed-in account plus sign-out. Plain form: /api/auth/logout is a Worker route. */
+function AccountRow({ email }: { email: string | null }) {
+  const label = email ?? SESSION_USER.label;
+  return (
+    <div className="flex items-center gap-2 px-2.5 py-1.5">
+      <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] font-medium text-secondary">
+        {initialsFromLabel(label)}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-[13px] text-secondary" title={label}>
+        {label}
+      </span>
+      <form method="post" action={LOGOUT_PATH}>
+        <button
+          type="submit"
+          className="shrink-0 rounded-[6px] px-1.5 py-1 text-[11.5px] font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
+        >
+          ログアウト
+        </button>
+      </form>
+    </div>
   );
 }
 

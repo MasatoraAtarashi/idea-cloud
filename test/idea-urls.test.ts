@@ -11,15 +11,12 @@ import {
 } from "../app/lib/idea-urls";
 import { safeUpsertInspirationsFromIdeaText } from "../db/inspirations";
 import { setTestOgpFetch } from "../server/ogp/fetch";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 

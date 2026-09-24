@@ -25,5 +25,8 @@
   ],
   "vars": {
     "MCP_API_KEY": "test-mcp-key",
+    "SESSION_SECRET": "test-session-secret",
+    "APP_API_TOKEN": "test-app-token",
+    "APP_API_TOKEN_EMAIL": "app@example.com",
   },
 }

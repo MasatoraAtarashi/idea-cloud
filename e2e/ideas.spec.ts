@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createIdea, isMobileProject, openIdeaFromList, uniqueLabel, visible } from "./helpers";
+import { createIdea, openIdeaFromList, openWorkbenchTab, uniqueLabel, visible } from "./helpers";
 
 test("creates an idea and shows it in the list", async ({ page }, testInfo) => {
   const title = uniqueLabel("E2E着想");
@@ -27,11 +27,7 @@ test("advances stage from detail", async ({ page }, testInfo) => {
   const title = uniqueLabel("E2E段階");
   await createIdea(page, testInfo.project.name, title, "段階を進めます。");
   await openIdeaFromList(page, title, testInfo.project.name);
-  if (isMobileProject(testInfo.project.name)) {
-    await visible(page.getByRole("button", { name: /次の段階へ/ })).click();
-  } else {
-    await page.getByLabel("段階").selectOption("aging");
-  }
+  await visible(page.getByRole("button", { name: "次の段階へ" })).click();
   await expect(visible(page.getByText("熟成中", { exact: true }))).toBeVisible();
 });
 
@@ -39,7 +35,6 @@ test("adds a comment on detail", async ({ page }, testInfo) => {
   const title = uniqueLabel("E2E話");
   await createIdea(page, testInfo.project.name, title, "コメントを残します。");
   await openIdeaFromList(page, title, testInfo.project.name);
-  await visible(page.getByRole("button", { name: /^コメント/ })).click();
   const note = uniqueLabel("E2Eコメント");
   await page.locator("#idea-comment").fill(note);
   await visible(page.getByRole("button", { name: "コメント送信" })).click();
@@ -53,7 +48,7 @@ test("copies the idea title and body", async ({ page }, testInfo) => {
   await createIdea(page, testInfo.project.name, title, body);
   await openIdeaFromList(page, title, testInfo.project.name);
   await visible(page.getByRole("button", { name: "説明を含めてコピー" })).click();
-  await expect(visible(page.getByText("コピーしました", { exact: true }))).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("コピーしました");
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toContain(title);
   expect(copied).toContain(body);
@@ -65,8 +60,7 @@ test("opens the discuss tab on idea detail", async ({ page }, testInfo) => {
   const note = uniqueLabel("E2E質問");
   await createIdea(page, testInfo.project.name, title, "相談タブを開きます。");
   await openIdeaFromList(page, title, testInfo.project.name);
-  await visible(page.getByRole("button", { name: "相談", exact: true })).click();
-  await expect(visible(page.getByRole("heading", { name: "AIと話す" }))).toBeVisible();
+  await openWorkbenchTab(page, testInfo.project.name, "相談");
   await expect(visible(page.getByRole("button", { name: "LPにするなら" }))).toBeVisible();
   await expect(visible(page.getByRole("button", { name: "法的リスクは？" }))).toBeVisible();
   await page.locator("#idea-discuss").fill(note);
@@ -75,7 +69,7 @@ test("opens the discuss tab on idea detail", async ({ page }, testInfo) => {
     visible(page.getByText("相談の返信に失敗しました。時間をおいて再度お試しください。")),
   ).toBeVisible({ timeout: 30_000 });
   await page.reload();
-  await visible(page.getByRole("button", { name: "相談", exact: true })).click();
+  await openWorkbenchTab(page, testInfo.project.name, "相談");
   await expect(visible(page.getByText(note))).toBeVisible();
 });
 
@@ -85,14 +79,9 @@ test("research control is present and fails softly without paid APIs", async ({
   const title = uniqueLabel("E2E調査");
   await createIdea(page, testInfo.project.name, title, "リサーチ導線を確認します。");
   await openIdeaFromList(page, title, testInfo.project.name);
-  await visible(page.getByRole("button", { name: "リサーチ", exact: true })).click();
+  await openWorkbenchTab(page, testInfo.project.name, "リサーチ");
   await expect(
-    visible(
-      page.getByText(
-        "ウェブで先行事例を数件取得し、本文と合わせて分析します。検索に失敗してもメモは残します。",
-        { exact: true },
-      ),
-    ),
+    visible(page.getByText("ウェブで先行事例を数件取得し、本文と合わせて分析します。")),
   ).toBeVisible();
   await visible(page.getByRole("button", { name: "リサーチを実行" })).click();
   await expect(
