@@ -3,6 +3,7 @@ import { resolveCategoryId } from "../../db/categories";
 import { createDb } from "../../db/client";
 import { IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
 import {
+  deleteInspiration,
   getInspirationRow,
   ideaTextFromInspiration,
   updateInspiration,
@@ -135,6 +136,14 @@ export async function inspirationDetailAction({
 
   if (intent === CREATE_IDEA_INTENT) {
     return createIdeaFromInspiration(form, context, inspirationId);
+  }
+
+  if (intent === "delete") {
+    const deleted = await deleteInspiration(db, inspirationId);
+    if (!deleted) {
+      return { error: "見つかりません", intent: "delete" } satisfies InspirationActionData;
+    }
+    return redirect(INSPIRATIONS_PATH);
   }
 
   if (intent === "refresh-ogp") {
