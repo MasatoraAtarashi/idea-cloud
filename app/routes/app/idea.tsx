@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Link,
   useActionData,
@@ -8,30 +8,24 @@ import {
   useNavigate,
   type LoaderFunctionArgs,
 } from "react-router";
-import { CategoryLabel } from "../../components/category-field";
-import { EmptyState, StagePill, TagPill } from "../../components/ui";
+import { AiWorkbench } from "../../components/ai-workbench";
+import { shortAgo } from "../../components/ai-format";
+import { EmptyState, StageDot, StagePill, TagPill } from "../../components/ui";
 import { IdeaComments } from "../../components/idea-comments";
-import { IdeaDiscuss, IdeaDiscussLink } from "../../components/idea-discuss";
 import { IdeaDetailSwipe } from "../../components/idea-detail-swipe";
-import { IdeaBrainstormControls } from "../../components/idea-brainstorm";
 import { IdeaEditForm } from "../../components/idea-edit-form";
-import { IdeaEvaluateControls } from "../../components/idea-evaluate";
-import { IdeaHistory } from "../../components/idea-history";
 import { IdeaReflectionForm } from "../../components/idea-reflection";
-import { IdeaReviewPrompt } from "../../components/idea-review";
+import { IdeaReviewBand } from "../../components/idea-review";
 import { IdeaHumanScore } from "../../components/idea-score";
-import { IdeaResearchControls, IdeaResearchNotes } from "../../components/idea-research";
+import { PopoverMenu } from "../../components/popover-menu";
 import { StageSelect } from "../../components/stage-select";
-import { SESSION_USER, STAGE_LABEL, nextStage } from "../../data/mock";
-import { confirmIdeaDelete } from "../../lib/idea-delete";
-import { formatAgedDays, formatDateJa, ideaPublicId } from "../../lib/format";
+import { STAGE_LABEL, nextStage } from "../../data/mock";
+import { formatAgedDays } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
-import { buildIdeaHistory } from "../../lib/idea-history";
 import { ideaDetailAction } from "../../lib/idea-detail-action";
 import {
   hashForIdeaDetailTab,
-  IDEA_DETAIL_TAB_IDS,
-  IDEA_DETAIL_TAB_LABEL,
+  hashTargetsAi,
   ideaDetailTabFromHash,
   type IdeaDetailTab,
 } from "../../lib/idea-detail-tabs";
@@ -42,7 +36,7 @@ import { listCommentsForIdea, toCommentView } from "../../../db/comments";
 import { listChatMessagesForIdea, toChatMessageView } from "../../../db/discussions";
 import { getIdeaView } from "../../../db/ideas";
 import { IdeaCopyButton } from "../../components/idea-copy-button";
-import { IconMerge, IconSpinner } from "../../components/icons";
+import { IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
 
 export { ideaDetailAction as action };
@@ -136,25 +130,98 @@ export default function IdeaPage() {
   );
 }
 
-function IdeaMeta({ idea }: { idea: MockIdea }) {
+type DetailSide = "idea" | "ai";
+
+function StageAdvanceButton({ idea, className = "" }: { idea: MockIdea; className?: string }) {
+  const fetcher = useFetcher();
+  const next = nextStage(idea.stage);
+  const busy = fetcher.state !== "idle";
+  const { pending, hold } = useInstantPending(busy);
+  const locked = !next;
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <StagePill stage={idea.stage} />
-      <CategoryLabel name={idea.categoryName} />
-      <span
-        className={`font-mono text-[11.5px] ${
-          idea.agedDays > 30 ? "text-[var(--stage-aging-fg)]" : "text-muted-foreground"
-        }`}
+    <fetcher.Form method="post" className={className} onSubmit={hold}>
+      <input type="hidden" name="intent" value="stage" />
+      {next ? <input type="hidden" name="stage" value={next} /> : null}
+      <button
+        type="submit"
+        disabled={pending || locked}
+        title={
+          idea.stage === "archived"
+            ? "アーカイブでは進められません"
+            : next
+              ? `次の段階へ（${STAGE_LABEL[next]}）`
+              : "最後の段階です"
+        }
+        className="ui-btn w-full px-3.5"
       >
-        熟成 {formatAgedDays(idea.agedDays)}
-      </span>
-      <span className="hidden font-mono text-[11.5px] text-muted-foreground lg:inline">
-        コメント {idea.commentCount}
-      </span>
-      {idea.researchedAt || idea.researchNotes ? (
-        <span className="hidden font-mono text-[11.5px] text-muted-foreground lg:inline">
-          調査済
+        {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+        {pending ? "更新中…" : "次の段階へ"}
+      </button>
+    </fetcher.Form>
+  );
+}
+
+function MoreMenu({ idea }: { idea: MockIdea }) {
+  const stageFetcher = useFetcher();
+  const archiveFetcher = useFetcher();
+  const archivePending = useInstantPending(archiveFetcher.state !== "idle");
+  const item =
+    "flex min-h-11 w-full items-center px-3 text-left text-[13px] text-secondary no-underline hover:bg-sunken md:min-h-9";
+  return (
+    <PopoverMenu
+      label="その他の操作"
+      trigger={
+        <span className="flex h-full w-full items-center justify-center rounded-[7px] border border-border-control bg-card text-[14px] leading-none text-secondary">
+          ⋯
         </span>
+      }
+    >
+      {(close) => (
+        <>
+          <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <span className="text-[12px] text-muted-foreground">段階を変更</span>
+            <stageFetcher.Form method="post">
+              <input type="hidden" name="intent" value="stage" />
+              <StageSelect defaultValue={idea.stage} autoSubmit />
+            </stageFetcher.Form>
+          </div>
+          <div className="my-1 border-t border-border" />
+          <Link to={`/app/merge?from=${idea.id}`} role="menuitem" className={item}>
+            他のアイデアと融合
+          </Link>
+          {idea.stage !== "archived" ? (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={archivePending.pending}
+              className={item}
+              onClick={() => {
+                archivePending.hold();
+                const data = new FormData();
+                data.set("intent", "stage");
+                data.set("stage", "archived");
+                void archiveFetcher.submit(data, { method: "post" });
+                close();
+              }}
+            >
+              {archivePending.pending ? "更新中…" : "アーカイブ"}
+            </button>
+          ) : null}
+        </>
+      )}
+    </PopoverMenu>
+  );
+}
+
+function IdeaHeaderMeta({ idea }: { idea: MockIdea }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      <StagePill stage={idea.stage} />
+      <span className="font-mono text-[12px] text-muted-foreground">
+        {formatAgedDays(idea.agedDays).replace(/日$/, "d")}
+      </span>
+      {idea.categoryName ? (
+        <span className="truncate text-[12px] text-muted-foreground">{idea.categoryName}</span>
       ) : null}
     </div>
   );
@@ -163,113 +230,47 @@ function IdeaMeta({ idea }: { idea: MockIdea }) {
 function IdeaTags({ idea }: { idea: MockIdea }) {
   if (idea.tags.length > 0) {
     return (
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-5 flex flex-wrap gap-1.5">
         {idea.tags.map((tag) => (
-          <TagPill key={tag} label={tag} />
+          <TagPill key={tag} label={tag} large />
         ))}
       </div>
     );
   }
-  return <p className="mt-3 text-[12.5px] text-muted-foreground">自動タグは付きませんでした</p>;
+  return <p className="mt-5 text-[11.5px] text-muted-foreground">自動タグなし</p>;
 }
 
-function StageAdvanceButton({ idea }: { idea: MockIdea }) {
-  const fetcher = useFetcher();
-  const next = nextStage(idea.stage);
-  const busy = fetcher.state !== "idle";
-  const { pending, hold } = useInstantPending(busy);
-  if (!next) return null;
-  return (
-    <fetcher.Form method="post" className="min-w-0 flex-1" onSubmit={hold}>
-      <input type="hidden" name="intent" value="stage" />
-      <input type="hidden" name="stage" value={next} />
-      <button type="submit" disabled={pending} className="ui-btn w-full px-3 text-[13px]">
-        {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-        {pending ? "更新中…" : `次の段階へ（${STAGE_LABEL[next]}）`}
-      </button>
-    </fetcher.Form>
-  );
-}
-
-function ArchiveButton({ idea, ghost = false }: { idea: MockIdea; ghost?: boolean }) {
-  const fetcher = useFetcher();
-  const busy = fetcher.state !== "idle";
-  const { pending, hold } = useInstantPending(busy);
-  return (
-    <fetcher.Form method="post" onSubmit={hold}>
-      <input type="hidden" name="intent" value="stage" />
-      <input type="hidden" name="stage" value="archived" />
-      <button
-        type="submit"
-        disabled={pending || idea.stage === "archived"}
-        className={
-          ghost
-            ? "ui-btn-ghost w-full justify-start px-3 text-[13px]"
-            : "ui-btn-secondary px-3 text-[13px]"
-        }
-      >
-        {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-        {pending ? "更新中…" : "アーカイブ"}
-      </button>
-    </fetcher.Form>
-  );
-}
-
-function DeleteButton({ idea }: { idea: MockIdea }) {
-  const fetcher = useFetcher();
-  const busy = fetcher.state !== "idle";
-  const { pending, hold } = useInstantPending(busy);
-  return (
-    <fetcher.Form
-      method="post"
-      onSubmit={(event) => {
-        if (!confirmIdeaDelete(idea.title)) {
-          event.preventDefault();
-          return;
-        }
-        hold();
-      }}
-    >
-      <input type="hidden" name="intent" value="delete" />
-      <input type="hidden" name="redirectTo" value={LIST_PATH} />
-      <button type="submit" disabled={pending} className="ui-btn-danger w-full justify-start px-3">
-        {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-        {pending ? "削除中…" : "削除"}
-      </button>
-    </fetcher.Form>
-  );
-}
-
-function IdeaDetailTabs({
-  tab,
-  onTab,
-  commentCount,
+function SelfReview({
+  idea,
+  scoreError,
+  reflectionError,
 }: {
-  tab: IdeaDetailTab;
-  onTab: (next: IdeaDetailTab) => void;
-  commentCount: number;
+  idea: MockIdea;
+  scoreError?: string;
+  reflectionError?: string;
 }) {
+  const summary = [
+    idea.humanScore ? `自分の点数 ${idea.humanScore}` : "",
+    idea.reflectionOutcome?.trim() ? "振り返りあり" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <div className="flex gap-1 overflow-x-auto border-b border-border">
-      {IDEA_DETAIL_TAB_IDS.map((id) => (
-        <button
-          key={id}
-          type="button"
-          onClick={() => onTab(id)}
-          aria-current={tab === id ? "page" : undefined}
-          className={`flex min-h-11 shrink-0 items-center px-3 text-[13.5px] ${
-            tab === id
-              ? "border-b-2 border-foreground font-semibold text-foreground"
-              : "font-medium text-muted-foreground"
-          }`}
-        >
-          {IDEA_DETAIL_TAB_LABEL[id]}
-          {id === "comments" ? (
-            <span className="ml-1 font-mono text-[11px]">{commentCount}</span>
-          ) : null}
-        </button>
-      ))}
-    </div>
+    <details className="group mt-8 border-t border-border pt-4">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-[13px] font-semibold md:min-h-8">
+        自分の評価と振り返り
+        {summary ? (
+          <span className="font-mono text-[11.5px] font-normal text-muted-foreground">
+            {summary}
+          </span>
+        ) : null}
+        <span className="ml-auto text-[12px] font-normal text-muted-foreground group-open:hidden">
+          開く
+        </span>
+      </summary>
+      <IdeaHumanScore idea={idea} error={scoreError} />
+      <IdeaReflectionForm idea={idea} error={reflectionError} />
+    </details>
   );
 }
 
@@ -305,220 +306,146 @@ function IdeaDetail({
   const [editing, setEditing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  // The URL hash is not sent to the server, so the first paint stays on 概要.
+  // The URL hash is not sent to the server, so the first paint stays on 相談.
   const [hashReady, setHashReady] = useState(false);
+  const [side, setSide] = useState<DetailSide>("idea");
   useEffect(() => {
     setHashReady(true);
+    if (hashTargetsAi(window.location.hash)) setSide("ai");
   }, []);
-  const tab = hashReady ? ideaDetailTabFromHash(location.hash) : "overview";
-  const history = buildIdeaHistory(idea, brainstorms);
+  const tab = hashReady ? ideaDetailTabFromHash(location.hash) : "discuss";
+  const toggleEdit = useCallback(() => setEditing((open) => !open), []);
 
   function setTab(next: IdeaDetailTab) {
-    const hash = hashForIdeaDetailTab(next);
     navigate(
-      { pathname: location.pathname, search: location.search, hash },
+      { pathname: location.pathname, search: location.search, hash: hashForIdeaDetailTab(next) },
       { replace: true, preventScrollReset: true },
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-      <article className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] lg:px-8 lg:py-6">
-        <header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 py-1 lg:flex lg:items-start lg:justify-between lg:py-0">
-            <Link
-              to={LIST_PATH}
-              className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] font-medium text-foreground no-underline lg:hidden"
-            >
-              戻る
-            </Link>
-            <p className="idea-title-wrap ui-title line-clamp-2 text-center text-[15px] font-semibold leading-snug lg:hidden">
-              {idea.title}
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card lg:grid lg:grid-cols-[minmax(0,1fr)_clamp(420px,36vw,500px)]">
+      {/* Mobile header: back, title, stage. */}
+      <header className="shrink-0 border-b border-border bg-card px-2 pt-[max(0.25rem,env(safe-area-inset-top))] lg:hidden">
+        <div className="flex items-center gap-1">
+          <Link
+            to={LIST_PATH}
+            aria-label="一覧へ戻る"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-[18px] text-foreground no-underline"
+          >
+            ←
+          </Link>
+          <div className="min-w-0 flex-1 py-1.5">
+            <p className="idea-title-wrap line-clamp-1 text-[14.5px] font-semibold">{idea.title}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-[11.5px] text-warn">
+              <StageDot stage={idea.stage} />
+              <span className="text-secondary">{STAGE_LABEL[idea.stage]}</span>
+              <span className="font-mono text-muted-foreground">
+                {formatAgedDays(idea.agedDays).replace(/日$/, "d")}
+              </span>
             </p>
-            <p className="hidden font-mono text-[11.5px] text-muted-foreground lg:block">
-              <Link
-                to={LIST_PATH}
-                className="text-muted-foreground no-underline hover:text-foreground"
-              >
-                アイデア
-              </Link>
-              <span className="mx-2">/</span>
-              {ideaPublicId(idea.id)}
-            </p>
-            <button
-              type="button"
-              onClick={() => setEditing((open) => !open)}
-              className="flex min-h-11 min-w-[3.5rem] items-center justify-end text-[13.5px] font-medium text-foreground lg:hidden"
-            >
-              {editing ? "閉じる" : "編集"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing((open) => !open)}
-              className="ui-btn-secondary hidden min-w-[4.5rem] px-3 lg:inline-flex"
-            >
-              {editing ? "閉じる" : "編集"}
-            </button>
           </div>
-          <IdeaDetailTabs tab={tab} onTab={setTab} commentCount={comments.length} />
+          <button
+            type="button"
+            onClick={toggleEdit}
+            className="flex min-h-11 min-w-11 items-center justify-center px-2 text-[13px] font-medium text-secondary"
+          >
+            {editing ? "閉じる" : "編集"}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-1.5 px-2 pb-2.5" role="tablist">
+          {(["idea", "ai"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={side === value}
+              onClick={() => setSide(value)}
+              className={`min-h-11 rounded-[8px] text-[13.5px] ${
+                side === value
+                  ? "bg-foreground font-semibold text-white"
+                  : "bg-muted font-medium text-tertiary"
+              }`}
+            >
+              {value === "idea" ? "アイデア" : "AI 作業台"}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Thinking column. */}
+      <article
+        className={`${side === "idea" ? "flex" : "hidden"} min-h-0 min-w-0 flex-1 flex-col overflow-y-auto lg:flex`}
+      >
+        <header className="hidden h-[65px] shrink-0 items-center justify-between gap-3 border-b border-border px-7 lg:flex">
+          <IdeaHeaderMeta idea={idea} />
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={toggleEdit} className="ui-btn-secondary px-3">
+              {editing ? "閉じる" : "編集"}
+            </button>
+            <IdeaCopyButton idea={idea} className="ui-btn-secondary px-3" inline />
+            <StageAdvanceButton idea={idea} />
+            <MoreMenu idea={idea} />
+          </div>
         </header>
 
-        <div className="mt-3 lg:hidden">
-          <IdeaCopyButton idea={idea} />
-        </div>
-
-        {tab === "overview" ? (
+        <div className="px-4 pt-5 pb-[max(2rem,env(safe-area-inset-bottom))] lg:px-7 lg:pt-8">
           <IdeaDetailSwipe
             idea={idea}
             editing={editing}
-            onEdit={() => setEditing((open) => !open)}
-            researchError={researchError}
-            brainstormError={brainstormError}
-            evaluateError={evaluateError}
+            onEdit={toggleEdit}
+            onAi={() => setSide("ai")}
           >
-            <div className="mt-3 lg:mt-4">
-              <IdeaMeta idea={idea} />
-            </div>
-
             {editing ? (
               <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
             ) : (
-              <>
-                <h1 className="idea-title-wrap ui-title mt-3 text-[22px] leading-snug lg:text-[23px] lg:leading-[1.4]">
+              <div className="max-w-[760px]">
+                <h1 className="idea-title-wrap text-[23px] leading-[1.45] font-semibold tracking-[-0.02em] lg:text-[27px]">
                   {idea.title}
                 </h1>
-                <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] font-medium leading-relaxed text-foreground lg:mt-5 lg:text-[13.5px]">
-                  {idea.body}
-                </p>
+                {idea.body.trim() ? (
+                  <p className="mt-4 text-[14.5px] leading-[1.95] whitespace-pre-wrap text-secondary">
+                    {idea.body}
+                  </p>
+                ) : null}
                 <IdeaTags idea={idea} />
-              </>
+                <p className="mt-4 font-mono text-[11.5px] text-muted-foreground">
+                  created {shortAgo(idea.createdAt)} · updated {shortAgo(idea.updatedAt)}
+                </p>
+              </div>
             )}
-
-            <div className="mt-5 lg:hidden">
-              <StageAdvanceButton idea={idea} />
-            </div>
           </IdeaDetailSwipe>
-        ) : null}
 
-        {tab === "overview" ? (
-          <>
-            <div className="lg:hidden">
-              <IdeaReviewPrompt idea={idea} compact showNextStage={false} />
+          <div className="max-w-[760px]">
+            <div className="mt-5 flex gap-2 lg:hidden">
+              <StageAdvanceButton idea={idea} className="flex-1" />
+              <IdeaCopyButton idea={idea} className="ui-btn-secondary px-4" inline />
             </div>
-            <div className="hidden lg:block">
-              <IdeaReviewPrompt idea={idea} />
-            </div>
+            <IdeaReviewBand idea={idea} />
             {reviewError ? <p className="mt-1.5 text-[12.5px] text-danger">{reviewError}</p> : null}
-            <IdeaHumanScore idea={idea} error={scoreError} />
-            <details className="mt-6 lg:hidden">
-              <summary className="flex min-h-11 cursor-pointer items-center text-[13.5px] font-medium">
-                振り返り
-              </summary>
-              <IdeaReflectionForm idea={idea} error={reflectionError} />
-            </details>
-            <div className="hidden lg:block">
-              <IdeaReflectionForm idea={idea} error={reflectionError} />
-            </div>
-            <div className="mt-6 lg:hidden">
-              <DeleteButton idea={idea} />
-            </div>
-          </>
-        ) : null}
-
-        {tab === "research" ? (
-          <section id="research" className="mt-4 max-w-2xl">
-            <p className="rounded-md border border-border bg-muted/60 px-3 py-2 text-[12.5px] leading-relaxed text-foreground">
-              ウェブで先行事例を数件取得し、本文と合わせて分析します。検索に失敗してもメモは残します。
-            </p>
-            <div className="mt-4 lg:hidden">
-              <IdeaResearchControls idea={idea} error={researchError} />
-            </div>
-            <IdeaResearchNotes idea={idea} />
-          </section>
-        ) : null}
-
-        {tab === "ai" ? (
-          <div className="mt-4 max-w-2xl">
-            <span id="history" className="sr-only">
-              AI/履歴
-            </span>
-            <div className="mb-4 flex flex-col gap-2 lg:hidden">
-              <IdeaBrainstormControls idea={idea} error={brainstormError} />
-              <IdeaEvaluateControls idea={idea} error={evaluateError} />
-            </div>
-            <IdeaHistory items={history} />
+            <IdeaComments comments={comments} error={commentError} compact />
+            <SelfReview idea={idea} scoreError={scoreError} reflectionError={reflectionError} />
           </div>
-        ) : null}
-
-        {tab === "discuss" ? (
-          <IdeaDiscuss idea={idea} messages={discussions} error={discussError} />
-        ) : null}
-
-        {tab === "comments" ? <IdeaComments comments={comments} error={commentError} /> : null}
+        </div>
       </article>
 
-      <aside className="hidden w-72 shrink-0 overflow-y-auto border-l border-border px-4 py-6 lg:block">
-        <div className="mb-4">
-          <IdeaCopyButton idea={idea} />
-        </div>
-        <h2 className="text-[13.5px] font-semibold">このアイデアの操作</h2>
-        <div className="mt-2 flex flex-col gap-1.5">
-          <IdeaResearchControls idea={idea} error={researchError} />
-          <IdeaBrainstormControls idea={idea} error={brainstormError} />
-          <IdeaEvaluateControls idea={idea} error={evaluateError} />
-          <IdeaDiscussLink ideaId={idea.id} />
-          <Link
-            to={`/app/merge?from=${idea.id}`}
-            className="ui-btn-secondary justify-start px-3 text-[13px]"
-          >
-            <IconMerge className="h-3.5 w-3.5" />
-            他のアイデアと融合
-          </Link>
-          <ArchiveButton idea={idea} ghost />
-          <DeleteButton idea={idea} />
-        </div>
-
-        <dl className="mt-6 space-y-3 text-[13px]">
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-muted-foreground">段階</dt>
-            <dd>
-              <StageFetcher idea={idea} />
-            </dd>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-muted-foreground">起案者</dt>
-            <dd>{SESSION_USER.label}</dd>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-muted-foreground">作成</dt>
-            <dd className="font-mono text-[11.5px]">{formatDateJa(idea.createdAt)}</dd>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-muted-foreground">更新</dt>
-            <dd className="font-mono text-[11.5px]">{formatDateJa(idea.updatedAt)}</dd>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-muted-foreground">コメント</dt>
-            <dd className="font-mono text-[11.5px]">{idea.commentCount}</dd>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-muted-foreground">リサーチ</dt>
-            <dd className="text-[12.5px]">
-              {idea.researchedAt || idea.researchNotes ? "調査済" : "未実行"}
-            </dd>
-          </div>
-        </dl>
+      {/* AI 作業台. */}
+      <aside
+        className={`${side === "ai" ? "flex" : "hidden"} min-h-0 flex-1 flex-col bg-sunken lg:flex lg:border-l lg:border-border`}
+        aria-label="AI 作業台"
+      >
+        <AiWorkbench
+          idea={idea}
+          tab={tab}
+          onTab={setTab}
+          discussions={discussions}
+          brainstorms={brainstorms}
+          researchError={researchError}
+          brainstormError={brainstormError}
+          evaluateError={evaluateError}
+          discussError={discussError}
+        />
       </aside>
     </div>
-  );
-}
-
-function StageFetcher({ idea }: { idea: MockIdea }) {
-  const fetcher = useFetcher();
-  return (
-    <fetcher.Form method="post">
-      <input type="hidden" name="intent" value="stage" />
-      <StageSelect defaultValue={idea.stage} autoSubmit />
-    </fetcher.Form>
   );
 }

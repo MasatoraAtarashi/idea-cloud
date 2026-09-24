@@ -107,7 +107,7 @@ export function PopoverMenu({
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((value) => !value)}
-        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-accent md:h-7 md:w-7"
+        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-[7px] text-muted-foreground hover:bg-muted hover:text-foreground md:h-7 md:w-7"
       >
         {trigger}
       </button>

@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useFetcher } from "react-router";
 import {
   COMPOSE_DRAFT_HINT,
+  COMPOSE_HEADING,
   COMPOSE_PLACEHOLDER,
+  COMPOSE_SUBHEADING,
   COMPOSE_SUBMIT,
-  COMPOSE_TITLE,
+  COMPOSE_TAG_HINT,
   COMPOSE_TITLE_PLACEHOLDER,
   COMPOSE_URL_HINT,
   useCompose,
@@ -14,13 +16,11 @@ import type { CreateIdeaActionData } from "../lib/idea-action";
 import { isSubmitShortcut } from "../lib/shortcuts";
 import { useInstantPending } from "../lib/use-instant-pending";
 import type { IdeaCategory } from "../lib/category";
-import { SESSION_USER } from "../data/mock";
 import { CategoryField } from "./category-field";
 import { IconClose, IconSpinner } from "./icons";
-import { StageSelect } from "./stage-select";
 
 export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
-  const { isOpen, close } = useCompose();
+  const { isOpen, seedTitle, close } = useCompose();
   const fetcher = useFetcher<CreateIdeaActionData>();
   const [title, setTitle] = useState("");
   const [draft, setDraft] = useState("");
@@ -32,11 +32,12 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
 
   useEffect(() => {
     if (!isOpen) return;
+    if (seedTitle) setTitle(seedTitle);
     const id = window.setTimeout(() => {
-      document.getElementById("idea-dialog-title")?.focus();
+      document.getElementById(seedTitle ? "idea-dialog" : "idea-dialog-title")?.focus();
     }, 0);
     return () => window.clearTimeout(id);
-  }, [isOpen]);
+  }, [isOpen, seedTitle]);
 
   useEffect(() => {
     if (!submitted.current || fetcher.state !== "idle") return;
@@ -54,11 +55,18 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
 
   if (!isOpen) return null;
 
+  function onSubmitShortcut(event: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) {
+    if (!isSubmitShortcut(event)) return;
+    event.preventDefault();
+    if (!canSubmit) return;
+    event.currentTarget.form?.requestSubmit();
+  }
+
   return (
     <div className="fixed inset-0 z-40 hidden md:block">
       <button
         type="button"
-        className="absolute inset-0 bg-[#15181d]/35"
+        className="absolute inset-0 bg-[rgba(16,24,40,0.35)]"
         aria-label="閉じる"
         onClick={close}
       />
@@ -66,19 +74,16 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-idea-title"
-        className="ui-float absolute left-1/2 top-[10%] w-[min(42rem,calc(100%-3rem))] -translate-x-1/2"
+        className="absolute top-[10%] left-1/2 w-[min(560px,calc(100%-3rem))] -translate-x-1/2 overflow-hidden rounded-[12px] border border-border-card bg-card shadow-[var(--shadow-float)]"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="stage-pill stage-spark">{COMPOSE_TITLE}</span>
-            <h2 id="new-idea-title" className="text-[12.5px] font-semibold text-foreground">
-              新しいアイデア
-            </h2>
-          </div>
+        <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <h2 id="new-idea-title" className="text-[15px] font-semibold text-foreground">
+            {COMPOSE_HEADING}
+          </h2>
           <button
             type="button"
             onClick={close}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex h-7 w-7 items-center justify-center rounded-[7px] text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="閉じる"
           >
             <IconClose className="h-4 w-4" />
@@ -87,79 +92,80 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
         <fetcher.Form
           method="post"
           action={NEW_IDEA_PATH}
-          className="px-5 pb-4 pt-4"
           onSubmit={() => {
             submitted.current = true;
             hold();
           }}
         >
-          <label htmlFor="idea-dialog-title" className="sr-only">
-            {COMPOSE_TITLE_PLACEHOLDER}
-          </label>
-          <input
-            id="idea-dialog-title"
-            name="title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder={COMPOSE_TITLE_PLACEHOLDER}
-            className="ui-title w-full border-0 bg-transparent text-[23px] leading-[1.4] text-foreground outline-none placeholder:text-muted-foreground/70"
-          />
-          <label htmlFor="idea-dialog" className="sr-only">
-            {COMPOSE_PLACEHOLDER}
-          </label>
-          <textarea
-            id="idea-dialog"
-            name="body"
-            rows={6}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={COMPOSE_PLACEHOLDER}
-            className="mt-2 h-auto w-full resize-none border-0 bg-transparent text-[13.5px] font-medium leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/80"
-            onKeyDown={(event) => {
-              if (!isSubmitShortcut(event)) return;
-              event.preventDefault();
-              if (!canSubmit) return;
-              event.currentTarget.form?.requestSubmit();
-            }}
-          />
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          <input type="hidden" name="stage" value="spark" />
+          <div className="px-5 pt-4 pb-5">
+            <p className="text-[12.5px] text-muted-foreground">{COMPOSE_SUBHEADING}</p>
+            <label htmlFor="idea-dialog-title" className="sr-only">
+              {COMPOSE_TITLE_PLACEHOLDER}
+            </label>
             <input
-              name="tags"
-              value={tags}
-              onChange={(event) => setTags(event.target.value)}
-              placeholder="空なら自動タグ"
-              className="h-8 w-40 rounded-full border border-dashed border-border-control bg-transparent px-3 text-[12.5px] text-foreground outline-none placeholder:text-muted-foreground"
+              id="idea-dialog-title"
+              name="title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              onKeyDown={onSubmitShortcut}
+              autoComplete="off"
+              placeholder={COMPOSE_TITLE_PLACEHOLDER}
+              className="mt-3 w-full border-0 bg-transparent pb-2.5 text-[19px] leading-snug font-semibold text-foreground outline-none placeholder:text-muted-foreground"
             />
-            <CategoryField categories={categories} idPrefix="idea-dialog" />
-            <StageSelect defaultValue="spark" />
-            <span className="inline-flex h-8 items-center rounded-full border border-border-control px-2.5 text-[12.5px] text-muted-foreground">
-              {SESSION_USER.label}
-            </span>
-            <p className="basis-full text-[11.5px] text-muted-foreground">
-              タグを空のまま作成すると、短い日本語タグを自動で付けます。失敗してもアイデアは残ります。
-              {COMPOSE_URL_HINT}
+            <div className="h-px bg-border" />
+            <label htmlFor="idea-dialog" className="sr-only">
+              {COMPOSE_PLACEHOLDER}
+            </label>
+            <textarea
+              id="idea-dialog"
+              name="body"
+              rows={6}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={onSubmitShortcut}
+              placeholder={COMPOSE_PLACEHOLDER}
+              className="mt-2.5 h-auto w-full resize-none border-0 bg-transparent text-[14.5px] leading-[1.9] text-secondary outline-none placeholder:text-muted-foreground"
+            />
+            <p className="mt-3 text-[12.5px] font-medium text-tertiary">カテゴリ（任意）</p>
+            <div className="mt-2">
+              <CategoryField categories={categories} idPrefix="idea-dialog" />
+            </div>
+            <label className="mt-3 flex h-11 items-center gap-2 rounded-[8px] border border-border-control bg-card px-3">
+              <span className="sr-only">タグ</span>
+              <input
+                name="tags"
+                value={tags}
+                onChange={(event) => setTags(event.target.value)}
+                placeholder="タグ（空なら自動タグ）"
+                autoComplete="off"
+                className="min-w-0 flex-1 border-0 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground"
+              />
+              <span className="shrink-0 rounded-[5px] bg-[#eef4ff] px-2 py-0.5 text-[11.5px] font-medium text-[#3538cd]">
+                {COMPOSE_TAG_HINT}
+              </span>
+            </label>
+            <p className="mt-2 text-[11.5px] text-muted-foreground">
+              自動タグに失敗してもアイデアは残ります。{COMPOSE_URL_HINT}
             </p>
+            {fetcher.data?.error ? (
+              <p className="mt-2 text-[12.5px] text-danger">{fetcher.data.error}</p>
+            ) : null}
           </div>
-          {fetcher.data?.error ? (
-            <p className="mt-2 text-xs text-muted-foreground">{fetcher.data.error}</p>
-          ) : null}
-          <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3">
-            <p className="text-[12.5px] text-muted-foreground">{COMPOSE_DRAFT_HINT}</p>
+          <div className="flex items-center justify-between gap-3 border-t border-border bg-sunken px-5 py-3.5">
+            <p className="font-mono text-[11.5px] text-muted-foreground">{COMPOSE_DRAFT_HINT}</p>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={close} className="ui-btn-secondary h-8 px-3">
+              <button type="button" onClick={close} className="ui-btn-secondary px-3">
                 キャンセル
               </button>
               <button
                 type="submit"
                 disabled={!canSubmit}
                 aria-busy={pending}
-                className="ui-btn h-8 px-3 text-[13.5px]"
+                className="ui-btn px-4"
               >
                 {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-                {pending ? "作成中" : COMPOSE_SUBMIT}
-                <kbd className="ml-1 rounded bg-white/20 px-1 font-mono text-[10px] text-primary-foreground">
-                  ⌘↵
-                </kbd>
+                {pending ? "作成中…" : COMPOSE_SUBMIT}
               </button>
             </div>
           </div>

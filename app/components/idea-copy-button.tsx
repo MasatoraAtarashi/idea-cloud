@@ -11,11 +11,14 @@ export function IdeaCopyButton({
   idea,
   className,
   menuitem = false,
+  inline = false,
   onDone,
 }: {
   idea: { title: string; body: string; stage: Stage; tags: string[]; categoryName?: string | null };
   className?: string;
   menuitem?: boolean;
+  /** Toolbar button: the result replaces the label instead of a line below. */
+  inline?: boolean;
   onDone?: () => void;
 }) {
   const [status, setStatus] = useState<"ok" | "fail" | null>(null);
@@ -40,7 +43,7 @@ export function IdeaCopyButton({
   const message = status === "ok" ? COPY_OK_MESSAGE : status === "fail" ? COPY_FAIL_MESSAGE : "";
 
   return (
-    <div className={menuitem ? "" : "flex flex-col gap-1"}>
+    <div className={menuitem || inline ? "contents" : "flex flex-col gap-1"}>
       <button
         type="button"
         role={menuitem ? "menuitem" : undefined}
@@ -50,9 +53,14 @@ export function IdeaCopyButton({
         aria-label="説明を含めてコピー"
         className={className ?? "ui-btn-secondary min-h-11 w-full justify-start px-3 text-[13px]"}
       >
-        {menuitem && message ? message : "コピー"}
+        {(menuitem || inline) && message ? message : "コピー"}
       </button>
-      {menuitem ? null : (
+      {inline ? (
+        <span role="status" aria-live="polite" className="sr-only">
+          {message}
+        </span>
+      ) : null}
+      {menuitem || inline ? null : (
         <p
           role="status"
           aria-live="polite"

@@ -46,7 +46,7 @@ export default function MergePage() {
                       type="checkbox"
                       checked={on}
                       onChange={() => toggle(idea.id)}
-                      className="mt-1 accent-primary"
+                      className="mt-1 accent-foreground"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="idea-title-wrap ui-title block text-sm leading-snug">

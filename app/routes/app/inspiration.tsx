@@ -5,10 +5,13 @@ import {
   useActionData,
   useFetcher,
   useLoaderData,
+  useOutletContext,
   type LoaderFunctionArgs,
 } from "react-router";
+import type { AppData } from "./layout";
 import { EmptyState, TagList } from "../../components/ui";
 import { IconSpinner } from "../../components/icons";
+import { InspirationIdeaDialog } from "../../components/inspiration-idea-dialog";
 import { InspirationDetailPreview } from "../../components/inspiration-preview";
 import { formatDateJa } from "../../lib/format";
 import { inspirationHeadline } from "../../lib/inspiration";
@@ -62,133 +65,131 @@ function InspirationDetail({
   item: NonNullable<Awaited<ReturnType<typeof loader>>["item"]>;
   error?: string;
 }) {
+  const { categories } = useOutletContext<AppData>();
   const [editing, setEditing] = useState(false);
-  const brainstorm = useFetcher();
+  const [making, setMaking] = useState(false);
   const refresh = useFetcher();
-  const busy = brainstorm.state !== "idle";
   const refreshing = refresh.state !== "idle";
-  const { pending, hold } = useInstantPending(busy);
   const { pending: refreshPending, hold: holdRefresh } = useInstantPending(refreshing);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.25rem,env(safe-area-inset-top))] md:px-8 md:py-5">
-      <header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:backdrop-blur-none">
-        <div className="flex items-center justify-between gap-3 py-1 md:py-0">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-card">
+      <header className="sticky top-0 z-20 shrink-0 border-b border-border bg-card/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur md:px-7">
+        <div className="flex min-h-[56px] items-center gap-2">
           <Link
             to={INSPIRATIONS_PATH}
-            className="flex min-h-11 items-center text-[13.5px] font-medium text-foreground no-underline hover:text-foreground"
+            className="flex min-h-11 items-center gap-1.5 pr-2 text-[13px] text-muted-foreground no-underline hover:text-foreground"
           >
-            戻る
+            <span aria-hidden="true">←</span>
+            <span className="hidden md:inline">インスピレーション</span>
           </Link>
-          <h1 className="idea-title-wrap ui-title min-w-0 flex-1 truncate text-center text-[15px] md:hidden">
+          <h1 className="min-w-0 flex-1 truncate text-center text-[14.5px] font-semibold md:hidden">
             {inspirationHeadline(item)}
           </h1>
-          <button
-            type="button"
-            onClick={() => setEditing((open) => !open)}
-            className="ui-btn-secondary min-w-[4.5rem] px-3"
-          >
-            {editing ? "閉じる" : "編集"}
-          </button>
+          <div className="flex items-center gap-2 md:ml-auto">
+            <button
+              type="button"
+              onClick={() => setEditing((open) => !open)}
+              className="ui-btn-secondary px-3"
+            >
+              {editing ? "閉じる" : "編集"}
+            </button>
+            <button type="button" onClick={() => setMaking(true)} className="ui-btn px-3">
+              ＋ アイデアにする
+            </button>
+          </div>
         </div>
       </header>
+      <div className="w-full max-w-3xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:px-7 md:py-2">
+        {editing ? (
+          <Form method="post" className="mt-4 max-w-xl space-y-2">
+            <input type="hidden" name="intent" value="edit" />
+            <input
+              name="title"
+              defaultValue={item.title}
+              placeholder="タイトル（空でも可）"
+              className="ui-input"
+            />
+            <input
+              name="url"
+              type="text"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="http:// または https://"
+              defaultValue={item.url ?? ""}
+              className="ui-input"
+            />
+            <textarea
+              name="memo"
+              defaultValue={item.memo}
+              rows={5}
+              className="ui-input min-h-[7rem] py-2"
+            />
+            <input name="tags" defaultValue={item.tags.join("、")} className="ui-input" />
+            <button type="submit" className="ui-btn">
+              保存
+            </button>
+          </Form>
+        ) : (
+          <>
+            <InspirationDetailPreview item={item} />
+            <h1 className="mt-5 hidden text-[24px] leading-[1.45] font-semibold tracking-[-0.02em] md:block">
+              {inspirationHeadline(item)}
+            </h1>
+            {item.url ? (
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 block break-all font-mono text-[12px] text-accent"
+              >
+                {item.url}
+              </a>
+            ) : null}
+            {item.memo ? (
+              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[14.5px] leading-[1.95] text-secondary">
+                {item.memo}
+              </p>
+            ) : (
+              <p className="mt-3 text-[13px] text-muted-foreground">メモはまだありません</p>
+            )}
+            <div className="mt-3">
+              <TagList tags={item.tags} emptyLabel="" />
+            </div>
+          </>
+        )}
 
-      {editing ? (
-        <Form method="post" className="mt-4 max-w-xl space-y-2">
-          <input type="hidden" name="intent" value="edit" />
-          <input
-            name="title"
-            defaultValue={item.title}
-            placeholder="タイトル（空でも可）"
-            className="ui-input"
-          />
-          <input
-            name="url"
-            type="text"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="http:// または https://"
-            defaultValue={item.url ?? ""}
-            className="ui-input"
-          />
-          <textarea
-            name="memo"
-            defaultValue={item.memo}
-            rows={5}
-            className="ui-input min-h-[7rem] py-2"
-          />
-          <input name="tags" defaultValue={item.tags.join("、")} className="ui-input" />
-          <button type="submit" className="ui-btn">
-            保存
-          </button>
-        </Form>
-      ) : (
-        <>
-          <InspirationDetailPreview item={item} />
-          <h1 className="ui-title mt-4 hidden text-[22px] leading-snug md:block">
-            {inspirationHeadline(item)}
-          </h1>
-          {item.url ? (
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 block break-all font-mono text-[12px] text-primary"
-            >
-              {item.url}
-            </a>
-          ) : null}
-          {item.memo ? (
-            <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] font-medium leading-relaxed text-foreground">
-              {item.memo}
-            </p>
-          ) : (
-            <p className="mt-3 text-[13px] text-muted-foreground">メモはまだありません</p>
-          )}
-          <div className="mt-3">
-            <TagList tags={item.tags} emptyLabel="" />
-          </div>
-        </>
-      )}
+        {item.url ? (
+          <refresh.Form method="post" className="mt-5" onSubmit={holdRefresh}>
+            <input type="hidden" name="intent" value="refresh-ogp" />
+            <button type="submit" disabled={refreshPending} className="ui-btn-secondary px-3">
+              {refreshPending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
+              {refreshPending ? "取得中…" : "再取得"}
+            </button>
+            {item.ogStatus === "failed" ? (
+              <p className="mt-2 text-[12px] text-muted-foreground">
+                プレビューを取得できませんでした。再取得できます。
+              </p>
+            ) : null}
+          </refresh.Form>
+        ) : null}
 
-      {item.url ? (
-        <refresh.Form method="post" className="mt-5" onSubmit={holdRefresh}>
-          <input type="hidden" name="intent" value="refresh-ogp" />
-          <button type="submit" disabled={refreshPending} className="ui-btn-secondary px-3">
-            {refreshPending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-            {refreshPending ? "取得中…" : "再取得"}
-          </button>
-          {item.ogStatus === "failed" ? (
-            <p className="mt-2 text-[12px] text-muted-foreground">
-              プレビューを取得できませんでした。再取得できます。
-            </p>
-          ) : null}
-        </refresh.Form>
-      ) : null}
-
-      <dl className="mt-6 space-y-2 text-[13px] text-muted-foreground">
-        <div>
-          作成 <span className="font-mono text-[11.5px]">{formatDateJa(item.createdAt)}</span>
-        </div>
-        <div>
-          更新 <span className="font-mono text-[11.5px]">{formatDateJa(item.updatedAt)}</span>
-        </div>
-      </dl>
-
-      <brainstorm.Form method="post" className="mt-6" onSubmit={hold}>
-        <input type="hidden" name="intent" value="brainstorm" />
-        <button type="submit" disabled={pending} className="ui-btn">
-          {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-          {pending ? "実行中…" : "AIブレスト"}
-        </button>
-        <p className="mt-2 max-w-sm text-[12px] text-muted-foreground">
-          タイトル・URL・メモを種にして新しいアイデアを作り、既存のブレストを実行します。
+        <p className="mt-6 font-mono text-[11.5px] text-muted-foreground">
+          created {formatDateJa(item.createdAt)} · updated {formatDateJa(item.updatedAt)}
         </p>
-      </brainstorm.Form>
-      {error ? <p className="mt-2 text-[12.5px] text-danger">{error}</p> : null}
+
+        {error ? <p className="mt-2 text-[12.5px] text-danger">{error}</p> : null}
+      </div>
+      {making ? (
+        <InspirationIdeaDialog
+          item={item}
+          categories={categories}
+          onClose={() => setMaking(false)}
+        />
+      ) : null}
     </div>
   );
 }

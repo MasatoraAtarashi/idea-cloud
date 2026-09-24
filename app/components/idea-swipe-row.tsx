@@ -7,6 +7,7 @@ import { SwipeReveal, type SwipeRevealAction } from "./swipe-reveal";
 
 const BUTTON_WIDTH = SWIPE_BUTTON_WIDTH;
 
+/** Swipe left = 次の段階へ (not AI). Swipe right = アーカイブ. */
 export function IdeaSwipeRow({ idea, children }: { idea: MockIdea; children: ReactNode }) {
   const fetcher = useFetcher();
   const next = nextStage(idea.stage);
@@ -27,23 +28,29 @@ export function IdeaSwipeRow({ idea, children }: { idea: MockIdea; children: Rea
     actions.push({
       key: "next",
       label: pending ? "更新中…" : "次の段階へ",
-      tone: "accent",
+      tone: "primary",
       disabled: pending,
       onClick: () => submitStage(next),
     });
   }
+  const leadingActions: SwipeRevealAction[] = [];
   if (canArchive) {
-    actions.push({
+    leadingActions.push({
       key: "archive",
       label: pending ? "更新中…" : "アーカイブ",
-      tone: "danger",
+      tone: "default",
       disabled: pending,
       onClick: () => submitStage("archived"),
     });
   }
 
   return (
-    <SwipeReveal actions={actions} buttonWidth={BUTTON_WIDTH}>
+    <SwipeReveal
+      actions={actions}
+      leadingActions={leadingActions}
+      buttonWidth={BUTTON_WIDTH}
+      actionClassName="rounded-[10px]"
+    >
       {children}
     </SwipeReveal>
   );

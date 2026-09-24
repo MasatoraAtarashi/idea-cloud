@@ -3,6 +3,8 @@ import {
   inspirationGlyph,
   inspirationHeadline,
   inspirationHostname,
+  inspirationIdeaDraft,
+  inspirationMediaHeight,
   inspirationSiteLabel,
   inspirationSnippet,
   inspirationTone,
@@ -45,5 +47,30 @@ describe("inspiration display helpers", () => {
     );
     expect(inspirationGlyph({ title: "無題", url: "https://github.com/x" })).toBe("G");
     expect(inspirationTone("github.com").bg).toMatch(/^#/);
+  });
+
+  it("keeps masonry heights stable and in range", () => {
+    for (const id of ["1", "2", "3", "42", "1000"]) {
+      const height = inspirationMediaHeight(id);
+      expect(height).toBeGreaterThanOrEqual(100);
+      expect(height).toBeLessThanOrEqual(180);
+      expect(inspirationMediaHeight(id)).toBe(height);
+    }
+  });
+
+  it("prefills an idea from a card with memo and a 参考 line", () => {
+    expect(
+      inspirationIdeaDraft({
+        title: "寿司職人の予約サイト",
+        url: "https://omakase.in/",
+        memo: "店ではなく職人から選ぶ導線。",
+        tags: ["寿司", "海外"],
+      }),
+    ).toEqual({
+      title: "寿司職人の予約サイト",
+      body: "店ではなく職人から選ぶ導線。\n\n参考: https://omakase.in/",
+      tags: ["寿司", "海外"],
+    });
+    expect(inspirationIdeaDraft({ title: "メモ", url: null, memo: "", tags: [] }).body).toBe("");
   });
 });

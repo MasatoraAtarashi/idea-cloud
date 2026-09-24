@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+  type AnySQLiteColumn,
+} from "drizzle-orm/sqlite-core";
 
 // テンプレート由来のサンプル CRUD。アイデア本文の暗号化保存（field-crypto）は未配線。
 
@@ -40,6 +47,10 @@ export const ideas = sqliteTable("ideas", {
   stage: text("stage").notNull().default("spark"),
   tags: text("tags").notNull().default("[]"),
   categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
+  /** Source inspiration when the idea was made from the shelf. */
+  inspirationId: integer("inspiration_id").references((): AnySQLiteColumn => inspirations.id, {
+    onDelete: "set null",
+  }),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

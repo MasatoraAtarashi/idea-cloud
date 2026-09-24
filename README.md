@@ -42,7 +42,7 @@ Playwright (mocked auth, local D1): `pnpm test:e2e`. See [docs/spec/e2e.md](docs
 | `/app`              | Mobile home: 新規アイデア. Desktop → `/app/list`                                                                                                                |
 | `/app/capture`      | Compose alias (desktop opens the list modal)                                                                                                                    |
 | `/app/list`         | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?tab=candidates`, `?tab=tried`, `?view=board`, `?stage=`, `?tag=`, `?q=`, `?v=`, `?sort=`, `?dir=` |
-| `/app/ideas/:id`    | Idea detail tabs 概要 / リサーチ / AI/履歴 / 相談 / コメント; 融合 as a per-idea action                                                                         |
+| `/app/ideas/:id`    | Idea detail + AI 作業台 (相談 / 評価 / リサーチ / ブレスト); 融合 in ⋯                                                                                          |
 | `/app/inspirations` | Inspiration gallery (URL / memo + OGP preview). First-class nav (mobile インスピ tab). Header **+** adds a card. Detail can kick **AIブレスト** into a new idea |
 | `/app/analytics`    | Light counts from D1 idea rows (stage + created per day). First-class nav (mobile 分析 tab)                                                                     |
 | `/app/merge`        | Merge deep link (not in primary nav)                                                                                                                            |

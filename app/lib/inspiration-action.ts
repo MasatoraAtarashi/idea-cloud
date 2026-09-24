@@ -1,6 +1,7 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
+import { resolveCategoryId } from "../../db/categories";
 import { createDb } from "../../db/client";
-import { insertIdea } from "../../db/ideas";
+import { IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
 import {
   getInspirationRow,
   ideaTextFromInspiration,
@@ -8,8 +9,12 @@ import {
   urlsDiffer,
 } from "../../db/inspirations";
 import { brainstormIdea } from "../../server/ai/brainstorm";
+import { scheduleCreateEvaluation } from "../../server/ai/evaluate";
 import { bindResearchAi } from "../../server/ai/research";
+import { resolveCreateTags } from "../../server/ai/tags";
+import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
 import { enrichInspirationOgp } from "../../server/ogp/enrich";
+import { composeBodyFromForm } from "./idea-action";
 import { prepareInspirationInput } from "./inspiration-input";
 import {
   applyFetchedTitle,
@@ -43,11 +48,68 @@ function readInspirationForm(form: FormData) {
   });
 }
 
+export const CREATE_IDEA_INTENT = "create-idea";
+
+/**
+ * Idea made from a shelf card. Links `ideas.inspiration_id`. With `brainstorm=1`, runs one
+ * brainstorm and opens the detail on that tab; a brainstorm failure still lands on the idea.
+ */
+async function createIdeaFromInspiration(
+  form: FormData,
+  context: ActionFunctionArgs["context"],
+  inspirationId: number,
+): Promise<Response | InspirationActionData> {
+  const intent = CREATE_IDEA_INTENT;
+  const { text, tags, categoryId, categoryName } = composeBodyFromForm(form);
+  if (!text) return { error: "入力してください", intent } satisfies InspirationActionData;
+  if (text.length > IDEA_BODY_MAX) return { error: "長すぎます", intent };
+  const env = context.cloudflare.env;
+  const db = createDb(env.DB);
+  const source = await getInspirationRow(db, inspirationId);
+  if (!source) return { error: "見つかりません", intent } satisfies InspirationActionData;
+  const category = await resolveCategoryId(db, { categoryId, categoryName });
+  if ("error" in category) return { error: category.error, intent };
+  const ai = bindResearchAi(env.AI);
+  const typesafeApiKey = typesafeApiKeyFromEnv(env);
+  const resolvedTags = await resolveCreateTags({ ai, text, tags, typesafeApiKey });
+  const created = await insertIdea(db, text, {
+    tags: resolvedTags,
+    categoryId: category.id,
+    inspirationId: source.id,
+  });
+  scheduleCreateEvaluation({
+    waitUntil: (promise) => context.cloudflare.ctx.waitUntil(promise),
+    db,
+    ai,
+    ideaId: created.id,
+    stage: created.stage,
+    typesafeApiKey,
+  });
+  if (String(form.get("brainstorm") ?? "") !== "1") {
+    return redirect(`/app/ideas/${created.id}`);
+  }
+  const result = await brainstormIdea({ db, ai, ideaId: created.id, preset: "", model: "" });
+  if (!result.ok) {
+    return redirect(`/app/ideas/${created.id}?brainstormError=${encodeURIComponent(result.error)}`);
+  }
+  return redirect(`/app/ideas/${created.id}#brainstorm`);
+}
+
+function inspirationIdFrom(raw: unknown): number | null {
+  const id = Number(raw);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 export async function createInspirationAction({
   request,
   context,
 }: ActionFunctionArgs): Promise<Response | InspirationActionData> {
   const form = await request.formData();
+  if (String(form.get("intent") ?? "") === CREATE_IDEA_INTENT) {
+    const id = inspirationIdFrom(form.get("inspirationId"));
+    if (!id) return { error: "見つかりません", intent: CREATE_IDEA_INTENT };
+    return createIdeaFromInspiration(form, context, id);
+  }
   const prepared = readInspirationForm(form);
   if (!prepared.ok) {
     return { error: prepared.error, intent: "create" } satisfies InspirationActionData;
@@ -70,6 +132,10 @@ export async function inspirationDetailAction({
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "edit");
   const db = createDb(context.cloudflare.env.DB);
+
+  if (intent === CREATE_IDEA_INTENT) {
+    return createIdeaFromInspiration(form, context, inspirationId);
+  }
 
   if (intent === "refresh-ogp") {
     const row = await getInspirationRow(db, inspirationId);

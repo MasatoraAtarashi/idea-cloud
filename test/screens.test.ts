@@ -67,7 +67,7 @@ describe("empty workspace data", () => {
 
   it("uses new-idea compose copy instead of キャプチャ", () => {
     const src = Object.values(appSources).join("\n");
-    expect(src).toContain("いま思いついたこと");
+    expect(src).toContain("思いついたまま、ひとこと。");
     expect(src).toContain("新規アイデア");
     expect(src).toContain("作成");
     expect(src).toContain("新しいカテゴリ…");
@@ -194,14 +194,13 @@ describe("responsive home and nav", () => {
 
   it("keeps empty list chrome instead of hiding the view frame", () => {
     const src = appSources["../app/components/idea-list-view.tsx"];
-    expect(src).toContain("ui-table");
-    expect(src).toContain("フィルタ");
+    expect(src).toContain("絞り込み");
     expect(src).toContain("まだアイデアがありません");
-    expect(src).toContain("テーブル");
+    expect(src).toContain("リスト");
     expect(src).toContain("ボード");
     expect(src).toContain("useListViewSearch");
-    expect(src).toContain("熟成候補");
-    expect(src).toContain("試したアイデア");
+    expect(src).toContain("見直し候補");
+    expect(src).toContain("試した");
     expect(src).toContain('tab === "candidates"');
     expect(src).toContain("並び順");
     expect(src).toContain("sortIdeas");
@@ -228,11 +227,8 @@ describe("responsive home and nav", () => {
     expect(src).toContain("じっくり");
     expect(src).toContain("実行中…");
     expect(src).toContain("IdeaComments");
-    expect(src).toContain("IdeaHistory");
-    expect(src).toContain("buildIdeaHistory");
-    expect(src).toContain("履歴");
-    expect(src).toContain("概要");
-    expect(src).toContain("AI/履歴");
+    expect(src).not.toContain("IdeaHistory");
+    expect(src).toContain("AI 作業台");
     expect(src).toContain("相談");
     expect(src).toContain("AIと話す");
     expect(src).toContain("説明を含めてコピー");
@@ -246,22 +242,18 @@ describe("responsive home and nav", () => {
     expect(src).not.toContain("ウェブ検索による先行事例はまだありません");
     expect(src).not.toContain("このリサーチはモデルのみです");
     expect(src).toContain("自動タグなし");
-    expect(src).toContain("自動タグは付きませんでした");
     expect(src).toContain("空なら自動タグ");
-    expect(src).toContain("未実行");
+    expect(src).not.toContain(">未実行<");
     expect(src).toContain("ブレスト");
-    expect(src).toContain("調査済");
     expect(src).toContain("commentCount");
     expect(src).toContain("resolveCommentAuthor");
     expect(src).toContain('intent === "comment"');
-    expect(src).toContain("着想から実行できます");
     expect(src).toContain("先行事例");
     expect(src).toContain("Web検索未取得");
     expect(src).toContain("AIコメント");
     expect(src).not.toContain("ウェブ検索はありません");
     expect(src).toContain("アーカイブではリサーチできません");
     expect(src).toContain("アーカイブではブレストできません");
-    expect(src).toContain("アーカイブでは実行できません");
     expect(src).not.toContain("採用で実行");
     expect(src).not.toContain("リサーチを実行（採用で実行）");
     expect(src).not.toContain("下の段階を採用に変えると");
@@ -280,11 +272,8 @@ describe("responsive home and nav", () => {
     const listSrc = appSources["../app/components/idea-list-view.tsx"];
     const detailSrc = appSources["../app/routes/app/idea.tsx"];
     expect(src).toContain("idea-title-wrap");
-    expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-3");
-    expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-2");
-    expect(listSrc).toContain("idea-title-wrap ui-title line-clamp-3");
+    expect(listSrc).toContain("line-clamp-3");
     expect(listSrc).toContain("MobileScreenHeader");
-    expect(listSrc).toContain("px-4 py-2.5");
     expect(detailSrc).toContain("idea-title-wrap");
     expect(detailSrc).not.toMatch(/<h1[^>]*line-clamp/);
     expect(src).toContain("IdeaSwipeRow");
@@ -311,8 +300,6 @@ describe("responsive home and nav", () => {
     expect(src).toContain("インスピレーション");
     expect(src).toContain("AIブレスト");
     expect(src).toContain("InspirationGallery");
-    expect(src).toContain("inspiration-masonry");
-    expect(src).toContain("inspiration-card");
     expect(src).toContain("再取得");
     expect(src).toContain("referrerPolicy");
     expect(src).toContain("refresh-ogp");
@@ -342,7 +329,6 @@ describe("responsive home and nav", () => {
     expect(appSources["../app/components/idea-swipe-row.tsx"]).not.toContain("hideFrom");
     expect(src).toContain("作成中");
     expect(src).toContain('media="print"');
-    expect(appSources["../app/components/idea-list-view.tsx"]).toContain("px-4 py-2.5");
   });
 
   it("keeps named list views next to stage and tag filters", () => {
@@ -376,24 +362,23 @@ describe("desktop compose shortcuts and brand", () => {
     expect(src).toContain("/favicon.ico");
     expect(src).toContain("/apple-touch-icon.png");
     expect(src).toContain("--brand-spark");
-    expect(src).toContain("Noto+Sans+JP:wght@400;500;600");
+    expect(src).toContain("IBM+Plex+Sans+JP:wght@400;500;600;700");
     expect(src).toContain("IBM+Plex+Mono");
     expect(src).toContain("stage-spark");
     expect(src).toContain("ui-title");
     expect(src).toContain("font-semibold");
     expect(src).toContain("mobile-tab-spacer");
     expect(src).toContain("MobileScreenHeader");
-    expect(src).toContain("px-4 py-2.5");
     expect(src).not.toContain("height: 52px");
-    expect(DESIGN_TOKENS.accent).toBe("#3b6ef6");
-    expect(DESIGN_TOKENS.sidebar).toBe("#fafafb");
-    expect(DESIGN_TOKENS.body).toBe("#0a0a0a");
-    expect(DESIGN_TOKENS.muted).toBe("#3a424e");
-    expect(DESIGN_TOKENS.border).toBe("#d4d8e0");
-    expect(DESIGN_TOKENS.borderControl).toBe("#c8ced7");
+    expect(DESIGN_TOKENS.accent).toBe("#4f46e5");
+    expect(DESIGN_TOKENS.sidebar).toBe("#ffffff");
+    expect(DESIGN_TOKENS.body).toBe("#101828");
+    expect(DESIGN_TOKENS.muted).toBe("#667085");
+    expect(DESIGN_TOKENS.border).toBe("#eaecf0");
+    expect(DESIGN_TOKENS.borderControl).toBe("#d0d5dd");
     expect(DESIGN_TOKENS.rowHeight).toBe(40);
-    expect(STAGE_PILL_HEX.spark.bg).toBe("#f3f0ff");
-    expect(STAGE_PILL_HEX.aging.fg).toBe("#b45309");
+    expect(STAGE_PILL_HEX.spark.bg).toBe("#f2f4f7");
+    expect(STAGE_PILL_HEX.aging.fg).toBe("#b54708");
     expect(faviconSvg).toContain("#3B6EF6");
     expect(faviconSvg).toContain("#FFFFFF");
     expect(faviconSvg).toContain("M8.4 24.2c-3.4 0-6.15-2.55-6.15-5.7");

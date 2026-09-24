@@ -1,6 +1,7 @@
 import { hasReflection, type ReflectionStatus } from "../lib/reflection";
 import type { ResearchSources } from "../lib/research-sources";
 import { CANDIDATE_DEFAULT_DAYS, type ReviewStatus } from "../lib/review";
+import { TAG_COLOR_HEX, type TagColor } from "../lib/tokens";
 
 export const STAGES = ["spark", "aging", "ripe", "selected", "archived"] as const;
 export type Stage = (typeof STAGES)[number];
@@ -48,18 +49,39 @@ export const STAGE_COLUMN_CLASS: Record<Stage, string> = {
   archived: "stage-archived",
 };
 
-const TAG_PILL_CLASSES = [
-  "bg-[#f8eef2] text-[#9f1239]",
-  "bg-[#eef0fb] text-[#3730a3]",
-  "bg-[#eaf6f3] text-[#0f766e]",
-  "bg-[#fff3e8] text-[#c2410c]",
-  "bg-[#f6eef8] text-[#86198f]",
-] as const;
+const TAG_HASH_COLORS = ["indigo", "violet", "pink", "cyan", "blue", "green", "red"] as const;
 
-export function tagPillClass(tag: string): string {
+/** Pinned so the tags in the handoff keep their color. Everything else hashes. */
+const TAG_COLOR_PIN: Record<string, TagColor> = {
+  プロダクト: "indigo",
+  ビジネス: "violet",
+  AI: "violet",
+  購入代行: "violet",
+  寿司: "pink",
+  動画: "pink",
+  サイト: "cyan",
+  日常: "cyan",
+  ツール: "cyan",
+  海外: "blue",
+  海外観光: "blue",
+  インバウンド: "green",
+  オーダーメイド: "green",
+  記録: "red",
+};
+
+/** Same tag → same color on every screen. */
+export function tagColor(tag: string): TagColor {
+  const pinned = TAG_COLOR_PIN[tag];
+  if (pinned) return pinned;
+  if (!tag) return "grey";
   let hash = 0;
-  for (const char of tag) hash = (hash + char.charCodeAt(0)) % TAG_PILL_CLASSES.length;
-  return TAG_PILL_CLASSES[hash] ?? TAG_PILL_CLASSES[0];
+  for (const char of tag) hash = (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0;
+  return TAG_HASH_COLORS[hash % TAG_HASH_COLORS.length] ?? "grey";
+}
+
+export function tagPillStyle(tag: string): { background: string; color: string } {
+  const hex = TAG_COLOR_HEX[tagColor(tag)];
+  return { background: hex.bg, color: hex.fg };
 }
 
 export interface MockIdea {
