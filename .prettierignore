@@ -50,3 +50,6 @@ opencode.jsonc
 reasonix.toml
 .mcp.json
 .goosehints
+
+# Flutter（dart は prettier の対象外、yaml は flutter 側の書式に合わせる）
+mobile/

@@ -1,0 +1,19 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# 生成されるプラットフォームディレクトリ（flutter create で再生成する）
+ios/
+android/
+macos/
+linux/
+windows/
+web/
+
+# IDE
+.idea/
+*.iml
