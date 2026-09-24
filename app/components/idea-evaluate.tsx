@@ -11,48 +11,50 @@ import { formatDateJa } from "../lib/format";
 import { useInstantPending } from "../lib/use-instant-pending";
 import {
   DEFAULT_EVALUATE_PRESET,
-  RESEARCH_PRESET_LABEL,
   type ResearchPreset,
   evaluationModelLabel,
   presetFromModel,
 } from "../lib/research-models";
 import type { EvaluateIdeaActionData } from "../lib/idea-evaluate-action";
+import { shortAgo } from "./ai-format";
 import { IconSpinner, IconStar } from "./icons";
-
-const PRESETS = Object.keys(RESEARCH_PRESET_LABEL) as ResearchPreset[];
 
 export function isEvaluateSubmitting(formData: FormData | undefined) {
   return formData?.get("intent") === "evaluate";
 }
 
+function useEvaluateFetcher(ideaId: string) {
+  return useFetcher<EvaluateIdeaActionData>({ key: `evaluate-${ideaId}` });
+}
+
 export function IdeaEvaluateControls({
   idea,
   error,
-  compact = false,
+  preset,
+  label,
+  hint = true,
 }: {
   idea: MockIdea;
   error?: EvaluateIdeaActionData["error"];
-  compact?: boolean;
+  /** Chosen in the AI 作業台 header. Falls back to the last evaluation model. */
+  preset?: ResearchPreset;
+  label?: string;
+  hint?: boolean;
 }) {
-  const fetcher = useFetcher<EvaluateIdeaActionData>();
+  const fetcher = useEvaluateFetcher(idea.id);
   const busy = fetcher.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
   const ready = canRunIdeaAi(idea.stage);
-  const defaultPreset = presetFromModel(idea.aiEvaluationModel) ?? DEFAULT_EVALUATE_PRESET;
+  const chosen = preset ?? presetFromModel(idea.aiEvaluationModel) ?? DEFAULT_EVALUATE_PRESET;
   const fail = (fetcher.data && "error" in fetcher.data ? fetcher.data.error : undefined) ?? error;
+  const evaluated = Boolean(idea.aiEvaluation || idea.aiScore);
 
   if (!ready) {
     return (
       <div>
-        <span className="ui-btn-secondary w-full cursor-not-allowed justify-start px-3 text-[13px] opacity-40">
-          <IconStar className="h-3.5 w-3.5" />
-          AI評価
-        </span>
-        {compact ? null : (
-          <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
-            {EVALUATE_ARCHIVE_ERROR}
-          </p>
-        )}
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+          {EVALUATE_ARCHIVE_ERROR}
+        </p>
         {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
       </div>
     );
@@ -61,57 +63,99 @@ export function IdeaEvaluateControls({
   return (
     <fetcher.Form method="post" className="flex flex-col gap-1.5" onSubmit={hold}>
       <input type="hidden" name="intent" value="evaluate" />
-      {compact ? (
-        <input type="hidden" name="preset" value={defaultPreset} />
-      ) : (
-        <>
-          <label className="sr-only" htmlFor="evaluate-preset">
-            プリセット
-          </label>
-          <select
-            id="evaluate-preset"
-            name="preset"
-            defaultValue={defaultPreset}
-            disabled={pending}
-            className="ui-input text-[13px]"
-          >
-            {PRESETS.map((preset) => (
-              <option key={preset} value={preset}>
-                {RESEARCH_PRESET_LABEL[preset]}
-              </option>
-            ))}
-          </select>
-        </>
-      )}
-      <button
-        type="submit"
-        className="ui-btn-secondary w-full justify-start px-3 text-[13px]"
-        disabled={pending}
-        aria-busy={pending}
-      >
-        {pending ? (
-          <IconSpinner className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <IconStar className="h-3.5 w-3.5" />
-        )}
-        {pending ? "実行中…" : "AI評価"}
-      </button>
+      <input type="hidden" name="preset" value={chosen} />
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          className="ui-btn-secondary shrink-0 px-3"
+          disabled={pending}
+          aria-busy={pending}
+        >
+          {pending ? (
+            <IconSpinner className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <IconStar className="h-3.5 w-3.5" />
+          )}
+          {pending ? "評価中…" : (label ?? (evaluated ? "もう一度AI評価" : "AI評価する"))}
+        </button>
+        {hint ? (
+          <p className="text-[11.5px] leading-snug text-muted-foreground">
+            強み・リスク・新規性・次の一手と、1–5 の{AI_SCORE_LABEL}。最新のみ残ります。
+          </p>
+        ) : null}
+      </div>
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
-      {compact ? null : (
-        <p className="text-[11.5px] leading-snug text-muted-foreground">
-          強み・リスク・新規性・次の一手と、1–5 の{AI_SCORE_LABEL}です。
-        </p>
-      )}
     </fetcher.Form>
   );
 }
 
-const SECTION_TONE: Record<EvaluationSectionLabel, string> = {
-  強み: "bg-[var(--stage-ripe-bg)]",
-  リスク: "bg-[var(--stage-aging-bg)]",
-  新規性: "bg-[var(--stage-spark-bg)]",
-  次の一手: "bg-[var(--stage-selected-bg)]",
+const SECTION_COLOR: Record<EvaluationSectionLabel, string> = {
+  強み: "#067647",
+  リスク: "#B42318",
+  新規性: "#B54708",
+  次の一手: "#4F46E5",
 };
+
+/** 推し度 card. Sits above every AI 作業台 tab. */
+export function IdeaScoreCard({ idea, preset }: { idea: MockIdea; preset?: ResearchPreset }) {
+  const fetcher = useEvaluateFetcher(idea.id);
+  const pending = fetcher.state !== "idle";
+  const parsed = idea.aiEvaluation?.trim() ? parseEvaluationNotes(idea.aiEvaluation) : null;
+  const score = idea.aiScore ?? parsed?.score ?? null;
+  const meaning = aiScoreMeaning(score);
+
+  if (score == null && !parsed) {
+    return (
+      <section className="rounded-[10px] border border-border bg-card px-4 py-3.5">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[12px] text-muted-foreground">{AI_SCORE_LABEL}</span>
+          <span className="font-mono text-[15px] font-semibold text-muted-foreground">—</span>
+          <span className="text-[12px] text-muted-foreground">/ 5 ・ まだ評価していません</span>
+        </div>
+        <div className="mt-3">
+          <IdeaEvaluateControls idea={idea} preset={preset} hint={false} />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className={`rounded-[10px] border border-border bg-card px-4 py-3.5 ${pending ? "opacity-60" : ""}`}
+      aria-busy={pending}
+    >
+      <div className="flex items-baseline gap-2">
+        <span className="text-[12px] text-muted-foreground">{AI_SCORE_LABEL}</span>
+        <span className="font-mono text-[24px] leading-none font-semibold tracking-[-0.02em]">
+          {score ?? "—"}
+        </span>
+        <span className="text-[12px] text-muted-foreground">
+          / 5{meaning ? ` ・ ${meaning}` : ""}
+        </span>
+        <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+          {pending ? "evaluating…" : shortAgo(idea.aiEvaluatedAt)}
+        </span>
+      </div>
+      {parsed ? (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {parsed.sections.map((section) => (
+            <div key={section.label} className="rounded-[8px] bg-sunken px-3 py-2.5">
+              <h4
+                className="text-[11px] font-semibold"
+                style={{ color: SECTION_COLOR[section.label] }}
+              >
+                {section.label}
+              </h4>
+              <p className="mt-1 line-clamp-4 whitespace-pre-wrap text-[12px] leading-[1.7] text-secondary">
+                {section.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
 export function IdeaEvaluationView({
   notes,
@@ -132,28 +176,25 @@ export function IdeaEvaluationView({
   return (
     <div>
       {shownScore ? (
-        <div className="flex items-center gap-3">
-          <p className="flex h-12 w-12 items-center justify-center rounded-md bg-[var(--stage-spark-bg)] text-[22px] font-semibold tabular-nums text-[var(--stage-spark-fg)]">
-            {shownScore}
-          </p>
-          <div>
-            <p className="text-[13.5px] font-semibold">
-              {AI_SCORE_LABEL}
-              <span className="ml-1 font-normal text-muted-foreground">/ 5</span>
-            </p>
-            {meaning ? <p className="text-[12.5px] text-muted-foreground">{meaning}</p> : null}
-          </div>
-        </div>
+        <p className="flex items-baseline gap-2">
+          <span className="text-[12px] text-muted-foreground">{AI_SCORE_LABEL}</span>
+          <span className="font-mono text-[18px] font-semibold">{shownScore}</span>
+          <span className="text-[12px] text-muted-foreground">
+            / 5{meaning ? ` ・ ${meaning}` : ""}
+          </span>
+        </p>
       ) : null}
       {parsed ? (
         <div className={`${shownScore ? "mt-3" : ""} space-y-2`}>
           {parsed.sections.map((section) => (
-            <section
-              key={section.label}
-              className={`rounded-md px-3 py-2.5 ${SECTION_TONE[section.label]}`}
-            >
-              <h4 className="text-[12.5px] font-semibold">{section.label}</h4>
-              <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
+            <section key={section.label} className="rounded-[8px] bg-sunken px-3 py-2.5">
+              <h4
+                className="text-[11px] font-semibold"
+                style={{ color: SECTION_COLOR[section.label] }}
+              >
+                {section.label}
+              </h4>
+              <p className="mt-1 whitespace-pre-wrap text-[12.5px] leading-[1.8] text-secondary">
                 {section.body}
               </p>
             </section>
@@ -161,7 +202,7 @@ export function IdeaEvaluationView({
         </div>
       ) : notes.trim() ? (
         <p
-          className={`${shownScore ? "mt-3" : ""} whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground`}
+          className={`${shownScore ? "mt-3" : ""} whitespace-pre-wrap text-[12.5px] leading-[1.8] text-secondary`}
         >
           {notes}
         </p>
@@ -169,7 +210,7 @@ export function IdeaEvaluationView({
         <p className="text-[12.5px] text-muted-foreground">本文はありません。</p>
       )}
       {modelLabel || at ? (
-        <p className="mt-2 text-[11.5px] text-muted-foreground">
+        <p className="mt-2 font-mono text-[11px] text-muted-foreground">
           {[modelLabel, at ? formatDateJa(at) : ""].filter(Boolean).join(" · ")}
         </p>
       ) : null}
@@ -178,27 +219,24 @@ export function IdeaEvaluationView({
 }
 
 export function IdeaEvaluateNotes({ idea, id }: { idea: MockIdea; id?: string }) {
+  if (!idea.aiEvaluation) {
+    return (
+      <p id={id} className="mt-4 text-[12.5px] text-muted-foreground">
+        {canRunIdeaAi(idea.stage)
+          ? "まだ評価していません。"
+          : `評価はまだありません。${EVALUATE_ARCHIVE_ERROR}`}
+      </p>
+    );
+  }
   return (
-    <section id={id} className="mt-6">
-      <h3 className="text-[13.5px] font-semibold">AI評価</h3>
-      {idea.aiEvaluation ? (
-        <div className="ui-panel mt-2 p-3">
-          <IdeaEvaluationView
-            notes={idea.aiEvaluation}
-            score={idea.aiScore}
-            model={idea.aiEvaluationModel}
-            at={idea.aiEvaluatedAt}
-          />
-        </div>
-      ) : canRunIdeaAi(idea.stage) ? (
-        <p className="mt-2 text-[12.5px] text-muted-foreground">
-          まだ実行していません。上のプリセットから評価できます。
-        </p>
-      ) : (
-        <p className="mt-2 text-[12.5px] text-muted-foreground">
-          評価はまだありません。{EVALUATE_ARCHIVE_ERROR}
-        </p>
-      )}
+    <section id={id} className="mt-4 rounded-[10px] border border-border bg-card px-4 py-3.5">
+      <h3 className="mb-2.5 text-[12.5px] font-semibold">評価の全文</h3>
+      <IdeaEvaluationView
+        notes={idea.aiEvaluation}
+        score={idea.aiScore}
+        model={idea.aiEvaluationModel}
+        at={idea.aiEvaluatedAt}
+      />
     </section>
   );
 }

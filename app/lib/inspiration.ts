@@ -62,3 +62,35 @@ export function inspirationTone(key: string): InspirationCardTone {
   }
   return TONES[hash % TONES.length] ?? TONES[0]!;
 }
+
+/** Masonry rhythm: 100–180px, stable per card. */
+export function inspirationMediaHeight(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  const steps = [100, 120, 140, 160, 180];
+  return steps[(hash * 7 + 3) % steps.length] ?? 140;
+}
+
+export type InspirationIdeaDraft = {
+  title: string;
+  body: string;
+  tags: string[];
+};
+
+/** Prefill for 「アイデアにする」: page title, memo + a mono 参考 line, the card's tags. */
+export function inspirationIdeaDraft(item: {
+  title: string;
+  url: string | null;
+  memo: string;
+  tags: string[];
+  ogTitle?: string;
+}): InspirationIdeaDraft {
+  const url = item.url?.trim() ?? "";
+  const memo = item.memo.trim();
+  const reference = url ? `参考: ${url}` : "";
+  return {
+    title: inspirationHeadline(item),
+    body: [memo, reference].filter(Boolean).join("\n\n"),
+    tags: item.tags,
+  };
+}

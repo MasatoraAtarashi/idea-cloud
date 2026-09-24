@@ -10,10 +10,10 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 
-/** Latin: Inter (variable, 400–600). Japanese: Noto Sans JP 400–600. Meta: IBM Plex Mono. */
+/** UI: IBM Plex Sans JP 400–700. Numbers, time, ids, labels: IBM Plex Mono 400–600. */
 
 const FONT_STYLESHEET =
-  "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:ital,opsz,wght@0,14..32,400..600;1,14..32,400..600&family=Noto+Sans+JP:wght@400;500;600&display=swap";
+  "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.svg", type: "image/svg+xml", sizes: "any" },

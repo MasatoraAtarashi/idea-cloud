@@ -53,7 +53,7 @@ export default function SettingsPage() {
                   onClick={() => setSection(item.id)}
                   className={`flex min-h-11 shrink-0 items-center rounded-md px-3 text-left text-[13px] md:min-h-0 md:px-2 md:py-1.5 ${
                     section === item.id
-                      ? "bg-accent font-semibold text-foreground"
+                      ? "bg-muted font-semibold text-foreground"
                       : "font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
                   }`}
                 >
@@ -104,7 +104,7 @@ function MembersPanel() {
               <tr key={member.name}>
                 <td>
                   <div className="flex items-center gap-2.5 py-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent font-mono text-[11px] text-primary">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] text-secondary">
                       {initialsFromLabel(member.name)}
                     </span>
                     <span>
@@ -129,7 +129,7 @@ function MembersPanel() {
       <section className="mt-8">
         <h3 className="text-[16px] font-semibold">既定の公開範囲</h3>
         <div className="mt-3 grid gap-2 md:grid-cols-3">
-          <div className="rounded-[10px] border border-primary/30 bg-accent p-3">
+          <div className="rounded-[10px] border border-border-card bg-sunken p-3">
             <p className="text-[13.5px] font-medium">チーム全体</p>
             <p className="mt-1 text-[12px] text-muted-foreground">
               同じチームの全員が閲覧・編集できる

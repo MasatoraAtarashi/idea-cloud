@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { STAGE_LABEL, STAGE_PILL_CLASS, tagPillClass, type Stage } from "../data/mock";
+import { STAGE_LABEL, STAGE_PILL_CLASS, tagPillStyle, type Stage } from "../data/mock";
+import { STAGE_PILL_HEX } from "../lib/tokens";
 
 export function PageHeader({
   icon,
@@ -52,10 +53,22 @@ export function StagePill({ stage }: { stage: Stage }) {
   return <span className={`stage-pill ${STAGE_PILL_CLASS[stage]}`}>{STAGE_LABEL[stage]}</span>;
 }
 
-export function TagPill({ label }: { label: string }) {
+export function StageDot({ stage, size = 6 }: { stage: Stage; size?: number }) {
   return (
     <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${tagPillClass(label)}`}
+      aria-hidden="true"
+      className="inline-block shrink-0 rounded-full"
+      style={{ width: size, height: size, background: STAGE_PILL_HEX[stage].dot }}
+    />
+  );
+}
+
+/** Square-ish chip so tags never read as stage pills. */
+export function TagPill({ label, large = false }: { label: string; large?: boolean }) {
+  return (
+    <span
+      className={`tag-chip ${large ? "px-[9px] py-[3px] text-[12px]" : ""}`}
+      style={tagPillStyle(label)}
     >
       {label}
     </span>
@@ -66,18 +79,24 @@ export function TagList({
   tags,
   emptyLabel = "自動タグなし",
   limit = 3,
+  nowrap = false,
 }: {
   tags: string[];
   emptyLabel?: string;
   limit?: number;
+  nowrap?: boolean;
 }) {
   if (tags.length === 0) {
-    return <span className="text-[11px] text-muted-foreground">{emptyLabel}</span>;
+    return emptyLabel ? (
+      <span className="text-[11.5px] text-muted-foreground">{emptyLabel}</span>
+    ) : null;
   }
   const shown = tags.slice(0, limit);
   const extra = tags.length - shown.length;
   return (
-    <div className="flex flex-wrap gap-1">
+    <div
+      className={`flex items-center gap-1.5 ${nowrap ? "flex-nowrap overflow-hidden" : "flex-wrap"}`}
+    >
       {shown.map((tag) => (
         <TagPill key={tag} label={tag} />
       ))}
@@ -89,9 +108,5 @@ export function TagList({
 }
 
 export function CountBadge({ value }: { value: number }) {
-  return (
-    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 font-mono text-[11px] text-muted-foreground">
-      {value}
-    </span>
-  );
+  return <span className="font-mono text-[12px] font-normal text-muted-foreground">{value}</span>;
 }

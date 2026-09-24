@@ -11,6 +11,7 @@ export default [
       route("ideas/:ideaId", "routes/app/idea.tsx"),
       route("merge", "routes/app/merge.tsx"),
       route("research", "routes/app/research.tsx"),
+      route("search", "routes/app/search.tsx"),
       route("settings", "routes/app/settings.tsx"),
       route("analytics", "routes/app/analytics.tsx"),
       route("inspirations", "routes/app/inspirations.tsx"),

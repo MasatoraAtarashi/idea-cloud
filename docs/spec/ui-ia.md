@@ -10,30 +10,31 @@ There is **no landing page**. `/` is the login gate.
 
 Chrome is a **quiet light console**: Linear-leaning IA (plus-to-compose, keyboard-first, settings for access/team), LiteLLM-thin chrome (white main, hairline borders, shadow only on modal/popover), Ideation Cloud pastel stage pills. Do **not** copy Relic’s logo, Relic’s blue marketing LP, or X dark mode. Do not put 融合 / リサーチ in the sidebar. **インスピレーション** and **アナリティクス** are first-class destinations (sidebar + mobile tabs), not settings-adjacent.
 
-| Token        | Value                                                                                                                                                                                                                           |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Surface      | `#FFFFFF`                                                                                                                                                                                                                       |
-| Sidebar      | `#FAFAFB`                                                                                                                                                                                                                       |
-| Table header | `#F4F5F7`                                                                                                                                                                                                                       |
-| Border       | `#D4D8E0` (controls `#C8CED7`) — readable frames, softer than the post-#37 `#C5CAD3` / `#B8BFC9` treatment                                                                                                                      |
-| Accent       | `#3B6EF6`                                                                                                                                                                                                                       |
-| Body         | `#0A0A0A` near-black for headings, body, list titles, and nav labels (muted meta `#3A424E`)                                                                                                                                     |
-| Row hover    | `#F8FAFE` / selection `#EEF2FD`                                                                                                                                                                                                 |
-| Density      | Row ~40px desktop / slightly airier mobile cards; filter 46px, table header 36px; 1px dividers, not zebra. Rows stay filled: tags, stage, relative updated, aging, comment count, research mark.                                |
-| Radius       | 6–7px controls, 9–12px panels                                                                                                                                                                                                   |
-| Type         | Inter (400–600) + Noto Sans JP / Hiragino (400–600); IBM Plex Mono for meta only. Default UI `500`; titles, buttons, and primary nav `font-weight: 600`, near-black. Compose/detail **本文** uses primary text, not muted gray. |
-| Brand        | Original SVG cloud + spark, wordmark 「アイデアクラウド」                                                                                                                                                                       |
-| Pills        | Pastel chips for stage/tags only. Human/AI idea scores are compact 1–5 chips (`人4` `AI3`), not Relic S/A/B.                                                                                                                    |
+The v2 redesign (Claude Design handoff, 2026-09) moved chrome to cool grey with thin rows. Values live in `app/app.css` and `app/lib/tokens.ts`.
 
-Stage pill hex (background / foreground):
+| Token   | Value                                                                                                   |
+| ------- | ------------------------------------------------------------------------------------------------------- |
+| App bg  | `#F9FAFB`; surfaces (cards, header, sidebar) `#FFFFFF`; sunken (AI 作業台, footers) `#F9FAFB`           |
+| Border  | weak `#EAECF0`, card `#E4E7EC`, control `#D0D5DD`                                                       |
+| Text    | primary `#101828`, secondary `#344054`, tertiary `#475467`, muted `#667085` (lightest text tone)        |
+| Grey    | `#98A2B3` / `#D0D5DD` for dots, rules, bars only — never text                                           |
+| Primary | button bg `#101828`, white text                                                                         |
+| Accent  | `#4F46E5` (`--accent`) for AI-origin things only: AI send, logo, 推し度                                 |
+| Type    | IBM Plex Sans JP 400–700; IBM Plex Mono for numbers, time, ids, labels                                  |
+| Radius  | buttons / inputs 7–8px, cards 10px, frames 12px, pills 999px, tags 5px                                  |
+| Shadow  | none on cards; modal `0 16px 40px rgba(16,24,40,0.18)`; hover row/card `0 4px 12px rgba(16,24,40,0.10)` |
+| Tags    | square-ish 5px chips, 8 colors from a hash of the name (same tag = same color everywhere)               |
+| Brand   | 24px accent square + wordmark 「Idea Cloud」 in the sidebar                                             |
 
-| Stage      | Japanese   | Background | Foreground |
-| ---------- | ---------- | ---------- | ---------- |
-| `spark`    | 着想       | `#F3F0FF`  | `#6D28D9`  |
-| `aging`    | 熟成中     | `#FFF6EC`  | `#B45309`  |
-| `ripe`     | 熟した     | `#ECFBF6`  | `#0F766E`  |
-| `selected` | 採用       | `#EDF4FF`  | `#1F49C4`  |
-| `archived` | アーカイブ | `#F4F5F8`  | `#687280`  |
+Stage pills are round with a leading dot (background / text / dot):
+
+| Stage      | Japanese   | Background | Text      | Dot       |
+| ---------- | ---------- | ---------- | --------- | --------- |
+| `spark`    | 着想       | `#F2F4F7`  | `#344054` | `#98A2B3` |
+| `aging`    | 熟成中     | `#FFFAEB`  | `#B54708` | `#F79009` |
+| `ripe`     | 熟した     | `#ECFDF3`  | `#067647` | `#17B26A` |
+| `selected` | 採用       | `#EEF4FF`  | `#3538CD` | `#6172F3` |
+| `archived` | アーカイブ | `#F9FAFB`  | `#667085` | `#D0D5DD` |
 
 Empty workspace still shows **view chrome** (sidebar, list header, filters, table/board toggle). Centered empty copy is **まだアイデアがありません** (board columns still use **まだありません**).
 
@@ -95,19 +96,11 @@ List view state is in the URL so Back/Forward and deep links work:
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
-Row menu (⋯) lists **次の段階へ**, **リサーチを実行**, **ブレスト**, and **AI評価** immediately under 詳細 (not behind 段階), plus **コピー**, **アーカイブ**, and **削除** (browser confirm; hard-deletes the row and its comments/brainstorms). **コピー** puts title, body, stage, category when set, and tags on the clipboard (**コピーしました** / **コピーできませんでした**). A set **カテゴリ** shows on the row (and under the desktop title) separately from tag chips. Mobile list rows are title-first: stage + aging + relative time on a quiet meta line; swipe and ⋯ stay for secondary actions (no extra chrome). List swipe is 88px **次の段階へ** / **アーカイブ** (`IdeaSwipeRow`, hidden from `md`). Detail is tabbed: **概要 | リサーチ | AI/履歴 | 相談 | コメント** (`#research` / `#history` / `#brainstorm` / `#evaluate` / `#discuss` / `#comments`). The fragment is not sent to the server, so the first paint is **概要** and the hashed tab applies immediately after. 概要 keeps wrapping title + body, tags, one primary **次の段階へ**, compact 見直し. リサーチ shows run controls + **先行事例** links (or **Web検索未取得**) above **AIコメント**. AI/履歴 is `buildIdeaHistory` and repeats the latest research snapshot. Secondary actions are a left swipe on the body (`IdeaDetailSwipe`, 72px targets, hidden from `lg`): **編集** / **AI** / **融合** / **アーカイブ**. Mobile also keeps a 44px **編集** in the sticky header (not a ⋯ menu). **AI** opens a large-target panel with compact リサーチ / ブレスト / AI評価 (not a tiny popover). Desktop keeps visible **編集** + the rail (including **コピー** and **削除**). Mobile detail shows **コピー** under the tabs. Archive-only lock: **アーカイブではリサーチできません** / **アーカイブではブレストできません** / **アーカイブではAI評価できません** / **アーカイブでは相談できません**. The AI swipe panel and desktop rail also link **AIと話す** (`#discuss`). List ⋯ includes the same link. Presets **速い・安い** / **標準** / **じっくり**, loading **実行中…**, a Japanese error if AI fails.
+The desktop list is one table grouped by stage (熟成中 → 熟した → 着想 → 採用 → アーカイブ). Sorting and filtering live in the sticky column header: click 段階 / アイデア / 熟成 / 更新 to sort (again to flip), and ▾ on 段階 / アイデア (keyword + カテゴリ) / タグ / 熟成 to filter that column. 「条件をクリア」 appears on the tab row while filters are active. Rows are one 40px line (pill, title + excerpt, up to 3 tags, 推し度, comments, aging, updated, ⋯). Row menu (⋯) is **次の段階へ** / **コピー** / **アーカイブ** / **削除** only — no AI items. Mobile keeps cards, a 絞り込み drawer, and swipe (left 次の段階へ, right アーカイブ).
 
-### Idea detail 履歴
+Detail (desktop) is the thinking column (title, body, tags, 見直し band with 見直した / 保留 / 捨てる, コメント, collapsible 自分の評価と振り返り) plus the **AI 作業台** on the right. The 作業台 has a preset (**速い・安い** / **標準** / **じっくり**) used by every run, an always-on 推し度 card, and tabs **相談 | 評価 | リサーチ | ブレスト** (`#discuss` / `#evaluate` / `#research` / `#brainstorm`). Each tab shows its own past output; there is no separate 履歴 tab (old `#history` / `#ai` links open 評価). Mobile detail switches アイデア | AI 作業台 with a segment. Archive locks all AI (**アーカイブでは相談できません** etc.) and 次の段階へ.
 
-One chronological **履歴** section (detail tab **AI/履歴**, hashes `#history` / `#brainstorm` / `#evaluate`; `#research` opens the リサーチ tab) lists stored AI/research output, newest first, expandable:
-
-| Kind     | Source                                                                | Persistence                                                                                                                                                                                                                                                                             |
-| -------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| リサーチ | `ideas.research_notes` + model + `researched_at` + `research_sources` | **Latest only** (overwrite). Marked 最新. **先行事例** links (or **Web検索未取得**) sit above **AIコメント**.                                                                                                                                                                           |
-| AI評価   | `ideas.ai_evaluation` + score + model + `ai_evaluated_at`             | **Latest only** (overwrite). Marked 最新. Primary view is **推し度** (1–5 and a one-line meaning) plus cards for 強み / リスク / 新規性 / 次の一手. Axis decimals and raw model ids stay off that view; a short preset or Jev label is secondary. Unparsed notes fall back to pre-wrap. |
-| ブレスト | `idea_brainstorms` rows                                               | **Every run** (append). Fallback to the idea snapshot if no rows are passed.                                                                                                                                                                                                            |
-
-Do not invent a separate history table for research or evaluation. Gaps: research and evaluation have no run log — only the current snapshot on the idea row. Helper: `app/lib/idea-history.ts` (`buildIdeaHistory`).
+Persistence per tab: リサーチ and AI評価 keep the **latest only** on the idea row; ブレスト appends every run in `idea_brainstorms`; 相談 is chronological in `idea_chat_messages`. Do not invent a separate history table for research or evaluation.
 
 ### Idea detail 相談
 

@@ -182,7 +182,14 @@ export async function getIdeaView(db: Db, id: string | undefined): Promise<MockI
 
 export async function insertIdeaRow(
   db: Db,
-  data: { title: string; body: string; stage?: Stage; tags?: string[]; categoryId?: number | null },
+  data: {
+    title: string;
+    body: string;
+    stage?: Stage;
+    tags?: string[];
+    categoryId?: number | null;
+    inspirationId?: number | null;
+  },
 ): Promise<Idea> {
   const title = data.title.trim().slice(0, 200) || "無題";
   const body = data.body;
@@ -196,6 +203,7 @@ export async function insertIdeaRow(
       stage,
       tags,
       ...(data.categoryId != null ? { categoryId: data.categoryId } : {}),
+      ...(data.inspirationId != null ? { inspirationId: data.inspirationId } : {}),
     })
     .returning();
   if (!created) {
@@ -207,7 +215,12 @@ export async function insertIdeaRow(
 export async function insertIdea(
   db: Db,
   text: string,
-  extras?: { stage?: Stage; tags?: string[]; categoryId?: number | null },
+  extras?: {
+    stage?: Stage;
+    tags?: string[];
+    categoryId?: number | null;
+    inspirationId?: number | null;
+  },
 ): Promise<Idea> {
   const { title, body } = splitTitleBody(text);
   return insertIdeaRow(db, {
@@ -216,6 +229,7 @@ export async function insertIdea(
     stage: extras?.stage,
     tags: extras?.tags,
     categoryId: extras?.categoryId,
+    inspirationId: extras?.inspirationId,
   });
 }
 

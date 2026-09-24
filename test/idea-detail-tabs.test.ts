@@ -1,25 +1,35 @@
 import { describe, expect, it } from "vitest";
 import {
   hashForIdeaDetailTab,
+  hashTargetsAi,
   ideaDetailTabFromHash,
   IDEA_DETAIL_TAB_LABEL,
 } from "../app/lib/idea-detail-tabs";
 
 describe("idea detail tabs", () => {
-  it("maps hashes onto 概要 / リサーチ / AI/履歴 / 相談 / コメント", () => {
-    expect(ideaDetailTabFromHash("")).toBe("overview");
-    expect(ideaDetailTabFromHash("#research")).toBe("research");
-    expect(ideaDetailTabFromHash("brainstorm")).toBe("ai");
-    expect(ideaDetailTabFromHash("#evaluate")).toBe("ai");
-    expect(ideaDetailTabFromHash("#history")).toBe("ai");
+  it("maps hashes onto the AI 作業台 tabs 相談 / 評価 / リサーチ / ブレスト", () => {
+    expect(ideaDetailTabFromHash("")).toBe("discuss");
     expect(ideaDetailTabFromHash("#discuss")).toBe("discuss");
-    expect(ideaDetailTabFromHash("#comments")).toBe("comments");
-    expect(IDEA_DETAIL_TAB_LABEL.overview).toBe("概要");
-    expect(IDEA_DETAIL_TAB_LABEL.ai).toBe("AI/履歴");
+    expect(ideaDetailTabFromHash("#evaluate")).toBe("evaluate");
+    expect(ideaDetailTabFromHash("#research")).toBe("research");
+    expect(ideaDetailTabFromHash("brainstorm")).toBe("brainstorm");
+    expect(ideaDetailTabFromHash("#history")).toBe("evaluate");
+    expect(ideaDetailTabFromHash("#nope")).toBe("discuss");
     expect(IDEA_DETAIL_TAB_LABEL.discuss).toBe("相談");
-    expect(hashForIdeaDetailTab("overview")).toBe("");
-    expect(hashForIdeaDetailTab("ai")).toBe("history");
+    expect(IDEA_DETAIL_TAB_LABEL.evaluate).toBe("評価");
     expect(hashForIdeaDetailTab("discuss")).toBe("discuss");
-    expect(hashForIdeaDetailTab("research")).toBe("research");
+  });
+
+  it("keeps older five-tab hashes working", () => {
+    expect(ideaDetailTabFromHash("#overview")).toBe("discuss");
+    expect(ideaDetailTabFromHash("#comments")).toBe("discuss");
+    expect(ideaDetailTabFromHash("#ai")).toBe("evaluate");
+  });
+
+  it("opens the mobile AI side only for explicit AI hashes", () => {
+    expect(hashTargetsAi("")).toBe(false);
+    expect(hashTargetsAi("#comments")).toBe(false);
+    expect(hashTargetsAi("#discuss")).toBe(true);
+    expect(hashTargetsAi("#research")).toBe(true);
   });
 });

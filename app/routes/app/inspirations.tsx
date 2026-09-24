@@ -1,9 +1,23 @@
-import { useEffect, useRef, useState } from "react";
-import { Form, useActionData, useLoaderData, type LoaderFunctionArgs } from "react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useOutletContext,
+  type LoaderFunctionArgs,
+} from "react-router";
+import type { AppData } from "./layout";
 import { HeaderPlusButton } from "../../components/header-create";
-import { InspirationGallery } from "../../components/inspiration-gallery";
+import { IconSpinner } from "../../components/icons";
+import {
+  InspirationGallery,
+  type InspirationGalleryItem,
+} from "../../components/inspiration-gallery";
+import { InspirationIdeaDialog, InspirationModal } from "../../components/inspiration-idea-dialog";
 import { MobileScreenHeader } from "../../components/mobile-header";
 import { SettingsIconLink } from "../../components/settings-link";
+import { TagPill } from "../../components/ui";
 import { createInspirationAction } from "../../lib/inspiration-action";
 import { createDb } from "../../../db/client";
 import { inspirationView, listInspirationRows } from "../../../db/inspirations";
@@ -20,119 +34,203 @@ export async function loader({ context }: LoaderFunctionArgs) {
   return { items };
 }
 
-function ComposeForm({ error, autoFocus = false }: { error?: string; autoFocus?: boolean }) {
+function PasteUrlForm({ error }: { error?: string }) {
   const urlRef = useRef<HTMLInputElement>(null);
+  const navigation = useNavigation();
+  const saving = navigation.state !== "idle" && navigation.formData?.get("intent") == null;
   useEffect(() => {
-    if (autoFocus) urlRef.current?.focus();
-  }, [autoFocus]);
+    urlRef.current?.focus();
+  }, []);
 
   return (
-    <>
-      <p className="text-[12px] text-muted-foreground">
-        URLだけでも追加できます。タイトルは空で大丈夫です。プレビューが取れなくても保存されます。画像のアップロードはまだありません。
+    <Form method="post" className="space-y-2.5 px-[18px] py-4">
+      <p className="text-[12px] leading-relaxed text-muted-foreground">
+        URLだけでも追加できます。プレビューが取れなくても保存されます。
       </p>
-      <Form method="post" className="mt-3 space-y-2">
-        <label className="sr-only" htmlFor="inspiration-url">
-          URL
-        </label>
-        <input
-          id="inspiration-url"
-          name="url"
-          type="text"
-          inputMode="url"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          autoComplete="off"
-          placeholder="http:// または https://"
-          className="ui-input"
-          ref={urlRef}
-        />
-        <label className="sr-only" htmlFor="inspiration-title">
-          タイトル（任意）
-        </label>
-        <input
-          id="inspiration-title"
-          name="title"
-          placeholder="タイトル（空でも可）"
-          autoComplete="off"
-          className="ui-input"
-        />
-        <label className="sr-only" htmlFor="inspiration-memo">
-          メモ
-        </label>
-        <textarea
-          id="inspiration-memo"
-          name="memo"
-          rows={4}
-          placeholder="残したいこと"
-          className="ui-input min-h-[6rem] py-2"
-        />
-        <label className="sr-only" htmlFor="inspiration-tags">
-          タグ
-        </label>
-        <input id="inspiration-tags" name="tags" placeholder="タグ（任意）" className="ui-input" />
-        <button type="submit" className="ui-btn w-full">
+      <label className="sr-only" htmlFor="inspiration-url">
+        URL
+      </label>
+      <input
+        id="inspiration-url"
+        name="url"
+        type="text"
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        autoComplete="off"
+        placeholder="https://"
+        className="ui-input font-mono md:h-10"
+        ref={urlRef}
+      />
+      <label className="sr-only" htmlFor="inspiration-title">
+        タイトル（任意）
+      </label>
+      <input
+        id="inspiration-title"
+        name="title"
+        placeholder="タイトル（空でも可）"
+        autoComplete="off"
+        className="ui-input md:h-10"
+      />
+      <label className="sr-only" htmlFor="inspiration-memo">
+        メモ
+      </label>
+      <textarea
+        id="inspiration-memo"
+        name="memo"
+        rows={3}
+        placeholder="残したいこと"
+        className="ui-input h-auto min-h-[5rem] py-2"
+      />
+      <label className="sr-only" htmlFor="inspiration-tags">
+        タグ
+      </label>
+      <input
+        id="inspiration-tags"
+        name="tags"
+        placeholder="タグ（任意・読点区切り）"
+        className="ui-input md:h-10"
+      />
+      <div className="flex items-center justify-end gap-2 pt-1">
+        {error ? <p className="mr-auto text-[12.5px] text-danger">{error}</p> : null}
+        <button type="submit" disabled={saving} className="ui-btn px-4 md:h-9 md:min-h-9">
+          {saving ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
           追加
         </button>
-        {error ? <p className="text-[12.5px] text-danger">{error}</p> : null}
-      </Form>
-    </>
+      </div>
+    </Form>
+  );
+}
+
+function TagFilter({
+  tags,
+  selected,
+  onChange,
+}: {
+  tags: string[];
+  selected: string | null;
+  onChange: (tag: string | null) => void;
+}) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  function pick(tag: string | null) {
+    onChange(tag);
+    ref.current?.removeAttribute("open");
+  }
+  return (
+    <details ref={ref} className="ui-menu relative">
+      <summary className="ui-btn-secondary cursor-pointer px-3 md:h-9 md:min-h-9">
+        {selected ? (
+          <>
+            タグ <TagPill label={selected} />
+          </>
+        ) : (
+          "タグ"
+        )}
+      </summary>
+      <div className="ui-float absolute right-0 z-20 mt-1 w-56 p-2">
+        {tags.length === 0 ? (
+          <p className="px-1 py-1 text-[12px] text-muted-foreground">まだタグがありません</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => pick(selected === tag ? null : tag)}
+                aria-pressed={selected === tag}
+                className={`rounded-[6px] p-0.5 ${selected === tag ? "ring-2 ring-foreground" : ""}`}
+              >
+                <TagPill label={tag} />
+              </button>
+            ))}
+          </div>
+        )}
+        {selected ? (
+          <button
+            type="button"
+            onClick={() => pick(null)}
+            className="mt-2 w-full rounded-[6px] px-2 py-1.5 text-left text-[12.5px] text-muted-foreground hover:bg-sunken"
+          >
+            絞り込みを外す
+          </button>
+        ) : null}
+      </div>
+    </details>
   );
 }
 
 export default function InspirationsPage() {
   const { items } = useLoaderData<typeof loader>();
+  const { categories } = useOutletContext<AppData>();
   const actionData = useActionData<typeof createInspirationAction>();
-  const error = actionData && "error" in actionData ? actionData.error : undefined;
-  const [composeOpen, setComposeOpen] = useState(items.length === 0);
+  const error =
+    actionData && "error" in actionData && actionData.intent === "create"
+      ? actionData.error
+      : undefined;
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [ideaFrom, setIdeaFrom] = useState<InspirationGalleryItem | null>(null);
+  const [tag, setTag] = useState<string | null>(null);
+  const allTags = useMemo(
+    () => [...new Set(items.flatMap((item) => item.tags))].sort((a, b) => a.localeCompare(b, "ja")),
+    [items],
+  );
+  const shown = tag ? items.filter((item) => item.tags.includes(tag)) : items;
+
+  useEffect(() => {
+    if (error) setPasteOpen(true);
+  }, [error]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="hidden h-[52px] shrink-0 items-center gap-2 border-b border-border px-4 md:flex">
-        <h1 className="ui-title text-[16px]">インスピレーション</h1>
-        <span className="font-mono text-[11px] text-muted-foreground">{items.length}</span>
-        <div className="ml-auto flex items-center">
-          <HeaderPlusButton label="インスピレーションを追加" onClick={() => setComposeOpen(true)} />
+      <header className="hidden shrink-0 items-center gap-2.5 border-b border-border bg-card px-7 py-4 md:flex">
+        <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-foreground">
+          インスピレーション
+        </h1>
+        <span className="font-mono text-[12px] text-muted-foreground">{items.length}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <TagFilter tags={allTags} selected={tag} onChange={setTag} />
+          <button
+            type="button"
+            onClick={() => setPasteOpen(true)}
+            className="ui-btn px-3.5 md:h-9 md:min-h-9"
+          >
+            ＋ URLを貼る
+          </button>
         </div>
       </header>
       <MobileScreenHeader
         title={
-          <div className="flex min-w-0 items-center gap-2">
-            <h1 className="ui-title truncate text-[15px]">インスピレーション</h1>
-            <span className="font-mono text-[11px] text-muted-foreground">{items.length}</span>
+          <div className="flex min-w-0 items-baseline gap-2 px-1">
+            <h1 className="truncate text-[18px] font-semibold text-foreground">
+              インスピレーション
+            </h1>
+            <span className="font-mono text-[11.5px] text-muted-foreground">{items.length}</span>
           </div>
         }
         trailing={
           <>
-            {composeOpen ? (
-              <button
-                type="button"
-                onClick={() => setComposeOpen(false)}
-                className="flex min-h-11 items-center px-2 text-[13.5px] font-medium text-foreground"
-              >
-                閉じる
-              </button>
-            ) : null}
+            <TagFilter tags={allTags} selected={tag} onChange={setTag} />
             <SettingsIconLink />
-            <HeaderPlusButton
-              label="インスピレーションを追加"
-              onClick={() => setComposeOpen(true)}
-            />
+            <HeaderPlusButton label="URLを貼る" onClick={() => setPasteOpen(true)} />
           </>
         }
       />
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:grid md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:gap-8 md:px-8 md:pb-5">
-        <section className={composeOpen ? "block" : "hidden md:block"}>
-          <h2 className="text-[13.5px] font-semibold">メモを残す</h2>
-          <div className="mt-2">
-            <ComposeForm error={error} autoFocus={composeOpen} />
-          </div>
-        </section>
-        <section className="mt-6 md:mt-0">
-          <InspirationGallery items={items} />
-        </section>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-7 md:py-[22px]">
+        <InspirationGallery items={shown} onMakeIdea={setIdeaFrom} />
       </div>
+      {pasteOpen ? (
+        <InspirationModal title="URLを貼る" width={480} onClose={() => setPasteOpen(false)}>
+          <PasteUrlForm error={error} />
+        </InspirationModal>
+      ) : null}
+      {ideaFrom ? (
+        <InspirationIdeaDialog
+          item={ideaFrom}
+          categories={categories}
+          onClose={() => setIdeaFrom(null)}
+        />
+      ) : null}
     </div>
   );
 }

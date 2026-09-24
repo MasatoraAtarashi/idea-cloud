@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useLoaderData, type LoaderFunctionArgs } from "react-router";
-import { STAGE_LABEL } from "../../data/mock";
-import { summarizeIdeaAnalytics, type CreatedDayCount } from "../../lib/analytics";
+import { STAGE_LABEL, tagPillStyle } from "../../data/mock";
+import {
+  createdBarTone,
+  createdDayLabel,
+  summarizeIdeaAnalytics,
+  type CreatedBarTone,
+  type CreatedDayCount,
+} from "../../lib/analytics";
+import { STAGE_PILL_HEX } from "../../lib/tokens";
 import { createDb } from "../../../db/client";
 import { listIdeaViews } from "../../../db/ideas";
 import { SettingsIconLink } from "../../components/settings-link";
@@ -17,148 +24,209 @@ export async function loader({ context }: LoaderFunctionArgs) {
   return { analytics: summarizeIdeaAnalytics(ideas) };
 }
 
+const BAR_FILL: Record<CreatedBarTone, string> = {
+  today: "#101828",
+  normal: "#d0d5dd",
+  low: "#e4e7ec",
+  empty: "#e4e7ec",
+};
+
+function Section({
+  title,
+  trailing,
+  children,
+}: {
+  title: string;
+  trailing?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mt-8">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[13.5px] font-semibold text-foreground">{title}</h2>
+        {trailing}
+      </div>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
 export default function AnalyticsPage() {
   const { analytics } = useLoaderData<typeof loader>();
   const [span, setSpan] = useState<7 | 30>(7);
-  const maxStage = Math.max(1, ...analytics.byStage.map((row) => row.count));
   const createdRows = span === 7 ? analytics.createdByDay7 : analytics.createdByDay30;
-  const createdTotal = span === 7 ? analytics.createdLast7 : analytics.createdLast30;
+  const stageRows = analytics.byStage;
+  const stageTotal = stageRows.reduce((sum, row) => sum + row.count, 0);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="hidden h-[52px] shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:flex">
-        <h1 className="ui-title text-[16px]">アナリティクス</h1>
+      <header className="hidden shrink-0 items-baseline gap-2.5 border-b border-border bg-card px-7 py-[18px] md:flex">
+        <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-foreground">
+          アナリティクス
+        </h1>
+        <span className="font-mono text-[12px] text-muted-foreground">last 30d</span>
       </header>
       <MobileScreenHeader
-        title={<h1 className="ui-title truncate text-[15px]">アナリティクス</h1>}
+        title={
+          <div className="flex items-baseline gap-2 px-1">
+            <h1 className="text-[18px] font-semibold text-foreground">アナリティクス</h1>
+            <span className="font-mono text-[11.5px] text-muted-foreground">last 30d</span>
+          </div>
+        }
         trailing={<SettingsIconLink />}
       />
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-8 md:pb-5">
-        <p className="max-w-2xl text-[13.5px] leading-relaxed text-foreground">
-          D1のアイデア行から数えた棚の様子です。チャートはまだなく、件数と短い棒だけです。
-        </p>
-        <dl className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
-          <Stat label="アイデア" value={analytics.total} />
-          <Stat label="直近7日の作成" value={analytics.createdLast7} />
-          <Stat label="直近30日の作成" value={analytics.createdLast30} />
-          <Stat label="平均熟成日数" value={formatDays(analytics.averageAgedDays)} />
-          <Stat label="中央値" value={formatDays(analytics.medianAgedDays)} />
-          <Stat label="振り返りあり" value={analytics.withReflection} />
-          <Stat label="人の点数" value={analytics.withHumanScore} />
-          <Stat label="AI評価" value={analytics.withAiScore} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-7 md:py-[22px]">
+        <dl className="grid max-w-[960px] grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="アイデア総数" value={analytics.total} />
+          <Stat
+            label="平均熟成日数"
+            value={analytics.averageAgedDays ?? "—"}
+            unit={analytics.averageAgedDays == null ? undefined : "d"}
+          />
+          <Stat label="AI評価済" value={analytics.withAiScore} />
+          <Stat label="試した" value={analytics.tried} />
         </dl>
 
-        <section className="mt-8">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-[13.5px] font-semibold">日別の作成</h2>
-            <div className="flex rounded-md border border-border-control p-0.5">
-              <button
-                type="button"
-                onClick={() => setSpan(7)}
-                className={`flex min-h-11 items-center rounded-sm px-3 text-[13px] md:min-h-0 md:px-2.5 md:py-1 md:text-[12.5px] ${
-                  span === 7 ? "bg-muted font-semibold text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                7日
-              </button>
-              <button
-                type="button"
-                onClick={() => setSpan(30)}
-                className={`flex min-h-11 items-center rounded-sm px-3 text-[13px] md:min-h-0 md:px-2.5 md:py-1 md:text-[12.5px] ${
-                  span === 30 ? "bg-muted font-semibold text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                30日
-              </button>
+        <div className="max-w-[960px]">
+          <Section title="段階の分布">
+            <div
+              className="flex h-3 w-full gap-[2px] overflow-hidden rounded-[4px] bg-muted"
+              role="img"
+              aria-label={stageRows
+                .map((row) => `${STAGE_LABEL[row.stage]} ${row.count}`)
+                .join("、")}
+            >
+              {stageTotal > 0
+                ? stageRows
+                    .filter((row) => row.count > 0)
+                    .map((row) => (
+                      <span
+                        key={row.stage}
+                        className="h-full"
+                        style={{
+                          flexGrow: row.count,
+                          flexBasis: 0,
+                          background: STAGE_PILL_HEX[row.stage].dot,
+                        }}
+                      />
+                    ))
+                : null}
             </div>
-          </div>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">
-            {span}日間で {createdTotal} 件
-          </p>
-          <CreatedBars rows={createdRows} />
-        </section>
-
-        <section className="mt-8">
-          <h2 className="text-[13.5px] font-semibold">段階</h2>
-          <div className="mt-3 space-y-2">
-            {analytics.byStage.map((row) => (
-              <div key={row.stage} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-[13px] text-foreground">
-                  {STAGE_LABEL[row.stage]}
-                </span>
-                <div className="h-2 min-w-0 flex-1 rounded-full border border-border bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary/80"
-                    style={{ width: `${(row.count / maxStage) * 100}%` }}
+            <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+              {stageRows.map((row) => (
+                <li
+                  key={row.stage}
+                  className="flex items-center gap-1.5 text-[12.5px] text-tertiary"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-[7px] w-[7px] rounded-full"
+                    style={{ background: STAGE_PILL_HEX[row.stage].dot }}
                   />
-                </div>
-                <span className="w-8 text-right font-mono text-[11.5px] text-muted-foreground">
-                  {row.count}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
+                  {STAGE_LABEL[row.stage]}
+                  <span className="font-mono text-[12px] font-medium text-secondary">
+                    {row.count}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Section>
 
-        <section className="mt-8">
-          <h2 className="text-[13.5px] font-semibold">よく使うタグ</h2>
-          {analytics.topTags.length === 0 ? (
-            <p className="mt-3 text-[13px] text-muted-foreground">まだタグがありません</p>
-          ) : (
-            <table className="ui-table mt-3 max-w-md">
-              <thead>
-                <tr>
-                  <th>タグ</th>
-                  <th className="text-right">件数</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analytics.topTags.map((row) => (
-                  <tr key={row.tag}>
-                    <td>{row.tag}</td>
-                    <td className="text-right font-mono text-[11.5px] text-muted-foreground">
-                      {row.count}
-                    </td>
-                  </tr>
+          <Section
+            title="1日あたりの着想"
+            trailing={
+              <div className="flex rounded-[7px] border border-border-control bg-card p-0.5">
+                {([7, 30] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setSpan(value)}
+                    aria-pressed={span === value}
+                    className={`flex min-h-11 items-center rounded-[5px] px-3 font-mono text-[11.5px] md:min-h-0 md:px-2.5 md:py-1 ${
+                      span === value
+                        ? "bg-muted font-semibold text-foreground"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {value}d
+                  </button>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+              </div>
+            }
+          >
+            <CreatedBars rows={createdRows} span={span} />
+          </Section>
+
+          <Section title="よく出るタグ">
+            {analytics.topTags.length === 0 ? (
+              <p className="text-[13px] text-muted-foreground">まだタグがありません</p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {analytics.topTags.map((row) => (
+                  <li
+                    key={row.tag}
+                    className="inline-flex items-center gap-1.5 rounded-[6px] px-2.5 py-1 text-[12.5px] font-medium"
+                    style={tagPillStyle(row.tag)}
+                  >
+                    {row.tag}
+                    <span className="font-mono text-[12px] font-semibold">{row.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </div>
       </div>
     </div>
   );
 }
 
-function CreatedBars({ rows }: { rows: CreatedDayCount[] }) {
+function CreatedBars({ rows, span }: { rows: CreatedDayCount[]; span: number }) {
   const max = Math.max(1, ...rows.map((row) => row.count));
+  const dense = rows.length > 7;
   return (
-    <div className="mt-3 flex items-end gap-1 overflow-x-auto border border-border bg-card px-2 py-3">
-      {rows.map((row) => (
-        <div key={row.day} className="flex min-w-[1.15rem] flex-1 flex-col items-center gap-1">
-          <span className="font-mono text-[10px] text-muted-foreground">{row.count}</span>
-          <div className="flex h-24 w-full items-end rounded-sm bg-muted">
-            <div
-              className="w-full rounded-sm bg-primary/80"
-              style={{ height: `${(row.count / max) * 100}%` }}
-            />
+    <div className={`flex items-end ${dense ? "gap-[3px]" : "gap-2 md:gap-3"}`}>
+      {rows.map((row, index) => {
+        const isToday = index === rows.length - 1;
+        const tone = createdBarTone(row.count, max, isToday);
+        const height = row.count > 0 ? Math.max(8, (row.count / max) * 100) : 0;
+        const label = createdDayLabel(row.day, isToday, span);
+        const showLabel = !dense || isToday || index % 5 === 0;
+        return (
+          <div key={row.day} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+            <div className="flex h-[120px] w-full items-end" title={`${row.day}: ${row.count}件`}>
+              <div
+                className="w-full rounded-[3px]"
+                style={{
+                  height: tone === "empty" ? 2 : `${height}%`,
+                  background: BAR_FILL[tone],
+                }}
+              />
+            </div>
+            <span
+              className={`font-mono text-[10.5px] tracking-[0.06em] ${
+                isToday ? "font-semibold text-foreground" : "text-muted-foreground"
+              } ${showLabel ? "" : "invisible"}`}
+            >
+              {label}
+            </span>
           </div>
-          <span className="font-mono text-[10px] text-muted-foreground">{row.day.slice(5)}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function Stat({ label, value, unit }: { label: string; value: number | string; unit?: string }) {
   return (
-    <div className="rounded-[10px] border border-border bg-card px-3 py-3">
-      <dt className="text-[12px] font-medium text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-mono text-[20px] font-semibold text-foreground">{value}</dd>
+    <div className="rounded-[10px] border border-border-card bg-card px-4 py-3.5">
+      <dt className="text-[12px] text-muted-foreground">{label}</dt>
+      <dd className="mt-2 font-mono text-[25px] leading-none font-semibold tracking-[-0.02em] text-foreground">
+        {value}
+        {unit ? (
+          <span className="ml-0.5 text-[13px] font-medium text-muted-foreground">{unit}</span>
+        ) : null}
+      </dd>
     </div>
   );
-}
-
-function formatDays(value: number | null): string {
-  return value == null ? "—" : `${value}`;
 }

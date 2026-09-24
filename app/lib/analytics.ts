@@ -1,4 +1,4 @@
-import { STAGES, type MockIdea, type Stage } from "../data/mock";
+import { isTriedIdea, STAGES, type MockIdea, type Stage } from "../data/mock";
 import { hasReflection } from "./reflection";
 
 export const ANALYTICS_TAG_TOP_N = 8;
@@ -26,6 +26,8 @@ export type IdeaAnalytics = {
   withHumanScore: number;
   withAiScore: number;
   withReflection: number;
+  /** 採用 or reflected. Same rule as the list 試した tab. */
+  tried: number;
   topTags: TagCount[];
   createdLast7: number;
   createdLast30: number;
@@ -123,10 +125,30 @@ export function summarizeIdeaAnalytics(ideas: MockIdea[], now = Date.now()): Ide
     withHumanScore: ideas.filter((idea) => idea.humanScore != null).length,
     withAiScore: ideas.filter((idea) => idea.aiScore != null).length,
     withReflection: ideas.filter((idea) => hasReflection(idea)).length,
+    tried: ideas.filter((idea) => isTriedIdea(idea)).length,
     topTags,
     createdLast7: createdByDay7.reduce((sum, row) => sum + row.count, 0),
     createdLast30: createdByDay30.reduce((sum, row) => sum + row.count, 0),
     createdByDay7,
     createdByDay30,
   };
+}
+
+const WEEKDAY = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
+
+/** Mono bar label: the last bucket is TODAY, others are UTC weekdays (or MM-DD for 30d). */
+export function createdDayLabel(day: string, isToday: boolean, span: number): string {
+  if (isToday) return "TODAY";
+  if (span > 7) return day.slice(5);
+  const ms = Date.parse(`${day}T00:00:00Z`);
+  return Number.isNaN(ms) ? day : (WEEKDAY[new Date(ms).getUTCDay()] ?? day);
+}
+
+export type CreatedBarTone = "today" | "normal" | "low" | "empty";
+
+/** Today is ink; a day under a third of the peak is paler so the rhythm reads. */
+export function createdBarTone(count: number, max: number, isToday: boolean): CreatedBarTone {
+  if (isToday) return "today";
+  if (count <= 0) return "empty";
+  return count < max / 3 ? "low" : "normal";
 }

@@ -4,7 +4,6 @@ import {
   inspirationHeadline,
   inspirationHostname,
   inspirationSiteLabel,
-  inspirationTone,
 } from "../lib/inspiration";
 
 export type InspirationPreviewItem = {
@@ -25,14 +24,16 @@ export function InspirationFallbackArt({
   className?: string;
 }) {
   const host = inspirationHostname(item.url);
-  const tone = inspirationTone(host || item.title);
   return (
     <div
-      className={`flex flex-col items-center justify-center ${className ?? ""}`}
-      style={{ background: tone.bg, color: tone.fg }}
+      className={`flex flex-col items-center justify-center bg-muted text-grey-dot ${className ?? ""}`}
     >
-      <span className="ui-title text-[32px] leading-none">{inspirationGlyph(item)}</span>
-      {host ? <span className="mt-2 font-mono text-[11px] opacity-80">{host}</span> : null}
+      <span className="font-mono text-[26px] leading-none">
+        {inspirationGlyph(item).toLowerCase()}
+      </span>
+      {host ? (
+        <span className="mt-2 font-mono text-[11px] text-muted-foreground">{host}</span>
+      ) : null}
     </div>
   );
 }
@@ -89,12 +90,12 @@ export function InspirationDetailPreview({ item }: { item: InspirationPreviewIte
       href={item.url}
       target="_blank"
       rel="noreferrer"
-      className="block overflow-hidden rounded-[12px] border border-border no-underline"
+      className="block overflow-hidden rounded-[10px] border border-border-card no-underline"
     >
       {inner}
     </a>
   ) : (
-    <div className="overflow-hidden rounded-[12px] border border-border">{inner}</div>
+    <div className="overflow-hidden rounded-[10px] border border-border-card">{inner}</div>
   );
 
   return (

@@ -9,7 +9,6 @@ export function IdeaAiMenu({
   researchError,
   brainstormError,
   evaluateError,
-  compact = false,
   label = "AI",
   ariaLabel,
   children,
@@ -18,6 +17,7 @@ export function IdeaAiMenu({
   researchError?: string;
   brainstormError?: string;
   evaluateError?: string;
+  /** Unused; kept for callers from the older AI menu. */
   compact?: boolean;
   label?: ReactNode;
   ariaLabel?: string;
@@ -33,9 +33,9 @@ export function IdeaAiMenu({
         {label}
       </summary>
       <div className="ui-float absolute right-0 z-20 mt-1 w-56 space-y-2 px-3 py-3">
-        <IdeaResearchControls idea={idea} error={researchError} compact={compact} />
-        <IdeaBrainstormControls idea={idea} error={brainstormError} compact={compact} />
-        <IdeaEvaluateControls idea={idea} error={evaluateError} compact={compact} />
+        <IdeaResearchControls idea={idea} error={researchError} />
+        <IdeaBrainstormControls idea={idea} error={brainstormError} />
+        <IdeaEvaluateControls idea={idea} error={evaluateError} />
         {children ? <div className="space-y-2 border-t border-border pt-2">{children}</div> : null}
       </div>
     </details>

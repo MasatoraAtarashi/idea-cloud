@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createdPerDay, summarizeIdeaAnalytics } from "../app/lib/analytics";
+import {
+  createdBarTone,
+  createdDayLabel,
+  createdPerDay,
+  summarizeIdeaAnalytics,
+} from "../app/lib/analytics";
 import type { MockIdea } from "../app/data/mock";
 
 function idea(partial: Partial<MockIdea> & Pick<MockIdea, "id" | "createdAt">): MockIdea {
@@ -38,5 +43,23 @@ describe("analytics created-per-day", () => {
     expect(summary.createdLast30).toBe(3);
     expect(summary.byStage.find((row) => row.stage === "spark")?.count).toBe(2);
     expect(summary.createdByDay30).toHaveLength(30);
+  });
+
+  it("labels bars and tones them", () => {
+    expect(createdDayLabel("2026-09-21", false, 7)).toBe("MON");
+    expect(createdDayLabel("2026-09-21", true, 7)).toBe("TODAY");
+    expect(createdDayLabel("2026-09-21", false, 30)).toBe("09-21");
+    expect(createdBarTone(0, 6, false)).toBe("empty");
+    expect(createdBarTone(1, 6, false)).toBe("low");
+    expect(createdBarTone(4, 6, false)).toBe("normal");
+    expect(createdBarTone(0, 6, true)).toBe("today");
+  });
+
+  it("counts tried ideas like the list tab", () => {
+    const ideas = [
+      idea({ id: "1", createdAt: "2026-09-21T01:00:00Z", stage: "selected" }),
+      idea({ id: "2", createdAt: "2026-09-21T01:00:00Z", stage: "spark" }),
+    ];
+    expect(summarizeIdeaAnalytics(ideas).tried).toBe(1);
   });
 });
