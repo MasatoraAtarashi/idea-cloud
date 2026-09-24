@@ -25,6 +25,7 @@ import {
 } from "../../../app/lib/inspiration-save";
 import { brainstormIdea } from "../../ai/brainstorm";
 import { bindResearchAi } from "../../ai/research";
+import { requirePremium } from "../../middleware/premium";
 import type { AppEnv } from "../../env";
 import { enrichInspirationOgp } from "../../ogp/enrich";
 
@@ -137,7 +138,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
     const titled = await replaceDerivedTitleFromOgp(db, enriched);
     return c.json({ item: inspirationJson(titled) });
   })
-  .post("/:id/brainstorm", zValidator("param", idParamSchema), async (c) => {
+  .post("/:id/brainstorm", requirePremium, zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const db = createDb(c.env.DB);
     const row = await getInspirationRow(db, id);

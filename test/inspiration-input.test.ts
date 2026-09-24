@@ -36,6 +36,7 @@ function createActionArgs(fields: Record<string, string>): ActionFunctionArgs {
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }

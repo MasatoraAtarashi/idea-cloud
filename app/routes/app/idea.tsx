@@ -49,7 +49,13 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
   const db = createDb(context.cloudflare.env.DB);
   const idea = await getIdeaView(db, params.ideaId);
   if (!idea) {
-    return { idea: undefined, comments: [], brainstorms: [], discussions: [] };
+    return {
+      premium: context.plan === "premium",
+      idea: undefined,
+      comments: [],
+      brainstorms: [],
+      discussions: [],
+    };
   }
   const [comments, brainstorms, discussions] = await Promise.all([
     listCommentsForIdea(db, Number(idea.id)),
@@ -57,6 +63,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     listChatMessagesForIdea(db, Number(idea.id)),
   ]);
   return {
+    premium: context.plan === "premium",
     idea,
     comments: comments.map(toCommentView),
     brainstorms: brainstorms.map(toBrainstormView),
@@ -68,7 +75,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 }
 
 export default function IdeaPage() {
-  const { idea, comments, brainstorms, discussions } = useLoaderData<typeof loader>();
+  const { idea, comments, brainstorms, discussions, premium } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof ideaDetailAction>();
 
   if (!idea) {
@@ -126,6 +133,7 @@ export default function IdeaPage() {
       scoreError={scoreError}
       reviewError={reviewError}
       reflectionError={reflectionError}
+      premium={premium}
     />
   );
 }
@@ -288,6 +296,7 @@ function IdeaDetail({
   scoreError,
   reviewError,
   reflectionError,
+  premium,
 }: {
   idea: MockIdea;
   comments: ReturnType<typeof toCommentView>[];
@@ -302,6 +311,7 @@ function IdeaDetail({
   scoreError?: string;
   reviewError?: string;
   reflectionError?: string;
+  premium: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const location = useLocation();
@@ -444,6 +454,7 @@ function IdeaDetail({
           brainstormError={brainstormError}
           evaluateError={evaluateError}
           discussError={discussError}
+          premium={premium}
         />
       </aside>
     </div>

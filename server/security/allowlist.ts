@@ -1,8 +1,8 @@
 /**
- * Second layer after Google identity.
- * Production primary gate is in-app Google OAuth (mock on /login this pass).
- * Template Access middleware still sits in front of APIs until the OAuth swap.
+ * Membership: the second layer after the in-app Google OAuth identity, checked
+ * on every request by the page gate and by `/api`'s sessionAuth.
  * Empty allowlist = identity provider only. Comma-separated emails, lowercase.
+ * Entitlement (free / premium) is a separate question: server/billing/plan.ts.
  */
 export function parseAllowlist(allowlistCsv: string | undefined): string[] {
   if (!allowlistCsv) return [];

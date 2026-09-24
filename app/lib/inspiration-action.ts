@@ -12,7 +12,8 @@ import {
 import { brainstormIdea } from "../../server/ai/brainstorm";
 import { scheduleCreateEvaluation } from "../../server/ai/evaluate";
 import { bindResearchAi } from "../../server/ai/research";
-import { resolveCreateTags } from "../../server/ai/tags";
+import { resolveCreateTags, sanitizeTags, USER_TAG_MAX } from "../../server/ai/tags";
+import { PREMIUM_REQUIRED_MESSAGE } from "../../server/billing/plan";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
 import { enrichInspirationOgp } from "../../server/ogp/enrich";
 import { composeBodyFromForm } from "./idea-action";
@@ -72,21 +73,26 @@ async function createIdeaFromInspiration(
   if ("error" in category) return { error: category.error, intent };
   const ai = bindResearchAi(env.AI);
   const typesafeApiKey = typesafeApiKeyFromEnv(env);
-  const resolvedTags = await resolveCreateTags({ ai, text, tags, typesafeApiKey });
+  const premium = context.plan === "premium";
+  const resolvedTags = premium
+    ? await resolveCreateTags({ ai, text, tags, typesafeApiKey })
+    : sanitizeTags(tags, USER_TAG_MAX);
   const created = await insertIdea(db, text, {
     tags: resolvedTags,
     categoryId: category.id,
     inspirationId: source.id,
   });
-  scheduleCreateEvaluation({
-    waitUntil: (promise) => context.cloudflare.ctx.waitUntil(promise),
-    db,
-    ai,
-    ideaId: created.id,
-    stage: created.stage,
-    typesafeApiKey,
-  });
-  if (String(form.get("brainstorm") ?? "") !== "1") {
+  if (premium) {
+    scheduleCreateEvaluation({
+      waitUntil: (promise) => context.cloudflare.ctx.waitUntil(promise),
+      db,
+      ai,
+      ideaId: created.id,
+      stage: created.stage,
+      typesafeApiKey,
+    });
+  }
+  if (!premium || String(form.get("brainstorm") ?? "") !== "1") {
     return redirect(`/app/ideas/${created.id}`);
   }
   const result = await brainstormIdea({ db, ai, ideaId: created.id, preset: "", model: "" });
@@ -160,6 +166,12 @@ export async function inspirationDetailAction({
   }
 
   if (intent === "brainstorm") {
+    if (context.plan !== "premium") {
+      return {
+        error: PREMIUM_REQUIRED_MESSAGE,
+        intent: "brainstorm",
+      } satisfies InspirationActionData;
+    }
     const row = await getInspirationRow(db, inspirationId);
     if (!row) {
       return { error: "見つかりません", intent: "brainstorm" } satisfies InspirationActionData;

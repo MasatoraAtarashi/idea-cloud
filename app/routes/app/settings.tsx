@@ -23,7 +23,7 @@ export function meta() {
 }
 
 export default function SettingsPage() {
-  const { userEmail } = useOutletContext<AppData>();
+  const { userEmail, premium } = useOutletContext<AppData>();
   const [section, setSection] = useState<SectionId>("members");
 
   return (
@@ -71,7 +71,7 @@ export default function SettingsPage() {
         {section === "members" ? (
           <MembersPanel userEmail={userEmail} />
         ) : section === "profile" ? (
-          <ProfilePanel userEmail={userEmail} />
+          <ProfilePanel userEmail={userEmail} premium={premium} />
         ) : (
           <StubPanel section={section} />
         )}
@@ -166,13 +166,17 @@ function MembersPanel({ userEmail }: { userEmail: string | null }) {
 }
 
 /** The signed-in Google account. Membership lives in ACCESS_ALLOWED_EMAILS, not in D1. */
-function ProfilePanel({ userEmail }: { userEmail: string | null }) {
+function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premium: boolean }) {
   return (
     <div className="mx-auto max-w-2xl">
       <h2 className="text-[16px] font-semibold">プロフィール</h2>
       <div className="mt-4 rounded-[10px] border border-border p-4">
         <p className="text-[12px] text-muted-foreground">ログイン中の Google アカウント</p>
         <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? "不明"}</p>
+        <p className="mt-3 text-[12px] text-muted-foreground">プラン</p>
+        <p className="mt-1 text-[13.5px] font-semibold">
+          {premium ? "プレミアム（AI機能あり）" : "フリー（AI機能なし）"}
+        </p>
         <form method="post" action={LOGOUT_PATH} className="mt-4">
           <button type="submit" className="ui-btn">
             ログアウト
