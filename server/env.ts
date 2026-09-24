@@ -9,8 +9,13 @@ export type AppEnv = {
 
 declare global {
   interface Env {
-    // .dev.vars でローカル開発時にだけ定義される（本番では未定義）
+    // Localhost stand-in. On other hosts, used only when AUTH_MOCK=1.
     LOCAL_DEV_USER_EMAIL?: string;
+    /**
+     * Temporary until Google OAuth (#48). `1` lets LOCAL_DEV_USER_EMAIL stand in
+     * when the Cloudflare Access email header is missing. Any other value is off.
+     */
+    AUTH_MOCK?: string;
     /** Comma-separated emails. Second layer after Google identity. Empty = identity only. */
     ACCESS_ALLOWED_EMAILS?: string;
     /** 32 バイト hex。未配線（フィールド暗号化スタブ用） */

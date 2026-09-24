@@ -73,7 +73,7 @@ Dump-and-go. A URL **or** a memo/title fragment is enough; the title is optional
 
 ## Login (`/` and `/login`)
 
-Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを預け、寝かせ、熟した頃に見返す。」, one Google-looking **Google で続行** button, note 「組織アカウントのみ利用できます」. Continues to `/app` on mobile (compose) and `/app/list` on desktop. No allowlist essay or skip-login links.
+Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを預け、寝かせ、熟した頃に見返す。」, one Google-looking **Google で続行** button that is only a link to `/app` (not OAuth), note 「Google ログインは未接続です。このボタンは登録画面を開くだけです。」. Continues to `/app` on mobile (compose) and `/app/list` on desktop. No allowlist essay or skip-login links.
 
 ## Idea list (`/app/list`, desktop home)
 

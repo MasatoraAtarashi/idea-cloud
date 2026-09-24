@@ -20,7 +20,8 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 
 - **This deploy** can sit behind **Cloudflare Access** (Zero Trust) once a hostname exists. Access is deferred until that URL is copied from a real deploy.
 - **In-app Google OAuth** is the product auth model. It is not a substitute for Access, and Access is not the OAuth implementation. See [security.md](./security.md) and [oauth-swap.md](./oauth-swap.md).
-- **This UI pass:** login is a Google-looking mock. Template Access middleware still guards `/api/*`. It comes out in the OAuth swap.
+- **This UI pass:** login is a Google-looking link to `/app`, not OAuth. Template Access middleware still guards `/api/*`. It comes out in the OAuth swap.
+- **Until #48:** workers.dev has no Access identity, and Cloudflare strips client `Cf-Access-Authenticated-User-Email`, so `/api/*` (including `POST /api/ideas`) returns `401` unless Worker vars `AUTH_MOCK=1` and `LOCAL_DEV_USER_EMAIL` (the operator email) are set. Do not commit the address. The page form `POST /app` does not use this middleware. Remove `AUTH_MOCK` when Google OAuth ships.
 
 ## GitHub secrets required
 
@@ -29,7 +30,7 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 | `CLOUDFLARE_API_TOKEN`  | Wrangler deploy. Least privilege: Workers Scripts **Edit**, plus D1 **Edit** so CI can apply migrations |
 | `CLOUDFLARE_ACCOUNT_ID` | Account for that token                                                                                  |
 
-Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; without it HTML fallbacks often return nothing from Workers). OAuth swap later: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; without it HTML fallbacks often return nothing from Workers). Until Google OAuth (#48): Worker vars `AUTH_MOCK=1` and `LOCAL_DEV_USER_EMAIL` (operator email, not a committed secret). OAuth swap later: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 
 Do not invent or commit these values. Production: GitHub Actions secrets for deploy; `wrangler secret put` for Worker runtime secrets.
 

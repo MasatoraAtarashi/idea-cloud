@@ -14,7 +14,7 @@ Two layers. Do not treat them as the same feature.
 | **Allowlist**                    | `ACCESS_ALLOWED_EMAILS` (comma-separated, lowercase). Empty = Google identity only. Set = identity plus app `403`. | **Stub wired** on APIs (`server/security/allowlist.ts`)                                        |
 | **Cloudflare Access** (template) | `Cf-Access-Authenticated-User-Email` middleware from `personal-fullstack`.                                         | **Remove in follow-up.** Do not block screenshots on this.                                     |
 
-Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only (still used because OAuth is unwired). Missing identity in production APIs → `401` (today: missing Access header).
+Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1`. Until Google OAuth (#48), the same email is accepted on any host only when the Worker var `AUTH_MOCK=1` is set. A present `Cf-Access-Authenticated-User-Email` still wins (Cloudflare strips client-supplied `Cf-*` headers, so curl cannot spoof it). A non-empty `ACCESS_ALLOWED_EMAILS` still returns `403`. Missing identity → `401`. Do not commit the email.
 
 Team settings show the allowlist in a **disabled** textarea so the mock cannot pretend to write secrets.
 

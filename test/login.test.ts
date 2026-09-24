@@ -14,7 +14,7 @@ describe("login page (Google OAuth mock)", () => {
   it("uses a Google continue CTA", () => {
     expect(GOOGLE_LOGIN_CTA).toBe("Google で続行");
     expect(LOGIN_TAGLINE).toContain("寝かせ");
-    expect(GOOGLE_LOGIN_NOTE).toContain("組織アカウント");
+    expect(GOOGLE_LOGIN_NOTE).toContain("未接続");
   });
 
   it("keeps the gate to brand, tagline, and one button", () => {

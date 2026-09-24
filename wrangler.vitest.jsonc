@@ -25,5 +25,8 @@
   ],
   "vars": {
     "MCP_API_KEY": "test-mcp-key",
+    "AUTH_MOCK": "",
+    "LOCAL_DEV_USER_EMAIL": "",
+    "ACCESS_ALLOWED_EMAILS": "",
   },
 }

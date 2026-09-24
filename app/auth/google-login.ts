@@ -1,4 +1,5 @@
-/** Japanese copy for the Google OAuth mock on /login. Real OAuth is a follow-up. */
+/** Japanese copy for the login gate. The button is not a Google OAuth start (#48). */
 export const GOOGLE_LOGIN_CTA = "Google で続行";
 export const LOGIN_TAGLINE = "思いつきを預け、寝かせ、熟した頃に見返す。";
-export const GOOGLE_LOGIN_NOTE = "組織アカウントのみ利用できます";
+export const GOOGLE_LOGIN_NOTE =
+  "Google ログインは未接続です。このボタンは登録画面を開くだけです。";

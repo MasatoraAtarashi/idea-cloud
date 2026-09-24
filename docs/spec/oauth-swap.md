@@ -6,7 +6,7 @@ This pass does **not** implement real OAuth. `/login` is a visual mock (Sign in 
 
 ## Why the template still has Access
 
-`server/middleware/access-auth.ts` came from squat `personal-fullstack`. APIs still require `Cf-Access-Authenticated-User-Email` (or `LOCAL_DEV_USER_EMAIL` on localhost). That is leftover scaffolding, not the product model. Tracked on the template as [app-template#28](https://github.com/MasatoraAtarashi/app-template/issues/28).
+`server/middleware/access-auth.ts` came from squat `personal-fullstack`. APIs still require `Cf-Access-Authenticated-User-Email`, or `LOCAL_DEV_USER_EMAIL` on localhost. Until this swap ships, `AUTH_MOCK=1` plus `LOCAL_DEV_USER_EMAIL` is a temporary stand-in on workers.dev when Access is absent. That is leftover scaffolding, not the product model. Tracked on the template as [app-template#28](https://github.com/MasatoraAtarashi/app-template/issues/28).
 
 ## Swap plan (after visual sign-off)
 
