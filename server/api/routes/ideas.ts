@@ -216,7 +216,7 @@ export const ideasRoute = new Hono<AppEnv>()
       return c.json({ error: category.error }, 400);
     }
     // Create still works on free; only the AI garnish (auto-tags, AI評価) is skipped.
-    const premium = isPremium(c.get("userEmail"), c.env);
+    const premium = await isPremium(db, c.get("userEmail"), c.env);
     const resolvedTags = premium
       ? await resolveCreateTags({
           ai: bindResearchAi(c.env.AI),

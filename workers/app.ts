@@ -3,7 +3,8 @@ import { createRequestHandler } from "react-router";
 import { api } from "../server/api";
 import { resolvePageSession } from "../server/auth/page-gate";
 import { authRoute } from "../server/auth/routes";
-import { resolvePlan } from "../server/billing/plan";
+import { resolvePlanForEnv } from "../server/billing/plan";
+import { billingWebhookRoute } from "../server/billing/webhook-route";
 import { handleMcpRequest } from "../server/mcp/http";
 import { securityHeaders } from "../server/middleware/security-headers";
 import type { AppEnv } from "../server/env";
@@ -17,6 +18,10 @@ app.all("/mcp", (c) => handleMcpRequest(c.req.raw, c.env));
 
 // In-app Google OAuth. Mounted before /api so it stays outside the session gate.
 app.route("/api/auth", authRoute);
+
+// Stripe webhook. Mounted before /api so it stays outside the session gate:
+// its credential is the signature, not a cookie.
+app.route("/api/billing/webhook", billingWebhookRoute);
 
 // API ルート（Hono）。ルートの追加は server/api/ 側で行う
 app.route("/api", api);
@@ -34,7 +39,7 @@ app.all("*", async (c) => {
   return requestHandler(c.req.raw, {
     cloudflare: { env: c.env, ctx: c.executionCtx },
     userEmail: session.email,
-    plan: resolvePlan(session.email, c.env),
+    plan: await resolvePlanForEnv(session.email, c.env),
   });
 });
 
