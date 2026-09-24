@@ -3,6 +3,7 @@ import { createRequestHandler } from "react-router";
 import { api } from "../server/api";
 import { resolvePageSession } from "../server/auth/page-gate";
 import { authRoute } from "../server/auth/routes";
+import { resolvePlan } from "../server/billing/plan";
 import { handleMcpRequest } from "../server/mcp/http";
 import { securityHeaders } from "../server/middleware/security-headers";
 import type { AppEnv } from "../server/env";
@@ -33,6 +34,7 @@ app.all("*", async (c) => {
   return requestHandler(c.req.raw, {
     cloudflare: { env: c.env, ctx: c.executionCtx },
     userEmail: session.email,
+    plan: resolvePlan(session.email, c.env),
   });
 });
 

@@ -12,14 +12,21 @@ import { deleteIdeaAction } from "./idea-delete-action";
 import { researchIdeaAction } from "./idea-research-action";
 import { reviewIdeaAction } from "./idea-review-action";
 import { humanScoreIdeaAction } from "./idea-score-action";
+import { PREMIUM_REQUIRED_MESSAGE } from "../../server/billing/plan";
 
 export type IdeaDetailActionData = {
   error: string;
 };
 
+/** Intents that spend AI budget. Everything else works on the free plan. */
+const PREMIUM_INTENTS = new Set(["brainstorm", "evaluate", "discuss", "research"]);
+
 export async function ideaDetailAction(args: ActionFunctionArgs) {
   const form = await args.request.clone().formData();
   const intent = String(form.get("intent") ?? "research");
+  if (PREMIUM_INTENTS.has(intent) && args.context.plan !== "premium") {
+    return { error: PREMIUM_REQUIRED_MESSAGE } satisfies IdeaDetailActionData;
+  }
   if (intent === "stage") {
     const ideaId = Number(args.params.ideaId);
     if (!Number.isInteger(ideaId) || ideaId <= 0) {

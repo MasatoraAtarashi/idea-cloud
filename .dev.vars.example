@@ -26,6 +26,10 @@ LOCAL_DEV_USER_EMAIL=you@example.com
 # APP_API_TOKEN=
 # APP_API_TOKEN_EMAIL=you@example.com
 
+# Premium (AI) entitlement. Comma-separated emails. Unset = every member is
+# premium, which is the pre-billing default. See docs/spec/billing.md.
+# PREMIUM_EMAILS=you@example.com
+
 # Field encryption stub (not wired to D1 yet). 32-byte hex. Production: wrangler secret.
 # FIELD_ENCRYPTION_KEY=
 

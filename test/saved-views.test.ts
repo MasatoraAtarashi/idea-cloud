@@ -28,6 +28,7 @@ function listActionArgs(search: string, fields: Record<string, string>): ActionF
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }

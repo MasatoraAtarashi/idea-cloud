@@ -41,7 +41,11 @@ describe("api session gate", () => {
 
   it("rejects a tampered session cookie", async () => {
     const cookie = await sessionCookie();
-    const tampered = cookie.replace(/.$/, (last) => (last === "A" ? "B" : "A"));
+    // Flip a byte of the payload, not the last char of the signature: the final
+    // base64url char of a 32-byte HMAC carries unused bits, so changing it can
+    // decode to the same signature and verify.
+    const [name, value] = cookie.split("=");
+    const tampered = `${name}=${value[0] === "e" ? "f" : "e"}${value.slice(1)}`;
     const res = await exports.default.fetch(API, { headers: { cookie: tampered } });
     expect(res.status).toBe(401);
   });

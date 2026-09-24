@@ -17,6 +17,8 @@ Two layers. Do not treat them as the same feature.
 
 Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only, and only while no Google client is configured (dev + Playwright). Unreachable on a real hostname. Missing credential on `/api/*` → `401`; identity outside the allowlist → `403` with no session set.
 
+Entitlement is a third, separate layer: a member without the premium plan still passes `401`/`403` and is refused only on the AI endpoints, with `402`. Membership says who is in; the plan says what they may spend. See [billing.md](./billing.md).
+
 Sessions are self-contained cookies with no `sessions` table: rotate `SESSION_SECRET` to revoke everything at once. Per-device sign-out is not built.
 
 Team settings show the allowlist in a **disabled** textarea so the UI cannot pretend to write secrets.

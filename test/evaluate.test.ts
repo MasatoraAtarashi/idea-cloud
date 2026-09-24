@@ -48,6 +48,7 @@ function detailActionArgs(ideaId: number, fields: Record<string, string>): Actio
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }
@@ -428,6 +429,7 @@ describe("ideas auto-evaluate on create", () => {
             },
           },
         },
+        plan: "premium",
       },
     } as unknown as ActionFunctionArgs);
     expect(result).toBeInstanceOf(Response);
@@ -457,6 +459,7 @@ describe("ideas auto-evaluate on create", () => {
           env,
           ctx: { waitUntil() {} },
         },
+        plan: "premium",
       },
     } as unknown as ActionFunctionArgs);
     expect(failed).toBeInstanceOf(Response);
