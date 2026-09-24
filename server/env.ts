@@ -9,8 +9,23 @@ export type AppEnv = {
 
 declare global {
   interface Env {
-    // .dev.vars でローカル開発時にだけ定義される（本番では未定義）
+    /**
+     * localhost-only stand-in for a Google sign-in. `/api/auth/google` signs this
+     * email in directly when no Google client is configured (dev / e2e).
+     */
     LOCAL_DEV_USER_EMAIL?: string;
+    /** Google OAuth web client. `wrangler secret` / .dev.vars only. */
+    GOOGLE_CLIENT_ID?: string;
+    GOOGLE_CLIENT_SECRET?: string;
+    /** HMAC key for the session cookie. Required in production. */
+    SESSION_SECRET?: string;
+    /**
+     * Personal API token for the native app / scripts: `Authorization: Bearer`.
+     * Swapped for native Google Sign-In once a Workspace domain exists.
+     */
+    APP_API_TOKEN?: string;
+    /** Email the app token acts as. Defaults to a single-entry ACCESS_ALLOWED_EMAILS. */
+    APP_API_TOKEN_EMAIL?: string;
     /** Comma-separated emails. Second layer after Google identity. Empty = identity only. */
     ACCESS_ALLOWED_EMAILS?: string;
     /** 32 バイト hex。未配線（フィールド暗号化スタブ用） */

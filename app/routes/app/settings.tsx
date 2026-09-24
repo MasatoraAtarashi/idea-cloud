@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useOutletContext } from "react-router";
+import { LOGOUT_PATH } from "../../auth/google-login";
+import type { AppData } from "./layout";
 import { MEMBERS, SESSION_USER } from "../../data/mock";
 import { initialsFromLabel } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
@@ -21,6 +23,7 @@ export function meta() {
 }
 
 export default function SettingsPage() {
+  const { userEmail } = useOutletContext<AppData>();
   const [section, setSection] = useState<SectionId>("members");
 
   return (
@@ -65,16 +68,28 @@ export default function SettingsPage() {
         </nav>
       </aside>
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
-        {section === "members" ? <MembersPanel /> : <StubPanel section={section} />}
+        {section === "members" ? (
+          <MembersPanel userEmail={userEmail} />
+        ) : section === "profile" ? (
+          <ProfilePanel userEmail={userEmail} />
+        ) : (
+          <StubPanel section={section} />
+        )}
       </div>
     </div>
   );
 }
 
-function MembersPanel() {
+function MembersPanel({ userEmail }: { userEmail: string | null }) {
   const rows =
     MEMBERS.length === 0
-      ? [{ name: SESSION_USER.label, email: "", role: SESSION_USER.role }]
+      ? [
+          {
+            name: userEmail ?? SESSION_USER.label,
+            email: userEmail ?? "",
+            role: SESSION_USER.role,
+          },
+        ]
       : MEMBERS;
 
   return (
@@ -146,6 +161,27 @@ function MembersPanel() {
         </div>
         <p className="mt-2 text-[12px] text-muted-foreground">表示のみ。保存はまだありません。</p>
       </section>
+    </div>
+  );
+}
+
+/** The signed-in Google account. Membership lives in ACCESS_ALLOWED_EMAILS, not in D1. */
+function ProfilePanel({ userEmail }: { userEmail: string | null }) {
+  return (
+    <div className="mx-auto max-w-2xl">
+      <h2 className="text-[16px] font-semibold">プロフィール</h2>
+      <div className="mt-4 rounded-[10px] border border-border p-4">
+        <p className="text-[12px] text-muted-foreground">ログイン中の Google アカウント</p>
+        <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? "不明"}</p>
+        <form method="post" action={LOGOUT_PATH} className="mt-4">
+          <button type="submit" className="ui-btn">
+            ログアウト
+          </button>
+        </form>
+      </div>
+      <p className="mt-3 text-[12px] text-muted-foreground">
+        名前とアイコンは Google の設定に従います。
+      </p>
     </div>
   );
 }

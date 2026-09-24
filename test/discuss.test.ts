@@ -12,15 +12,12 @@ import {
 } from "../server/ai/discuss";
 import { flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { setTestAiRun } from "../server/ai/research";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 

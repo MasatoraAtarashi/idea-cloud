@@ -1,10 +1,16 @@
 import { useLayoutEffect, useState } from "react";
-import { Link } from "react-router";
-import { GOOGLE_LOGIN_CTA, GOOGLE_LOGIN_NOTE, LOGIN_TAGLINE } from "../auth/google-login";
+import { useSearchParams } from "react-router";
+import {
+  GOOGLE_LOGIN_CTA,
+  GOOGLE_LOGIN_NOTE,
+  googleLoginHref,
+  loginErrorMessage,
+  LOGIN_TAGLINE,
+} from "../auth/google-login";
 import { homePathForClient, isDesktopViewport, NEW_IDEA_PATH } from "../lib/home-path";
 import { BrandMark, BrandWordmark } from "./brand";
 
-/** Official four-color G mark. Visual mock only — this is not a Google SDK. */
+/** Official four-color G mark. Plain SVG — the flow runs on the Worker, not a Google SDK. */
 function GoogleMark() {
   return (
     <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5 shrink-0">
@@ -29,16 +35,22 @@ function GoogleMark() {
 }
 
 export function LoginGate() {
-  const [continueTo, setContinueTo] = useState(NEW_IDEA_PATH);
+  const [searchParams] = useSearchParams();
+  // `next` is where the page gate sent the visitor from; otherwise pick the home
+  // that matches this device (mobile = compose, desktop = list).
+  const requestedNext = searchParams.get("next");
+  const [continueTo, setContinueTo] = useState(requestedNext ?? NEW_IDEA_PATH);
+  const errorMessage = loginErrorMessage(searchParams.get("error"));
 
   useLayoutEffect(() => {
+    if (requestedNext) return;
     setContinueTo(
       homePathForClient({
         isDesktopViewport: isDesktopViewport(),
         userAgent: navigator.userAgent,
       }),
     );
-  }, []);
+  }, [requestedNext]);
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
@@ -46,13 +58,21 @@ export function LoginGate() {
         <BrandMark className="h-11 w-11" />
         <BrandWordmark className="ui-title mt-5 text-[22px]" />
         <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{LOGIN_TAGLINE}</p>
-        <Link
-          to={continueTo}
+        {errorMessage ? (
+          <p
+            role="alert"
+            className="mt-6 w-full rounded-[10px] border border-border-control bg-card px-3 py-2 text-[12.5px] leading-relaxed text-foreground"
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+        <a
+          href={googleLoginHref(continueTo)}
           className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-border-control bg-card text-[14px] font-semibold text-foreground no-underline hover:bg-row-hover"
         >
           <GoogleMark />
           {GOOGLE_LOGIN_CTA}
-        </Link>
+        </a>
         <p className="mt-4 text-[12.5px] text-muted-foreground">{GOOGLE_LOGIN_NOTE}</p>
       </div>
     </div>
