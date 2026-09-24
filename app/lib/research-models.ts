@@ -92,3 +92,32 @@ export function extractAiText(result: unknown): string {
   }
   return "";
 }
+
+/**
+ * Workers AI reports how a generation ended. Returns true when the model was cut
+ * off by max_tokens rather than finishing its own sentence.
+ */
+export function isAiTruncated(result: unknown, maxTokens: number): boolean {
+  if (!result || typeof result !== "object") return false;
+  const record = result as Record<string, unknown>;
+  const reason = findFinishReason(record);
+  if (reason) return reason === "length";
+  const usage = record.usage;
+  if (usage && typeof usage === "object") {
+    const completion = (usage as Record<string, unknown>).completion_tokens;
+    if (typeof completion === "number") return completion >= maxTokens;
+  }
+  return false;
+}
+
+function findFinishReason(record: Record<string, unknown>): string | undefined {
+  if (typeof record.finish_reason === "string") return record.finish_reason;
+  if (Array.isArray(record.choices)) {
+    const first = record.choices[0];
+    if (first && typeof first === "object") {
+      const reason = (first as Record<string, unknown>).finish_reason;
+      if (typeof reason === "string") return reason;
+    }
+  }
+  return undefined;
+}

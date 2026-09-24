@@ -4,6 +4,7 @@ import { aiScoreMeaning, softenEvaluationText } from "../../app/lib/evaluation-n
 import {
   DEFAULT_DISCUSS_PRESET,
   extractAiText,
+  isAiTruncated,
   resolveResearchModel,
   type ResearchModelId,
 } from "../../app/lib/research-models";
@@ -31,7 +32,13 @@ export const DISCUSS_SYSTEM_PROMPT = [
   "出典やURLを作らないでください。知らないことは知らないと書いてください。",
   "法律・規制・契約・著作権の質問には、一般的な思考の補助として答え、断定的な違法や合法の結論は出さないでください。",
   "その種の質問では、法律の助言ではないことを短く添えてください。",
+  "答えは日本語で600字以内にまとめ、途中で切れないよう必ず最後まで書き切ってください。",
 ].join("");
+
+export const DISCUSS_TRUNCATED_NOTE =
+  "（ここで返信の上限に達しました。「続き」と送ると続きを書きます。）";
+
+const DISCUSS_MAX_TOKENS = 2048;
 
 const LEGAL_TOPIC = /法的|法律|違法|コンプライアンス|規約|著作権|個人情報|訴訟/;
 const COMMENT_LIMIT = 5;
@@ -91,13 +98,16 @@ export async function generateDiscussReply(
       ...history,
       { role: "user", content: opts.userText },
     ],
-    max_tokens: 768,
+    max_tokens: DISCUSS_MAX_TOKENS,
   });
   const text = extractAiText(result).trim();
   if (!text) {
     throw new Error("empty discuss result");
   }
-  return truncate(ensureLegalDisclaimer(opts.userText, text), REPLY_MAX);
+  const withNote = isAiTruncated(result, DISCUSS_MAX_TOKENS)
+    ? `${text}\n\n${DISCUSS_TRUNCATED_NOTE}`
+    : text;
+  return truncate(ensureLegalDisclaimer(opts.userText, withNote), REPLY_MAX);
 }
 
 export type DiscussIdeaResult =
