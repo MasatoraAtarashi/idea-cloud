@@ -7,6 +7,7 @@ import { RESEARCH_PRESETS } from "../app/lib/research-models";
 import {
   DISCUSS_FAIL_MESSAGE,
   DISCUSS_LEGAL_DISCLAIMER,
+  DISCUSS_TRUNCATED_NOTE,
   ensureLegalDisclaimer,
   formatDiscussContext,
 } from "../server/ai/discuss";
@@ -134,6 +135,44 @@ describe("ideas discuss API", () => {
       "user",
       "assistant",
     ]);
+  });
+
+  it("gives the reply room and flags a cut-off answer", async () => {
+    let requested = 0;
+    setTestAiRun(async (_model, inputs) => {
+      requested = inputs.max_tokens ?? 0;
+      return {
+        response: "長い説明の途中でリ",
+        usage: { completion_tokens: inputs.max_tokens },
+      };
+    });
+    const id = await createIdea("打ち切りを見たい着想");
+    await flushScheduledCreateEvaluations();
+
+    const res = await api(`/ideas/${id}/discuss`, {
+      method: "POST",
+      body: JSON.stringify({ body: "この評価の理由を詳しく教えて" }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: { role: string; body: string }[] };
+    expect(requested).toBeGreaterThanOrEqual(2048);
+    expect(body.items[1]?.body).toContain(DISCUSS_TRUNCATED_NOTE);
+  });
+
+  it("leaves a complete answer untouched", async () => {
+    setTestAiRun(async () => ({
+      response: "こう考えると良いです。",
+      usage: { completion_tokens: 12 },
+    }));
+    const id = await createIdea("完走する着想");
+    await flushScheduledCreateEvaluations();
+
+    const res = await api(`/ideas/${id}/discuss`, {
+      method: "POST",
+      body: JSON.stringify({ body: "どう思う？" }),
+    });
+    const body = (await res.json()) as { items: { body: string }[] };
+    expect(body.items[1]?.body).toBe("こう考えると良いです。");
   });
 
   it("appends a disclaimer for legal questions and keeps the user turn when AI fails", async () => {
