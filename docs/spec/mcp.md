@@ -60,7 +60,7 @@ Cloudflare Access in front of the hostname will block agents before this check. 
 | `create_idea`           | write | `title` and/or `body`, optional `tags` and `stage` (default `spark`). No auto-tag and no research. http(s) URLs in the text are copied to the shelf without a page fetch.                                                                             |
 | `update_idea`           | write | Patch `title`, `body`, `tags`, and/or `stage` by `id`.                                                                                                                                                                                                |
 | `add_comment`           | write | Append a comment. Author is stored as `MCP`.                                                                                                                                                                                                          |
-| `create_inspiration`    | write | URL and/or memo, same create rules as the app. A URL triggers the existing Open Graph fetch (public http(s), fail-soft).                                                                                                                              |
+| `create_inspiration`    | write | URL and/or memo (title optional), same create rules as the app: `http`/`https`, trimmed paste, bare hosts become `https://`. A URL triggers Open Graph (fail-soft); an empty title is filled from the page title or a host/slug fallback.             |
 
 Stages: `spark` 着想, `aging` 熟成中, `ripe` 熟した, `selected` 採用, `archived` アーカイブ.
 

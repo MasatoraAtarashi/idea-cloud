@@ -66,6 +66,10 @@ The tab bar stays on list / inspirations / analytics. It **hides** on stack scre
 
 Helpers live in `app/nav.ts` (`isMobileNavActive`, `isWorkspaceNavActive`, `isMobileTabBarHidden`).
 
+## Inspiration create (`/app/inspirations`)
+
+Dump-and-go. A URL **or** a memo/title fragment is enough; the title is optional, and the URL field is focused when compose is open. The URL control is `type=text` with `inputmode=url` (not `type=url`) so mobile paste is not blocked by browser URL validation. `http://` and `https://` are both saved. Surrounding whitespace, newlines, and zero-width characters are stripped. A bare host or host/path is saved as `https://…`. If the title is empty and a URL is present, the card title becomes the fetched page title, otherwise a path slug, the hostname, or 「無題」. Open Graph failure does not block save. Error copy matches the failure: empty input, a malformed URL, or a non-http(s) scheme.
+
 ## Login (`/` and `/login`)
 
 Minimal: brand mark + 「アイデアクラウド」, tagline 「思いつきを預け、寝かせ、熟した頃に見返す。」, one Google-looking **Google で続行** button, note 「組織アカウントのみ利用できます」. Continues to `/app` on mobile (compose) and `/app/list` on desktop. No allowlist essay or skip-login links.

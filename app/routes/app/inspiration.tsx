@@ -11,6 +11,7 @@ import { EmptyState, TagList } from "../../components/ui";
 import { IconSpinner } from "../../components/icons";
 import { InspirationDetailPreview } from "../../components/inspiration-preview";
 import { formatDateJa } from "../../lib/format";
+import { inspirationHeadline } from "../../lib/inspiration";
 import { INSPIRATIONS_PATH, inspirationDetailAction } from "../../lib/inspiration-action";
 import { useInstantPending } from "../../lib/use-instant-pending";
 import { createDb } from "../../../db/client";
@@ -80,7 +81,7 @@ function InspirationDetail({
             戻る
           </Link>
           <h1 className="idea-title-wrap ui-title min-w-0 flex-1 truncate text-center text-[15px] md:hidden">
-            {item.title}
+            {inspirationHeadline(item)}
           </h1>
           <button
             type="button"
@@ -95,8 +96,24 @@ function InspirationDetail({
       {editing ? (
         <Form method="post" className="mt-4 max-w-xl space-y-2">
           <input type="hidden" name="intent" value="edit" />
-          <input name="title" defaultValue={item.title} className="ui-input" />
-          <input name="url" type="url" defaultValue={item.url ?? ""} className="ui-input" />
+          <input
+            name="title"
+            defaultValue={item.title}
+            placeholder="タイトル（空でも可）"
+            className="ui-input"
+          />
+          <input
+            name="url"
+            type="text"
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="http:// または https://"
+            defaultValue={item.url ?? ""}
+            className="ui-input"
+          />
           <textarea
             name="memo"
             defaultValue={item.memo}
@@ -111,7 +128,9 @@ function InspirationDetail({
       ) : (
         <>
           <InspirationDetailPreview item={item} />
-          <h1 className="ui-title mt-4 hidden text-[22px] leading-snug md:block">{item.title}</h1>
+          <h1 className="ui-title mt-4 hidden text-[22px] leading-snug md:block">
+            {inspirationHeadline(item)}
+          </h1>
           {item.url ? (
             <a
               href={item.url}

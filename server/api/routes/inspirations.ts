@@ -9,12 +9,19 @@ import {
   INSPIRATION_URL_MAX,
   getInspirationRow,
   ideaTextFromInspiration,
-  insertInspiration,
   inspirationJson,
   listInspirationRows,
   updateInspiration,
   urlsDiffer,
 } from "../../../db/inspirations";
+import {
+  prepareInspirationInput,
+  normalizeInspirationInputUrl,
+} from "../../../app/lib/inspiration-input";
+import {
+  insertPreparedInspiration,
+  replaceDerivedTitleFromOgp,
+} from "../../../app/lib/inspiration-save";
 import { brainstormIdea } from "../../ai/brainstorm";
 import { bindResearchAi } from "../../ai/research";
 import type { AppEnv } from "../../env";
@@ -22,7 +29,11 @@ import { enrichInspirationOgp } from "../../ogp/enrich";
 
 const createInspirationSchema = z.object({
   title: z.string().trim().max(INSPIRATION_TITLE_MAX).optional(),
-  url: z.string().trim().max(INSPIRATION_URL_MAX).optional().nullable(),
+  url: z
+    .string()
+    .max(INSPIRATION_URL_MAX + 64)
+    .optional()
+    .nullable(),
   memo: z.string().max(INSPIRATION_MEMO_MAX).optional(),
   tags: z.array(z.string().trim().min(1)).max(8).optional(),
 });
@@ -30,7 +41,11 @@ const createInspirationSchema = z.object({
 const updateInspirationSchema = z
   .object({
     title: z.string().trim().min(1).max(INSPIRATION_TITLE_MAX).optional(),
-    url: z.string().trim().max(INSPIRATION_URL_MAX).optional().nullable(),
+    url: z
+      .string()
+      .max(INSPIRATION_URL_MAX + 64)
+      .optional()
+      .nullable(),
     memo: z.string().max(INSPIRATION_MEMO_MAX).optional(),
     tags: z.array(z.string().trim().min(1)).max(8).optional(),
   })
@@ -55,19 +70,13 @@ export const inspirationsRoute = new Hono<AppEnv>()
   })
   .post("/", zValidator("json", createInspirationSchema), async (c) => {
     const { title, url, memo, tags } = c.req.valid("json");
-    const text = [title?.trim(), memo?.trim(), url?.trim()].filter(Boolean).join("");
-    if (!text) {
-      return c.json({ error: "入力してください" }, 400);
+    const prepared = prepareInspirationInput({ title, url, memo, tags });
+    if (!prepared.ok) {
+      return c.json({ error: prepared.error }, 400);
     }
     const db = createDb(c.env.DB);
-    const created = await insertInspiration(db, {
-      title: title?.trim() || memo?.trim().slice(0, 200) || url?.trim() || "無題",
-      url: url ?? null,
-      memo: memo ?? "",
-      tags: tags ?? [],
-    });
-    const enriched = created.url ? await enrichInspirationOgp(db, created) : created;
-    return c.json({ item: inspirationJson(enriched) }, 201);
+    const created = await insertPreparedInspiration(db, prepared.value);
+    return c.json({ item: inspirationJson(created) }, 201);
   })
   .get("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
@@ -85,12 +94,20 @@ export const inspirationsRoute = new Hono<AppEnv>()
     async (c) => {
       const { id } = c.req.valid("param");
       const patch = c.req.valid("json");
+      let url = patch.url;
+      if (url !== undefined && url !== null) {
+        const normalized = normalizeInspirationInputUrl(url);
+        if ("error" in normalized) {
+          return c.json({ error: normalized.error }, 400);
+        }
+        url = normalized.url || null;
+      }
       const db = createDb(c.env.DB);
       const existing = await getInspirationRow(db, id);
       if (!existing) {
         return c.json({ error: "Not Found" }, 404);
       }
-      const updated = await updateInspiration(db, id, patch);
+      const updated = await updateInspiration(db, id, { ...patch, url });
       if (!updated) {
         return c.json({ error: "Not Found" }, 404);
       }
@@ -107,7 +124,8 @@ export const inspirationsRoute = new Hono<AppEnv>()
       return c.json({ error: "Not Found" }, 404);
     }
     const enriched = await enrichInspirationOgp(db, row);
-    return c.json({ item: inspirationJson(enriched) });
+    const titled = await replaceDerivedTitleFromOgp(db, enriched);
+    return c.json({ item: inspirationJson(titled) });
   })
   .post("/:id/brainstorm", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");

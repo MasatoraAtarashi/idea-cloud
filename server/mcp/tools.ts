@@ -1,6 +1,14 @@
 import { filterIdeas, type Stage } from "../../app/data/mock";
 import { summarizeIdeaAnalytics } from "../../app/lib/analytics";
 import { extractHttpUrls } from "../../app/lib/idea-urls";
+import {
+  INSPIRATION_EMPTY_MESSAGE,
+  INSPIRATION_MEMO_TOO_LONG_MESSAGE,
+  INSPIRATION_TITLE_TOO_LONG_MESSAGE,
+  INSPIRATION_URL_TOO_LONG_MESSAGE,
+  prepareInspirationInput,
+} from "../../app/lib/inspiration-input";
+import { insertPreparedInspiration } from "../../app/lib/inspiration-save";
 import type { Db } from "../../db/client";
 import {
   COMMENT_BODY_MAX,
@@ -23,12 +31,10 @@ import {
   INSPIRATION_MEMO_MAX,
   INSPIRATION_TITLE_MAX,
   INSPIRATION_URL_MAX,
-  insertInspiration,
   inspirationJson,
   listInspirationRows,
   safeUpsertInspirationsFromIdeaText,
 } from "../../db/inspirations";
-import { enrichInspirationOgp } from "../ogp/enrich";
 import { toolError, toolJson, type McpToolResult } from "./result";
 
 export const MCP_LIST_DEFAULT_LIMIT = 20;
@@ -372,32 +378,31 @@ export async function createInspiration(
   db: Db,
   args: CreateInspirationArgs,
 ): Promise<McpToolResult> {
-  const title = args.title?.trim() ?? "";
-  const memo = args.memo ?? "";
-  const url = args.url?.trim() || null;
-  if (title.length > INSPIRATION_TITLE_MAX) {
-    return toolError("title_too_long", {
-      message: `title max is ${INSPIRATION_TITLE_MAX} characters`,
-    });
-  }
-  if (memo.length > INSPIRATION_MEMO_MAX) {
-    return toolError("memo_too_long", {
-      message: `memo max is ${INSPIRATION_MEMO_MAX} characters`,
-    });
-  }
-  if (url && url.length > INSPIRATION_URL_MAX) {
-    return toolError("url_too_long", { message: `url max is ${INSPIRATION_URL_MAX} characters` });
-  }
-  const text = [title, memo.trim(), url ?? ""].filter(Boolean).join("");
-  if (!text) {
-    return toolError("empty_inspiration", { message: "url and/or memo (or title) is required" });
-  }
-  const created = await insertInspiration(db, {
-    title: title || memo.trim().slice(0, INSPIRATION_TITLE_MAX) || url || "無題",
-    url,
-    memo,
-    tags: args.tags ?? [],
+  const prepared = prepareInspirationInput({
+    title: args.title,
+    url: args.url,
+    memo: args.memo,
+    tags: args.tags,
   });
-  const enriched = created.url ? await enrichInspirationOgp(db, created) : created;
-  return toolJson({ item: inspirationRecord(inspirationJson(enriched)) });
+  if (!prepared.ok) {
+    if (prepared.error === INSPIRATION_EMPTY_MESSAGE) {
+      return toolError("empty_inspiration", { message: "url and/or memo (or title) is required" });
+    }
+    if (prepared.error === INSPIRATION_TITLE_TOO_LONG_MESSAGE) {
+      return toolError("title_too_long", {
+        message: `title max is ${INSPIRATION_TITLE_MAX} characters`,
+      });
+    }
+    if (prepared.error === INSPIRATION_MEMO_TOO_LONG_MESSAGE) {
+      return toolError("memo_too_long", {
+        message: `memo max is ${INSPIRATION_MEMO_MAX} characters`,
+      });
+    }
+    if (prepared.error === INSPIRATION_URL_TOO_LONG_MESSAGE) {
+      return toolError("url_too_long", { message: `url max is ${INSPIRATION_URL_MAX} characters` });
+    }
+    return toolError("invalid_url", { message: prepared.error });
+  }
+  const created = await insertPreparedInspiration(db, prepared.value);
+  return toolJson({ item: inspirationRecord(inspirationJson(created)) });
 }

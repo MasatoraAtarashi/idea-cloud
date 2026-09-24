@@ -194,16 +194,15 @@ export function createIdeaCloudMcpServer(env: Env): McpServer {
     {
       title: "Create inspiration",
       description:
-        "Add an inspiration shelf item from a URL and/or memo (title optional). At least one of url, memo, or title is required. When url is set, Open Graph is fetched with the same rules as the app (public http(s) only, fail-soft). Does not create an idea and does not run brainstorm.",
+        "Add an inspiration shelf item from a URL and/or memo (title optional). At least one of url, memo, or title is required. http and https are accepted; surrounding whitespace is trimmed; a bare host is saved as https. When url is set, Open Graph is fetched (public http(s) only, fail-soft) and an empty title is filled from the page title or a host/slug fallback. Does not create an idea and does not run brainstorm.",
       inputSchema: z.object({
         title: z.string().trim().max(INSPIRATION_TITLE_MAX).optional(),
         url: z
           .string()
-          .trim()
-          .max(INSPIRATION_URL_MAX)
+          .max(INSPIRATION_URL_MAX + 64)
           .nullable()
           .optional()
-          .describe("Public http(s) URL."),
+          .describe("http(s) URL, or a bare host/path. Whitespace is trimmed."),
         memo: z.string().max(INSPIRATION_MEMO_MAX).optional(),
         tags: tagsSchema.optional(),
       }),
