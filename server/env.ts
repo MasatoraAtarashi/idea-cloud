@@ -29,4 +29,19 @@ declare global {
     /** Optional Brave Search API key. HTML scrapers are the fallback and often return nothing from Workers. */
     SEARCH_API_KEY?: string;
   }
+
+  /**
+   * `import { env } from "cloudflare:workers"` is typed as `Cloudflare.Env`.
+   * `wrangler types` only copies wrangler.jsonc bindings onto that interface, and
+   * a `vars` value is a string-literal type (`""` cannot be assigned `"1"`).
+   * Declare the same optional strings here. Real values stay in `.dev.vars` or
+   * Worker vars/secrets, not in git.
+   */
+  namespace Cloudflare {
+    interface Env {
+      LOCAL_DEV_USER_EMAIL?: string;
+      AUTH_MOCK?: string;
+      ACCESS_ALLOWED_EMAILS?: string;
+    }
+  }
 }
