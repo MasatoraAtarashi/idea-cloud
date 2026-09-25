@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { COMMENT_BODY_MAX, type IdeaCommentView } from "../../db/comments";
 import { formatDateJa, formatRelativeJa } from "../lib/format";
-import { SESSION_USER } from "../data/mock";
+import { useT } from "../i18n/context";
 import { commentComposerAfterSettle, commentComposerResetOnSubmit } from "../lib/comment-composer";
 import { useInstantPending } from "../lib/use-instant-pending";
 import type { CommentIdeaActionData } from "../lib/idea-comment-action";
@@ -23,6 +23,7 @@ export function IdeaComments({
   error?: string;
   compact?: boolean;
 }) {
+  const t = useT();
   const fetcher = useFetcher<CommentIdeaActionData & { ok?: true }>();
   const busy = fetcher.state !== "idle" && isCommentSubmitting(fetcher.formData);
   const { pending, hold } = useInstantPending(busy);
@@ -63,16 +64,14 @@ export function IdeaComments({
   return (
     <section id="comments" className={compact ? "mt-8" : "mt-8"}>
       <h2 className="flex items-baseline gap-2 text-[13px] font-semibold">
-        コメント
+        {t.idea.comments.heading}
         <span className="font-mono text-[12px] font-normal text-muted-foreground">
           {comments.length}
         </span>
       </h2>
 
       {comments.length === 0 ? (
-        <p className="mt-3 text-[12.5px] text-muted-foreground">
-          まだコメントはありません。あとから少しずつ残せます。
-        </p>
+        <p className="mt-3 text-[12.5px] text-muted-foreground">{t.idea.comments.empty}</p>
       ) : (
         <ol className="mt-3.5 space-y-4">
           {comments.map((comment) => (
@@ -81,8 +80,8 @@ export function IdeaComments({
               <div className="min-w-0 flex-1">
                 <p className="text-[11.5px] text-muted-foreground">
                   {comment.authorName} ·{" "}
-                  <time dateTime={comment.createdAt} title={formatDateJa(comment.createdAt)}>
-                    {shortAge(comment.createdAt) || formatRelativeJa(comment.createdAt)}
+                  <time dateTime={comment.createdAt} title={formatDateJa(t, comment.createdAt)}>
+                    {shortAge(comment.createdAt) || formatRelativeJa(t, comment.createdAt)}
                   </time>
                 </p>
                 <p className="mt-0.5 whitespace-pre-wrap text-[13.5px] leading-[1.8] text-secondary">
@@ -102,7 +101,7 @@ export function IdeaComments({
       >
         <input type="hidden" name="intent" value="comment" />
         <label htmlFor="idea-comment" className="sr-only">
-          コメント
+          {t.idea.comments.heading}
         </label>
         <textarea
           ref={textareaRef}
@@ -118,7 +117,7 @@ export function IdeaComments({
             if (!body.trim() || pending) return;
             event.currentTarget.form?.requestSubmit();
           }}
-          placeholder="あとから気づいたことを書く"
+          placeholder={t.idea.comments.placeholder}
           readOnly={pending}
           autoComplete="off"
           enterKeyHint="send"
@@ -128,12 +127,12 @@ export function IdeaComments({
           type="submit"
           disabled={pending || body.trim().length === 0}
           aria-busy={pending}
-          aria-label="コメント送信"
-          title={`${SESSION_USER.label} として追加（⌘Enter）`}
+          aria-label={t.idea.comments.sendLabel}
+          title={t.idea.comments.addAs(t.common.sessionUser)}
           className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-[7px] bg-muted px-3 text-[12.5px] font-semibold text-secondary hover:bg-border disabled:opacity-50 md:h-8 md:min-h-8"
         >
           {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-          {pending ? "送信中…" : "送信"}
+          {pending ? t.idea.comments.sending : t.idea.comments.send}
         </button>
       </fetcher.Form>
       {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}

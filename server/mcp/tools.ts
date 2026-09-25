@@ -36,6 +36,7 @@ import {
   safeUpsertInspirationsFromIdeaText,
 } from "../../db/inspirations";
 import { toolError, toolJson, type McpToolResult } from "./result";
+import { JA } from "../../app/i18n/dictionary";
 
 export const MCP_LIST_DEFAULT_LIMIT = 20;
 export const MCP_LIST_MAX_LIMIT = 100;
@@ -378,7 +379,7 @@ export async function createInspiration(
   db: Db,
   args: CreateInspirationArgs,
 ): Promise<McpToolResult> {
-  const prepared = prepareInspirationInput({
+  const prepared = prepareInspirationInput(JA, {
     title: args.title,
     url: args.url,
     memo: args.memo,

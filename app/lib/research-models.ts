@@ -1,3 +1,4 @@
+import type { Dictionary } from "../i18n/dictionary";
 import { JEV_MODEL, JEV_MODEL_LABEL } from "./jev";
 
 export const RESEARCH_PRESETS = {
@@ -9,11 +10,10 @@ export const RESEARCH_PRESETS = {
 export type ResearchPreset = keyof typeof RESEARCH_PRESETS;
 export type ResearchModelId = (typeof RESEARCH_PRESETS)[ResearchPreset];
 
-export const RESEARCH_PRESET_LABEL: Record<ResearchPreset, string> = {
-  fast: "速い・安い",
-  standard: "標準",
-  deep: "じっくり",
-};
+/** UI copy for a preset. The model id behind it is never translated. */
+export function researchPresetLabel(t: Dictionary, preset: ResearchPreset): string {
+  return t.ai.preset[preset];
+}
 
 export const DEFAULT_RESEARCH_PRESET: ResearchPreset = "fast";
 export const DEFAULT_BRAINSTORM_PRESET: ResearchPreset = "standard";
@@ -30,11 +30,11 @@ export function isResearchModelId(value: string): value is ResearchModelId {
   return ALLOWED_MODELS.has(value);
 }
 
-export function evaluationModelLabel(model: string | null | undefined): string {
+export function evaluationModelLabel(t: Dictionary, model: string | null | undefined): string {
   if (!model) return "";
   if (model === JEV_MODEL) return JEV_MODEL_LABEL;
   const preset = presetFromModel(model);
-  return preset ? RESEARCH_PRESET_LABEL[preset] : model;
+  return preset ? researchPresetLabel(t, preset) : model;
 }
 
 export function presetFromModel(model: string | null | undefined): ResearchPreset | undefined {

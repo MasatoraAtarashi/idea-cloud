@@ -27,6 +27,8 @@ export const common = {
     selected: "実行へ進んだ",
     archived: "今は動かさない",
   } satisfies Record<Stage, string>,
+  /** Shown in place of tags when auto-tagging produced none. */
+  autoTagsNone: "自動タグなし",
   /** Fallback display name when there is no session email. */
   sessionUser: "ログイン中",
   self: "自分",

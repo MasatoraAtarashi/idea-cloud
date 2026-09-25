@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { formatIdeaCopyText } from "../app/lib/idea-copy";
+import { JA } from "../app/i18n/dictionary";
 
 describe("formatIdeaCopyText", () => {
   it("copies title, body, stage, and tags without an id", () => {
-    const text = formatIdeaCopyText({
+    const text = formatIdeaCopyText(JA, {
       title: "朝の棚",
       body: "通勤中に一言だけ残す。",
       stage: "aging",
@@ -16,7 +17,7 @@ describe("formatIdeaCopyText", () => {
   });
 
   it("omits an empty tag line and still keeps the title", () => {
-    const text = formatIdeaCopyText({
+    const text = formatIdeaCopyText(JA, {
       title: "  ",
       body: "",
       stage: "spark",
@@ -29,7 +30,7 @@ describe("formatIdeaCopyText", () => {
   });
 
   it("adds a category line when the idea has one", () => {
-    const text = formatIdeaCopyText({
+    const text = formatIdeaCopyText(JA, {
       title: "連載",
       body: "週一で短く書く。",
       stage: "spark",

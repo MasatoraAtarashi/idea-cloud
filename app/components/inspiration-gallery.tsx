@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { useT } from "../i18n/context";
 import {
   inspirationGlyph,
   inspirationHeadline,
@@ -23,13 +24,9 @@ export function InspirationGallery({
   items: InspirationGalleryItem[];
   onMakeIdea: (item: InspirationGalleryItem) => void;
 }) {
+  const t = useT();
   if (items.length === 0) {
-    return (
-      <EmptyState
-        title="まだインスピレーションがありません"
-        body="URL かメモを残して、あとでアイデアにします。"
-      />
-    );
+    return <EmptyState title={t.inspiration.emptyTitle} body={t.inspiration.emptyBody} />;
   }
 
   return (
@@ -78,7 +75,8 @@ function InspirationCard({
   item: InspirationGalleryItem;
   onMakeIdea: (item: InspirationGalleryItem) => void;
 }) {
-  const headline = inspirationHeadline(item);
+  const t = useT();
+  const headline = inspirationHeadline(t, item);
   const host = inspirationHostname(item.url) || item.ogSiteName;
 
   return (
@@ -97,7 +95,7 @@ function InspirationCard({
           onClick={() => onMakeIdea(item)}
           className="absolute right-2.5 transition-opacity focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 bottom-2.5 flex min-h-11 items-center gap-1 rounded-[6px] bg-foreground px-2.5 text-[11.5px] font-semibold text-white md:min-h-[30px]"
         >
-          ＋ アイデアにする
+          ＋ {t.inspiration.makeIdea}
         </button>
       </div>
       <Link
@@ -111,7 +109,9 @@ function InspirationCard({
         {host ? (
           <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
             {host}
-            {item.ogStatus === "failed" ? <span className="font-sans"> · 取得できず</span> : null}
+            {item.ogStatus === "failed" ? (
+              <span className="font-sans"> · {t.inspiration.fetchFailedShort}</span>
+            ) : null}
           </p>
         ) : null}
       </Link>

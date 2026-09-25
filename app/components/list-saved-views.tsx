@@ -1,4 +1,5 @@
 import { Form, Link, useActionData } from "react-router";
+import { useT } from "../i18n/context";
 import type { ListViewActionData } from "../lib/list-view-action";
 import {
   filtersEqual,
@@ -18,18 +19,20 @@ export function ListSavedViews({
   state: ListViewSearch;
   nameFieldId?: string;
 }) {
+  const t = useT();
   const actionData = useActionData() as ListViewActionData | undefined;
   const currentFilters = omitSavedViewId(state);
   const active = views.find((view) => filtersEqual(view.filters, currentFilters));
-  const summary = active?.name ?? (state.savedViewId ? "ビュー" : "カスタム");
+  const summary =
+    active?.name ?? (state.savedViewId ? t.list.savedViews.fallbackName : t.list.savedViews.custom);
 
   return (
     <details className="ui-menu relative">
       <summary
         className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border border-border-control bg-card px-2.5 text-[13px] md:h-8 md:min-h-8"
-        aria-label="ビュー"
+        aria-label={t.list.savedViews.label}
       >
-        <span className="text-muted-foreground">ビュー</span>
+        <span className="text-muted-foreground">{t.list.savedViews.label}</span>
         <span className="max-w-[9rem] truncate font-medium">{summary}</span>
       </summary>
       <div className="ui-float absolute left-0 z-20 mt-1 w-64 py-1">
@@ -47,10 +50,10 @@ export function ListSavedViews({
           preventScrollReset
           className="block min-h-11 px-3 py-2 text-[13px] text-foreground no-underline hover:bg-row-hover md:min-h-0 md:py-1.5"
         >
-          すべてのアイデア
+          {t.list.savedViews.allIdeas}
         </Link>
         {views.length === 0 ? (
-          <p className="px-3 py-1.5 text-[12px] text-muted-foreground">まだビューはありません</p>
+          <p className="px-3 py-1.5 text-[12px] text-muted-foreground">{t.list.savedViews.empty}</p>
         ) : (
           views.map((view) => (
             <div key={view.id} className="flex items-center gap-1 pr-1">
@@ -70,9 +73,9 @@ export function ListSavedViews({
                 <button
                   type="submit"
                   className="rounded px-2 py-1 text-[11px] text-muted-foreground hover:bg-row-hover hover:text-foreground"
-                  aria-label={`${view.name}を削除`}
+                  aria-label={t.list.savedViews.deleteLabel(view.name)}
                 >
-                  削除
+                  {t.list.savedViews.delete}
                 </button>
               </Form>
             </div>
@@ -82,23 +85,23 @@ export function ListSavedViews({
         <Form method="post" className="px-3 py-2">
           <input type="hidden" name="intent" value="save-view" />
           <label className="sr-only" htmlFor={nameFieldId}>
-            ビュー名
+            {t.list.savedViews.nameLabel}
           </label>
           <input
             id={nameFieldId}
             name="name"
             maxLength={SAVED_VIEW_NAME_MAX}
-            placeholder="現在の絞り込みを保存"
+            placeholder={t.list.savedViews.namePlaceholder}
             className="ui-input h-8 text-[13px]"
           />
           <button type="submit" className="ui-btn-secondary mt-1.5 h-8 w-full text-[12.5px]">
-            ビューを保存
+            {t.list.savedViews.save}
           </button>
           {actionData?.error ? (
             <p className="mt-1.5 text-[12px] text-danger">{actionData.error}</p>
           ) : (
             <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
-              段階・タグ・熟成日数・検索を名前付きで残せます
+              {t.list.savedViews.hint}
             </p>
           )}
         </Form>

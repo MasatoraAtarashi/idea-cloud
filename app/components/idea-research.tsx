@@ -1,11 +1,12 @@
 import { useFetcher } from "react-router";
 import type { MockIdea } from "../data/mock";
-import { canRunIdeaAi, RESEARCH_ARCHIVE_ERROR } from "../lib/idea-ai";
+import { useT } from "../i18n/context";
+import { canRunIdeaAi } from "../lib/idea-ai";
 import { formatDateJa } from "../lib/format";
 import { useInstantPending } from "../lib/use-instant-pending";
 import {
   DEFAULT_RESEARCH_PRESET,
-  RESEARCH_PRESET_LABEL,
+  researchPresetLabel,
   type ResearchPreset,
   presetFromModel,
 } from "../lib/research-models";
@@ -13,7 +14,6 @@ import {
   hasResearchSourceLinks,
   researchSourcesForDisplay,
   sourceHostname,
-  WEB_SEARCH_UNAVAILABLE_LABEL,
   type ResearchSources,
 } from "../lib/research-sources";
 import type { ResearchIdeaActionData } from "../lib/idea-research-action";
@@ -25,17 +25,20 @@ export function isResearchSubmitting(formData: FormData | undefined) {
 
 export function ResearchSourcesList({
   sources,
-  heading = "先行事例",
+  heading,
 }: {
   sources: ResearchSources | null | undefined;
   heading?: string;
 }) {
+  const t = useT();
   if (!sources) return null;
   const links = hasResearchSourceLinks(sources) ? sources.results : [];
 
   return (
     <section className="mt-3">
-      <h4 className="text-[12px] font-semibold text-secondary">{heading}</h4>
+      <h4 className="text-[12px] font-semibold text-secondary">
+        {heading ?? t.ai.research.sourcesHeading}
+      </h4>
       {links.length > 0 ? (
         <ul className="mt-1.5 space-y-2">
           {links.map((source) => {
@@ -63,7 +66,9 @@ export function ResearchSourcesList({
           })}
         </ul>
       ) : (
-        <p className="mt-1 text-[12.5px] text-muted-foreground">{WEB_SEARCH_UNAVAILABLE_LABEL}</p>
+        <p className="mt-1 text-[12.5px] text-muted-foreground">
+          {t.ai.research.webSearchUnavailable}
+        </p>
       )}
     </section>
   );
@@ -79,6 +84,7 @@ export function IdeaResearchControls({
   /** Chosen in the AI 作業台 header. Falls back to the last research model. */
   preset?: ResearchPreset;
 }) {
+  const t = useT();
   const fetcher = useFetcher<ResearchIdeaActionData>({ key: `research-${idea.id}` });
   const busy = fetcher.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
@@ -91,7 +97,7 @@ export function IdeaResearchControls({
     return (
       <div>
         <p id="research-gate" className="text-[12.5px] leading-relaxed text-muted-foreground">
-          {RESEARCH_ARCHIVE_ERROR}
+          {t.ai.archive.research}
         </p>
         {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
       </div>
@@ -114,11 +120,9 @@ export function IdeaResearchControls({
           ) : (
             <IconSearch className="h-3.5 w-3.5" />
           )}
-          {pending ? "実行中…" : ran ? "もう一度リサーチ" : "リサーチを実行"}
+          {pending ? t.ai.research.running : ran ? t.ai.research.rerun : t.ai.research.run}
         </button>
-        <p className="text-[11.5px] leading-snug text-muted-foreground">
-          ウェブで先行事例を数件取得し、本文と合わせて分析します。
-        </p>
+        <p className="text-[11.5px] leading-snug text-muted-foreground">{t.ai.research.hint}</p>
       </div>
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
     </fetcher.Form>
@@ -126,16 +130,15 @@ export function IdeaResearchControls({
 }
 
 export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
+  const t = useT();
   const preset = presetFromModel(idea.researchModel);
-  const modelLabel = preset ? RESEARCH_PRESET_LABEL[preset] : idea.researchModel;
+  const modelLabel = preset ? researchPresetLabel(t, preset) : idea.researchModel;
   const sources = researchSourcesForDisplay(idea);
 
   if (!(idea.researchNotes || idea.researchedAt)) {
     return (
       <p className="mt-4 text-[12.5px] text-muted-foreground">
-        {canRunIdeaAi(idea.stage)
-          ? "まだ実行していません。"
-          : `調査メモはまだありません。${RESEARCH_ARCHIVE_ERROR}`}
+        {canRunIdeaAi(idea.stage) ? t.ai.research.notRun : t.ai.research.emptyArchived}
       </p>
     );
   }
@@ -143,9 +146,9 @@ export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
   return (
     <section className="mt-4 rounded-[10px] border border-border bg-card px-4 py-3.5">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-[12.5px] font-semibold">最新のリサーチ</h3>
+        <h3 className="text-[12.5px] font-semibold">{t.ai.research.latest}</h3>
         <p className="font-mono text-[11px] text-muted-foreground">
-          {[modelLabel, idea.researchedAt ? formatDateJa(idea.researchedAt) : ""]
+          {[modelLabel, idea.researchedAt ? formatDateJa(t, idea.researchedAt) : ""]
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -153,7 +156,7 @@ export function IdeaResearchNotes({ idea }: { idea: MockIdea }) {
       <ResearchSourcesList sources={sources} />
       {idea.researchNotes ? (
         <div className="mt-3 border-t border-border pt-3">
-          <h4 className="text-[12px] font-semibold text-secondary">AIコメント</h4>
+          <h4 className="text-[12px] font-semibold text-secondary">{t.ai.research.comment}</h4>
           <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-[1.9] text-secondary">
             {idea.researchNotes}
           </p>

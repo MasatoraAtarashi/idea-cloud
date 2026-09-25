@@ -4,6 +4,7 @@ import { createDb } from "../../db/client";
 import { getIdeaRow, IDEA_BODY_MAX, updateIdeaFields } from "../../db/ideas";
 import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
 import { STAGES, type Stage } from "../data/mock";
+import { dictionary } from "../i18n/dictionary";
 
 export type EditIdeaActionData = {
   error?: string;
@@ -20,9 +21,10 @@ export async function editIdeaAction({
   params,
   context,
 }: ActionFunctionArgs): Promise<EditIdeaActionData> {
+  const t = dictionary(context.locale);
   const ideaId = Number(params.ideaId);
   if (!Number.isInteger(ideaId) || ideaId <= 0) {
-    return { error: "見つかりません", intent: "edit" } satisfies EditIdeaActionData;
+    return { error: t.idea.errors.notFound, intent: "edit" } satisfies EditIdeaActionData;
   }
 
   const form = await request.formData();
@@ -31,11 +33,11 @@ export async function editIdeaAction({
   const tagsRaw = String(form.get("tags") ?? "");
   const stage = parseStage(String(form.get("stage") ?? ""));
   if (!title && !body) {
-    return { error: "入力してください", intent: "edit" } satisfies EditIdeaActionData;
+    return { error: t.idea.errors.required, intent: "edit" } satisfies EditIdeaActionData;
   }
   const text = [title, body].filter(Boolean).join("\n");
   if (text.length > IDEA_BODY_MAX) {
-    return { error: "長すぎます", intent: "edit" } satisfies EditIdeaActionData;
+    return { error: t.idea.errors.tooLong, intent: "edit" } satisfies EditIdeaActionData;
   }
 
   const tags = tagsRaw
@@ -54,14 +56,14 @@ export async function editIdeaAction({
   }
   const current = await getIdeaRow(db, ideaId);
   const updated = await updateIdeaFields(db, ideaId, {
-    title: title || body.slice(0, 200) || "無題",
+    title: title || body.slice(0, 200) || t.idea.untitled,
     body: body || title,
     tags,
     stage,
     categoryId: category.id,
   });
   if (!updated) {
-    return { error: "見つかりません", intent: "edit" } satisfies EditIdeaActionData;
+    return { error: t.idea.errors.notFound, intent: "edit" } satisfies EditIdeaActionData;
   }
   if (!current || current.body !== updated.body) {
     await safeUpsertInspirationsFromIdeaText(db, text);

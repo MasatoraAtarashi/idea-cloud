@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
+import { dictionary } from "../i18n/dictionary";
 import { bindResearchAi } from "../../server/ai/research";
 import { evaluateIdea } from "../../server/ai/evaluate";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
@@ -17,7 +18,10 @@ export async function evaluateIdeaAction({
 }: ActionFunctionArgs): Promise<EvaluateIdeaActionData> {
   const ideaId = Number(params.ideaId);
   if (!Number.isInteger(ideaId) || ideaId <= 0) {
-    return { error: "見つかりません", intent: "evaluate" } satisfies EvaluateIdeaActionData;
+    return {
+      error: dictionary(context.locale).ai.notFound,
+      intent: "evaluate",
+    } satisfies EvaluateIdeaActionData;
   }
 
   const form = await request.formData();

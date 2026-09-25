@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
+import { dictionary } from "../i18n/dictionary";
 import { bindResearchAi } from "../../server/ai/research";
 import { brainstormIdea } from "../../server/ai/brainstorm";
 
@@ -16,7 +17,10 @@ export async function brainstormIdeaAction({
 }: ActionFunctionArgs): Promise<BrainstormIdeaActionData> {
   const ideaId = Number(params.ideaId);
   if (!Number.isInteger(ideaId) || ideaId <= 0) {
-    return { error: "見つかりません", intent: "brainstorm" } satisfies BrainstormIdeaActionData;
+    return {
+      error: dictionary(context.locale).ai.notFound,
+      intent: "brainstorm",
+    } satisfies BrainstormIdeaActionData;
   }
 
   const form = await request.formData();

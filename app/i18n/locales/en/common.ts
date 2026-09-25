@@ -26,6 +26,7 @@ export const common: Dictionary["common"] = {
     selected: "Moved into action",
     archived: "Not moving for now",
   },
+  autoTagsNone: "No auto tags",
   sessionUser: "Signed in",
   self: "Me",
 };

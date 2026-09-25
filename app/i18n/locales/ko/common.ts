@@ -26,6 +26,7 @@ export const common: Dictionary["common"] = {
     selected: "실행으로 넘어감",
     archived: "지금은 움직이지 않음",
   },
+  autoTagsNone: "자동 태그 없음",
   sessionUser: "로그인 중",
   self: "나",
 };

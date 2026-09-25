@@ -1,3 +1,70 @@
 import type { Dictionary } from "../../dictionary";
 
-export const inspiration: Dictionary["inspiration"] = {};
+export const inspiration: Dictionary["inspiration"] = {
+  metaTitle: "인스피레이션 — 아이디어 클라우드",
+  title: "인스피레이션",
+
+  untitled: "제목 없음",
+
+  pasteUrl: "URL 붙여넣기",
+  pasteHint: "URL만으로도 추가할 수 있습니다. 미리보기를 못 받아도 저장됩니다.",
+  urlLabel: "URL",
+  titleLabel: "제목(선택)",
+  titlePlaceholder: "제목(비워도 됩니다)",
+  urlPlaceholder: "http:// 또는 https://",
+  memoLabel: "메모",
+  memoPlaceholder: "남기고 싶은 것",
+  tagsLabel: "태그",
+  tagsPlaceholder: "태그(선택, 쉼표로 구분)",
+  add: "추가",
+
+  noTags: "아직 태그가 없습니다",
+  clearFilter: "필터 해제",
+
+  emptyTitle: "아직 모은 것이 없습니다",
+  emptyBody: "URL이나 메모를 남겨 두고 나중에 아이디어로 만듭니다.",
+  makeIdea: "아이디어로",
+  fetchFailedShort: "못 가져옴",
+
+  notFound: "아직 없습니다",
+  toShelf: "선반으로",
+  edit: "편집",
+  delete: "삭제",
+  deleting: "삭제 중…",
+  noMemo: "메모가 아직 없습니다",
+  refetch: "다시 가져오기",
+  refetching: "가져오는 중…",
+  previewFailed: "미리보기를 가져오지 못했습니다. 다시 시도할 수 있습니다.",
+  deleteConfirm: (title: string) => `「${title}」을(를) 삭제합니다. 되돌릴 수 없습니다.`,
+  timestamps: (created: string, updated: string) => `created ${created} · updated ${updated}`,
+  reference: (url: string) => `참고: ${url}`,
+
+  dialog: {
+    title: "인스피레이션으로 아이디어 만들기",
+    viewSource: "원문 보기",
+    fieldTitle: "제목",
+    fieldBody: "본문",
+    fieldCategory: "카테고리",
+    tags: "태그",
+    removeTag: (tag: string) => `${tag} 제거`,
+    remove: "제거",
+    tagPlaceholder: "비우면 자동으로 붙습니다",
+    autoTags: "원문에서 자동 추출",
+    footerNote: "만들면 이 인스피레이션과 연결됩니다",
+    brainstormAndCreate: "AI 브레인스토밍 후 생성",
+    brainstorming: "브레인스토밍 중…",
+    create: "생성",
+  },
+
+  errors: {
+    empty: "입력해 주세요",
+    tooLong: "너무 깁니다",
+    notFound: "찾을 수 없습니다",
+    noUrl: "URL이 없습니다",
+    urlFormat: "URL 형식이 올바르지 않습니다",
+    urlProtocol: "http 또는 https URL을 사용해 주세요",
+    titleTooLong: "제목이 너무 깁니다",
+    memoTooLong: "메모가 너무 깁니다",
+    urlTooLong: "URL이 너무 깁니다",
+  },
+};

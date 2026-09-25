@@ -1,9 +1,11 @@
-export function inspirationDeleteConfirmMessage(title: string): string {
-  const compact = title.replace(/\s+/g, " ").trim() || "無題";
-  return `「${compact}」を削除します。この操作は取り消せません。`;
+import type { Dictionary } from "../i18n/dictionary";
+
+export function inspirationDeleteConfirmMessage(t: Dictionary, title: string): string {
+  const compact = title.replace(/\s+/g, " ").trim() || t.inspiration.untitled;
+  return t.inspiration.deleteConfirm(compact);
 }
 
-export function confirmInspirationDelete(title: string): boolean {
+export function confirmInspirationDelete(t: Dictionary, title: string): boolean {
   if (typeof window === "undefined" || typeof window.confirm !== "function") return false;
-  return window.confirm(inspirationDeleteConfirmMessage(title));
+  return window.confirm(inspirationDeleteConfirmMessage(t, title));
 }

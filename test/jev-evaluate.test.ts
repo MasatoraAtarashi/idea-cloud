@@ -11,6 +11,7 @@ import {
   type JevEvaluateAxes,
 } from "../server/ai/jev-evaluate";
 import type { ScoreAnswer } from "../server/ai/typesafe";
+import { JA } from "../app/i18n/dictionary";
 
 function scoreAnswer(value: number, legend: Record<string, string>): ScoreAnswer {
   return {
@@ -75,7 +76,7 @@ describe("Jev evaluation mapping", () => {
   });
 
   it("labels Jev in the UI helper", () => {
-    expect(evaluationModelLabel(JEV_MODEL)).toBe(JEV_MODEL_LABEL);
-    expect(evaluationModelLabel("@cf/qwen/qwen3-30b-a3b-fp8")).toBe("標準");
+    expect(evaluationModelLabel(JA, JEV_MODEL)).toBe(JEV_MODEL_LABEL);
+    expect(evaluationModelLabel(JA, "@cf/qwen/qwen3-30b-a3b-fp8")).toBe("標準");
   });
 });

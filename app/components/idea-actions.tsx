@@ -1,5 +1,6 @@
 import { useFetcher, useLocation } from "react-router";
-import { nextStage, STAGE_LABEL, type MockIdea, type Stage } from "../data/mock";
+import { nextStage, type MockIdea, type Stage } from "../data/mock";
+import { useT } from "../i18n/context";
 import { confirmIdeaDelete } from "../lib/idea-delete";
 import { LIST_PATH } from "../lib/home-path";
 import { useInstantPending } from "../lib/use-instant-pending";
@@ -12,6 +13,7 @@ const itemClass =
 
 /** Row `⋯`. AI runs live on the detail page only, so none of them are here. */
 export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
+  const t = useT();
   const fetcher = useFetcher();
   const location = useLocation();
   const next = nextStage(idea.stage);
@@ -35,7 +37,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
   }
 
   function deleteIdeaRow() {
-    if (!confirmIdeaDelete(idea.title)) return;
+    if (!confirmIdeaDelete(t, idea.title)) return;
     deletePending.hold();
     const here = `${location.pathname}${location.search}`;
     submitIntent("delete", { redirectTo: here.startsWith("/app/ideas/") ? LIST_PATH : here });
@@ -43,7 +45,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
 
   return (
     <PopoverMenu
-      label="操作"
+      label={t.idea.actions.menuLabel}
       trigger={
         stagePending.pending || deletePending.pending ? (
           <IconSpinner className="h-4 w-4 animate-spin" />
@@ -64,7 +66,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
               }}
               className={itemClass}
             >
-              次の段階へ（{STAGE_LABEL[next]}）
+              {t.idea.nextStageTo(t.common.stage[next])}
             </button>
           ) : null}
           <IdeaCopyButton idea={idea} menuitem className={itemClass} onDone={close} />
@@ -78,7 +80,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
               }}
               className={itemClass}
             >
-              アーカイブ
+              {t.idea.archive}
             </button>
           ) : null}
           <div className="my-1 border-t border-border" />
@@ -92,7 +94,7 @@ export function IdeaActionsMenu({ idea }: { idea: MockIdea }) {
             }}
             className={`${itemClass} text-danger hover:bg-[var(--danger-soft)] hover:text-danger`}
           >
-            {deletePending.pending ? "削除中…" : "削除"}
+            {deletePending.pending ? t.idea.actions.deleting : t.idea.actions.delete}
           </button>
         </>
       )}

@@ -42,14 +42,6 @@ export function isSearchShortcut(event: {
 export const SEARCH_KINDS = ["all", "idea", "comment", "inspiration", "tag"] as const;
 export type SearchKind = (typeof SEARCH_KINDS)[number];
 
-export const SEARCH_KIND_LABEL: Record<SearchKind, string> = {
-  all: "すべて",
-  idea: "アイデア",
-  comment: "コメント",
-  inspiration: "インスピ",
-  tag: "タグ",
-};
-
 export type SearchItem =
   | { kind: "idea"; key: string; href: string; idea: SearchResults["ideas"][number] }
   | { kind: "comment"; key: string; href: string; comment: SearchResults["comments"][number] }

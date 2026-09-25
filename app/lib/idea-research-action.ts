@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
+import { dictionary } from "../i18n/dictionary";
 import { bindResearchAi, researchIdea } from "../../server/ai/research";
 
 export type ResearchIdeaActionData = {
@@ -11,7 +12,10 @@ export type ResearchIdeaActionData = {
 export async function researchIdeaAction({ request, params, context }: ActionFunctionArgs) {
   const ideaId = Number(params.ideaId);
   if (!Number.isInteger(ideaId) || ideaId <= 0) {
-    return { error: "見つかりません", intent: "research" } satisfies ResearchIdeaActionData;
+    return {
+      error: dictionary(context.locale).ai.notFound,
+      intent: "research",
+    } satisfies ResearchIdeaActionData;
   }
 
   const form = await request.formData();

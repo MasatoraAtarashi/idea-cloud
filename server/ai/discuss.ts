@@ -1,3 +1,4 @@
+// The discuss prompt is written in Japanese, so its labels are pinned to ja.
 import { STAGE_LABEL } from "../../app/data/mock";
 import { DISCUSS_ARCHIVE_ERROR, canRunIdeaAi } from "../../app/lib/idea-ai";
 import { aiScoreMeaning, softenEvaluationText } from "../../app/lib/evaluation-notes";
@@ -20,6 +21,7 @@ import {
 import type { Db } from "../../db/client";
 import { errorClass, logDiag } from "../diag";
 import { resolveAiRun, type ResearchAi } from "./research";
+import { JA } from "../../app/i18n/dictionary";
 
 export const DISCUSS_FAIL_MESSAGE = "相談の返信に失敗しました。時間をおいて再度お試しください。";
 
@@ -231,7 +233,7 @@ function formatEvaluationContext(score: number | null, notes: string | null): st
   if (!score && !softened) return "";
   const lines = ["AI評価（参考。数値の内訳は省いてあります）:"];
   if (score) {
-    const meaning = aiScoreMeaning(score);
+    const meaning = aiScoreMeaning(JA, score);
     lines.push(meaning ? `推し度: ${score}（${meaning}）` : `推し度: ${score}`);
   }
   if (softened) lines.push(truncate(softened, EVAL_MAX));

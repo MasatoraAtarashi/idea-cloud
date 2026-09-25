@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { useFetcher } from "react-router";
 import type { MockIdea } from "../data/mock";
+import { useT } from "../i18n/context";
 import { DETAIL_SWIPE_BUTTON_WIDTH } from "../lib/swipe";
 import { useInstantPending } from "../lib/use-instant-pending";
 import { SwipeReveal, type SwipeRevealAction } from "./swipe-reveal";
 
-/** Mobile detail body: swipe for 編集 / AI 作業台 / 融合 / アーカイブ. */
+/** Mobile detail body: swipe for edit / AI bench / merge / archive. */
 export function IdeaDetailSwipe({
   idea,
   editing,
@@ -16,10 +17,11 @@ export function IdeaDetailSwipe({
   idea: MockIdea;
   editing: boolean;
   onEdit: () => void;
-  /** Switches the mobile segment to the AI 作業台. */
+  /** Switches the mobile segment to the AI workbench. */
   onAi: () => void;
   children: ReactNode;
 }) {
+  const t = useT();
   const archiveFetcher = useFetcher();
   const busy = archiveFetcher.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
@@ -28,25 +30,25 @@ export function IdeaDetailSwipe({
   const actions: SwipeRevealAction[] = [
     {
       key: "edit",
-      label: editing ? "閉じる" : "編集",
+      label: editing ? t.common.close : t.idea.editButton,
       tone: "accent",
       onClick: onEdit,
     },
     {
       key: "ai",
-      label: "AI",
+      label: t.idea.swipe.ai,
       onClick: onAi,
     },
     {
       key: "merge",
-      label: "融合",
+      label: t.idea.swipe.merge,
       href: `/app/merge?from=${idea.id}`,
     },
   ];
   if (canArchive) {
     actions.push({
       key: "archive",
-      label: pending ? "更新中…" : "アーカイブ",
+      label: pending ? t.idea.updating : t.idea.archive,
       tone: "danger",
       disabled: pending,
       onClick: () => {

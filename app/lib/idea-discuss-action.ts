@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
+import { dictionary } from "../i18n/dictionary";
 import { discussIdea } from "../../server/ai/discuss";
 import { bindResearchAi } from "../../server/ai/research";
 
@@ -16,7 +17,10 @@ export async function discussIdeaAction({
 }: ActionFunctionArgs): Promise<DiscussIdeaActionData> {
   const ideaId = Number(params.ideaId);
   if (!Number.isInteger(ideaId) || ideaId <= 0) {
-    return { error: "見つかりません", intent: "discuss" } satisfies DiscussIdeaActionData;
+    return {
+      error: dictionary(context.locale).ai.notFound,
+      intent: "discuss",
+    } satisfies DiscussIdeaActionData;
   }
 
   const form = await request.formData();

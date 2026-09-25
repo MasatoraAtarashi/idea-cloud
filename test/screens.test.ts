@@ -9,7 +9,6 @@ import {
   NEW_IDEA_PATH,
   LIST_PATH,
 } from "../app/lib/home-path";
-import { COMPOSE_URL_HINT } from "../app/lib/compose";
 import { isNewIdeaShortcut, isSubmitShortcut } from "../app/lib/shortcuts";
 import { formatRelativeJa, ideaExcerpt, ideaPublicId } from "../app/lib/format";
 import { DESIGN_TOKENS, STAGE_PILL_HEX } from "../app/lib/tokens";
@@ -24,6 +23,11 @@ import {
   STAGES,
   type MockIdea,
 } from "../app/data/mock";
+import { dictionary } from "../app/i18n/dictionary";
+/** Nav constants hold dictionary keys now; assert on what a ja reader sees. */
+const navItems = dictionary("ja").nav.items;
+const label = (item: { labelKey: keyof typeof navItems }) => navItems[item.labelKey];
+const ariaLabel = (item: { ariaLabelKey: keyof typeof navItems }) => navItems[item.ariaLabelKey];
 
 const appSources = import.meta.glob(["../app/**/*.{ts,tsx,css}"], {
   query: "?raw",
@@ -161,27 +165,23 @@ describe("responsive home and nav", () => {
     ).toBe(LIST_PATH);
     const src = Object.values(appSources).join("\n");
     expect(src).toContain("prefersComposeHome");
-    expect(src).toContain(COMPOSE_URL_HINT);
+    expect(src).toContain(dictionary("ja").compose.urlHint);
   });
 
   it("keeps list + inspirations + analytics on mobile tabs and list-first workspace on desktop", () => {
-    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "インスピ", "分析"]);
+    expect(MOBILE_NAV.map(label)).toEqual(["一覧", "インスピ", "分析"]);
     expect(MOBILE_NAV.map((item) => item.to)).toEqual([
       "/app/list",
       "/app/inspirations",
       "/app/analytics",
     ]);
     const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
-    const mobileLabels: readonly string[] = MOBILE_NAV.map((item) => item.label);
+    const mobileLabels: readonly string[] = MOBILE_NAV.map(label);
     expect(mobileDestinations).not.toContain("/app");
     expect(mobileDestinations).not.toContain("/app/settings");
     expect(mobileLabels).not.toContain("新規");
     expect(mobileLabels).not.toContain("設定");
-    expect(WORKSPACE_NAV.map((item) => item.label)).toEqual([
-      "アイデア",
-      "インスピレーション",
-      "アナリティクス",
-    ]);
+    expect(WORKSPACE_NAV.map(label)).toEqual(["アイデア", "インスピレーション", "アナリティクス"]);
     expect(WORKSPACE_NAV[0]?.to).toBe("/app/list");
     expect(WORKSPACE_NAV[1]?.to).toBe("/app/inspirations");
     expect(WORKSPACE_NAV[2]?.to).toBe("/app/analytics");
@@ -194,15 +194,24 @@ describe("responsive home and nav", () => {
 
   it("keeps empty list chrome instead of hiding the view frame", () => {
     const src = appSources["../app/components/idea-list-view.tsx"];
-    expect(src).toContain("絞り込み");
-    expect(src).toContain("まだアイデアがありません");
-    expect(src).toContain("リスト");
-    expect(src).toContain("ボード");
+    // The copy moved into the dictionary; assert both halves — that the view
+    // still reaches for each affordance, and that ja still reads the same.
+    const list = dictionary("ja").list;
+    expect(src).toContain("t.list.filters");
+    expect(list.filters).toBe("絞り込み");
+    expect(src).toContain("t.list.empty.title");
+    expect(list.empty.title).toBe("まだアイデアがありません");
+    expect(src).toContain("t.list.layout.table");
+    expect(list.layout.table).toBe("リスト");
+    expect(src).toContain("t.list.layout.board");
+    expect(list.layout.board).toBe("ボード");
     expect(src).toContain("useListViewSearch");
-    expect(src).toContain("見直し候補");
-    expect(src).toContain("試した");
+    expect(list.tab.candidates).toBe("見直し候補");
+    expect(list.tab.tried).toBe("試した");
+    expect(src).toContain("t.list.tab");
     expect(src).toContain('tab === "candidates"');
-    expect(src).toContain("並び順");
+    expect(src).toContain("t.list.sortOrder");
+    expect(list.sortOrder).toBe("並び順");
     expect(src).toContain("sortIdeas");
     expect(src).toContain("IdeaBoard");
     expect(src).toContain("overflow-y-auto");
@@ -279,16 +288,25 @@ describe("responsive home and nav", () => {
     expect(src).toContain("IdeaSwipeRow");
     expect(src).toContain("SwipeReveal");
     expect(src).toContain("IdeaDetailSwipe");
-    expect(src).toContain("次の段階へ");
-    expect(src).toContain("アーカイブ");
-    expect(appSources["../app/components/idea-swipe-row.tsx"]).toContain("SwipeReveal");
-    expect(appSources["../app/components/idea-swipe-row.tsx"]).toContain("次の段階へ");
-    expect(appSources["../app/components/idea-swipe-row.tsx"]).toContain("アーカイブ");
-    expect(appSources["../app/components/idea-detail-swipe.tsx"]).toContain('"編集"');
-    expect(appSources["../app/components/idea-detail-swipe.tsx"]).toContain('label: "AI"');
-    expect(appSources["../app/components/idea-detail-swipe.tsx"]).toContain('label: "融合"');
-    expect(appSources["../app/components/idea-detail-swipe.tsx"]).toContain('"アーカイブ"');
-    expect(appSources["../app/components/idea-detail-swipe.tsx"]).not.toContain("次の段階へ");
+    const ja = dictionary("ja");
+    expect(ja.list.swipe.next).toBe("次の段階へ");
+    expect(ja.list.swipe.archive).toBe("アーカイブ");
+    const swipeRow = appSources["../app/components/idea-swipe-row.tsx"];
+    expect(swipeRow).toContain("SwipeReveal");
+    expect(swipeRow).toContain("t.list.swipe.next");
+    expect(swipeRow).toContain("t.list.swipe.archive");
+    // Detail swipe offers 編集 / AI / 融合 / アーカイブ — never 次の段階へ,
+    // which stays the on-page primary CTA there.
+    const detailSwipe = appSources["../app/components/idea-detail-swipe.tsx"];
+    expect(detailSwipe).toContain("t.idea.editButton");
+    expect(detailSwipe).toContain("t.idea.swipe.ai");
+    expect(detailSwipe).toContain("t.idea.swipe.merge");
+    expect(detailSwipe).toContain("t.idea.archive");
+    expect(detailSwipe).not.toContain("t.list.swipe.next");
+    expect(ja.idea.swipe.ai).toBe("AI");
+    expect(ja.idea.swipe.merge).toBe("融合");
+    expect(ja.idea.editButton).toBe("編集");
+    expect(ja.idea.archive).toBe("アーカイブ");
     expect(appSources["../app/components/swipe-reveal.tsx"]).toContain("min-h-11");
     expect(appSources["../app/lib/swipe.ts"]).toContain("SWIPE_BUTTON_WIDTH = 88");
     expect(appSources["../app/lib/swipe.ts"]).toContain("DETAIL_SWIPE_BUTTON_WIDTH = 72");
@@ -408,8 +426,12 @@ describe("display helpers", () => {
         commentCount: 0,
       }),
     ).toBe("本文の続き");
-    expect(formatRelativeJa("2026-09-18T02:00:00Z", Date.parse("2026-09-18T02:00:30Z"))).toBe(
-      "たった今",
-    );
+    expect(
+      formatRelativeJa(
+        dictionary("ja"),
+        "2026-09-18T02:00:00Z",
+        Date.parse("2026-09-18T02:00:30Z"),
+      ),
+    ).toBe("たった今");
   });
 });

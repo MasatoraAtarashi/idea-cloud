@@ -26,6 +26,7 @@ export const common: Dictionary["common"] = {
     selected: "已开始推进",
     archived: "暂时不动",
   },
+  autoTagsNone: "无自动标签",
   sessionUser: "已登录",
   self: "我",
 };
