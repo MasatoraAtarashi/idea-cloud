@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { createRequestHandler } from "react-router";
+import { resolveLocale } from "../app/i18n/locale";
 import { api } from "../server/api";
 import { resolvePageSession } from "../server/auth/page-gate";
 import { authRoute } from "../server/auth/routes";
@@ -39,6 +40,7 @@ app.all("*", async (c) => {
   return requestHandler(c.req.raw, {
     cloudflare: { env: c.env, ctx: c.executionCtx },
     userEmail: session.email,
+    locale: resolveLocale(c.req.raw),
     plan: await resolvePlanForEnv(session.email, c.env),
   });
 });
