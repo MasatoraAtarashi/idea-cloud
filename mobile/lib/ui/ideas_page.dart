@@ -34,9 +34,19 @@ class _IdeasPageState extends State<IdeasPage> {
   }
 
   Future<void> _bootstrap() async {
-    // モックはサーバを見ないので設定を飛ばす。
-    if (!widget.api.isMock && !await widget.settings.isConfigured()) {
-      await _openSettings();
+    try {
+      // モックはサーバを見ないので設定を飛ばす。
+      if (!widget.api.isMock && !await widget.settings.isConfigured()) {
+        await _openSettings();
+        return;
+      }
+    } on Object catch (error) {
+      // Keychain が読めないと以降が全部立ち行かないので、黙って回り続けず理由を出す。
+      if (!mounted) return;
+      setState(() {
+        _error = '保存した設定を読めませんでした: $error';
+        _loading = false;
+      });
       return;
     }
     await _reload();
@@ -61,6 +71,13 @@ class _IdeasPageState extends State<IdeasPage> {
         _loading = false;
       });
       if (error.isAuthFailure) await _openSettings();
+    } on Object catch (error) {
+      // 想定外（Keychain、JSON の崩れなど）でもスピナーのまま固まらせない。
+      if (!mounted) return;
+      setState(() {
+        _error = '$error';
+        _loading = false;
+      });
     }
   }
 
