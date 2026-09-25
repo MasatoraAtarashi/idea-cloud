@@ -4,12 +4,18 @@
 
 ## 前提
 
-- **サーバ側に `APP_API_TOKEN` を設定しておく。** `/api/*` は `server/auth/principal.ts` の
-  `resolvePrincipal` が Cookie セッション（Web）か `Authorization: Bearer <APP_API_TOKEN>`
-  （このアプリ）のどちらかを受ける。本番なら `wrangler secret put APP_API_TOKEN`、
-  ローカルなら `.dev.vars` に書く。書き込みの帰属先は `APP_API_TOKEN_EMAIL`
-  （未設定なら `ACCESS_ALLOWED_EMAILS` が 1 件のときだけそれが使われる）。
+- **サーバ側に `GOOGLE_IOS_CLIENT_ID` を設定しておく。** アプリは端末の Google Sign-In で
+  取った `id_token` を `Authorization: Bearer` で送り、サーバは
+  `server/auth/google-id-token.ts` で署名（JWKS）・`aud`・`exp`・`email_verified` を検証する。
+  通ったメールは Web と同じ `ACCESS_ALLOWED_EMAILS` に掛かる。DB は使わない。
+  値は Google Cloud Console の **iOS クライアント ID**。秘密ではない（アプリに載る）が、
+  照合する audience を差し替えられるよう env に置いている。
+- **クライアント ID を変えたら 2 箇所直す** — `lib/api/config.dart` と
+  `ios/Runner/Info.plist` の URL スキーム（クライアント ID を逆順にしたもの）。
 - Flutter SDK 3.5 以上、Xcode（App Store 版。Command Line Tools だけでは iOS ビルドは通らない）。
+  初回は `xcodebuild -downloadPlatform iOS` が要る（約 8GB。無いと destination が 1 つも無く、
+  「No Xcode build settings have been found」で落ちる）。
+- CocoaPods（`brew install cocoapods`）。`LANG` が UTF-8 でないと pod install が失敗する。
 - 実機に入れるなら Apple Developer Program。未加入だと署名が 7 日で切れて入れ直しになる。
 
 ## セットアップ
@@ -24,17 +30,18 @@ flutter run
 ```
 
 `flutter create` は既存の `lib/` `test/` `pubspec.yaml` を上書きしない。
-`ios/` に署名設定（Bundle Identifier、チーム）を入れたあとも残したければ、
-`.gitignore` の `ios/` を外してコミットする。
+`ios/` は追跡しているので、Info.plist の URL スキームや署名設定は再生成しても残る。
 
 ## 使い方
 
-初回起動で設定画面が出る。
+初回は「Google でログイン」だけ。入力欄は無い。
 
-- **接続先** — `https://<Workers のホスト>`。https のみ受ける（トークンを平文で流さないため）。
-- **個人 API トークン** — Workers の `APP_API_TOKEN` と同じ値。iOS Keychain に入る。
+- **接続先** — `lib/api/config.dart` に焼き込み。ローカルの Workers を相手にするときだけ
+  `--dart-define=API_BASE_URL=http://192.168.1.17:5173` で差し替える。
+- **`id_token` は保存しない** — 1 時間で切れるので、リクエストのたびに
+  `attemptLightweightAuthentication` で取り直す（UI は出ない）。
 
-401/403 が返ると自動で設定画面に戻る。トークンを回したときはここで入れ直す。
+401/403 が返ると自動でログイン画面に戻る。右上のアイコンでサインアウト。
 
 ## 入っているもの
 

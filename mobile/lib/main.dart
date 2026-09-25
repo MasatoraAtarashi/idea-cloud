@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'api/api_client.dart';
+import 'api/auth.dart';
 import 'api/idea_source.dart';
 import 'api/mock_source.dart';
-import 'api/settings.dart';
 import 'ui/ideas_page.dart';
 import 'ui/theme.dart';
 
@@ -12,15 +12,15 @@ import 'ui/theme.dart';
 const useMock = bool.fromEnvironment('MOCK');
 
 void main() {
-  final settings = Settings();
-  final IdeaSource source = useMock ? MockSource() : ApiClient(settings: settings);
-  runApp(IdeaCloudApp(settings: settings, api: source));
+  final auth = GoogleAuth();
+  final IdeaSource source = useMock ? MockSource() : ApiClient(auth: auth);
+  runApp(IdeaCloudApp(auth: auth, api: source));
 }
 
 class IdeaCloudApp extends StatelessWidget {
-  const IdeaCloudApp({super.key, required this.settings, required this.api});
+  const IdeaCloudApp({super.key, required this.auth, required this.api});
 
-  final Settings settings;
+  final GoogleAuth auth;
   final IdeaSource api;
 
   @override
@@ -29,7 +29,7 @@ class IdeaCloudApp extends StatelessWidget {
       title: 'アイデアクラウド',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
-      home: IdeasPage(api: api, settings: settings),
+      home: IdeasPage(api: api, auth: auth),
     );
   }
 }

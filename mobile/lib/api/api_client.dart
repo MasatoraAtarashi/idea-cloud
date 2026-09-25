@@ -5,8 +5,9 @@ import 'package:http/http.dart' as http;
 import '../models/comment.dart';
 import '../models/idea.dart';
 import '../models/stage.dart';
+import 'auth.dart';
+import 'config.dart';
 import 'idea_source.dart';
-import 'settings.dart';
 
 /// API が 2xx 以外を返したとき、または応答が読めなかったときに投げる。
 class ApiException implements Exception {
@@ -24,14 +25,15 @@ class ApiException implements Exception {
 
 /// `/api/*` を叩く薄いクライアント。
 ///
-/// 認証は個人 API トークンの Bearer 一本。サーバ側は Cookie セッションと
-/// Bearer の両方を受ける（server/middleware/session-auth.ts）。
+/// 認証は端末の Google Sign-In で取った `id_token` の Bearer。サーバ側は
+/// Cookie セッション・id_token・個人トークンのどれでも受ける
+/// （server/auth/principal.ts）。
 class ApiClient implements IdeaSource {
-  ApiClient({required Settings settings, http.Client? httpClient})
-      : _settings = settings,
+  ApiClient({required GoogleAuth auth, http.Client? httpClient})
+      : _auth = auth,
         _http = httpClient ?? http.Client();
 
-  final Settings _settings;
+  final GoogleAuth _auth;
   final http.Client _http;
 
   @override
@@ -104,13 +106,13 @@ class ApiClient implements IdeaSource {
     Map<String, dynamic>? body,
     Duration timeout = const Duration(seconds: 30),
   }) async {
-    final baseUrl = await _settings.baseUrl();
-    final token = await _settings.token();
-    if (baseUrl == null || baseUrl.isEmpty || token == null || token.isEmpty) {
-      throw ApiException('接続先とトークンが未設定です。設定画面から入力してください。');
+    final token = await _auth.idToken();
+    if (token == null || token.isEmpty) {
+      // 呼び出し側が再ログインへ回せるよう 401 として扱う。
+      throw ApiException('サインインが必要です。', statusCode: 401);
     }
 
-    final request = http.Request(method, Uri.parse('$baseUrl$path'))
+    final request = http.Request(method, Uri.parse('$apiBaseUrl$path'))
       ..headers['authorization'] = 'Bearer $token'
       ..headers['accept'] = 'application/json';
     if (body != null) {

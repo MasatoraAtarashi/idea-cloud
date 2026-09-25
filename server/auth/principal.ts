@@ -8,12 +8,13 @@ import type { Context } from "hono";
 import type { AppEnv } from "../env";
 import { isEmailAllowed } from "../security/allowlist";
 import { timingSafeEqualString } from "../mcp/auth";
+import { verifyGoogleIdToken, looksLikeJwt } from "./google-id-token";
 import { readSessionEmail } from "./session";
 
 export type Principal = {
   email: string;
-  /** `cookie` = browser session, `token` = native app / scripted client. */
-  via: "cookie" | "token";
+  /** `cookie` = browser session, `google` = native Google Sign-In, `token` = scripted client. */
+  via: "cookie" | "google" | "token";
 };
 
 function bearerToken(authorization: string | null): string | null {
@@ -45,11 +46,30 @@ function tokenPrincipal(c: Context<AppEnv>): Principal | null {
   return { email, via: "token" };
 }
 
+/** Audiences a device-issued `id_token` may carry. */
+function googleAudiences(env: Env): string[] {
+  return [env.GOOGLE_IOS_CLIENT_ID, env.GOOGLE_CLIENT_ID]
+    .map((entry) => entry?.trim())
+    .filter((entry): entry is string => !!entry);
+}
+
+/**
+ * Native Google Sign-In. The device sends the `id_token` it got from Google as
+ * the Bearer value; unlike APP_API_TOKEN it is short-lived and per-account.
+ */
+async function googlePrincipal(c: Context<AppEnv>): Promise<Principal | null> {
+  const presented = bearerToken(c.req.header("authorization") ?? null);
+  if (presented == null || !looksLikeJwt(presented)) return null;
+  const email = await verifyGoogleIdToken(presented, googleAudiences(c.env));
+  return email ? { email, via: "google" } : null;
+}
+
 /** `null` when the request carries no usable credential. */
 export async function resolvePrincipal(c: Context<AppEnv>): Promise<Principal | null> {
   const cookieEmail = await readSessionEmail(c);
   if (cookieEmail) return { email: cookieEmail, via: "cookie" };
-  return tokenPrincipal(c);
+  // A JWT-shaped Bearer is a Google id_token; anything else is the app token.
+  return (await googlePrincipal(c)) ?? tokenPrincipal(c);
 }
 
 export function isPrincipalAllowed(principal: Principal, env: Env): boolean {
