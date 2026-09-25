@@ -16,6 +16,11 @@ declare global {
     LOCAL_DEV_USER_EMAIL?: string;
     /** Google OAuth web client. `wrangler secret` / .dev.vars only. */
     GOOGLE_CLIENT_ID?: string;
+    /**
+     * Google OAuth iOS client id. Not a secret (it ships inside the app), but
+     * kept in env so the accepted `id_token` audience is configurable.
+     */
+    GOOGLE_IOS_CLIENT_ID?: string;
     GOOGLE_CLIENT_SECRET?: string;
     /** HMAC key for the session cookie. Required in production. */
     SESSION_SECRET?: string;

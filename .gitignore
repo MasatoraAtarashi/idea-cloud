@@ -32,3 +32,7 @@ blob-report/
 
 # misc
 .DS_Store
+
+# Flutter のビルド生成物
+mobile/build/
+mobile/.dart_tool/

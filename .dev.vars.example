@@ -19,7 +19,12 @@ LOCAL_DEV_USER_EMAIL=you@example.com
 # Keep at least one entry in production.
 # ACCESS_ALLOWED_EMAILS=you@example.com
 
-# Native app / scripted access: `Authorization: Bearer <APP_API_TOKEN>` on /api/*.
+# Native app sign-in: the iOS app sends the Google `id_token` it got on-device
+# as `Authorization: Bearer`. Server verifies signature/aud/exp against JWKS
+# (server/auth/google-id-token.ts). Not a secret -- it ships inside the app.
+# GOOGLE_IOS_CLIENT_ID=
+
+# Scripted access: `Authorization: Bearer <APP_API_TOKEN>` on /api/*.
 # Production: `wrangler secret put APP_API_TOKEN` (e.g. `openssl rand -hex 32`).
 # APP_API_TOKEN_EMAIL is the identity writes are attributed to; it defaults to a
 # single-entry ACCESS_ALLOWED_EMAILS.

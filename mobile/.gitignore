@@ -1,0 +1,25 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# 生成されるプラットフォームディレクトリ（flutter create で再生成する）
+# ios/ は生成物だが、Info.plist に Google Sign-In の URL スキームを持たせているので
+# 追跡する。再生成で消えると起動後にサインインから戻ってこられなくなる。
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Pods/
+ios/Podfile.lock
+ios/.symlinks/
+android/
+macos/
+linux/
+windows/
+web/
+
+# IDE
+.idea/
+*.iml
