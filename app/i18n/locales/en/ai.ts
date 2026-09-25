@@ -31,7 +31,7 @@ export const ai: Dictionary["ai"] = {
     research: "Research failed. Please try again in a moment.",
     brainstorm: "Brainstorm failed. Please try again in a moment.",
     evaluate: "AI evaluation failed. Please try again in a moment.",
-    discuss: "The chat failed. Please try again in a moment.",
+    discuss: "The reply failed. Please try again in a moment.",
     noRoom:
       "It ran out of room while thinking and could not finish the answer. Try asking in smaller pieces.",
     badRequest: "Those settings are not valid. Pick a preset again.",

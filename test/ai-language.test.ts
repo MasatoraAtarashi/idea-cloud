@@ -7,6 +7,10 @@ import { discussSystemPrompt } from "../server/ai/discuss";
 import { evaluateSystemPrompt } from "../server/ai/evaluate";
 import { researchSystemPrompt } from "../server/ai/research";
 import { autoTagSystemPrompt } from "../server/ai/tags";
+import { RESEARCH_FAIL_MESSAGE } from "../server/ai/research";
+import { BRAINSTORM_FAIL_MESSAGE } from "../server/ai/brainstorm";
+import { EVALUATE_FAIL_MESSAGE } from "../server/ai/evaluate";
+import { DISCUSS_FAIL_MESSAGE, DISCUSS_NO_ROOM_MESSAGE } from "../server/ai/discuss";
 import { languageName } from "../server/ai/language";
 import { EVALUATION_SECTION_LABELS, parseEvaluationNotes } from "../app/lib/evaluation-notes";
 
@@ -87,6 +91,17 @@ describe("AI failures reach the screen in the reader's language", () => {
     expect(aiErrorMessage(en, "discuss", "tooLong")).toBe(en.ai.failure.tooLong);
     expect(aiErrorMessage(en, "discuss", "empty")).toBe(en.ai.failure.empty);
     expect(aiErrorMessage(en, "research", "badRequest")).toBe(en.ai.failure.badRequest);
+  });
+
+  it("did not quietly reword the Japanese UI while moving copy into the dictionary", () => {
+    // The screen used to render these server constants directly. Japanese
+    // readers must see exactly what they saw before.
+    const ja = dictionary("ja");
+    expect(ja.ai.failure.research).toBe(RESEARCH_FAIL_MESSAGE);
+    expect(ja.ai.failure.brainstorm).toBe(BRAINSTORM_FAIL_MESSAGE);
+    expect(ja.ai.failure.evaluate).toBe(EVALUATE_FAIL_MESSAGE);
+    expect(ja.ai.failure.discuss).toBe(DISCUSS_FAIL_MESSAGE);
+    expect(ja.ai.failure.noRoom).toBe(DISCUSS_NO_ROOM_MESSAGE);
   });
 
   it("says something in all four languages, and never the same thing twice", () => {

@@ -31,7 +31,7 @@ export const ai: Dictionary["ai"] = {
     research: "调研失败，请稍后再试。",
     brainstorm: "头脑风暴失败，请稍后再试。",
     evaluate: "AI 评估失败，请稍后再试。",
-    discuss: "咨询失败，请稍后再试。",
+    discuss: "回复失败，请稍后再试。",
     noRoom: "思考过程中达到了回复上限，没能写完答案。请把问题拆短后再试。",
     badRequest: "设置不正确，请重新选择预设。",
     empty: "请输入内容",
