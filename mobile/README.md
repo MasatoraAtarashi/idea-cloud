@@ -4,8 +4,11 @@
 
 ## 前提
 
-- **サーバ側の Bearer 対応が先に要る。** `Authorization: Bearer <APP_API_TOKEN>` を
-  受ける `resolvePrincipal` が入るまで、このアプリは 401 しか受け取れない。
+- **サーバ側に `APP_API_TOKEN` を設定しておく。** `/api/*` は `server/auth/principal.ts` の
+  `resolvePrincipal` が Cookie セッション（Web）か `Authorization: Bearer <APP_API_TOKEN>`
+  （このアプリ）のどちらかを受ける。本番なら `wrangler secret put APP_API_TOKEN`、
+  ローカルなら `.dev.vars` に書く。書き込みの帰属先は `APP_API_TOKEN_EMAIL`
+  （未設定なら `ACCESS_ALLOWED_EMAILS` が 1 件のときだけそれが使われる）。
 - Flutter SDK 3.5 以上、Xcode（App Store 版。Command Line Tools だけでは iOS ビルドは通らない）。
 - 実機に入れるなら Apple Developer Program。未加入だと署名が 7 日で切れて入れ直しになる。
 
@@ -57,7 +60,7 @@ cd mobile && flutter test
 
 ## サーバなしで画面だけ見る
 
-`--dart-define=MOCK=true` を付けるとメモリ上の作り物を使う。Bearer 対応を待たずに触れる。
+`--dart-define=MOCK=true` を付けるとメモリ上の作り物を使う。サーバを立てずに見た目を確認するとき用。
 
 ```bash
 cd mobile && flutter run --dart-define=MOCK=true
