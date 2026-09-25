@@ -26,9 +26,14 @@ LOCAL_DEV_USER_EMAIL=you@example.com
 # APP_API_TOKEN=
 # APP_API_TOKEN_EMAIL=you@example.com
 
-# Premium (AI) entitlement. Comma-separated emails. Unset = every member is
-# premium, which is the pre-billing default. See docs/spec/billing.md.
+# Billing. Premium gates the AI features. PREMIUM_EMAILS is the comped/owner
+# override (comma-separated); paying customers come from the `entitlements`
+# table written by the Stripe webhook. Until all three STRIPE_* values are set,
+# billing is not live and every member is premium. See docs/spec/billing.md.
 # PREMIUM_EMAILS=you@example.com
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_PRICE_ID=price_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Field encryption stub (not wired to D1 yet). 32-byte hex. Production: wrangler secret.
 # FIELD_ENCRYPTION_KEY=

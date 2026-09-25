@@ -1,4 +1,5 @@
 import { createMiddleware } from "hono/factory";
+import { createDb } from "../../db/client";
 import { isPremium, PREMIUM_REQUIRED_MESSAGE, PREMIUM_REQUIRED_STATUS } from "../billing/plan";
 import type { AppEnv } from "../env";
 
@@ -8,7 +9,7 @@ import type { AppEnv } from "../env";
  * "authenticated but not entitled", never "not signed in".
  */
 export const requirePremium = createMiddleware<AppEnv>(async (c, next) => {
-  if (!isPremium(c.get("userEmail"), c.env)) {
+  if (!(await isPremium(createDb(c.env.DB), c.get("userEmail"), c.env))) {
     return c.json({ error: PREMIUM_REQUIRED_MESSAGE, plan: "free" }, PREMIUM_REQUIRED_STATUS);
   }
   await next();

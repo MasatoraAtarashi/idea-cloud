@@ -19,6 +19,8 @@ Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only, and only
 
 Entitlement is a third, separate layer: a member without the premium plan still passes `401`/`403` and is refused only on the AI endpoints, with `402`. Membership says who is in; the plan says what they may spend. See [billing.md](./billing.md).
 
+`POST /api/billing/webhook` is the one route outside the session gate. Its credential is Stripe's `Stripe-Signature` over the **raw** body: HMAC-SHA256 of `${t}.${body}`, constant-time compare, 300 s timestamp tolerance, and the body is not parsed until it verifies. Replays are dropped by event id (`billing_events`). No Stripe secret is logged, and card data never reaches this origin — Checkout and the portal are Stripe-hosted.
+
 Sessions are self-contained cookies with no `sessions` table: rotate `SESSION_SECRET` to revoke everything at once. Per-device sign-out is not built.
 
 Team settings show the allowlist in a **disabled** textarea so the UI cannot pretend to write secrets.

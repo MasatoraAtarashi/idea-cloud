@@ -29,11 +29,17 @@ declare global {
     /** Comma-separated emails. Second layer after Google identity. Empty = identity only. */
     ACCESS_ALLOWED_EMAILS?: string;
     /**
-     * Comma-separated emails entitled to the premium (AI) features. Empty means
-     * billing is not live yet, so every member is premium. See
-     * server/billing/plan.ts and docs/spec/billing.md.
+     * Comped / owner emails: always premium, no subscription needed. The paid
+     * path is the `entitlements` table written by the Stripe webhook.
+     * See server/billing/plan.ts and docs/spec/billing.md.
      */
     PREMIUM_EMAILS?: string;
+    /** Stripe restricted/secret key. `wrangler secret` only. */
+    STRIPE_SECRET_KEY?: string;
+    /** Price id of the single premium subscription (`price_...`). */
+    STRIPE_PRICE_ID?: string;
+    /** Signing secret of the `/api/billing/webhook` endpoint (`whsec_...`). */
+    STRIPE_WEBHOOK_SECRET?: string;
     /** 32 バイト hex。未配線（フィールド暗号化スタブ用） */
     FIELD_ENCRYPTION_KEY?: string;
     /** TypeSafe Jev (System One). When set, auto-tags and AI評価 prefer Jev. */
