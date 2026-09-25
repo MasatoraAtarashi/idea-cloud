@@ -1,3 +1,8 @@
+import type {
+  EvaluateNextId,
+  JevPursueLevel,
+  JevScoreLevel,
+} from "../../../../server/ai/jev-evaluate";
 import type { Dictionary } from "../../dictionary";
 
 export const ai: Dictionary["ai"] = {
@@ -21,6 +26,18 @@ export const ai: Dictionary["ai"] = {
   },
 
   /** Bad or unknown idea id in an AI action. */
+
+  failure: {
+    research: "调研失败，请稍后再试。",
+    brainstorm: "头脑风暴失败，请稍后再试。",
+    evaluate: "AI 评估失败，请稍后再试。",
+    discuss: "咨询失败，请稍后再试。",
+    noRoom: "思考过程中达到了回复上限，没能写完答案。请把问题拆短后再试。",
+    badRequest: "设置不正确，请重新选择预设。",
+    empty: "请输入内容",
+    tooLong: "内容过长",
+  },
+
   notFound: "未找到",
 
   menu: {
@@ -91,6 +108,66 @@ export const ai: Dictionary["ai"] = {
   billing: {
     notReady: "付费功能还在准备中。",
     failed: "无法打开支付页面。请稍后再试。",
+  },
+
+  /**
+   * Stored Jev evaluation notes (`server/ai/jev-evaluate.ts`). Display copy only:
+   * the four headings, the `スコア:` line and the Japanese values sent to / read
+   * back from the Jev API stay Japanese, so old notes keep parsing.
+   */
+  jev: {
+    /** Axis labels in the 強み / リスク bullets. */
+    axis: {
+      impact: "价值",
+      feasibility: "可行性",
+      clarity: "清晰度",
+      risk: "大小",
+      pursue: "推进价值",
+    },
+
+    /** No legend value came back for an axis. */
+    noJudgement: "未评定",
+
+    /** 進める価値, from the `pursue` noul. */
+    pursue: {
+      high: "较高",
+      normal: "一般",
+      low: "较低",
+      unknown: "不明",
+    } satisfies Record<JevPursueLevel, string>,
+
+    /** Jev legend value (Japanese, the API contract) -> what the reader sees. */
+    level: {
+      既存の延長: "现有延伸",
+      一部新しい: "部分新颖",
+      明確に新しい: "明显新颖",
+      大きく新しい: "非常新颖",
+      小さい: "较小",
+      ある: "一般",
+      大きい: "较大",
+      非常に大きい: "非常大",
+      かなり困難: "相当困难",
+      難しいが可能: "有难度但可行",
+      現実的: "现实可行",
+      容易: "容易",
+      曖昧: "模糊",
+      方向は見える: "方向可见",
+      具体的: "具体",
+      すぐ動ける: "可立即着手",
+      低い: "低",
+      中程度: "中等",
+      高い: "高",
+      致命的: "致命",
+    } satisfies Record<JevScoreLevel, string>,
+
+    /** 次の一手. Keyed by the choice id; the Japanese criteria text is unchanged. */
+    next: {
+      research: "用调研验证假设",
+      age: "先放一放，慢慢沉淀",
+      try: "小步试一试",
+      select: "推进采用",
+      archive: "暂不考虑",
+    } satisfies Record<EvaluateNextId, string>,
   },
 
   page: {

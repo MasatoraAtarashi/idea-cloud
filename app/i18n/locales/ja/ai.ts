@@ -1,3 +1,8 @@
+import type {
+  EvaluateNextId,
+  JevPursueLevel,
+  JevScoreLevel,
+} from "../../../../server/ai/jev-evaluate";
 import type { ResearchPreset } from "../../../lib/research-models";
 
 export const ai = {
@@ -21,6 +26,19 @@ export const ai = {
     brainstorm: "アーカイブではブレストできません",
     evaluate: "アーカイブではAI評価できません",
     discuss: "アーカイブでは相談できません",
+  },
+
+  /** Why a run failed. Rendered from the server's error code, never its text. */
+  failure: {
+    research: "リサーチに失敗しました。時間をおいて再度お試しください。",
+    brainstorm: "ブレストに失敗しました。時間をおいて再度お試しください。",
+    evaluate: "AI評価に失敗しました。時間をおいて再度お試しください。",
+    discuss: "相談に失敗しました。時間をおいて再度お試しください。",
+    noRoom:
+      "考えているうちに返信の上限に達して、答えを書き切れませんでした。質問を短く区切って試してください。",
+    badRequest: "設定が正しくありません。プリセットを選び直してください。",
+    empty: "入力してください",
+    tooLong: "長すぎます",
   },
 
   /** Bad or unknown idea id in an AI action. */
@@ -96,6 +114,66 @@ export const ai = {
   billing: {
     notReady: "課金は準備中です。",
     failed: "決済ページを開けませんでした。時間をおいて再度お試しください。",
+  },
+
+  /**
+   * Stored Jev evaluation notes (`server/ai/jev-evaluate.ts`). Display copy only:
+   * the four headings, the `スコア:` line and the Japanese values sent to / read
+   * back from the Jev API stay Japanese, so old notes keep parsing.
+   */
+  jev: {
+    /** Axis labels in the 強み / リスク bullets. */
+    axis: {
+      impact: "価値",
+      feasibility: "実現性",
+      clarity: "明確さ",
+      risk: "大きさ",
+      pursue: "進める価値",
+    },
+
+    /** No legend value came back for an axis. */
+    noJudgement: "判定なし",
+
+    /** 進める価値, from the `pursue` noul. */
+    pursue: {
+      high: "高め",
+      normal: "ふつう",
+      low: "低め",
+      unknown: "不明",
+    } satisfies Record<JevPursueLevel, string>,
+
+    /** Jev legend value (Japanese, the API contract) -> what the reader sees. */
+    level: {
+      既存の延長: "既存の延長",
+      一部新しい: "一部新しい",
+      明確に新しい: "明確に新しい",
+      大きく新しい: "大きく新しい",
+      小さい: "小さい",
+      ある: "ある",
+      大きい: "大きい",
+      非常に大きい: "非常に大きい",
+      かなり困難: "かなり困難",
+      難しいが可能: "難しいが可能",
+      現実的: "現実的",
+      容易: "容易",
+      曖昧: "曖昧",
+      方向は見える: "方向は見える",
+      具体的: "具体的",
+      すぐ動ける: "すぐ動ける",
+      低い: "低い",
+      中程度: "中程度",
+      高い: "高い",
+      致命的: "致命的",
+    } satisfies Record<JevScoreLevel, string>,
+
+    /** 次の一手. Keyed by the choice id; the Japanese criteria text is unchanged. */
+    next: {
+      research: "リサーチで仮説を検証する",
+      age: "寝かせて熟成させる",
+      try: "小さく試す",
+      select: "採用へ進める",
+      archive: "見送る",
+    } satisfies Record<EvaluateNextId, string>,
   },
 
   /** Standalone /app/research screen. */

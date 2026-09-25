@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { dictionary } from "../i18n/dictionary";
+import { aiErrorMessage } from "./idea-ai";
 import { bindResearchAi } from "../../server/ai/research";
 import { brainstormIdea } from "../../server/ai/brainstorm";
 
@@ -31,9 +32,13 @@ export async function brainstormIdeaAction({
     ideaId,
     preset: String(form.get("preset") ?? ""),
     model: String(form.get("model") ?? ""),
+    locale: context.locale,
   });
   if (!result.ok) {
-    return { error: result.error, intent: "brainstorm" } satisfies BrainstormIdeaActionData;
+    return {
+      error: aiErrorMessage(dictionary(context.locale), "brainstorm", result.code),
+      intent: "brainstorm",
+    } satisfies BrainstormIdeaActionData;
   }
   return { ok: true, intent: "brainstorm" } satisfies BrainstormIdeaActionData;
 }

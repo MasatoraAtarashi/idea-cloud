@@ -54,6 +54,7 @@ import { requirePremium } from "../../middleware/premium";
 import { typesafeApiKeyFromEnv } from "../../ai/typesafe";
 import { logCreatePrerequisites } from "../../diag";
 import type { AppEnv } from "../../env";
+import { resolveLocale } from "../../../app/i18n/locale";
 
 const createIdeaSchema = z.object({
   body: z.string().trim().min(1).max(IDEA_BODY_MAX),
@@ -223,6 +224,7 @@ export const ideasRoute = new Hono<AppEnv>()
           text: body,
           tags: tags ?? [],
           typesafeApiKey: typesafeApiKeyFromEnv(c.env),
+          locale: resolveLocale(c.req.raw),
         })
       : sanitizeTags(tags ?? [], USER_TAG_MAX);
     const created = await insertIdea(db, body, {
@@ -239,6 +241,7 @@ export const ideasRoute = new Hono<AppEnv>()
         ideaId: created.id,
         stage: created.stage,
         typesafeApiKey: typesafeApiKeyFromEnv(c.env),
+        locale: resolveLocale(c.req.raw),
       });
     }
     return c.json({ item: await ideaJsonWithCategory(db, created) }, 201);
@@ -348,9 +351,10 @@ export const ideasRoute = new Hono<AppEnv>()
       preset: input.preset,
       model: input.model,
       searchApiKey: searchApiKeyFromEnv(c.env),
+      locale: resolveLocale(c.req.raw),
     });
     if (!result.ok) {
-      return c.json({ error: result.error }, result.status);
+      return c.json({ error: result.error, code: result.code }, result.status);
     }
     return c.json({ item: await ideaJsonWithCategory(db, result.idea) });
   })
@@ -377,9 +381,10 @@ export const ideasRoute = new Hono<AppEnv>()
       ideaId: id,
       preset: input.preset,
       model: input.model,
+      locale: resolveLocale(c.req.raw),
     });
     if (!result.ok) {
-      return c.json({ error: result.error }, result.status);
+      return c.json({ error: result.error, code: result.code }, result.status);
     }
     const row = await getIdeaRow(db, id);
     if (!row) {
@@ -424,9 +429,10 @@ export const ideasRoute = new Hono<AppEnv>()
       body,
       preset: typeof payload.preset === "string" ? payload.preset : undefined,
       model: typeof payload.model === "string" ? payload.model : undefined,
+      locale: resolveLocale(c.req.raw),
     });
     if (!result.ok) {
-      return c.json({ error: result.error }, result.status);
+      return c.json({ error: result.error, code: result.code }, result.status);
     }
     return c.json({ items: result.messages.map(chatMessageJson) });
   })
@@ -444,9 +450,10 @@ export const ideasRoute = new Hono<AppEnv>()
       preset: input.preset,
       model: input.model,
       typesafeApiKey: typesafeApiKeyFromEnv(c.env),
+      locale: resolveLocale(c.req.raw),
     });
     if (!result.ok) {
-      return c.json({ error: result.error }, result.status);
+      return c.json({ error: result.error, code: result.code }, result.status);
     }
     return c.json({ item: await ideaJsonWithCategory(db, result.idea) });
   });

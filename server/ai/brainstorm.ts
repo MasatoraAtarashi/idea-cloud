@@ -11,14 +11,24 @@ import { listCommentsForIdea, type IdeaComment } from "../../db/comments";
 import type { Db } from "../../db/client";
 import { errorClass, logDiag } from "../diag";
 import { resolveAiRun, type ResearchAi } from "./research";
+import { writeInLanguage } from "./language";
+import { aiFailure, type AiFailure } from "./errors";
+import type { Locale } from "../../app/i18n/locale";
 
 export const BRAINSTORM_FAIL_MESSAGE = "ブレストに失敗しました。時間をおいて再度お試しください。";
 
-export const BRAINSTORM_SYSTEM_PROMPT = [
-  "あなたはアイデアを広げるブレスト相手です。ウェブ検索はしません。",
-  "与えられたタイトル・本文・コメントだけを読み、日本語で具体的な展開を書いてください。",
-  "見出しは「切り口」「別案」「次の問い」「関連する方向」の4つ。前置きや締めの文は不要です。",
-].join("");
+/** Brainstorm notes are displayed as stored, so the whole note follows the reader. */
+export function brainstormSystemPrompt(locale?: Locale): string {
+  return [
+    "あなたはアイデアを広げるブレスト相手です。ウェブ検索はしません。",
+    "与えられたタイトル・本文・コメントだけを読み、具体的な展開を書いてください。",
+    "見出しは「切り口」「別案」「次の問い」「関連する方向」にあたる4つ。前置きや締めの文は不要です。",
+    writeInLanguage(locale),
+  ].join("");
+}
+
+/** Japanese wording, kept for the tests and callers that pin it. */
+export const BRAINSTORM_SYSTEM_PROMPT = brainstormSystemPrompt("ja");
 
 const COMMENT_LIMIT = 8;
 const COMMENT_MAX_LEN = 400;
@@ -44,11 +54,12 @@ export async function generateBrainstormNotes(
   ai: ResearchAi,
   model: ResearchModelId,
   ideaText: string,
+  locale?: Locale,
 ): Promise<string> {
   const run = resolveAiRun(ai);
   const result = await run(model, {
     messages: [
-      { role: "system", content: BRAINSTORM_SYSTEM_PROMPT },
+      { role: "system", content: brainstormSystemPrompt(locale) },
       { role: "user", content: ideaText },
     ],
     max_tokens: 768,
@@ -60,9 +71,7 @@ export async function generateBrainstormNotes(
   return text;
 }
 
-export type BrainstormIdeaResult =
-  | { ok: true; brainstorm: IdeaBrainstorm }
-  | { ok: false; status: 400 | 404 | 409 | 502; error: string };
+export type BrainstormIdeaResult = { ok: true; brainstorm: IdeaBrainstorm } | AiFailure;
 
 export async function brainstormIdea(opts: {
   db: Db;
@@ -70,6 +79,8 @@ export async function brainstormIdea(opts: {
   ideaId: number;
   preset?: string | null;
   model?: string | null;
+  /** Language the notes are written in. Defaults to Japanese. */
+  locale?: Locale;
 }): Promise<BrainstormIdeaResult> {
   const resolved = resolveResearchModel({
     preset: opts.preset,
@@ -77,12 +88,12 @@ export async function brainstormIdea(opts: {
     defaultPreset: DEFAULT_BRAINSTORM_PRESET,
   });
   if (!resolved.ok) {
-    return { ok: false, status: 400, error: resolved.error };
+    return aiFailure(400, "badRequest", resolved.error);
   }
 
   const idea = await getIdeaRow(opts.db, opts.ideaId);
   if (!idea) {
-    return { ok: false, status: 404, error: "見つかりません" };
+    return aiFailure(404, "notFound", "見つかりません");
   }
   if (!canRunIdeaAi(asStage(idea.stage))) {
     logDiag("info", "ai brainstorm", {
@@ -92,7 +103,7 @@ export async function brainstormIdea(opts: {
       ideaId: idea.id,
       status: 409,
     });
-    return { ok: false, status: 409, error: BRAINSTORM_ARCHIVE_ERROR };
+    return aiFailure(409, "archived", BRAINSTORM_ARCHIVE_ERROR);
   }
 
   const comments = await listCommentsForIdea(opts.db, idea.id);
@@ -110,7 +121,7 @@ export async function brainstormIdea(opts: {
   });
   let notes: string;
   try {
-    notes = await generateBrainstormNotes(opts.ai, resolved.model, ideaText);
+    notes = await generateBrainstormNotes(opts.ai, resolved.model, ideaText, opts.locale);
   } catch (error) {
     logDiag("warn", "workers ai call", {
       step: "brainstorm",
@@ -120,7 +131,7 @@ export async function brainstormIdea(opts: {
       model: resolved.model,
       error: errorClass(error),
     });
-    return { ok: false, status: 502, error: BRAINSTORM_FAIL_MESSAGE };
+    return aiFailure(502, "failed", BRAINSTORM_FAIL_MESSAGE);
   }
 
   const saved = await insertIdeaBrainstorm(opts.db, idea.id, {

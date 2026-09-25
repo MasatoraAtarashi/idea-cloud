@@ -189,7 +189,11 @@ describe("ideas discuss API", () => {
       body: JSON.stringify({ body: "全部まとめて詳しく説明して" }),
     });
     expect(res.status).toBe(502);
-    expect((await res.json()) as { error: string }).toEqual({ error: DISCUSS_NO_ROOM_MESSAGE });
+    // `code` is what the UI localizes from; `error` stays Japanese for API clients.
+    expect((await res.json()) as { error: string; code: string }).toEqual({
+      error: DISCUSS_NO_ROOM_MESSAGE,
+      code: "noRoom",
+    });
 
     // The user turn is still on the thread so nothing is retyped.
     const listed = await api(`/ideas/${id}/discussions`);

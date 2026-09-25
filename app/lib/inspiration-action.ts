@@ -10,6 +10,7 @@ import {
   urlsDiffer,
 } from "../../db/inspirations";
 import { brainstormIdea } from "../../server/ai/brainstorm";
+import { aiErrorMessage } from "./idea-ai";
 import { scheduleCreateEvaluation } from "../../server/ai/evaluate";
 import { bindResearchAi } from "../../server/ai/research";
 import { resolveCreateTags, sanitizeTags, USER_TAG_MAX } from "../../server/ai/tags";
@@ -79,7 +80,7 @@ async function createIdeaFromInspiration(
   const typesafeApiKey = typesafeApiKeyFromEnv(env);
   const premium = context.plan === "premium";
   const resolvedTags = premium
-    ? await resolveCreateTags({ ai, text, tags, typesafeApiKey })
+    ? await resolveCreateTags({ ai, text, tags, typesafeApiKey, locale: context.locale })
     : sanitizeTags(tags, USER_TAG_MAX);
   const created = await insertIdea(db, text, {
     tags: resolvedTags,
@@ -94,14 +95,26 @@ async function createIdeaFromInspiration(
       ideaId: created.id,
       stage: created.stage,
       typesafeApiKey,
+      locale: context.locale,
     });
   }
   if (!premium || String(form.get("brainstorm") ?? "") !== "1") {
     return redirect(`/app/ideas/${created.id}`);
   }
-  const result = await brainstormIdea({ db, ai, ideaId: created.id, preset: "", model: "" });
+  const result = await brainstormIdea({
+    db,
+    ai,
+    ideaId: created.id,
+    preset: "",
+    model: "",
+    locale: context.locale,
+  });
   if (!result.ok) {
-    return redirect(`/app/ideas/${created.id}?brainstormError=${encodeURIComponent(result.error)}`);
+    return redirect(
+      `/app/ideas/${created.id}?brainstormError=${encodeURIComponent(
+        aiErrorMessage(dictionary(context.locale), "brainstorm", result.code),
+      )}`,
+    );
   }
   return redirect(`/app/ideas/${created.id}#brainstorm`);
 }
@@ -203,10 +216,13 @@ export async function inspirationDetailAction({
       ideaId: created.id,
       preset: String(form.get("preset") ?? ""),
       model: String(form.get("model") ?? ""),
+      locale: context.locale,
     });
     if (!result.ok) {
       return redirect(
-        `/app/ideas/${created.id}?brainstormError=${encodeURIComponent(result.error)}`,
+        `/app/ideas/${created.id}?brainstormError=${encodeURIComponent(
+          aiErrorMessage(dictionary(context.locale), "brainstorm", result.code),
+        )}`,
       );
     }
     return redirect(`/app/ideas/${created.id}#brainstorm`);

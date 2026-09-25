@@ -12,26 +12,43 @@ import { errorClass, logDiag, statusFromError } from "../diag";
 import { evaluateIdeaWithJev } from "./jev-evaluate";
 import { resolveAiRun, type ResearchAi } from "./research";
 import { hasTypesafeApiKey } from "./typesafe";
+import { writeInLanguageKeepingHeadings } from "./language";
+import { aiFailure, type AiFailure } from "./errors";
+import { EVALUATION_SECTION_LABELS } from "../../app/lib/evaluation-notes";
+import type { Locale } from "../../app/i18n/locale";
 
 export const EVALUATE_FAIL_MESSAGE = "AI評価に失敗しました。時間をおいて再度お試しください。";
 
-export const EVALUATE_SYSTEM_PROMPT = [
-  "あなたはアイデアの評価相手です。ウェブ検索はしません。",
-  "与えられたタイトルと本文だけを読み、日本語で短く批評してください。",
-  "見出しは「強み」「リスク」「新規性」「次の一手」の4つ。各見出しの下は、小数や内部スコアを使わず、短い日本語の箇条書きにしてください。",
-  "前置きや締めの文は不要です。",
-  "最後の行は必ず「スコア: N」とし、Nは1から5の整数だけにしてください。",
-].join("");
+/**
+ * Unlike research and brainstorm, this note is parsed back out again
+ * (app/lib/evaluation-notes.ts), so the four headings and the score line stay
+ * Japanese as storage keys while the prose follows the reader. The UI never
+ * shows those headings raw — it renders `t.idea.evaluation.section.*`.
+ */
+export function evaluateSystemPrompt(locale?: Locale): string {
+  return [
+    "あなたはアイデアの評価相手です。ウェブ検索はしません。",
+    "与えられたタイトルと本文だけを読み、短く批評してください。",
+    "見出しは「強み」「リスク」「新規性」「次の一手」の4つ。各見出しの下は、小数や内部スコアを使わず、短い箇条書きにしてください。",
+    "前置きや締めの文は不要です。",
+    "最後の行は必ず「スコア: N」とし、Nは1から5の整数だけにしてください。",
+    writeInLanguageKeepingHeadings(locale, EVALUATION_SECTION_LABELS),
+  ].join("");
+}
+
+/** Japanese wording, kept for the tests and callers that pin it. */
+export const EVALUATE_SYSTEM_PROMPT = evaluateSystemPrompt("ja");
 
 export async function generateAiEvaluation(
   ai: ResearchAi,
   model: ResearchModelId,
   ideaText: string,
+  locale?: Locale,
 ): Promise<string> {
   const run = resolveAiRun(ai);
   const result = await run(model, {
     messages: [
-      { role: "system", content: EVALUATE_SYSTEM_PROMPT },
+      { role: "system", content: evaluateSystemPrompt(locale) },
       { role: "user", content: ideaText },
     ],
     max_tokens: 512,
@@ -43,8 +60,7 @@ export async function generateAiEvaluation(
   return text;
 }
 
-export type EvaluateIdeaResult =
-  { ok: true; idea: Idea } | { ok: false; status: 400 | 404 | 409 | 502; error: string };
+export type EvaluateIdeaResult = { ok: true; idea: Idea } | AiFailure;
 
 export async function evaluateIdea(opts: {
   db: Db;
@@ -53,10 +69,12 @@ export async function evaluateIdea(opts: {
   preset?: string | null;
   model?: string | null;
   typesafeApiKey?: string;
+  /** Language the evaluation prose is written in. Defaults to Japanese. */
+  locale?: Locale;
 }): Promise<EvaluateIdeaResult> {
   const idea = await getIdeaRow(opts.db, opts.ideaId);
   if (!idea) {
-    return { ok: false, status: 404, error: "見つかりません" };
+    return aiFailure(404, "notFound", "見つかりません");
   }
   if (!canRunIdeaAi(asStage(idea.stage))) {
     logDiag("info", "ai evaluate", {
@@ -66,7 +84,7 @@ export async function evaluateIdea(opts: {
       ideaId: idea.id,
       status: 409,
     });
-    return { ok: false, status: 409, error: EVALUATE_ARCHIVE_ERROR };
+    return aiFailure(409, "archived", EVALUATE_ARCHIVE_ERROR);
   }
 
   const hasTypesafeKey = Boolean(opts.typesafeApiKey?.trim());
@@ -80,7 +98,7 @@ export async function evaluateIdea(opts: {
   });
   if (hasTypesafeApiKey(opts.typesafeApiKey)) {
     try {
-      const jev = await evaluateIdeaWithJev(opts.typesafeApiKey, ideaText);
+      const jev = await evaluateIdeaWithJev(opts.typesafeApiKey, ideaText, opts.locale);
       const saved = await saveAiEvaluation(opts.db, idea.id, {
         score: jev.score,
         notes: jev.notes,
@@ -113,12 +131,12 @@ export async function evaluateIdea(opts: {
     defaultPreset: DEFAULT_EVALUATE_PRESET,
   });
   if (!resolved.ok) {
-    return { ok: false, status: 400, error: resolved.error };
+    return aiFailure(400, "badRequest", resolved.error);
   }
 
   let notes: string;
   try {
-    notes = await generateAiEvaluation(opts.ai, resolved.model, ideaText);
+    notes = await generateAiEvaluation(opts.ai, resolved.model, ideaText, opts.locale);
   } catch (error) {
     logDiag("warn", "workers ai call", {
       step: "evaluate",
@@ -128,7 +146,7 @@ export async function evaluateIdea(opts: {
       model: resolved.model,
       error: errorClass(error),
     });
-    return { ok: false, status: 502, error: EVALUATE_FAIL_MESSAGE };
+    return aiFailure(502, "failed", EVALUATE_FAIL_MESSAGE);
   }
 
   const saved = await saveAiEvaluation(opts.db, idea.id, {
@@ -169,6 +187,8 @@ export function scheduleCreateEvaluation(opts: {
   ideaId: number;
   stage: string;
   typesafeApiKey?: string;
+  /** Language of whoever created the idea. Defaults to Japanese. */
+  locale?: Locale;
 }): void {
   const hasTypesafeKey = Boolean(opts.typesafeApiKey?.trim());
   if (!canRunIdeaAi(asStage(opts.stage))) {
@@ -204,6 +224,7 @@ async function runCreateEvaluation(opts: {
   ai: ResearchAi;
   ideaId: number;
   typesafeApiKey?: string;
+  locale?: Locale;
 }): Promise<void> {
   try {
     const result = await evaluateIdea({
@@ -211,6 +232,7 @@ async function runCreateEvaluation(opts: {
       ai: opts.ai,
       ideaId: opts.ideaId,
       typesafeApiKey: opts.typesafeApiKey,
+      locale: opts.locale,
     });
     if (!result.ok) {
       logDiag("warn", "create auto-evaluate", {

@@ -84,6 +84,7 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
         text,
         tags,
         typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
+        locale: context.locale,
       })
     : sanitizeTags(tags, USER_TAG_MAX);
   const created = await insertIdea(db, text, {
@@ -100,6 +101,7 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
       ideaId: created.id,
       stage: created.stage,
       typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
+      locale: context.locale,
     });
   }
   return redirect(LIST_PATH);

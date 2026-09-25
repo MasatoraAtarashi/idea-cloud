@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs } from "react-router";
 import { createDb } from "../../db/client";
 import { dictionary } from "../i18n/dictionary";
+import { aiErrorMessage } from "./idea-ai";
 import { bindResearchAi, researchIdea } from "../../server/ai/research";
 
 export type ResearchIdeaActionData = {
@@ -27,9 +28,13 @@ export async function researchIdeaAction({ request, params, context }: ActionFun
     preset: String(form.get("preset") ?? ""),
     model: String(form.get("model") ?? ""),
     searchApiKey: context.cloudflare.env.SEARCH_API_KEY,
+    locale: context.locale,
   });
   if (!result.ok) {
-    return { error: result.error, intent: "research" } satisfies ResearchIdeaActionData;
+    return {
+      error: aiErrorMessage(dictionary(context.locale), "research", result.code),
+      intent: "research",
+    } satisfies ResearchIdeaActionData;
   }
   return { ok: true, intent: "research" } satisfies ResearchIdeaActionData;
 }

@@ -156,7 +156,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
     });
     if (!result.ok) {
       return c.json(
-        { error: result.error, item: { id: created.id, title: created.title } },
+        { error: result.error, code: result.code, item: { id: created.id, title: created.title } },
         result.status,
       );
     }

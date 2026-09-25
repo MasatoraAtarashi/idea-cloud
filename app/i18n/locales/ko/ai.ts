@@ -1,3 +1,8 @@
+import type {
+  EvaluateNextId,
+  JevPursueLevel,
+  JevScoreLevel,
+} from "../../../../server/ai/jev-evaluate";
 import type { Dictionary } from "../../dictionary";
 
 export const ai: Dictionary["ai"] = {
@@ -21,6 +26,18 @@ export const ai: Dictionary["ai"] = {
   },
 
   /** Bad or unknown idea id in an AI action. */
+
+  failure: {
+    research: "리서치에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+    brainstorm: "브레인스토밍에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+    evaluate: "AI 평가에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+    discuss: "상담에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+    noRoom: "생각하는 동안 응답 한도에 이르러 답을 끝내지 못했습니다. 질문을 짧게 나눠 보세요.",
+    badRequest: "설정이 올바르지 않습니다. 프리셋을 다시 선택해 주세요.",
+    empty: "입력해 주세요",
+    tooLong: "너무 깁니다",
+  },
+
   notFound: "찾을 수 없습니다",
 
   menu: {
@@ -92,6 +109,66 @@ export const ai: Dictionary["ai"] = {
   billing: {
     notReady: "결제는 준비 중입니다.",
     failed: "결제 페이지를 열지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  },
+
+  /**
+   * Stored Jev evaluation notes (`server/ai/jev-evaluate.ts`). Display copy only:
+   * the four headings, the `スコア:` line and the Japanese values sent to / read
+   * back from the Jev API stay Japanese, so old notes keep parsing.
+   */
+  jev: {
+    /** Axis labels in the 強み / リスク bullets. */
+    axis: {
+      impact: "가치",
+      feasibility: "실현성",
+      clarity: "명확성",
+      risk: "크기",
+      pursue: "추진 가치",
+    },
+
+    /** No legend value came back for an axis. */
+    noJudgement: "판정 없음",
+
+    /** 進める価値, from the `pursue` noul. */
+    pursue: {
+      high: "높음",
+      normal: "보통",
+      low: "낮음",
+      unknown: "불명",
+    } satisfies Record<JevPursueLevel, string>,
+
+    /** Jev legend value (Japanese, the API contract) -> what the reader sees. */
+    level: {
+      既存の延長: "기존의 연장",
+      一部新しい: "일부 새로움",
+      明確に新しい: "분명히 새로움",
+      大きく新しい: "크게 새로움",
+      小さい: "작음",
+      ある: "있음",
+      大きい: "큼",
+      非常に大きい: "매우 큼",
+      かなり困難: "상당히 어려움",
+      難しいが可能: "어렵지만 가능",
+      現実的: "현실적",
+      容易: "쉬움",
+      曖昧: "모호함",
+      方向は見える: "방향은 보임",
+      具体的: "구체적",
+      すぐ動ける: "바로 착수 가능",
+      低い: "낮음",
+      中程度: "보통",
+      高い: "높음",
+      致命的: "치명적",
+    } satisfies Record<JevScoreLevel, string>,
+
+    /** 次の一手. Keyed by the choice id; the Japanese criteria text is unchanged. */
+    next: {
+      research: "리서치로 가설을 검증",
+      age: "묵혀서 숙성시키기",
+      try: "작게 시도",
+      select: "채택으로 진행",
+      archive: "보류",
+    } satisfies Record<EvaluateNextId, string>,
   },
 
   page: {

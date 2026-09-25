@@ -22,20 +22,30 @@ import type { Db } from "../../db/client";
 import { errorClass, logDiag } from "../diag";
 import { resolveAiRun, type ResearchAi } from "./research";
 import { JA } from "../../app/i18n/dictionary";
+import { writeInLanguage } from "./language";
+import { aiFailure, type AiFailure } from "./errors";
+import type { Locale } from "../../app/i18n/locale";
 
 export const DISCUSS_FAIL_MESSAGE = "相談の返信に失敗しました。時間をおいて再度お試しください。";
 
 export const DISCUSS_LEGAL_DISCLAIMER =
   "※これは一般的な思考の補助です。法律の助言ではありません。判断が必要なら専門家に確認してください。";
 
-export const DISCUSS_SYSTEM_PROMPT = [
-  "あなたは一つのアイデアについて話す相談相手です。ウェブ検索はしません。",
-  "渡されたアイデアのタイトル・本文・段階・タグ・評価メモ・コメントと、これまでの会話だけを読んで、日本語で具体的に答えてください。",
-  "出典やURLを作らないでください。知らないことは知らないと書いてください。",
-  "法律・規制・契約・著作権の質問には、一般的な思考の補助として答え、断定的な違法や合法の結論は出さないでください。",
-  "その種の質問では、法律の助言ではないことを短く添えてください。",
-  "答えは日本語で600字以内にまとめ、途中で切れないよう必ず最後まで書き切ってください。",
-].join("");
+/** Free prose shown as stored, so the whole reply follows the reader. */
+export function discussSystemPrompt(locale?: Locale): string {
+  return [
+    "あなたは一つのアイデアについて話す相談相手です。ウェブ検索はしません。",
+    "渡されたアイデアのタイトル・本文・段階・タグ・評価メモ・コメントと、これまでの会話だけを読んで、具体的に答えてください。",
+    "出典やURLを作らないでください。知らないことは知らないと書いてください。",
+    "法律・規制・契約・著作権の質問には、一般的な思考の補助として答え、断定的な違法や合法の結論は出さないでください。",
+    "その種の質問では、法律の助言ではないことを短く添えてください。",
+    "答えは600字程度以内にまとめ、途中で切れないよう必ず最後まで書き切ってください。",
+    writeInLanguage(locale),
+  ].join("");
+}
+
+/** Japanese wording, kept for the tests and callers that pin it. */
+export const DISCUSS_SYSTEM_PROMPT = discussSystemPrompt("ja");
 
 export const DISCUSS_NO_ROOM_MESSAGE =
   "考えているうちに返信の上限に達して、答えを書き切れませんでした。質問を短く区切って試してください。";
@@ -98,6 +108,7 @@ export async function generateDiscussReply(
     context: string;
     history: { role: IdeaChatRole; body: string }[];
     userText: string;
+    locale?: Locale;
   },
 ): Promise<string> {
   const history = opts.history.slice(-HISTORY_LIMIT).map((message) => ({
@@ -107,7 +118,7 @@ export async function generateDiscussReply(
   const run = resolveAiRun(ai);
   const result = await run(model, {
     messages: [
-      { role: "system", content: `${DISCUSS_SYSTEM_PROMPT}\n\n${opts.context}` },
+      { role: "system", content: `${discussSystemPrompt(opts.locale)}\n\n${opts.context}` },
       ...history,
       { role: "user", content: opts.userText },
     ],
@@ -125,9 +136,7 @@ export async function generateDiscussReply(
   return truncate(ensureLegalDisclaimer(opts.userText, withNote), REPLY_MAX);
 }
 
-export type DiscussIdeaResult =
-  | { ok: true; messages: IdeaChatMessage[] }
-  | { ok: false; status: 400 | 404 | 409 | 502; error: string };
+export type DiscussIdeaResult = { ok: true; messages: IdeaChatMessage[] } | AiFailure;
 
 export async function discussIdea(opts: {
   db: Db;
@@ -136,13 +145,15 @@ export async function discussIdea(opts: {
   body: string;
   preset?: string | null;
   model?: string | null;
+  /** Language the reply is written in. Defaults to Japanese. */
+  locale?: Locale;
 }): Promise<DiscussIdeaResult> {
   const userText = opts.body.trim();
   if (!userText) {
-    return { ok: false, status: 400, error: "入力してください" };
+    return aiFailure(400, "empty", "入力してください");
   }
   if (userText.length > DISCUSS_BODY_MAX) {
-    return { ok: false, status: 400, error: "長すぎます" };
+    return aiFailure(400, "tooLong", "長すぎます");
   }
 
   const resolved = resolveResearchModel({
@@ -151,12 +162,12 @@ export async function discussIdea(opts: {
     defaultPreset: DEFAULT_DISCUSS_PRESET,
   });
   if (!resolved.ok) {
-    return { ok: false, status: 400, error: resolved.error };
+    return aiFailure(400, "badRequest", resolved.error);
   }
 
   const idea = await getIdeaRow(opts.db, opts.ideaId);
   if (!idea) {
-    return { ok: false, status: 404, error: "見つかりません" };
+    return aiFailure(404, "notFound", "見つかりません");
   }
   if (!canRunIdeaAi(asStage(idea.stage))) {
     logDiag("info", "ai discuss", {
@@ -166,7 +177,7 @@ export async function discussIdea(opts: {
       ideaId: idea.id,
       status: 409,
     });
-    return { ok: false, status: 409, error: DISCUSS_ARCHIVE_ERROR };
+    return aiFailure(409, "archived", DISCUSS_ARCHIVE_ERROR);
   }
 
   const prior = await listChatMessagesForIdea(opts.db, idea.id);
@@ -195,6 +206,7 @@ export async function discussIdea(opts: {
           : [],
       ),
       userText,
+      locale: opts.locale,
     });
   } catch (error) {
     const noRoom = error instanceof DiscussNoRoomError;
@@ -206,11 +218,9 @@ export async function discussIdea(opts: {
       model: resolved.model,
       error: errorClass(error),
     });
-    return {
-      ok: false,
-      status: 502,
-      error: noRoom ? DISCUSS_NO_ROOM_MESSAGE : DISCUSS_FAIL_MESSAGE,
-    };
+    return noRoom
+      ? aiFailure(502, "noRoom", DISCUSS_NO_ROOM_MESSAGE)
+      : aiFailure(502, "failed", DISCUSS_FAIL_MESSAGE);
   }
 
   const assistant = await insertIdeaChatMessage(opts.db, idea.id, {
