@@ -177,3 +177,35 @@ export const inspirations = sqliteTable("inspirations", {
 
 export type Inspiration = typeof inspirations.$inferSelect;
 export type NewInspiration = typeof inspirations.$inferInsert;
+
+/**
+ * Billing state written by the Stripe webhook, keyed by the Google email the
+ * user signs in with. Not a user table: no profile, no credentials, no rows for
+ * people who never paid. Stripe stays the source of truth; this is the cached
+ * answer to "may this email use the AI features right now".
+ */
+export const entitlements = sqliteTable("entitlements", {
+  email: text("email").primaryKey(),
+  plan: text("plan").notNull().default("free"),
+  /** Stripe subscription status verbatim: active / trialing / past_due / canceled / … */
+  status: text("status").notNull().default("inactive"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  /** ISO-8601 UTC. Access survives to here while a payment is retried. */
+  currentPeriodEnd: text("current_period_end"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export type Entitlement = typeof entitlements.$inferSelect;
+export type NewEntitlement = typeof entitlements.$inferInsert;
+
+/** Webhook idempotency. Stripe retries, and retries must not double-apply. */
+export const billingEvents = sqliteTable("billing_events", {
+  id: text("id").primaryKey(),
+  type: text("type").notNull(),
+  receivedAt: text("received_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});

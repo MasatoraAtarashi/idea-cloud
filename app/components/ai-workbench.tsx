@@ -14,6 +14,7 @@ import {
   type ResearchPreset,
 } from "../lib/research-models";
 import { shortModelName } from "./ai-format";
+import { PremiumUpsell } from "./premium-upsell";
 import {
   IdeaBrainstormControls,
   IdeaBrainstormNotes,
@@ -84,6 +85,7 @@ export function AiWorkbench({
   brainstormError,
   evaluateError,
   discussError,
+  premium,
 }: {
   idea: MockIdea;
   tab: IdeaDetailTab;
@@ -94,6 +96,7 @@ export function AiWorkbench({
   brainstormError?: string;
   evaluateError?: string;
   discussError?: string;
+  premium: boolean;
 }) {
   const [preset, setPreset] = useState<ResearchPreset>(DEFAULT_DISCUSS_PRESET);
   const counts: Record<IdeaDetailTab, number | null> = {
@@ -102,6 +105,23 @@ export function AiWorkbench({
     research: idea.researchNotes || idea.researchedAt ? 1 : 0,
     brainstorm: brainstorms.length || (idea.brainstormNotes ? 1 : 0),
   };
+
+  if (!premium) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center gap-2 px-4 pt-3 pb-2 lg:px-5 lg:pt-4 lg:pb-3">
+          <span
+            className="hidden h-[7px] w-[7px] rounded-full bg-accent lg:block"
+            aria-hidden="true"
+          />
+          <h2 className="hidden text-[13.5px] font-semibold lg:block">AI 作業台</h2>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 lg:px-5">
+          <PremiumUpsell />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

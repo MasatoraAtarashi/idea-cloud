@@ -35,6 +35,6 @@ export async function commentIdeaAction({
     return { error: "見つかりません", intent: "comment" } satisfies CommentIdeaActionData;
   }
 
-  await insertIdeaComment(db, ideaId, body, resolveCommentAuthor());
+  await insertIdeaComment(db, ideaId, body, resolveCommentAuthor(context.userEmail));
   return { ok: true, intent: "comment" } satisfies CommentIdeaActionData;
 }

@@ -1,8 +1,17 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useOutletContext } from "react-router";
+import { LOGOUT_PATH } from "../../auth/google-login";
+import type { AppData } from "./layout";
 import { MEMBERS, SESSION_USER } from "../../data/mock";
 import { initialsFromLabel } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
+import {
+  BILLING_CHECKOUT_PATH,
+  BILLING_PORTAL_PATH,
+  BILLING_STATUS_PATH,
+  startBilling,
+  type BillingStatus,
+} from "../../lib/billing";
 
 const SECTIONS = [
   { id: "members", group: "ワークスペース", label: "メンバーとアクセス" },
@@ -21,6 +30,7 @@ export function meta() {
 }
 
 export default function SettingsPage() {
+  const { userEmail, premium } = useOutletContext<AppData>();
   const [section, setSection] = useState<SectionId>("members");
 
   return (
@@ -65,16 +75,28 @@ export default function SettingsPage() {
         </nav>
       </aside>
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
-        {section === "members" ? <MembersPanel /> : <StubPanel section={section} />}
+        {section === "members" ? (
+          <MembersPanel userEmail={userEmail} />
+        ) : section === "profile" ? (
+          <ProfilePanel userEmail={userEmail} premium={premium} />
+        ) : (
+          <StubPanel section={section} />
+        )}
       </div>
     </div>
   );
 }
 
-function MembersPanel() {
+function MembersPanel({ userEmail }: { userEmail: string | null }) {
   const rows =
     MEMBERS.length === 0
-      ? [{ name: SESSION_USER.label, email: "", role: SESSION_USER.role }]
+      ? [
+          {
+            name: userEmail ?? SESSION_USER.label,
+            email: userEmail ?? "",
+            role: SESSION_USER.role,
+          },
+        ]
       : MEMBERS;
 
   return (
@@ -146,6 +168,115 @@ function MembersPanel() {
         </div>
         <p className="mt-2 text-[12px] text-muted-foreground">表示のみ。保存はまだありません。</p>
       </section>
+    </div>
+  );
+}
+
+function periodEndLabel(iso: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+}
+
+/**
+ * Plan and subscription. The row is read from `/api/billing` after mount rather
+ * than from the outlet so it reflects a checkout that just completed, and
+ * every money action hands off to a Stripe-hosted page.
+ */
+function BillingRow({ premium }: { premium: boolean }) {
+  const [status, setStatus] = useState<BillingStatus | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch(BILLING_STATUS_PATH, { headers: { accept: "application/json" } })
+      .then((response) => (response.ok ? (response.json() as Promise<BillingStatus>) : null))
+      .then((body) => {
+        if (live && body) setStatus(body);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  async function go(path: string) {
+    setPending(true);
+    setError(await startBilling(path));
+    setPending(false);
+  }
+
+  const isPremium = status ? status.plan === "premium" : premium;
+  const paidThrough = periodEndLabel(status?.currentPeriodEnd ?? null);
+
+  return (
+    <>
+      <p className="mt-3 text-[12px] text-muted-foreground">プラン</p>
+      <p className="mt-1 text-[13.5px] font-semibold">
+        {isPremium ? "プレミアム（AI機能あり）" : "フリー（AI機能なし）"}
+      </p>
+      {status?.comped ? (
+        <p className="mt-1 text-[12px] text-muted-foreground">
+          管理者による付与のため、支払いはありません。
+        </p>
+      ) : null}
+      {paidThrough ? (
+        <p className="mt-1 text-[12px] text-muted-foreground">
+          {status?.status === "canceled" ? "利用できるのは" : "次回更新"} {paidThrough}
+          {status?.status === "past_due" ? "（支払いを再試行中）" : ""}
+        </p>
+      ) : null}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {!isPremium ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => go(BILLING_CHECKOUT_PATH)}
+            className="ui-btn"
+          >
+            プレミアムにする
+          </button>
+        ) : null}
+        {status?.manageable ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => go(BILLING_PORTAL_PATH)}
+            className="ui-btn-secondary px-3"
+          >
+            支払い方法・解約
+          </button>
+        ) : null}
+      </div>
+      {error ? (
+        <p role="alert" className="mt-2 text-[12.5px] text-danger">
+          {error}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+/** The signed-in Google account. Membership lives in ACCESS_ALLOWED_EMAILS, not in D1. */
+function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premium: boolean }) {
+  return (
+    <div className="mx-auto max-w-2xl">
+      <h2 className="text-[16px] font-semibold">プロフィール</h2>
+      <div className="mt-4 rounded-[10px] border border-border p-4">
+        <p className="text-[12px] text-muted-foreground">ログイン中の Google アカウント</p>
+        <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? "不明"}</p>
+        <BillingRow premium={premium} />
+        <form method="post" action={LOGOUT_PATH} className="mt-4">
+          <button type="submit" className="ui-btn">
+            ログアウト
+          </button>
+        </form>
+      </div>
+      <p className="mt-3 text-[12px] text-muted-foreground">
+        名前とアイコンは Google の設定に従います。支払いは Stripe のページで完結します。
+      </p>
     </div>
   );
 }

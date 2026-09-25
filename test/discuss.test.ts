@@ -7,20 +7,19 @@ import { RESEARCH_PRESETS } from "../app/lib/research-models";
 import {
   DISCUSS_FAIL_MESSAGE,
   DISCUSS_LEGAL_DISCLAIMER,
+  DISCUSS_NO_ROOM_MESSAGE,
+  DISCUSS_TRUNCATED_NOTE,
   ensureLegalDisclaimer,
   formatDiscussContext,
 } from "../server/ai/discuss";
 import { flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { setTestAiRun } from "../server/ai/research";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 
@@ -53,6 +52,7 @@ function detailActionArgs(ideaId: number, fields: Record<string, string>): Actio
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }
@@ -134,6 +134,67 @@ describe("ideas discuss API", () => {
       "user",
       "assistant",
     ]);
+  });
+
+  it("gives the reply room and flags a cut-off answer", async () => {
+    let requested = 0;
+    setTestAiRun(async (_model, inputs) => {
+      requested = inputs.max_tokens ?? 0;
+      return {
+        response: "長い説明の途中でリ",
+        usage: { completion_tokens: inputs.max_tokens },
+      };
+    });
+    const id = await createIdea("打ち切りを見たい着想");
+    await flushScheduledCreateEvaluations();
+
+    const res = await api(`/ideas/${id}/discuss`, {
+      method: "POST",
+      body: JSON.stringify({ body: "この評価の理由を詳しく教えて" }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: { role: string; body: string }[] };
+    expect(requested).toBeGreaterThanOrEqual(2048);
+    expect(body.items[1]?.body).toContain(DISCUSS_TRUNCATED_NOTE);
+  });
+
+  it("leaves a complete answer untouched", async () => {
+    setTestAiRun(async () => ({
+      response: "こう考えると良いです。",
+      usage: { completion_tokens: 12 },
+    }));
+    const id = await createIdea("完走する着想");
+    await flushScheduledCreateEvaluations();
+
+    const res = await api(`/ideas/${id}/discuss`, {
+      method: "POST",
+      body: JSON.stringify({ body: "どう思う？" }),
+    });
+    const body = (await res.json()) as { items: { body: string }[] };
+    expect(body.items[1]?.body).toBe("こう考えると良いです。");
+  });
+
+  it("explains a cut-off that left no answer instead of a generic failure", async () => {
+    setTestAiRun(async (_model, inputs) => ({
+      // qwen3 can spend the whole budget on reasoning and return no text.
+      response: "",
+      choices: [{ finish_reason: "length", message: { content: "" } }],
+      usage: { completion_tokens: inputs.max_tokens },
+    }));
+    const id = await createIdea("考えすぎる着想");
+    await flushScheduledCreateEvaluations();
+
+    const res = await api(`/ideas/${id}/discuss`, {
+      method: "POST",
+      body: JSON.stringify({ body: "全部まとめて詳しく説明して" }),
+    });
+    expect(res.status).toBe(502);
+    expect((await res.json()) as { error: string }).toEqual({ error: DISCUSS_NO_ROOM_MESSAGE });
+
+    // The user turn is still on the thread so nothing is retyped.
+    const listed = await api(`/ideas/${id}/discussions`);
+    const body = (await listed.json()) as { items: { role: string }[] };
+    expect(body.items.map((item) => item.role)).toEqual(["user"]);
   });
 
   it("appends a disclaimer for legal questions and keeps the user turn when AI fails", async () => {

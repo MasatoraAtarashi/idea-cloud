@@ -7,15 +7,12 @@ import { RESEARCH_ARCHIVE_ERROR } from "../app/lib/idea-ai";
 import { flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { RESEARCH_FAIL_MESSAGE, setTestAiRun } from "../server/ai/research";
 import { setTestWebSearch } from "../server/ai/web-search";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 
@@ -327,6 +324,7 @@ function detailActionArgs(ideaId: number, fields: Record<string, string>): Actio
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }

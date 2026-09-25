@@ -16,6 +16,7 @@ import { InspirationDetailPreview } from "../../components/inspiration-preview";
 import { formatDateJa } from "../../lib/format";
 import { inspirationHeadline } from "../../lib/inspiration";
 import { INSPIRATIONS_PATH, inspirationDetailAction } from "../../lib/inspiration-action";
+import { confirmInspirationDelete } from "../../lib/inspiration-delete";
 import { useInstantPending } from "../../lib/use-instant-pending";
 import { createDb } from "../../../db/client";
 import { getInspirationRow, inspirationView } from "../../../db/inspirations";
@@ -71,6 +72,17 @@ function InspirationDetail({
   const refresh = useFetcher();
   const refreshing = refresh.state !== "idle";
   const { pending: refreshPending, hold: holdRefresh } = useInstantPending(refreshing);
+  const deleteFetcher = useFetcher();
+  const deleting = deleteFetcher.state !== "idle";
+  const { pending: deletePending, hold: holdDelete } = useInstantPending(deleting);
+
+  function handleDelete() {
+    if (!confirmInspirationDelete(inspirationHeadline(item))) return;
+    holdDelete();
+    const data = new FormData();
+    data.set("intent", "delete");
+    void deleteFetcher.submit(data, { method: "post" });
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-card">
@@ -96,6 +108,14 @@ function InspirationDetail({
             </button>
             <button type="button" onClick={() => setMaking(true)} className="ui-btn px-3">
               ＋ アイデアにする
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deletePending}
+              className="ui-btn-secondary px-3 text-danger"
+            >
+              {deletePending ? "削除中…" : "削除"}
             </button>
           </div>
         </div>

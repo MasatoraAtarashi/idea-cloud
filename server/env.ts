@@ -9,10 +9,37 @@ export type AppEnv = {
 
 declare global {
   interface Env {
-    // .dev.vars でローカル開発時にだけ定義される（本番では未定義）
+    /**
+     * localhost-only stand-in for a Google sign-in. `/api/auth/google` signs this
+     * email in directly when no Google client is configured (dev / e2e).
+     */
     LOCAL_DEV_USER_EMAIL?: string;
+    /** Google OAuth web client. `wrangler secret` / .dev.vars only. */
+    GOOGLE_CLIENT_ID?: string;
+    GOOGLE_CLIENT_SECRET?: string;
+    /** HMAC key for the session cookie. Required in production. */
+    SESSION_SECRET?: string;
+    /**
+     * Personal API token for the native app / scripts: `Authorization: Bearer`.
+     * Swapped for native Google Sign-In once a Workspace domain exists.
+     */
+    APP_API_TOKEN?: string;
+    /** Email the app token acts as. Defaults to a single-entry ACCESS_ALLOWED_EMAILS. */
+    APP_API_TOKEN_EMAIL?: string;
     /** Comma-separated emails. Second layer after Google identity. Empty = identity only. */
     ACCESS_ALLOWED_EMAILS?: string;
+    /**
+     * Comped / owner emails: always premium, no subscription needed. The paid
+     * path is the `entitlements` table written by the Stripe webhook.
+     * See server/billing/plan.ts and docs/spec/billing.md.
+     */
+    PREMIUM_EMAILS?: string;
+    /** Stripe restricted/secret key. `wrangler secret` only. */
+    STRIPE_SECRET_KEY?: string;
+    /** Price id of the single premium subscription (`price_...`). */
+    STRIPE_PRICE_ID?: string;
+    /** Signing secret of the `/api/billing/webhook` endpoint (`whsec_...`). */
+    STRIPE_WEBHOOK_SECRET?: string;
     /** 32 バイト hex。未配線（フィールド暗号化スタブ用） */
     FIELD_ENCRYPTION_KEY?: string;
     /** TypeSafe Jev (System One). When set, auto-tags and AI評価 prefer Jev. */

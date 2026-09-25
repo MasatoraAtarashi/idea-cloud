@@ -39,3 +39,9 @@ global_settings:
     - path: wrangler.vitest.jsonc
       rule_id: SECRET-Secret-Keyword
       reason: Vitest fixture MCP_API_KEY is a local test value, not a production credential.
+    - path: server/auth/session.ts
+      rule_id: SECRET-Secret-Keyword
+      reason: Localhost-only HMAC signing key used when SESSION_SECRET is unset. Production never falls back to this value.
+    - path: test/premium.test.ts
+      rule_id: SECRET-Secret-Keyword
+      reason: Stripe webhook fixtures — the vitest `whsec_test` value and a deliberately wrong secret used to assert that a forged signature is rejected. Neither is a real credential.

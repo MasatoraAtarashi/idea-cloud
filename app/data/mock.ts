@@ -127,7 +127,7 @@ export interface MockMember {
   role: "owner" | "member";
 }
 
-/** Signed-in session placeholder. Do not invent teammate names. */
+/** Fallback label when no session email is available. Do not invent teammate names. */
 export const SESSION_USER = {
   id: "mock-user",
   label: "ログイン中",
@@ -139,7 +139,7 @@ export type CommentAuthor = {
   name: string;
 };
 
-/** Mock auth: Access email when the API has one, else the session placeholder. */
+/** Signed-in Google email when there is a session, else the placeholder. */
 export function resolveCommentAuthor(email?: string | null): CommentAuthor {
   const trimmed = email?.trim();
   if (trimmed) {

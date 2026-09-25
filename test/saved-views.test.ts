@@ -3,15 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { ActionFunctionArgs } from "react-router";
 import { listViewAction } from "../app/lib/list-view-action";
 import { listViewHref } from "../app/lib/list-view-search";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 
@@ -31,6 +28,7 @@ function listActionArgs(search: string, fields: Record<string, string>): ActionF
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }

@@ -28,17 +28,22 @@ export default defineConfig({
     timeout: 180_000,
   },
   projects: [
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "mobile",
+      dependencies: ["setup"],
       use: {
         ...devices["iPhone 13"],
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
+        storageState: "e2e/.auth/state.json",
       },
     },
     {
       name: "desktop",
+      dependencies: ["setup"],
       use: {
+        storageState: "e2e/.auth/state.json",
         viewport: { width: 1280, height: 800 },
         userAgent:
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

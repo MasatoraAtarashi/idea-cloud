@@ -10,6 +10,10 @@ import { listSavedViews, savedViewJson } from "../../../db/saved-views";
 
 export type AppData = {
   categories: IdeaCategory[];
+  /** Signed-in Google email from the session cookie. */
+  userEmail: string | null;
+  /** True when the signed-in email is entitled to the AI features. */
+  premium: boolean;
 };
 
 export async function loader({ context }: LoaderFunctionArgs) {
@@ -28,15 +32,21 @@ export async function loader({ context }: LoaderFunctionArgs) {
     ideas: [...ideas]
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
       .map((idea) => ({ id: idea.id, title: idea.title, stage: idea.stage })),
+    userEmail: context.userEmail,
   };
-  return { categories, nav };
+  return {
+    categories,
+    nav,
+    userEmail: context.userEmail,
+    premium: context.plan === "premium",
+  };
 }
 
 export default function AppLayout() {
-  const { categories, nav } = useLoaderData<typeof loader>();
+  const { categories, nav, userEmail, premium } = useLoaderData<typeof loader>();
   return (
     <AppShell categories={categories} nav={nav}>
-      <Outlet context={{ categories } satisfies AppData} />
+      <Outlet context={{ categories, userEmail, premium } satisfies AppData} />
     </AppShell>
   );
 }

@@ -7,15 +7,12 @@ import {
   commentComposerResetOnSubmit,
 } from "../app/lib/comment-composer";
 import { COMMENT_BODY_MAX } from "../db/comments";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 
@@ -44,6 +41,7 @@ function detailActionArgs(ideaId: number, fields: Record<string, string>): Actio
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }

@@ -18,9 +18,9 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 
 ## Access vs in-app OAuth
 
-- **This deploy** can sit behind **Cloudflare Access** (Zero Trust) once a hostname exists. Access is deferred until that URL is copied from a real deploy.
-- **In-app Google OAuth** is the product auth model. It is not a substitute for Access, and Access is not the OAuth implementation. See [security.md](./security.md) and [oauth-swap.md](./oauth-swap.md).
-- **This UI pass:** login is a Google-looking mock. Template Access middleware still guards `/api/*`. It comes out in the OAuth swap.
+- **In-app Google OAuth is the gate** and it is implemented ([oauth-swap.md](./oauth-swap.md)). The template Access middleware has been removed.
+- **Cloudflare Access is optional and secondary.** A native app cannot hold an Access session, so if Zero Trust is ever attached it must cover pages only and bypass `/api` and `/mcp`.
+- Before the first real sign-in, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, and `ACCESS_ALLOWED_EMAILS` as Worker secrets, and add `https://<host>/api/auth/google/callback` to the Google OAuth client.
 
 ## GitHub secrets required
 
@@ -29,8 +29,7 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 | `CLOUDFLARE_API_TOKEN`  | Wrangler deploy. Least privilege: Workers Scripts **Edit**, plus D1 **Edit** so CI can apply migrations |
 | `CLOUDFLARE_ACCOUNT_ID` | Account for that token                                                                                  |
 
-Optional later: wrangler secrets `ACCESS_ALLOWED_EMAILS`, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; without it HTML fallbacks often return nothing from Workers). OAuth swap later: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
-
+Required before sign-in works in production: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET` (`openssl rand -hex 32`), `ACCESS_ALLOWED_EMAILS`. Optional later: `APP_API_TOKEN` (+ `APP_API_TOKEN_EMAIL`) for the native app, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; without it HTML fallbacks often return nothing from Workers).
 Do not invent or commit these values. Production: GitHub Actions secrets for deploy; `wrangler secret put` for Worker runtime secrets.
 
 ## D1
@@ -76,7 +75,7 @@ Do this only once a real Worker hostname is known. Until then Access stays defer
 2. Include the production hostname from the deploy log / dashboard.
 3. Identity: Google.
 4. Policy: allow listed emails only (Atarashi Lab).
-5. **Path policy:** `/` and `/login` are the public login gate. Require Access (or later in-app OAuth) for `/app` and `/api`. Bypass `/mcp` so MCP clients can present `Authorization: Bearer` (`MCP_API_KEY`) without an Access session.
+5. **Path policy:** `/` and `/login` are the public login gate; `/app` may be covered. Bypass `/api` and `/mcp` — the app's own gate handles them, and Access would break the native app and MCP clients.
 6. After Access, optional app-level `ACCESS_ALLOWED_EMAILS` matches the same set.
 
 ## First successful URL

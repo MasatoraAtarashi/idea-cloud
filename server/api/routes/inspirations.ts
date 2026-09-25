@@ -7,6 +7,7 @@ import {
   INSPIRATION_MEMO_MAX,
   INSPIRATION_TITLE_MAX,
   INSPIRATION_URL_MAX,
+  deleteInspiration,
   getInspirationRow,
   ideaTextFromInspiration,
   inspirationJson,
@@ -24,6 +25,7 @@ import {
 } from "../../../app/lib/inspiration-save";
 import { brainstormIdea } from "../../ai/brainstorm";
 import { bindResearchAi } from "../../ai/research";
+import { requirePremium } from "../../middleware/premium";
 import type { AppEnv } from "../../env";
 import { enrichInspirationOgp } from "../../ogp/enrich";
 
@@ -116,6 +118,15 @@ export const inspirationsRoute = new Hono<AppEnv>()
       return c.json({ item: inspirationJson(enriched) });
     },
   )
+  .delete("/:id", zValidator("param", idParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const db = createDb(c.env.DB);
+    const deleted = await deleteInspiration(db, id);
+    if (!deleted) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+    return c.json({ ok: true });
+  })
   .post("/:id/ogp", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const db = createDb(c.env.DB);
@@ -127,7 +138,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
     const titled = await replaceDerivedTitleFromOgp(db, enriched);
     return c.json({ item: inspirationJson(titled) });
   })
-  .post("/:id/brainstorm", zValidator("param", idParamSchema), async (c) => {
+  .post("/:id/brainstorm", requirePremium, zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const db = createDb(c.env.DB);
     const row = await getInspirationRow(db, id);

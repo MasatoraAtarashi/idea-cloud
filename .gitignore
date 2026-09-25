@@ -14,6 +14,7 @@ build/
 worker-configuration.d.ts
 
 # Playwright
+e2e/.auth/
 playwright-report/
 test-results/
 blob-report/

@@ -9,17 +9,14 @@ import {
   prepareInspirationInput,
 } from "../app/lib/inspiration-input";
 import { setTestOgpFetch } from "../server/ogp/fetch";
+import { authHeaders } from "./auth-helper";
 
 const SAMPLE = "http://www.sc-runner.com/2013/10/kinovea-tutorial.html";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 
@@ -39,6 +36,7 @@ function createActionArgs(fields: Record<string, string>): ActionFunctionArgs {
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }

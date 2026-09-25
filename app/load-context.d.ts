@@ -1,4 +1,5 @@
 import type { AppLoadContext } from "react-router";
+import type { Plan } from "../server/billing/plan";
 
 declare module "react-router" {
   interface AppLoadContext {
@@ -10,6 +11,10 @@ declare module "react-router" {
         passThroughOnException?: () => void;
       };
     };
+    /** Signed-in email from the session cookie. `null` on public pages (/login). */
+    userEmail: string | null;
+    /** Entitlement for the signed-in email. "free" on public pages. */
+    plan: Plan;
   }
 }
 

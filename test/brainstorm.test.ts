@@ -7,15 +7,12 @@ import { RESEARCH_PRESETS } from "../app/lib/research-models";
 import { BRAINSTORM_FAIL_MESSAGE, formatBrainstormUserText } from "../server/ai/brainstorm";
 import { flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { setTestAiRun } from "../server/ai/research";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 
@@ -48,6 +45,7 @@ function detailActionArgs(ideaId: number, fields: Record<string, string>): Actio
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }

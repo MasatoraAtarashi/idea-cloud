@@ -6,7 +6,7 @@ import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
 import { logCreatePrerequisites } from "../../server/diag";
 import { scheduleCreateEvaluation } from "../../server/ai/evaluate";
 import { bindResearchAi } from "../../server/ai/research";
-import { resolveCreateTags } from "../../server/ai/tags";
+import { resolveCreateTags, sanitizeTags, USER_TAG_MAX } from "../../server/ai/tags";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
 import { STAGES, type Stage } from "../data/mock";
 import { LIST_PATH } from "./home-path";
@@ -74,25 +74,31 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
     return { error: category.error, title, body: bodyField } satisfies CreateIdeaActionData;
   }
   logCreatePrerequisites(context.cloudflare.env);
-  const resolvedTags = await resolveCreateTags({
-    ai: bindResearchAi(context.cloudflare.env.AI),
-    text,
-    tags,
-    typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
-  });
+  // Free keeps the capture flow; only auto-tags and the create-time AI評価 drop off.
+  const premium = context.plan === "premium";
+  const resolvedTags = premium
+    ? await resolveCreateTags({
+        ai: bindResearchAi(context.cloudflare.env.AI),
+        text,
+        tags,
+        typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
+      })
+    : sanitizeTags(tags, USER_TAG_MAX);
   const created = await insertIdea(db, text, {
     stage,
     tags: resolvedTags,
     categoryId: category.id,
   });
   await safeUpsertInspirationsFromIdeaText(db, text);
-  scheduleCreateEvaluation({
-    waitUntil: (promise) => context.cloudflare.ctx.waitUntil(promise),
-    db,
-    ai: bindResearchAi(context.cloudflare.env.AI),
-    ideaId: created.id,
-    stage: created.stage,
-    typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
-  });
+  if (premium) {
+    scheduleCreateEvaluation({
+      waitUntil: (promise) => context.cloudflare.ctx.waitUntil(promise),
+      db,
+      ai: bindResearchAi(context.cloudflare.env.AI),
+      ideaId: created.id,
+      stage: created.stage,
+      typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
+    });
+  }
   return redirect(LIST_PATH);
 }

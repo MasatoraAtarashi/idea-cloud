@@ -48,7 +48,9 @@ import { bindResearchAi, researchIdea, searchApiKeyFromEnv } from "../../ai/rese
 import { brainstormIdea } from "../../ai/brainstorm";
 import { discussIdea } from "../../ai/discuss";
 import { evaluateIdea, scheduleCreateEvaluation } from "../../ai/evaluate";
-import { resolveCreateTags } from "../../ai/tags";
+import { resolveCreateTags, sanitizeTags, USER_TAG_MAX } from "../../ai/tags";
+import { isPremium } from "../../billing/plan";
+import { requirePremium } from "../../middleware/premium";
 import { typesafeApiKeyFromEnv } from "../../ai/typesafe";
 import { logCreatePrerequisites } from "../../diag";
 import type { AppEnv } from "../../env";
@@ -213,26 +215,32 @@ export const ideasRoute = new Hono<AppEnv>()
     if ("error" in category) {
       return c.json({ error: category.error }, 400);
     }
-    const resolvedTags = await resolveCreateTags({
-      ai: bindResearchAi(c.env.AI),
-      text: body,
-      tags: tags ?? [],
-      typesafeApiKey: typesafeApiKeyFromEnv(c.env),
-    });
+    // Create still works on free; only the AI garnish (auto-tags, AI評価) is skipped.
+    const premium = await isPremium(db, c.get("userEmail"), c.env);
+    const resolvedTags = premium
+      ? await resolveCreateTags({
+          ai: bindResearchAi(c.env.AI),
+          text: body,
+          tags: tags ?? [],
+          typesafeApiKey: typesafeApiKeyFromEnv(c.env),
+        })
+      : sanitizeTags(tags ?? [], USER_TAG_MAX);
     const created = await insertIdea(db, body, {
       stage,
       tags: resolvedTags,
       categoryId: category.id,
     });
     await safeUpsertInspirationsFromIdeaText(db, body);
-    scheduleCreateEvaluation({
-      waitUntil: (promise) => c.executionCtx.waitUntil(promise),
-      db,
-      ai: bindResearchAi(c.env.AI),
-      ideaId: created.id,
-      stage: created.stage,
-      typesafeApiKey: typesafeApiKeyFromEnv(c.env),
-    });
+    if (premium) {
+      scheduleCreateEvaluation({
+        waitUntil: (promise) => c.executionCtx.waitUntil(promise),
+        db,
+        ai: bindResearchAi(c.env.AI),
+        ideaId: created.id,
+        stage: created.stage,
+        typesafeApiKey: typesafeApiKeyFromEnv(c.env),
+      });
+    }
     return c.json({ item: await ideaJsonWithCategory(db, created) }, 201);
   })
   .patch(
@@ -326,7 +334,7 @@ export const ideasRoute = new Hono<AppEnv>()
       return c.json({ item: await ideaJsonWithCategory(db, row) });
     },
   )
-  .post("/:id/research", zValidator("param", idParamSchema), async (c) => {
+  .post("/:id/research", requirePremium, zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const input = await readResearchInput(c);
     if ("error" in input) {
@@ -356,7 +364,7 @@ export const ideasRoute = new Hono<AppEnv>()
     const items = await listBrainstormsForIdea(db, id);
     return c.json({ items: items.map(brainstormJson) });
   })
-  .post("/:id/brainstorm", zValidator("param", idParamSchema), async (c) => {
+  .post("/:id/brainstorm", requirePremium, zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const input = await readResearchInput(c);
     if ("error" in input) {
@@ -396,7 +404,7 @@ export const ideasRoute = new Hono<AppEnv>()
     const items = await listChatMessagesForIdea(db, id);
     return c.json({ items: items.map(chatMessageJson) });
   })
-  .post("/:id/discuss", zValidator("param", idParamSchema), async (c) => {
+  .post("/:id/discuss", requirePremium, zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     let payload: { body?: unknown; preset?: unknown; model?: unknown } = {};
     try {
@@ -422,7 +430,7 @@ export const ideasRoute = new Hono<AppEnv>()
     }
     return c.json({ items: result.messages.map(chatMessageJson) });
   })
-  .post("/:id/evaluate", zValidator("param", idParamSchema), async (c) => {
+  .post("/:id/evaluate", requirePremium, zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
     const input = await readResearchInput(c);
     if ("error" in input) {

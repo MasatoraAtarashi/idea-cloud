@@ -1,10 +1,39 @@
 # Local-only env (this file is gitignored).
-# Until in-app Google OAuth is wired, APIs still use the template Access middleware.
-# On localhost, this email stands in for the signed-in user.
+# Auth is in-app Google OAuth: /api/auth/google -> Google -> /api/auth/google/callback.
+# On localhost, when GOOGLE_CLIENT_ID/SECRET are unset, this email is signed in
+# directly so `pnpm dev` and e2e need no Google credentials.
 LOCAL_DEV_USER_EMAIL=you@example.com
 
-# Second layer after Google identity (comma-separated). Empty = identity only.
+# Real Google sign-in locally: create a Web application OAuth client and add
+# http://localhost:5173/api/auth/google/callback as an authorized redirect URI.
+# Production: `wrangler secret put GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=
+
+# HMAC key for the session cookie. Required in production
+# (`wrangler secret put SESSION_SECRET`, e.g. `openssl rand -hex 32`).
+# On localhost a fixed dev key is used when this is unset.
+# SESSION_SECRET=
+
+# Who may use the app (comma-separated). Empty = any verified Google account.
+# Keep at least one entry in production.
 # ACCESS_ALLOWED_EMAILS=you@example.com
+
+# Native app / scripted access: `Authorization: Bearer <APP_API_TOKEN>` on /api/*.
+# Production: `wrangler secret put APP_API_TOKEN` (e.g. `openssl rand -hex 32`).
+# APP_API_TOKEN_EMAIL is the identity writes are attributed to; it defaults to a
+# single-entry ACCESS_ALLOWED_EMAILS.
+# APP_API_TOKEN=
+# APP_API_TOKEN_EMAIL=you@example.com
+
+# Billing. Premium gates the AI features. PREMIUM_EMAILS is the comped/owner
+# override (comma-separated); paying customers come from the `entitlements`
+# table written by the Stripe webhook. Until all three STRIPE_* values are set,
+# billing is not live and every member is premium. See docs/spec/billing.md.
+# PREMIUM_EMAILS=you@example.com
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_PRICE_ID=price_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Field encryption stub (not wired to D1 yet). 32-byte hex. Production: wrangler secret.
 # FIELD_ENCRYPTION_KEY=

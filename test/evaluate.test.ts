@@ -10,15 +10,12 @@ import { RESEARCH_PRESETS } from "../app/lib/research-models";
 import { EVALUATE_FAIL_MESSAGE, flushScheduledCreateEvaluations } from "../server/ai/evaluate";
 import { setTestAiRun } from "../server/ai/research";
 import { setTestSystemOneRun, type SystemOneResult } from "../server/ai/typesafe";
-
-const authHeaders = {
-  "cf-access-authenticated-user-email": "test@example.com",
-};
+import { authHeaders } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
     ...init,
-    headers: { ...authHeaders, "content-type": "application/json", ...init?.headers },
+    headers: { ...(await authHeaders()), "content-type": "application/json", ...init?.headers },
   });
 }
 
@@ -51,6 +48,7 @@ function detailActionArgs(ideaId: number, fields: Record<string, string>): Actio
         env,
         ctx: { waitUntil() {} },
       },
+      plan: "premium",
     },
   } as unknown as ActionFunctionArgs;
 }
@@ -431,6 +429,7 @@ describe("ideas auto-evaluate on create", () => {
             },
           },
         },
+        plan: "premium",
       },
     } as unknown as ActionFunctionArgs);
     expect(result).toBeInstanceOf(Response);
@@ -460,6 +459,7 @@ describe("ideas auto-evaluate on create", () => {
           env,
           ctx: { waitUntil() {} },
         },
+        plan: "premium",
       },
     } as unknown as ActionFunctionArgs);
     expect(failed).toBeInstanceOf(Response);
