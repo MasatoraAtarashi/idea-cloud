@@ -326,3 +326,114 @@ a {
     border-width: 0;
   }
 }
+
+/*
+ * Landing page only. The app itself stays a quiet light console; the public
+ * front door gets one dark band at the top and one at the bottom, with the
+ * light product shot floating against it.
+ */
+.lp-dark {
+  --lp-ink: #0b1020;
+  background: var(--lp-ink);
+  color: #f2f4f7;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Aurora: soft lights behind the headline. */
+.lp-dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(62% 52% at 20% 12%, rgba(99, 102, 241, 0.62), transparent 68%),
+    radial-gradient(52% 46% at 82% 4%, rgba(165, 180, 252, 0.4), transparent 70%),
+    radial-gradient(58% 58% at 50% 108%, rgba(79, 70, 229, 0.34), transparent 66%),
+    radial-gradient(38% 40% at 68% 62%, rgba(23, 178, 106, 0.14), transparent 70%);
+}
+
+/* A faint engineering grid, fading out downward. */
+.lp-dark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%);
+}
+
+.lp-dark > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The product shot, lifted off the dark band. */
+.lp-shot {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 30px 80px -20px rgba(4, 7, 20, 0.7),
+    0 12px 32px -12px rgba(4, 7, 20, 0.5);
+}
+
+/* Glass chip for eyebrow / badges on the dark band. */
+.lp-chip {
+  @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-[12px] font-medium;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e9eaff;
+  backdrop-filter: blur(6px);
+}
+
+/* Light-on-dark secondary button. */
+.lp-btn-ghost {
+  @apply inline-flex h-11 items-center justify-center rounded-[10px] px-5 text-[14px] font-semibold no-underline;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.lp-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Primary button on the dark band: white, so it is the brightest thing there. */
+.lp-btn {
+  @apply inline-flex h-11 items-center justify-center rounded-[10px] px-5 text-[14px] font-semibold no-underline;
+  background: #fff;
+  color: #101828;
+}
+
+.lp-btn:hover {
+  background: #e9eaff;
+}
+
+.lp-gradient-text {
+  background: linear-gradient(96deg, #ffffff 30%, #c7cbff 70%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lp-rise {
+    animation: lp-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

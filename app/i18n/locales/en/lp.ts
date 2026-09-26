@@ -13,6 +13,51 @@ export const lp: Dictionary["lp"] = {
     note: "No credit card. Start with a Google account.",
   },
 
+  /** Copy for the product shot in the hero. Not real data — a staged shelf. */
+  preview: {
+    nav: { ideas: "Ideas", inspiration: "Inspiration", analytics: "Analytics" },
+    search: "Search",
+    filter: "Ripe",
+    columns: { idea: "Idea", stage: "Stage", score: "Score", updated: "Updated" },
+    rows: [
+      {
+        title: "Turn meeting audio into minutes on its own",
+        stage: "ripe",
+        score: "82",
+        updated: "2d ago",
+      },
+      {
+        title: "Rent an empty shop on the high street for a day",
+        stage: "aging",
+        score: "—",
+        updated: "3w ago",
+      },
+      {
+        title: "A shelf that passes finished books along",
+        stage: "spark",
+        score: "—",
+        updated: "Today",
+      },
+      {
+        title: "A map with only the places you actually go",
+        stage: "selected",
+        score: "91",
+        updated: "Last week",
+      },
+    ],
+    ai: {
+      title: "AI evaluation",
+      axes: [
+        { label: "Novelty", value: 78 },
+        { label: "Impact", value: 86 },
+        { label: "Feasibility", value: 64 },
+      ],
+      verdictLabel: "Verdict",
+      verdict: "Worth pursuing",
+      nextLabel: "Next move",
+      next: "Check the price of three near competitors",
+    },
+  },
   ritual: {
     title: "Only three moves",
     body: "Not a place to write, but a shelf for time. What grows here is the resting period, not the feature list.",

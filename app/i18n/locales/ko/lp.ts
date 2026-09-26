@@ -13,6 +13,41 @@ export const lp: Dictionary["lp"] = {
     note: "신용카드가 필요 없습니다. Google 계정으로 시작하세요.",
   },
 
+  /** Copy for the product shot in the hero. Not real data — a staged shelf. */
+  preview: {
+    nav: { ideas: "아이디어", inspiration: "영감", analytics: "분석" },
+    search: "검색",
+    filter: "익음",
+    columns: { idea: "아이디어", stage: "단계", score: "추천도", updated: "업데이트" },
+    rows: [
+      { title: "회의 음성을 회의록으로 자동 정리", stage: "ripe", score: "82", updated: "2일 전" },
+      {
+        title: "상점가의 빈 점포를 하루만 빌려주기",
+        stage: "aging",
+        score: "—",
+        updated: "3주 전",
+      },
+      {
+        title: "다 읽은 책을 다음 사람에게 넘기는 선반",
+        stage: "spark",
+        score: "—",
+        updated: "오늘",
+      },
+      { title: "자주 가는 곳만 담은 지도", stage: "selected", score: "91", updated: "지난주" },
+    ],
+    ai: {
+      title: "AI 평가",
+      axes: [
+        { label: "새로움", value: 78 },
+        { label: "임팩트", value: 86 },
+        { label: "실현성", value: 64 },
+      ],
+      verdictLabel: "추천도",
+      verdict: "추진할 가치 있음",
+      nextLabel: "다음 한 수",
+      next: "비슷한 경쟁 서비스 3곳의 가격만 확인",
+    },
+  },
   ritual: {
     title: "동작은 셋뿐",
     body: "쓰는 곳이 아니라 시간의 선반입니다. 여기서 늘리는 것은 기능이 아니라 묵히는 시간입니다.",

@@ -13,6 +13,31 @@ export const lp: Dictionary["lp"] = {
     note: "无需信用卡，用 Google 账号即可开始。",
   },
 
+  /** Copy for the product shot in the hero. Not real data — a staged shelf. */
+  preview: {
+    nav: { ideas: "想法", inspiration: "灵感", analytics: "分析" },
+    search: "搜索",
+    filter: "成熟",
+    columns: { idea: "想法", stage: "阶段", score: "推荐度", updated: "更新" },
+    rows: [
+      { title: "把会议录音自动整理成纪要", stage: "ripe", score: "82", updated: "2天前" },
+      { title: "把商业街的空铺只出租一天", stage: "aging", score: "—", updated: "3周前" },
+      { title: "把读完的书传给下一个人的书架", stage: "spark", score: "—", updated: "今天" },
+      { title: "只收录常去店铺的地图", stage: "selected", score: "91", updated: "上周" },
+    ],
+    ai: {
+      title: "AI 评估",
+      axes: [
+        { label: "新颖性", value: 78 },
+        { label: "影响力", value: 86 },
+        { label: "可行性", value: 64 },
+      ],
+      verdictLabel: "推荐度",
+      verdict: "值得推进",
+      nextLabel: "下一步",
+      next: "查三家相近竞品的价格",
+    },
+  },
   ritual: {
     title: "只有三个动作",
     body: "这不是写字的地方，而是时间的置物架。这里增加的是沉淀的时间，不是功能。",

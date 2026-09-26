@@ -2,6 +2,8 @@ import { Link, redirect, useLoaderData, type LoaderFunctionArgs } from "react-ro
 import { googleLoginHref } from "../auth/google-login";
 import { BrandMark } from "../components/brand";
 import { LanguageSwitcher } from "../components/language-switcher";
+import { AppPreview } from "../components/landing/app-preview";
+import { FEATURE_ART, StageRail } from "../components/landing/visuals";
 import { dictionary } from "../i18n/dictionary";
 import { useT } from "../i18n/context";
 import { NEW_IDEA_PATH } from "../lib/home-path";
@@ -31,28 +33,44 @@ export function meta({ data }: Route.MetaArgs) {
   ];
 }
 
-function SignInButton({ className = "" }: { className?: string }) {
+/** The one action we want on every screenful. `variant` picks dark vs light band. */
+function SignInButton({
+  variant = "light",
+  className = "",
+}: {
+  variant?: "light" | "dark";
+  className?: string;
+}) {
   const t = useT();
+  const base =
+    variant === "dark"
+      ? "lp-btn"
+      : "inline-flex h-11 items-center justify-center rounded-[10px] bg-primary px-5 text-[14px] font-semibold text-primary-foreground no-underline hover:opacity-90";
   return (
-    <a
-      href={googleLoginHref(NEW_IDEA_PATH)}
-      className={`inline-flex h-11 items-center justify-center rounded-[10px] bg-primary px-5 text-[14px] font-semibold text-primary-foreground no-underline hover:opacity-90 ${className}`}
-    >
+    <a href={googleLoginHref(NEW_IDEA_PATH)} className={`${base} ${className}`}>
       {t.common.getStarted}
     </a>
   );
 }
 
 /** Each hero / CTA headline carries an intentional line break. */
-function MultilineHeading({ text, className }: { text: string; className: string }) {
+function MultilineHeading({
+  text,
+  className,
+  as: Tag = "h1",
+}: {
+  text: string;
+  className: string;
+  as?: "h1" | "h2";
+}) {
   return (
-    <h1 className={className}>
-      {text.split("\n").map((line, index) => (
+    <Tag className={className}>
+      {text.split("\n").map((line) => (
         <span key={line} className="block">
-          {index > 0 ? line : line}
+          {line}
         </span>
       ))}
-    </h1>
+    </Tag>
   );
 }
 
@@ -60,19 +78,23 @@ function Section({
   title,
   body,
   children,
+  tone = "plain",
 }: {
   title: string;
   body?: string;
   children?: React.ReactNode;
+  tone?: "plain" | "sunken";
 }) {
   return (
-    <section className="border-t border-border px-6 py-16 md:py-24">
-      <div className="mx-auto max-w-5xl">
-        <h2 className="ui-title text-[22px] leading-snug md:text-[28px]">{title}</h2>
+    <section
+      className={`border-t border-border px-6 py-16 md:py-24 ${tone === "sunken" ? "bg-muted" : ""}`}
+    >
+      <div className="mx-auto max-w-6xl">
+        <h2 className="ui-title text-[24px] leading-snug tracking-[-0.02em] md:text-[32px]">
+          {title}
+        </h2>
         {body ? (
-          <p className="mt-3 max-w-2xl text-[14.5px] leading-relaxed text-muted-foreground">
-            {body}
-          </p>
+          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">{body}</p>
         ) : null}
         {children}
       </div>
@@ -91,67 +113,82 @@ export default function LandingPage() {
         {t.lp.skipToContent}
       </a>
 
-      <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-6 py-3">
-          <span className="inline-flex items-center gap-2">
-            <BrandMark className="h-6 w-6" />
-            <span className="text-[14.5px] font-semibold tracking-[-0.01em]">
-              {t.common.appName}
-            </span>
-          </span>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <Link
-              to="/login"
-              className="hidden h-8 items-center rounded-[8px] px-2.5 text-[13px] text-secondary no-underline hover:bg-muted sm:inline-flex"
-            >
-              {t.common.signIn}
-            </Link>
-            <a
-              href={googleLoginHref(NEW_IDEA_PATH)}
-              className="inline-flex h-8 items-center rounded-[8px] bg-primary px-3 text-[13px] font-semibold text-primary-foreground no-underline hover:opacity-90"
-            >
-              {t.common.getStarted}
-            </a>
-          </div>
-        </div>
-      </header>
-
       <main id="main">
-        <section className="px-6 pt-16 pb-16 md:pt-28 md:pb-24">
-          <div className="mx-auto max-w-5xl">
-            <p className="text-[12.5px] font-semibold tracking-wide text-accent uppercase">
-              {t.lp.hero.eyebrow}
-            </p>
-            <MultilineHeading
-              text={t.lp.hero.title}
-              className="ui-title mt-4 text-[30px] leading-[1.25] tracking-[-0.02em] md:text-[46px]"
-            />
-            <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-secondary">
-              {t.lp.hero.body}
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <SignInButton />
+        {/* One dark band for the hero. The header lives outside it because
+            `.lp-dark` clips (overflow: hidden), which would kill `sticky`. */}
+        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0b1020] text-white">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-3">
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <BrandMark className="h-6 w-6 shrink-0" />
+              <span className="truncate text-[14.5px] font-semibold tracking-[-0.01em]">
+                {t.common.appName}
+              </span>
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              {/* Narrow screens have no room for it here; the footer keeps one. */}
+              <span className="hidden sm:inline-flex">
+                <LanguageSwitcher />
+              </span>
               <Link
                 to="/login"
-                className="inline-flex h-11 items-center justify-center rounded-[10px] border border-border-control bg-card px-5 text-[14px] font-semibold text-foreground no-underline hover:bg-row-hover"
+                className="hidden h-8 items-center rounded-[8px] px-2.5 text-[13px] text-white/75 no-underline hover:bg-white/10 hover:text-white sm:inline-flex"
               >
                 {t.common.signIn}
               </Link>
+              <a
+                href={googleLoginHref(NEW_IDEA_PATH)}
+                className="inline-flex h-8 shrink-0 items-center rounded-[8px] bg-white px-3 text-[13px] font-semibold whitespace-nowrap text-[#101828] no-underline hover:bg-[#e9eaff]"
+              >
+                {t.common.getStarted}
+              </a>
             </div>
-            <p className="mt-4 text-[12.5px] text-muted-foreground">{t.lp.hero.note}</p>
           </div>
-        </section>
+        </header>
+
+        <div className="lp-dark px-6 pt-16 pb-36 md:pt-24 md:pb-52">
+          <div className="lp-rise mx-auto max-w-4xl text-center">
+            <span className="lp-chip">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-spark" aria-hidden="true" />
+              {t.lp.hero.eyebrow}
+            </span>
+            <MultilineHeading
+              text={t.lp.hero.title}
+              className="lp-gradient-text mt-6 text-[34px] leading-[1.2] font-semibold tracking-[-0.03em] md:text-[58px]"
+            />
+            <p className="mx-auto mt-6 max-w-2xl text-[15.5px] leading-relaxed text-white/70">
+              {t.lp.hero.body}
+            </p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <SignInButton variant="dark" />
+              <Link to="/login" className="lp-btn-ghost">
+                {t.common.signIn}
+              </Link>
+            </div>
+            <p className="mt-4 text-[12.5px] text-white/50">{t.lp.hero.note}</p>
+          </div>
+        </div>
+
+        {/* The shot straddles the seam: half on the dark band, half on the page. */}
+        <div className="px-4 sm:px-6">
+          <div
+            className="lp-rise mx-auto -mt-28 max-w-6xl md:-mt-44"
+            style={{ animationDelay: "120ms" }}
+          >
+            <AppPreview />
+          </div>
+        </div>
 
         <Section title={t.lp.ritual.title} body={t.lp.ritual.body}>
-          <ol className="mt-10 grid gap-4 md:grid-cols-3">
+          <ol className="mt-10 grid gap-5 md:grid-cols-3">
             {t.lp.ritual.steps.map((step) => (
               <li
                 key={step.step}
-                className="rounded-[12px] border border-border-card bg-card p-5 list-none"
+                className="list-none rounded-[14px] border border-border-card bg-card p-6"
               >
-                <span className="font-mono text-[12px] text-muted-foreground">{step.step}</span>
-                <p className="ui-title mt-2 text-[15.5px]">{step.title}</p>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 font-mono text-[12px] font-semibold text-accent">
+                  {step.step}
+                </span>
+                <p className="ui-title mt-4 text-[16px]">{step.title}</p>
                 <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
                   {step.body}
                 </p>
@@ -160,54 +197,51 @@ export default function LandingPage() {
           </ol>
         </Section>
 
-        <Section title={t.lp.features.title} body={t.lp.features.body}>
-          <ul className="mt-10 grid gap-4 md:grid-cols-3">
-            {t.lp.features.items.map((item) => (
-              <li key={item.title} className="rounded-[12px] border border-border-card bg-card p-5">
-                <p className="ui-title text-[15px]">{item.title}</p>
-                <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
-                  {item.body}
-                </p>
-              </li>
-            ))}
+        <Section title={t.lp.features.title} body={t.lp.features.body} tone="sunken">
+          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {t.lp.features.items.map((item, index) => {
+              const Art = FEATURE_ART[index];
+              return (
+                <li
+                  key={item.title}
+                  className="flex flex-col rounded-[14px] border border-border-card bg-card p-4"
+                >
+                  {Art ? <Art /> : null}
+                  <p className="ui-title mt-4 px-1 text-[15px]">{item.title}</p>
+                  <p className="mt-2 px-1 pb-1 text-[13.5px] leading-relaxed text-muted-foreground">
+                    {item.body}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         </Section>
 
         <Section title={t.lp.stages.title} body={t.lp.stages.body}>
-          <ul className="mt-8 flex flex-col gap-2">
-            {t.lp.stages.items.map((item, index) => (
-              <li
-                key={item.label}
-                className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-[10px] border border-border bg-card px-4 py-3"
-              >
-                <span className="font-mono text-[11.5px] text-muted-foreground">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="text-[14px] font-semibold">{item.label}</span>
-                <span className="text-[13px] text-muted-foreground">{item.body}</span>
-              </li>
-            ))}
-          </ul>
+          <StageRail />
         </Section>
 
-        <Section title={t.lp.team.title} body={t.lp.team.body} />
+        <Section title={t.lp.team.title} body={t.lp.team.body} tone="sunken" />
 
-        <section className="border-t border-border px-6 py-20 md:py-28">
-          <div className="mx-auto max-w-5xl">
+        <section className="lp-dark px-6 py-20 md:py-28">
+          <div className="mx-auto max-w-3xl text-center">
             <MultilineHeading
+              as="h2"
               text={t.lp.cta.title}
-              className="ui-title text-[26px] leading-[1.3] tracking-[-0.02em] md:text-[36px]"
+              className="lp-gradient-text text-[28px] leading-[1.25] font-semibold tracking-[-0.02em] md:text-[42px]"
             />
-            <p className="mt-4 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
+            <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-white/70">
               {t.lp.cta.body}
             </p>
-            <SignInButton className="mt-8" />
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <SignInButton variant="dark" />
+            </div>
           </div>
         </section>
       </main>
 
       <footer className="border-t border-border px-6 py-10">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">
             <span className="inline-flex items-center gap-2">
               <BrandMark className="h-5 w-5" />
