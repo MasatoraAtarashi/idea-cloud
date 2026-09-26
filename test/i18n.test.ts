@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dictionary } from "../app/i18n/dictionary";
+import { FEATURE_ART } from "../app/components/landing/visuals";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -95,5 +96,34 @@ describe("dictionaries", () => {
       expect(t.auth.cta, `locale ${locale}`).not.toBe(ja.auth.cta);
       expect(t.common.stage.spark, `locale ${locale}`).not.toBe(ja.common.stage.spark);
     }
+  });
+});
+
+describe("landing product shot", () => {
+  const stages = Object.keys(dictionary("ja").common.stage);
+
+  it("names a real stage on every row, in every language", () => {
+    for (const locale of LOCALES) {
+      for (const row of dictionary(locale).lp.preview.rows) {
+        expect(stages).toContain(row.stage);
+      }
+    }
+  });
+
+  it("keeps the shot the same shape in every language", () => {
+    const ja = dictionary("ja").lp.preview;
+    for (const locale of LOCALES) {
+      const preview = dictionary(locale).lp.preview;
+      expect(preview.rows).toHaveLength(ja.rows.length);
+      expect(preview.ai.axes).toHaveLength(ja.ai.axes.length);
+      // The bars are the same reading in every language; only the labels move.
+      expect(preview.ai.axes.map((axis) => axis.value)).toEqual(
+        ja.ai.axes.map((axis) => axis.value),
+      );
+    }
+  });
+
+  it("has one illustration per feature", () => {
+    expect(FEATURE_ART).toHaveLength(dictionary("ja").lp.features.items.length);
   });
 });

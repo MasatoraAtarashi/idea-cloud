@@ -11,6 +11,31 @@ export const lp = {
     note: "クレジットカード不要。Google アカウントではじめられます。",
   },
 
+  /** Copy for the product shot in the hero. Not real data — a staged shelf. */
+  preview: {
+    nav: { ideas: "アイデア", inspiration: "インスピレーション", analytics: "アナリティクス" },
+    search: "検索",
+    filter: "熟した",
+    columns: { idea: "アイデア", stage: "段階", score: "推し度", updated: "更新" },
+    rows: [
+      { title: "会議の音声から議事録を自動で起こす", stage: "ripe", score: "82", updated: "2日前" },
+      { title: "商店街の空き店舗を1日だけ貸す", stage: "aging", score: "—", updated: "3週間前" },
+      { title: "読み終えた本を次の人へ回す棚", stage: "spark", score: "—", updated: "今日" },
+      { title: "行きつけの店だけが載る地図", stage: "selected", score: "91", updated: "先週" },
+    ],
+    ai: {
+      title: "AI 評価",
+      axes: [
+        { label: "新規性", value: 78 },
+        { label: "インパクト", value: 86 },
+        { label: "実現性", value: 64 },
+      ],
+      verdictLabel: "推し度",
+      verdict: "進める価値あり",
+      nextLabel: "次の一手",
+      next: "近い競合を3社、価格だけ調べる",
+    },
+  },
   ritual: {
     title: "3つの動作だけ",
     body: "書く場所ではなく、時間の棚です。増やすのは機能ではなく、寝かせる時間。",
