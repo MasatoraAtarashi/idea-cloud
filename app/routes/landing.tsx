@@ -90,7 +90,7 @@ function Section({
       className={`border-t border-border px-6 py-16 md:py-24 ${tone === "sunken" ? "bg-muted" : ""}`}
     >
       <div className="mx-auto max-w-6xl">
-        <h2 className="ui-title text-[24px] leading-snug tracking-[-0.02em] md:text-[32px]">
+        <h2 className="ui-title text-[24px] leading-snug font-semibold tracking-[-0.02em] md:text-[32px]">
           {title}
         </h2>
         {body ? (
@@ -187,7 +187,7 @@ export default function LandingPage() {
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 font-mono text-[12px] font-semibold text-accent">
                   {step.step}
                 </span>
-                <p className="ui-title mt-4 text-[16px]">{step.title}</p>
+                <p className="ui-title mt-4 text-[16px] font-semibold">{step.title}</p>
                 <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
                   {step.body}
                 </p>
@@ -206,7 +206,7 @@ export default function LandingPage() {
                   className="flex flex-col rounded-[14px] border border-border-card bg-card p-4"
                 >
                   {Art ? <Art /> : null}
-                  <p className="ui-title mt-4 px-1 text-[15px]">{item.title}</p>
+                  <p className="ui-title mt-4 px-1 text-[15px] font-semibold">{item.title}</p>
                   <p className="mt-2 px-1 pb-1 text-[13.5px] leading-relaxed text-muted-foreground">
                     {item.body}
                   </p>

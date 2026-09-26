@@ -59,7 +59,7 @@ export default function SettingsPage() {
         <span className="min-w-[3.5rem]" />
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
-        <p className="hidden px-2 text-[16px] font-semibold md:block">{t.settings.title}</p>
+        <p className="hidden px-2 text-[16px] font-medium md:block">{t.settings.title}</p>
         <nav className="mt-3 flex gap-1 overflow-x-auto md:mt-4 md:flex-col">
           {SECTIONS.map((item, index) => {
             const prev = SECTIONS[index - 1];
@@ -117,7 +117,7 @@ function MembersPanel({ userEmail }: { userEmail: string | null }) {
     <div className="mx-auto max-w-3xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold">{t.settings.sections.members}</h2>
+          <h2 className="text-[16px] font-medium">{t.settings.sections.members}</h2>
           <p className="mt-1 text-[12.5px] text-muted-foreground">
             {t.settings.members.description}
           </p>
@@ -172,7 +172,7 @@ function MembersPanel({ userEmail }: { userEmail: string | null }) {
         </table>
       </div>
       <section className="mt-8">
-        <h3 className="text-[16px] font-semibold">{t.settings.members.visibility.heading}</h3>
+        <h3 className="text-[16px] font-medium">{t.settings.members.visibility.heading}</h3>
         <div className="mt-3 grid gap-2 md:grid-cols-3">
           <div className="rounded-[10px] border border-border-card bg-sunken p-3">
             <p className="text-[13.5px] font-medium">{t.settings.members.visibility.team.title}</p>
@@ -303,7 +303,7 @@ function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premiu
   const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{t.settings.sections.profile}</h2>
+      <h2 className="text-[16px] font-medium">{t.settings.sections.profile}</h2>
       <div className="mt-4 rounded-[10px] border border-border p-4">
         <p className="text-[12px] text-muted-foreground">{t.settings.profile.account}</p>
         <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? t.settings.profile.unknown}</p>
@@ -332,7 +332,7 @@ function StubPanel({ section }: { section: SectionId }) {
   const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{t.settings.sections[section]}</h2>
+      <h2 className="text-[16px] font-medium">{t.settings.sections[section]}</h2>
       <p className="mt-3 text-[13.5px] text-muted-foreground">{t.settings.stub}</p>
     </div>
   );

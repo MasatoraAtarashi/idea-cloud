@@ -162,7 +162,7 @@ function InspirationDetail({
         ) : (
           <>
             <InspirationDetailPreview item={item} />
-            <h1 className="mt-5 hidden text-[24px] leading-[1.45] font-semibold tracking-[-0.02em] md:block">
+            <h1 className="mt-5 hidden text-[24px] leading-[1.45] font-medium tracking-[-0.02em] md:block">
               {inspirationHeadline(t, item)}
             </h1>
             {item.url ? (

@@ -421,7 +421,7 @@ function IdeaDetail({
               <IdeaEditForm idea={idea} onCancel={() => setEditing(false)} error={editError} />
             ) : (
               <div className="max-w-[760px]">
-                <h1 className="idea-title-wrap text-[23px] leading-[1.45] font-semibold tracking-[-0.02em] lg:text-[27px]">
+                <h1 className="idea-title-wrap text-[23px] leading-[1.45] font-medium tracking-[-0.02em] lg:text-[27px]">
                   {idea.title}
                 </h1>
                 {idea.body.trim() ? (
