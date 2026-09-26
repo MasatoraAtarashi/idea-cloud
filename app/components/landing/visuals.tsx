@@ -196,7 +196,7 @@ export function StageRail() {
             style={{ background: STAGE_DOT[stage] }}
             aria-hidden="true"
           />
-          <p className="ui-title mt-4 text-[14.5px]">{items[index]?.label}</p>
+          <p className="ui-title mt-4 text-[14.5px] font-semibold">{items[index]?.label}</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
             {items[index]?.body}
           </p>

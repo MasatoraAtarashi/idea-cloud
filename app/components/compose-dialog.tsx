@@ -69,7 +69,7 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
         className="absolute top-[10%] left-1/2 w-[min(560px,calc(100%-3rem))] -translate-x-1/2 overflow-hidden rounded-[12px] border border-border-card bg-card shadow-[var(--shadow-float)]"
       >
         <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-          <h2 id="new-idea-title" className="text-[15px] font-semibold text-foreground">
+          <h2 id="new-idea-title" className="text-[15px] font-medium text-foreground">
             {t.compose.heading}
           </h2>
           <button
@@ -103,7 +103,7 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
               onKeyDown={onSubmitShortcut}
               autoComplete="off"
               placeholder={t.compose.titlePlaceholder}
-              className="mt-3 w-full border-0 bg-transparent pb-2.5 text-[19px] leading-snug font-semibold text-foreground outline-none placeholder:text-muted-foreground"
+              className="mt-3 w-full border-0 bg-transparent pb-2.5 text-[19px] leading-snug font-medium text-foreground outline-none placeholder:text-muted-foreground"
             />
             <div className="h-px bg-border" />
             <label htmlFor="idea-dialog" className="sr-only">

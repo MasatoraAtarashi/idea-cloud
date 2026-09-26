@@ -184,7 +184,7 @@ export function IdeaListView({
     <PeekProvider controls={peek}>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <header className="hidden shrink-0 items-center gap-3 border-b border-border bg-card px-7 pt-5 pb-4 md:flex">
-          <h1 className="flex items-baseline gap-2.5 text-[20px] font-semibold tracking-[-0.01em] text-foreground">
+          <h1 className="flex items-baseline gap-2.5 text-[20px] font-medium tracking-[-0.01em] text-foreground">
             {t.list.title}
             <span className="font-mono text-[12px] font-normal tracking-normal text-muted-foreground">
               {t.list.count(ideas.length)}
@@ -254,7 +254,7 @@ export function IdeaListView({
         </nav>
 
         <MobileScreenHeader
-          title={<h1 className="text-[18px] font-semibold text-foreground">{t.list.title}</h1>}
+          title={<h1 className="text-[18px] font-medium text-foreground">{t.list.title}</h1>}
           trailing={
             <>
               <button
@@ -447,7 +447,7 @@ function IdeaRow({ idea }: { idea: MockIdea }) {
         {...peek}
         className="flex min-w-0 items-baseline gap-2.5 overflow-hidden whitespace-nowrap no-underline after:absolute after:inset-0 after:content-['']"
       >
-        <span className="max-w-full shrink-0 truncate text-[15.5px] leading-[1.5] font-semibold tracking-[-0.01em] text-foreground">
+        <span className="max-w-full shrink-0 truncate text-[15.5px] leading-[1.5] font-medium tracking-[-0.01em] text-foreground">
           {idea.title}
         </span>
         {excerpt ? (
