@@ -1,24 +1,25 @@
-import { STAGE_LABEL, type Stage } from "../data/mock";
+import type { Stage } from "../data/mock";
+import type { Dictionary } from "../i18n/dictionary";
 
-export const COPY_OK_MESSAGE = "コピーしました";
-export const COPY_FAIL_MESSAGE = "コピーできませんでした";
-
-export function formatIdeaCopyText(idea: {
-  title: string;
-  body: string;
-  stage: Stage;
-  tags: string[];
-  categoryName?: string | null;
-}): string {
-  const title = idea.title.trim() || "無題";
+export function formatIdeaCopyText(
+  t: Dictionary,
+  idea: {
+    title: string;
+    body: string;
+    stage: Stage;
+    tags: string[];
+    categoryName?: string | null;
+  },
+): string {
+  const title = idea.title.trim() || t.idea.untitled;
   const body = idea.body.trim();
   const category = idea.categoryName?.trim() ?? "";
   const lines = [title];
   if (body) lines.push("", body);
-  lines.push("", `段階: ${STAGE_LABEL[idea.stage]}`);
-  if (category) lines.push(`カテゴリ: ${category}`);
+  lines.push("", `${t.idea.copy.stageField}: ${t.common.stage[idea.stage]}`);
+  if (category) lines.push(`${t.idea.copy.categoryField}: ${category}`);
   if (idea.tags.length > 0) {
-    lines.push(`タグ: ${idea.tags.join(", ")}`);
+    lines.push(`${t.idea.copy.tagsField}: ${idea.tags.join(", ")}`);
   }
   return lines.join("\n");
 }

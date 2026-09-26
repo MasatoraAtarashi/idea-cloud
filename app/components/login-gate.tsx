@@ -1,14 +1,10 @@
 import { useLayoutEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import {
-  GOOGLE_LOGIN_CTA,
-  GOOGLE_LOGIN_NOTE,
-  googleLoginHref,
-  loginErrorMessage,
-  LOGIN_TAGLINE,
-} from "../auth/google-login";
+import { googleLoginHref, loginErrorMessage } from "../auth/google-login";
+import { useT } from "../i18n/context";
 import { homePathForClient, isDesktopViewport, NEW_IDEA_PATH } from "../lib/home-path";
 import { BrandMark, BrandWordmark } from "./brand";
+import { LanguageSwitcher } from "./language-switcher";
 
 /** Official four-color G mark. Plain SVG — the flow runs on the Worker, not a Google SDK. */
 function GoogleMark() {
@@ -35,12 +31,13 @@ function GoogleMark() {
 }
 
 export function LoginGate() {
+  const t = useT();
   const [searchParams] = useSearchParams();
   // `next` is where the page gate sent the visitor from; otherwise pick the home
   // that matches this device (mobile = compose, desktop = list).
   const requestedNext = searchParams.get("next");
   const [continueTo, setContinueTo] = useState(requestedNext ?? NEW_IDEA_PATH);
-  const errorMessage = loginErrorMessage(searchParams.get("error"));
+  const errorMessage = loginErrorMessage(t, searchParams.get("error"));
 
   useLayoutEffect(() => {
     if (requestedNext) return;
@@ -57,7 +54,7 @@ export function LoginGate() {
       <div className="flex w-full max-w-[22rem] flex-col items-center text-center">
         <BrandMark className="h-11 w-11" />
         <BrandWordmark className="ui-title mt-5 text-[22px]" />
-        <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{LOGIN_TAGLINE}</p>
+        <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{t.auth.tagline}</p>
         {errorMessage ? (
           <p
             role="alert"
@@ -71,9 +68,10 @@ export function LoginGate() {
           className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-border-control bg-card text-[14px] font-semibold text-foreground no-underline hover:bg-row-hover"
         >
           <GoogleMark />
-          {GOOGLE_LOGIN_CTA}
+          {t.auth.cta}
         </a>
-        <p className="mt-4 text-[12.5px] text-muted-foreground">{GOOGLE_LOGIN_NOTE}</p>
+        <p className="mt-4 text-[12.5px] text-muted-foreground">{t.auth.note}</p>
+        <LanguageSwitcher className="mt-8" />
       </div>
     </div>
   );

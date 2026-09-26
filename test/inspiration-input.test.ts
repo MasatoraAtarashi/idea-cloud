@@ -10,6 +10,7 @@ import {
 } from "../app/lib/inspiration-input";
 import { setTestOgpFetch } from "../server/ogp/fetch";
 import { authHeaders } from "./auth-helper";
+import { JA } from "../app/i18n/dictionary";
 
 const SAMPLE = "http://www.sc-runner.com/2013/10/kinovea-tutorial.html";
 
@@ -43,12 +44,12 @@ function createActionArgs(fields: Record<string, string>): ActionFunctionArgs {
 
 describe("inspiration URL paste", () => {
   it("accepts http, trims mobile paste, and adds https to a bare host", () => {
-    expect(normalizeInspirationInputUrl(`  ${SAMPLE}\n`)).toEqual({ url: SAMPLE });
-    expect(normalizeInspirationInputUrl(`${SAMPLE}\u200B`)).toEqual({ url: SAMPLE });
-    expect(normalizeInspirationInputUrl("www.sc-runner.com/2013/10/kinovea-tutorial.html")).toEqual(
-      { url: "https://www.sc-runner.com/2013/10/kinovea-tutorial.html" },
-    );
-    expect(normalizeInspirationInputUrl("")).toEqual({ url: "" });
+    expect(normalizeInspirationInputUrl(JA, `  ${SAMPLE}\n`)).toEqual({ url: SAMPLE });
+    expect(normalizeInspirationInputUrl(JA, `${SAMPLE}\u200B`)).toEqual({ url: SAMPLE });
+    expect(
+      normalizeInspirationInputUrl(JA, "www.sc-runner.com/2013/10/kinovea-tutorial.html"),
+    ).toEqual({ url: "https://www.sc-runner.com/2013/10/kinovea-tutorial.html" });
+    expect(normalizeInspirationInputUrl(JA, "")).toEqual({ url: "" });
     expect(fallbackTitleFromUrl(SAMPLE)).toBe("kinovea tutorial");
     expect(fallbackTitleFromUrl("https://example.com/2013/10/")).toBe("example.com");
     expect(isDerivedInspirationTitle("kinovea tutorial", SAMPLE)).toBe(true);
@@ -56,7 +57,7 @@ describe("inspiration URL paste", () => {
   });
 
   it("allows an empty title when a URL or memo is present", () => {
-    const urlOnly = prepareInspirationInput({ title: "  ", url: SAMPLE });
+    const urlOnly = prepareInspirationInput(JA, { title: "  ", url: SAMPLE });
     expect(urlOnly.ok).toBe(true);
     if (urlOnly.ok) {
       expect(urlOnly.value.titleFromUser).toBe(false);
@@ -64,16 +65,16 @@ describe("inspiration URL paste", () => {
       expect(urlOnly.value.title).toBe("kinovea tutorial");
     }
 
-    const memoOnly = prepareInspirationInput({ memo: "あとで見る" });
+    const memoOnly = prepareInspirationInput(JA, { memo: "あとで見る" });
     expect(memoOnly.ok).toBe(true);
     if (memoOnly.ok) expect(memoOnly.value.title).toBe("あとで見る");
 
-    const empty = prepareInspirationInput({ title: "", url: " \n " });
+    const empty = prepareInspirationInput(JA, { title: "", url: " \n " });
     expect(empty).toEqual({ ok: false, error: "入力してください" });
 
-    const junk = prepareInspirationInput({ url: "メモだけどURL欄" });
+    const junk = prepareInspirationInput(JA, { url: "メモだけどURL欄" });
     expect(junk).toEqual({ ok: false, error: "URLの形式が正しくありません" });
-    expect(normalizeInspirationInputUrl("ftp://example.com/file")).toEqual({
+    expect(normalizeInspirationInputUrl(JA, "ftp://example.com/file")).toEqual({
       error: "http または https のURLにしてください",
     });
   });

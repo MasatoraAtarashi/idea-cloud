@@ -1,7 +1,8 @@
 import { useLayoutEffect } from "react";
 import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router";
 import { CaptureView } from "../../components/capture-view";
-import { useCompose, COMPOSE_TITLE } from "../../lib/compose";
+import { useCompose } from "../../lib/compose";
+import { dictionary } from "../../i18n/dictionary";
 import { createIdeaAction } from "../../lib/idea-action";
 import {
   isDesktopViewport,
@@ -9,15 +10,19 @@ import {
   LIST_PATH,
   prefersComposeHome,
 } from "../../lib/home-path";
+import type { Route } from "./+types/capture";
 
 export { createIdeaAction as action };
 
-export function meta() {
-  return [{ title: `${COMPOSE_TITLE} — アイデアクラウド` }];
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").compose.metaTitle }];
 }
 
-export function loader({ request }: LoaderFunctionArgs) {
-  return { mobileUa: isMobileUserAgent(request.headers.get("user-agent")) };
+export function loader({ context, request }: LoaderFunctionArgs) {
+  return {
+    mobileUa: isMobileUserAgent(request.headers.get("user-agent")),
+    locale: context.locale,
+  };
 }
 
 /** Deep link for compose. Desktop opens the list modal instead of a nav tab. */

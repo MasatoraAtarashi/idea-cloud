@@ -28,6 +28,7 @@ import { bindResearchAi } from "../../ai/research";
 import { requirePremium } from "../../middleware/premium";
 import type { AppEnv } from "../../env";
 import { enrichInspirationOgp } from "../../ogp/enrich";
+import { JA } from "../../../app/i18n/dictionary";
 
 const createInspirationSchema = z.object({
   title: z.string().trim().max(INSPIRATION_TITLE_MAX).optional(),
@@ -72,7 +73,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
   })
   .post("/", zValidator("json", createInspirationSchema), async (c) => {
     const { title, url, memo, tags } = c.req.valid("json");
-    const prepared = prepareInspirationInput({ title, url, memo, tags });
+    const prepared = prepareInspirationInput(JA, { title, url, memo, tags });
     if (!prepared.ok) {
       return c.json({ error: prepared.error }, 400);
     }
@@ -98,7 +99,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
       const patch = c.req.valid("json");
       let url = patch.url;
       if (url !== undefined && url !== null) {
-        const normalized = normalizeInspirationInputUrl(url);
+        const normalized = normalizeInspirationInputUrl(JA, url);
         if ("error" in normalized) {
           return c.json({ error: normalized.error }, 400);
         }
@@ -155,7 +156,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
     });
     if (!result.ok) {
       return c.json(
-        { error: result.error, item: { id: created.id, title: created.title } },
+        { error: result.error, code: result.code, item: { id: created.id, title: created.title } },
         result.status,
       );
     }

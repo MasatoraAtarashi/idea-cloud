@@ -12,6 +12,11 @@ import {
   SETTINGS_NAV,
   WORKSPACE_NAV,
 } from "../app/nav";
+import { dictionary } from "../app/i18n/dictionary";
+/** Nav constants hold dictionary keys now; assert on what a ja reader sees. */
+const navItems = dictionary("ja").nav.items;
+const label = (item: { labelKey: keyof typeof navItems }) => navItems[item.labelKey];
+const ariaLabel = (item: { ariaLabelKey: keyof typeof navItems }) => navItems[item.ariaLabelKey];
 
 describe("nav destinations", () => {
   it("exposes analytics and inspirations as top-level workspace items", () => {
@@ -20,11 +25,7 @@ describe("nav destinations", () => {
       "/app/inspirations",
       "/app/analytics",
     ]);
-    expect(WORKSPACE_NAV.map((item) => item.label)).toEqual([
-      "アイデア",
-      "インスピレーション",
-      "アナリティクス",
-    ]);
+    expect(WORKSPACE_NAV.map(label)).toEqual(["アイデア", "インスピレーション", "アナリティクス"]);
     expect(SETTINGS_NAV.map((item) => item.to)).toEqual(["/app/settings"]);
     expect(WORKSPACE_NAV.some((item) => item.to.includes("merge"))).toBe(false);
     expect(WORKSPACE_NAV.some((item) => item.to.includes("research"))).toBe(false);
@@ -36,14 +37,10 @@ describe("nav destinations", () => {
       "/app/inspirations",
       "/app/analytics",
     ]);
-    expect(MOBILE_NAV.map((item) => item.label)).toEqual(["一覧", "インスピ", "分析"]);
-    expect(MOBILE_NAV.map((item) => item.ariaLabel)).toEqual([
-      "一覧",
-      "インスピレーション",
-      "アナリティクス",
-    ]);
+    expect(MOBILE_NAV.map(label)).toEqual(["一覧", "インスピ", "分析"]);
+    expect(MOBILE_NAV.map(ariaLabel)).toEqual(["一覧", "インスピレーション", "アナリティクス"]);
     const mobileDestinations: readonly string[] = MOBILE_NAV.map((item) => item.to);
-    const mobileLabels: readonly string[] = MOBILE_NAV.map((item) => item.label);
+    const mobileLabels: readonly string[] = MOBILE_NAV.map(label);
     expect(mobileDestinations).not.toContain("/app");
     expect(mobileDestinations).not.toContain("/app/settings");
     expect(mobileLabels).not.toContain("新規");

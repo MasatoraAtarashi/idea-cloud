@@ -1,15 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-export const COMPOSE_TITLE = "新規アイデア";
-export const COMPOSE_SUBMIT = "作成";
-export const COMPOSE_PLACEHOLDER = "思いついたまま、ひとこと。";
-export const COMPOSE_HEADING = "新しいアイデア";
-export const COMPOSE_SUBHEADING = "整えなくていい。あとで熟成させます。";
-export const COMPOSE_TAG_HINT = "空なら自動で付きます";
-export const COMPOSE_TITLE_PLACEHOLDER = "タイトル";
-export const COMPOSE_DRAFT_HINT = "⌘Enter で作成";
-export const COMPOSE_URL_HINT = "本文のURLはインスピレーションにも残します";
-
+/** Compose copy lives in `t.compose`. */
 type ComposeContextValue = {
   isOpen: boolean;
   /** Title to prefill on the next open (⌘⏎ from the search palette). */

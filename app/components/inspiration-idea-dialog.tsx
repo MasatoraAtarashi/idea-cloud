@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useFetcher } from "react-router";
+import { useT } from "../i18n/context";
 import type { IdeaCategory } from "../lib/category";
 import {
   inspirationGlyph,
@@ -29,6 +30,7 @@ export function InspirationModal({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const t = useT();
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -56,7 +58,7 @@ export function InspirationModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="閉じる"
+            aria-label={t.common.close}
             className="flex h-11 w-11 items-center justify-center rounded-[7px] text-muted-foreground hover:bg-sunken hover:text-foreground md:h-8 md:w-8"
           >
             <IconClose className="h-4 w-4" />
@@ -120,7 +122,8 @@ export function InspirationIdeaDialog({
   categories: IdeaCategory[];
   onClose: () => void;
 }) {
-  const draft = inspirationIdeaDraft(item);
+  const t = useT();
+  const draft = inspirationIdeaDraft(t, item);
   const fetcher = useFetcher<InspirationActionData>();
   const [tags, setTags] = useState<string[]>(draft.tags);
   const [tagInput, setTagInput] = useState("");
@@ -136,7 +139,7 @@ export function InspirationIdeaDialog({
   }
 
   return (
-    <InspirationModal title="インスピレーションからアイデアを作る" onClose={onClose}>
+    <InspirationModal title={t.inspiration.dialog.title} onClose={onClose}>
       <fetcher.Form
         method="post"
         action={INSPIRATIONS_PATH}
@@ -150,7 +153,7 @@ export function InspirationIdeaDialog({
           <InspirationThumb item={item} width={74} height={52} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13.5px] font-semibold text-foreground">
-              {inspirationHeadline(item)}
+              {inspirationHeadline(t, item)}
             </p>
             {host ? (
               <p className="mt-1 truncate font-mono text-[11.5px] text-muted-foreground">{host}</p>
@@ -163,14 +166,14 @@ export function InspirationIdeaDialog({
               rel="noreferrer noopener"
               className="ui-btn-secondary shrink-0 px-2.5 md:h-[30px] md:min-h-[30px]"
             >
-              元ネタを見る
+              {t.inspiration.dialog.viewSource}
             </a>
           ) : null}
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-[18px] py-4">
           <div>
-            {fieldLabel("タイトル", "insp-idea-title")}
+            {fieldLabel(t.inspiration.dialog.fieldTitle, "insp-idea-title")}
             <input
               id="insp-idea-title"
               name="title"
@@ -180,7 +183,7 @@ export function InspirationIdeaDialog({
             />
           </div>
           <div>
-            {fieldLabel("本文", "insp-idea-body")}
+            {fieldLabel(t.inspiration.dialog.fieldBody, "insp-idea-body")}
             <textarea
               id="insp-idea-body"
               name="body"
@@ -190,20 +193,20 @@ export function InspirationIdeaDialog({
             />
           </div>
           <div>
-            {fieldLabel("カテゴリ")}
+            {fieldLabel(t.inspiration.dialog.fieldCategory)}
             <CategoryField categories={categories} idPrefix="insp-idea" disabled={submitting} />
           </div>
           <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-[8px] border border-border-control px-3 py-2">
             <label htmlFor="insp-idea-tag" className="mr-1 text-[13px] text-muted-foreground">
-              タグ
+              {t.inspiration.dialog.tags}
             </label>
             {tags.map((tag) => (
               <button
                 key={tag}
                 type="button"
                 onClick={() => setTags(tags.filter((t) => t !== tag))}
-                aria-label={`${tag}を外す`}
-                title="外す"
+                aria-label={t.inspiration.dialog.removeTag(tag)}
+                title={t.inspiration.dialog.remove}
               >
                 <TagPill label={tag} />
               </button>
@@ -226,12 +229,12 @@ export function InspirationIdeaDialog({
                 addTag(tagInput);
                 setTagInput("");
               }}
-              placeholder={tags.length === 0 ? "空なら自動で付きます" : ""}
+              placeholder={tags.length === 0 ? t.inspiration.dialog.tagPlaceholder : ""}
               className="min-w-[5rem] flex-1 bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
             />
             {draft.tags.length > 0 ? (
               <span className="ml-auto shrink-0 rounded-[5px] bg-[#eef4ff] px-2 py-0.5 text-[11.5px] font-medium text-[#3538cd]">
-                元ページから自動抽出
+                {t.inspiration.dialog.autoTags}
               </span>
             ) : null}
           </div>
@@ -240,7 +243,7 @@ export function InspirationIdeaDialog({
 
         <footer className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border bg-card px-[18px] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <p className="mr-auto text-[12px] text-muted-foreground">
-            作成後はこのインスピが紐づきます
+            {t.inspiration.dialog.footerNote}
           </p>
           <button
             type="submit"
@@ -250,13 +253,15 @@ export function InspirationIdeaDialog({
             className="ui-btn-secondary px-3.5 md:h-9 md:min-h-9"
           >
             {brainstorming ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-            {brainstorming ? "ブレスト中…" : "AIブレストしてから作る"}
+            {brainstorming
+              ? t.inspiration.dialog.brainstorming
+              : t.inspiration.dialog.brainstormAndCreate}
           </button>
           <button type="submit" disabled={submitting} className="ui-btn px-4 md:h-9 md:min-h-9">
             {submitting && !brainstorming ? (
               <IconSpinner className="h-3.5 w-3.5 animate-spin" />
             ) : null}
-            作成
+            {t.inspiration.dialog.create}
           </button>
         </footer>
       </fetcher.Form>

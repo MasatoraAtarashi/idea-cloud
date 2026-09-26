@@ -3,6 +3,8 @@ import { errorClass, logDiag } from "../diag";
 import { suggestIdeaTagsWithJev } from "./jev-tags";
 import type { ResearchAi, ResearchAiRun } from "./research";
 import { hasTypesafeApiKey } from "./typesafe";
+import { languageName } from "./language";
+import type { Locale } from "../../app/i18n/locale";
 
 /** Fast/cheap model already used for research 「速い・安い」. */
 export const AUTO_TAG_MODEL = RESEARCH_PRESETS.fast;
@@ -11,12 +13,18 @@ export const AUTO_TAG_MAX = 5;
 export const USER_TAG_MAX = 8;
 const TAG_MAX_LEN = 20;
 
-export const AUTO_TAG_SYSTEM_PROMPT = [
-  "あなたはアイデアに付ける短い日本語タグを提案します。",
-  "タイトルと本文から、2〜5個の短い名詞タグだけをJSON配列で返してください。",
-  '例: ["通勤","音声メモ","朝"]',
-  "説明・番号・英語の長文は不要です。",
-].join("");
+/** Tags are shown as stored, so they are written in the language of whoever created the idea. */
+export function autoTagSystemPrompt(locale?: Locale): string {
+  return [
+    `あなたはアイデアに付ける短い${languageName(locale)}のタグを提案します。`,
+    "タイトルと本文から、2〜5個の短い名詞タグだけをJSON配列で返してください。",
+    '例: ["通勤","音声メモ","朝"]（この例は形式の見本で、言語は上の指定に従ってください）',
+    "説明や番号は不要です。",
+  ].join("");
+}
+
+/** Japanese wording, kept for the tests and callers that pin it. */
+export const AUTO_TAG_SYSTEM_PROMPT = autoTagSystemPrompt("ja");
 
 let testTagAiRun: ResearchAiRun | undefined;
 
@@ -74,14 +82,18 @@ export function parseTagSuggestions(raw: string): string[] {
   return sanitizeTags(text.split(/[,、/｜|;\n]/), AUTO_TAG_MAX);
 }
 
-export async function suggestIdeaTags(ai: ResearchAi, text: string): Promise<string[]> {
+export async function suggestIdeaTags(
+  ai: ResearchAi,
+  text: string,
+  locale?: Locale,
+): Promise<string[]> {
   const ideaText = text.trim();
   if (!ideaText) return [];
   try {
     const run = testTagAiRun ?? ((model, inputs) => ai.run(model, inputs));
     const result = await run(AUTO_TAG_MODEL, {
       messages: [
-        { role: "system", content: AUTO_TAG_SYSTEM_PROMPT },
+        { role: "system", content: autoTagSystemPrompt(locale) },
         { role: "user", content: ideaText },
       ],
       max_tokens: 96,
@@ -105,6 +117,8 @@ export async function resolveCreateTags(opts: {
   text: string;
   tags: string[];
   typesafeApiKey?: string;
+  /** Language the generated tags are written in. Defaults to Japanese. */
+  locale?: Locale;
 }): Promise<string[]> {
   const hasTypesafeKey = Boolean(opts.typesafeApiKey?.trim());
   const provided = sanitizeTags(opts.tags, USER_TAG_MAX);
@@ -161,7 +175,7 @@ export async function resolveCreateTags(opts: {
       hasTypesafeApiKey: false,
     });
   }
-  const tags = await suggestIdeaTags(opts.ai, opts.text);
+  const tags = await suggestIdeaTags(opts.ai, opts.text, opts.locale);
   if (tags.length === 0) {
     logDiag("warn", "create auto-tag", {
       step: "tags",

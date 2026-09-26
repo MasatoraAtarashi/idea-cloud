@@ -1,9 +1,6 @@
 import { useState } from "react";
-import {
-  CATEGORY_FIELD_LABEL,
-  CATEGORY_NAME_PLACEHOLDER,
-  type IdeaCategory,
-} from "../lib/category";
+import { useT } from "../i18n/context";
+import type { IdeaCategory } from "../lib/category";
 
 /** Optional category as chips. Tap the selected chip again to clear. */
 export function CategoryField({
@@ -20,12 +17,13 @@ export function CategoryField({
   const [mode, setMode] = useState<"pick" | "new">("pick");
   const [categoryId, setCategoryId] = useState(defaultId ? String(defaultId) : "");
   const [name, setName] = useState("");
+  const t = useT();
   const nameId = `${idPrefix}-category-name`;
 
   return (
     <div
       role="group"
-      aria-label={CATEGORY_FIELD_LABEL}
+      aria-label={t.compose.category.label}
       className="flex min-w-0 flex-wrap items-center gap-2"
     >
       <input type="hidden" name="categoryId" value={mode === "new" ? "" : categoryId} />
@@ -54,7 +52,7 @@ export function CategoryField({
       {mode === "new" ? (
         <span className="flex min-w-[10rem] flex-1 items-center gap-1">
           <label htmlFor={nameId} className="sr-only">
-            {CATEGORY_NAME_PLACEHOLDER}
+            {t.compose.category.namePlaceholder}
           </label>
           <input
             id={nameId}
@@ -63,7 +61,7 @@ export function CategoryField({
             disabled={disabled}
             autoFocus
             onChange={(event) => setName(event.target.value)}
-            placeholder={CATEGORY_NAME_PLACEHOLDER}
+            placeholder={t.compose.category.namePlaceholder}
             className="min-h-11 min-w-0 flex-1 rounded-[8px] border border-dashed border-border-control bg-card px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground md:min-h-[34px]"
           />
           <button
@@ -75,7 +73,7 @@ export function CategoryField({
             }}
             className="min-h-11 px-1.5 text-[12.5px] text-muted-foreground hover:text-foreground md:min-h-[34px]"
           >
-            やめる
+            {t.compose.category.cancel}
           </button>
         </span>
       ) : (
@@ -85,7 +83,7 @@ export function CategoryField({
           onClick={() => setMode("new")}
           className="flex min-h-11 items-center rounded-[8px] border border-dashed border-border-control px-3.5 text-[13px] text-muted-foreground hover:text-foreground md:min-h-[34px]"
         >
-          ＋ 新しいカテゴリ
+          {t.compose.category.add}
         </button>
       )}
     </div>

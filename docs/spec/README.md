@@ -1,6 +1,6 @@
 # Specs (English)
 
-Canonical engineering docs for Idea Cloud. Product UI copy stays Japanese.
+Canonical engineering docs for Idea Cloud. Product UI copy ships in ja / en / zh / ko; Japanese is the source of truth.
 
 | File                                                 | Covers                                                                                       |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -13,5 +13,6 @@ Canonical engineering docs for Idea Cloud. Product UI copy stays Japanese.
 | [oauth-swap.md](./oauth-swap.md)                     | The implemented auth: in-app Google OAuth, session cookie, app token                         |
 | [billing.md](./billing.md)                           | Stripe Checkout + webhook, `entitlements` in D1, AI behind premium                           |
 | [mcp.md](./mcp.md)                                   | Remote MCP on `/mcp`: bearer secret, nine idea/inspiration tools                             |
+| [i18n.md](./i18n.md)                                 | Four UI languages, the `lang` cookie, and the public landing page                            |
 
 UI previews (not specs): [../ui-previews/](../ui-previews/).

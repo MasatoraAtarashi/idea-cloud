@@ -1,4 +1,5 @@
 import { STAGES, type MockIdea, type Stage } from "../data/mock";
+import type { Dictionary } from "../i18n/dictionary";
 
 export const LIST_SORT_KEYS = ["updatedAt", "createdAt", "stage", "title"] as const;
 export type ListSortKey = (typeof LIST_SORT_KEYS)[number];
@@ -10,13 +11,6 @@ export type ListSort = {
 };
 
 export const LIST_SORT_DEFAULT: ListSort = { key: "updatedAt", dir: "desc" };
-
-export const LIST_SORT_LABEL: Record<ListSortKey, string> = {
-  updatedAt: "更新",
-  createdAt: "作成",
-  stage: "段階",
-  title: "タイトル",
-};
 
 const STAGE_RANK: Record<Stage, number> = {
   spark: 0,
@@ -78,7 +72,7 @@ export function sortIdeas(ideas: MockIdea[], sort: ListSort): MockIdea[] {
   });
 }
 
-export function listSortSummary(sort: ListSort): string {
-  const dir = sort.dir === "asc" ? "昇順" : "降順";
-  return `${LIST_SORT_LABEL[sort.key]}${dir}`;
+export function listSortSummary(t: Dictionary, sort: ListSort): string {
+  const dir = sort.dir === "asc" ? t.list.sort.asc : t.list.sort.desc;
+  return `${t.list.sort.key[sort.key]}${dir}`;
 }

@@ -1,16 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useFetcher } from "react-router";
-import {
-  COMPOSE_DRAFT_HINT,
-  COMPOSE_HEADING,
-  COMPOSE_PLACEHOLDER,
-  COMPOSE_SUBHEADING,
-  COMPOSE_SUBMIT,
-  COMPOSE_TAG_HINT,
-  COMPOSE_TITLE_PLACEHOLDER,
-  COMPOSE_URL_HINT,
-  useCompose,
-} from "../lib/compose";
+import { useCompose } from "../lib/compose";
+import { useT } from "../i18n/context";
 import { NEW_IDEA_PATH } from "../lib/home-path";
 import type { CreateIdeaActionData } from "../lib/idea-action";
 import { isSubmitShortcut } from "../lib/shortcuts";
@@ -21,6 +12,7 @@ import { IconClose, IconSpinner } from "./icons";
 
 export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
   const { isOpen, seedTitle, close } = useCompose();
+  const t = useT();
   const fetcher = useFetcher<CreateIdeaActionData>();
   const [title, setTitle] = useState("");
   const [draft, setDraft] = useState("");
@@ -67,7 +59,7 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
       <button
         type="button"
         className="absolute inset-0 bg-[rgba(16,24,40,0.35)]"
-        aria-label="閉じる"
+        aria-label={t.common.close}
         onClick={close}
       />
       <div
@@ -78,13 +70,13 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
       >
         <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
           <h2 id="new-idea-title" className="text-[15px] font-semibold text-foreground">
-            {COMPOSE_HEADING}
+            {t.compose.heading}
           </h2>
           <button
             type="button"
             onClick={close}
             className="flex h-7 w-7 items-center justify-center rounded-[7px] text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="閉じる"
+            aria-label={t.common.close}
           >
             <IconClose className="h-4 w-4" />
           </button>
@@ -99,9 +91,9 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
         >
           <input type="hidden" name="stage" value="spark" />
           <div className="px-5 pt-4 pb-5">
-            <p className="text-[12.5px] text-muted-foreground">{COMPOSE_SUBHEADING}</p>
+            <p className="text-[12.5px] text-muted-foreground">{t.compose.subheading}</p>
             <label htmlFor="idea-dialog-title" className="sr-only">
-              {COMPOSE_TITLE_PLACEHOLDER}
+              {t.compose.titlePlaceholder}
             </label>
             <input
               id="idea-dialog-title"
@@ -110,12 +102,12 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
               onChange={(event) => setTitle(event.target.value)}
               onKeyDown={onSubmitShortcut}
               autoComplete="off"
-              placeholder={COMPOSE_TITLE_PLACEHOLDER}
+              placeholder={t.compose.titlePlaceholder}
               className="mt-3 w-full border-0 bg-transparent pb-2.5 text-[19px] leading-snug font-semibold text-foreground outline-none placeholder:text-muted-foreground"
             />
             <div className="h-px bg-border" />
             <label htmlFor="idea-dialog" className="sr-only">
-              {COMPOSE_PLACEHOLDER}
+              {t.compose.placeholder}
             </label>
             <textarea
               id="idea-dialog"
@@ -124,39 +116,39 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={onSubmitShortcut}
-              placeholder={COMPOSE_PLACEHOLDER}
+              placeholder={t.compose.placeholder}
               className="mt-2.5 h-auto w-full resize-none border-0 bg-transparent text-[14.5px] leading-[1.9] text-secondary outline-none placeholder:text-muted-foreground"
             />
-            <p className="mt-3 text-[12.5px] font-medium text-tertiary">カテゴリ（任意）</p>
+            <p className="mt-3 text-[12.5px] font-medium text-tertiary">
+              {t.compose.category.optional}
+            </p>
             <div className="mt-2">
               <CategoryField categories={categories} idPrefix="idea-dialog" />
             </div>
             <label className="mt-3 flex h-11 items-center gap-2 rounded-[8px] border border-border-control bg-card px-3">
-              <span className="sr-only">タグ</span>
+              <span className="sr-only">{t.compose.tags}</span>
               <input
                 name="tags"
                 value={tags}
                 onChange={(event) => setTags(event.target.value)}
-                placeholder="タグ（空なら自動タグ）"
+                placeholder={t.compose.tagsPlaceholder}
                 autoComplete="off"
                 className="min-w-0 flex-1 border-0 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground"
               />
               <span className="shrink-0 rounded-[5px] bg-[#eef4ff] px-2 py-0.5 text-[11.5px] font-medium text-[#3538cd]">
-                {COMPOSE_TAG_HINT}
+                {t.compose.tagHint}
               </span>
             </label>
-            <p className="mt-2 text-[11.5px] text-muted-foreground">
-              自動タグに失敗してもアイデアは残ります。{COMPOSE_URL_HINT}
-            </p>
+            <p className="mt-2 text-[11.5px] text-muted-foreground">{t.compose.autoTagNote}</p>
             {fetcher.data?.error ? (
               <p className="mt-2 text-[12.5px] text-danger">{fetcher.data.error}</p>
             ) : null}
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-border bg-sunken px-5 py-3.5">
-            <p className="font-mono text-[11.5px] text-muted-foreground">{COMPOSE_DRAFT_HINT}</p>
+            <p className="font-mono text-[11.5px] text-muted-foreground">{t.compose.draftHint}</p>
             <div className="flex items-center gap-2">
               <button type="button" onClick={close} className="ui-btn-secondary px-3">
-                キャンセル
+                {t.common.cancel}
               </button>
               <button
                 type="submit"
@@ -165,7 +157,7 @@ export function ComposeDialog({ categories }: { categories: IdeaCategory[] }) {
                 className="ui-btn px-4"
               >
                 {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-                {pending ? "作成中…" : COMPOSE_SUBMIT}
+                {pending ? t.compose.submitting : t.compose.submit}
               </button>
             </div>
           </div>

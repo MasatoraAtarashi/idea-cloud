@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useFetcher, useLocation, useNavigate } from "react-router";
 import type { SearchResults } from "../../db/search";
-import { STAGE_LABEL } from "../data/mock";
+import { useT } from "../i18n/context";
 import { useCompose } from "../lib/compose";
 import { isDesktopViewport, NEW_IDEA_PATH } from "../lib/home-path";
 import {
   flattenSearchResults,
-  SEARCH_KIND_LABEL,
   SEARCH_KINDS,
   searchKindCounts,
   type SearchItem,
@@ -34,6 +33,7 @@ function SearchPaletteDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
   const compose = useCompose();
+  const t = useT();
   const fetcher = useFetcher<SearchResults>();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -126,14 +126,14 @@ function SearchPaletteDialog({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50" onKeyDown={onKeyDown}>
       <button
         type="button"
-        aria-label="閉じる"
+        aria-label={t.common.close}
         className="absolute inset-0 bg-[rgba(16,24,40,0.35)]"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="検索"
+        aria-label={t.nav.search.label}
         className="absolute inset-x-0 top-0 flex max-h-dvh flex-col overflow-hidden bg-card shadow-[var(--shadow-float)] md:top-[12%] md:left-1/2 md:max-h-[70vh] md:w-[600px] md:max-w-[calc(100%-3rem)] md:-translate-x-1/2 md:rounded-[12px] md:border md:border-border-card"
       >
         <div className="flex items-center gap-3 border-b border-border px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 md:pt-4">
@@ -141,14 +141,14 @@ function SearchPaletteDialog({ onClose }: { onClose: () => void }) {
             ⌕
           </span>
           <label htmlFor="search-palette-input" className="sr-only">
-            検索
+            {t.nav.search.label}
           </label>
           <input
             ref={inputRef}
             id="search-palette-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="アイデア・コメント・インスピ・タグを検索"
+            placeholder={t.nav.search.placeholder}
             autoComplete="off"
             spellCheck={false}
             role="combobox"
@@ -182,7 +182,7 @@ function SearchPaletteDialog({ onClose }: { onClose: () => void }) {
                       : "bg-muted text-secondary hover:bg-border"
                   }`}
                 >
-                  {SEARCH_KIND_LABEL[item]}
+                  {t.nav.search.kinds[item]}
                   <span className="font-mono text-[11px]">{counts[item]}</span>
                 </button>
               );
@@ -197,12 +197,10 @@ function SearchPaletteDialog({ onClose }: { onClose: () => void }) {
           className="min-h-0 flex-1 overflow-y-auto py-1.5"
         >
           {!trimmed ? (
-            <p className="px-5 py-6 text-[13px] text-muted-foreground">
-              タイトル・本文・コメント・インスピレーション・タグを横断して探します。
-            </p>
+            <p className="px-5 py-6 text-[13px] text-muted-foreground">{t.nav.search.hint}</p>
           ) : items.length === 0 ? (
             <p className="px-5 py-6 text-[13px] text-muted-foreground">
-              {loading ? "検索中…" : `「${trimmed}」は見つかりませんでした`}
+              {loading ? t.nav.search.loading : t.nav.search.empty(trimmed)}
             </p>
           ) : (
             items.map((item, index) => {
@@ -229,8 +227,8 @@ function SearchPaletteDialog({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex items-center gap-4 border-t border-border bg-sunken px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-[12px] text-muted-foreground">
-          <span className="hidden md:inline">↑↓ 移動</span>
-          <span className="hidden md:inline">⏎ 開く</span>
+          <span className="hidden md:inline">{t.nav.search.moveHint}</span>
+          <span className="hidden md:inline">{t.nav.search.openHint}</span>
           <button
             type="button"
             onClick={createFromQuery}
@@ -238,7 +236,7 @@ function SearchPaletteDialog({ onClose }: { onClose: () => void }) {
           >
             <kbd className="ui-kbd hidden md:inline-flex">⌘⏎</kbd>
             <span className="font-semibold text-foreground">
-              {trimmed ? `「${trimmed}」で新規アイデア` : "新規アイデア"}
+              {trimmed ? t.nav.search.createWith(trimmed) : t.nav.search.create}
             </span>
           </button>
         </div>
@@ -287,6 +285,7 @@ function SearchRow({
 }
 
 function SearchRowBody({ item, selected }: { item: SearchItem; selected: boolean }) {
+  const t = useT();
   if (item.kind === "idea") {
     const idea = item.idea;
     const archived = idea.stage === "archived";
@@ -303,7 +302,7 @@ function SearchRowBody({ item, selected }: { item: SearchItem; selected: boolean
           </span>
           {archived ? (
             <span className="shrink-0 rounded-[5px] bg-muted px-1.5 py-px text-[11px] text-muted-foreground">
-              {STAGE_LABEL.archived}
+              {t.common.stage.archived}
             </span>
           ) : null}
           {idea.matchedIn ? (
@@ -360,7 +359,7 @@ function SearchRowBody({ item, selected }: { item: SearchItem; selected: boolean
         <TagPill label={item.tag.tag} />
       </span>
       <span className="shrink-0 font-mono text-[11.5px] text-muted-foreground">
-        {item.tag.count}件
+        {t.nav.search.tagCount(item.tag.count)}
       </span>
     </>
   );

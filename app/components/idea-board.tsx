@@ -1,5 +1,6 @@
 import { Link } from "react-router";
-import { STAGE_HINT, STAGES, type MockIdea } from "../data/mock";
+import { STAGES, type MockIdea } from "../data/mock";
+import { useT } from "../i18n/context";
 import { compactAgedDays, compactRelative } from "../lib/list-format";
 import { IdeaActionsMenu } from "./idea-actions";
 import { IdeaReviewPrompt } from "./idea-review";
@@ -13,6 +14,7 @@ export function IdeaBoard({
   ideas: MockIdea[];
   showReview?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex min-h-0 flex-1 gap-3.5 overflow-x-auto overflow-y-hidden px-7 py-[22px]">
       {STAGES.map((stage) => {
@@ -28,13 +30,13 @@ export function IdeaBoard({
                 <CountBadge value={cards.length} />
               </h2>
               <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-                {STAGE_HINT[stage]}
+                {t.common.stageHint[stage]}
               </p>
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
               {cards.length === 0 ? (
                 <p className="rounded-[8px] border border-dashed border-border-control bg-card px-2 py-6 text-center text-[11.5px] text-muted-foreground">
-                  まだありません
+                  {t.list.boardEmpty}
                 </p>
               ) : (
                 <div className="flex flex-col gap-1.5">
@@ -58,8 +60,8 @@ export function IdeaBoard({
                           <p className="mt-1.5 flex items-center gap-2.5 font-mono text-[11px] text-muted-foreground">
                             <ListAiScore score={idea.aiScore} />
                             <ListCommentCount count={idea.commentCount} />
-                            <span>{compactAgedDays(idea.agedDays)}</span>
-                            <span>{compactRelative(idea.updatedAt)}</span>
+                            <span>{compactAgedDays(t, idea.agedDays)}</span>
+                            <span>{compactRelative(t, idea.updatedAt)}</span>
                           </p>
                           {showReview ? <IdeaReviewPrompt idea={idea} compact /> : null}
                         </Link>

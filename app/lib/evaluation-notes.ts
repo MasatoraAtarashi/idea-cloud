@@ -1,15 +1,11 @@
+import type { Dictionary } from "../i18n/dictionary";
 import { parseAiScore } from "./scores";
 
-export const AI_SCORE_LABEL = "推し度";
-
-export const AI_SCORE_MEANING: Record<number, string> = {
-  1: "まだ早い",
-  2: "慎重に見たい",
-  3: "どちらでもない",
-  4: "進めてよさそう",
-  5: "強く推したい",
-};
-
+/**
+ * PARSING KEYS, not UI copy. The server prompt writes evaluation notes in Japanese and
+ * they are stored that way, so these headings must stay Japanese to keep parsing old rows.
+ * Display copy lives in `t.idea.evaluation.section` — see `evaluationSectionLabel`.
+ */
 export const EVALUATION_SECTION_LABELS = ["強み", "リスク", "新規性", "次の一手"] as const;
 export type EvaluationSectionLabel = (typeof EVALUATION_SECTION_LABELS)[number];
 
@@ -25,9 +21,24 @@ export type ParsedEvaluation = {
 
 const HEADING = /^(強み|リスク|新規性|次の一手)\s*[:：]?\s*(.*)$/;
 
-export function aiScoreMeaning(score: number | null | undefined): string {
+/** Display label for a parsed section heading. */
+const SECTION_DICTIONARY_KEY = {
+  強み: "strengths",
+  リスク: "risks",
+  新規性: "novelty",
+  次の一手: "nextMove",
+} as const satisfies Record<
+  EvaluationSectionLabel,
+  keyof Dictionary["idea"]["evaluation"]["section"]
+>;
+
+export function evaluationSectionLabel(t: Dictionary, label: EvaluationSectionLabel): string {
+  return t.idea.evaluation.section[SECTION_DICTIONARY_KEY[label]];
+}
+
+export function aiScoreMeaning(t: Dictionary, score: number | null | undefined): string {
   if (score == null) return "";
-  return AI_SCORE_MEANING[score] ?? "";
+  return t.idea.evaluation.meaning[score] ?? "";
 }
 
 /** Turn Jev axis decimals into plain Japanese. Unknown text is left readable. */

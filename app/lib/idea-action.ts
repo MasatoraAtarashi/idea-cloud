@@ -9,6 +9,7 @@ import { bindResearchAi } from "../../server/ai/research";
 import { resolveCreateTags, sanitizeTags, USER_TAG_MAX } from "../../server/ai/tags";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
 import { STAGES, type Stage } from "../data/mock";
+import { dictionary } from "../i18n/dictionary";
 import { LIST_PATH } from "./home-path";
 
 export type CreateIdeaActionData = {
@@ -59,14 +60,15 @@ export function composeBodyFromForm(form: FormData): {
 }
 
 export async function createIdeaAction({ request, context }: ActionFunctionArgs) {
+  const t = dictionary(context.locale);
   const form = await request.formData();
   const { title, bodyField, text, stage, tags, categoryId, categoryName } =
     composeBodyFromForm(form);
   if (!text) {
-    return { error: "入力してください", title, body: bodyField } satisfies CreateIdeaActionData;
+    return { error: t.idea.errors.required, title, body: bodyField } satisfies CreateIdeaActionData;
   }
   if (text.length > IDEA_BODY_MAX) {
-    return { error: "長すぎます", title, body: bodyField } satisfies CreateIdeaActionData;
+    return { error: t.idea.errors.tooLong, title, body: bodyField } satisfies CreateIdeaActionData;
   }
   const db = createDb(context.cloudflare.env.DB);
   const category = await resolveCategoryId(db, { categoryId, categoryName });
@@ -82,6 +84,7 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
         text,
         tags,
         typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
+        locale: context.locale,
       })
     : sanitizeTags(tags, USER_TAG_MAX);
   const created = await insertIdea(db, text, {
@@ -98,6 +101,7 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
       ideaId: created.id,
       stage: created.stage,
       typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
+      locale: context.locale,
     });
   }
   return redirect(LIST_PATH);

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useFetcher } from "react-router";
-import { nextStage, reviewAnchorAt, STAGE_LABEL, type MockIdea } from "../data/mock";
+import { nextStage, reviewAnchorAt, type MockIdea } from "../data/mock";
+import { useT } from "../i18n/context";
 import { confirmIdeaDelete } from "../lib/idea-delete";
 import { LIST_PATH } from "../lib/home-path";
-import { REVIEW_STATUS_LABEL, type ReviewStatus } from "../lib/review";
+import { type ReviewStatus } from "../lib/review";
 import { useInstantPending } from "../lib/use-instant-pending";
 import { IconSpinner } from "./icons";
 
@@ -16,6 +17,7 @@ export function IdeaReviewPrompt({
   compact?: boolean;
   showNextStage?: boolean;
 }) {
+  const t = useT();
   const reviewFetcher = useFetcher();
   const stageFetcher = useFetcher();
   const reviewBusy = reviewFetcher.state !== "idle";
@@ -50,10 +52,10 @@ export function IdeaReviewPrompt({
     >
       {compact ? null : (
         <div className="mb-2">
-          <p className="text-[13.5px] font-semibold">見直し</p>
+          <p className="text-[13.5px] font-semibold">{t.idea.review.heading}</p>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
-            寝かせたあと、進めるか一旦止めるかを決めます。
-            {status !== "none" ? ` いまは${REVIEW_STATUS_LABEL[status]}。` : ""}
+            {t.idea.review.hint}
+            {status !== "none" ? t.idea.review.current(t.list.reviewStatus[status]) : ""}
           </p>
         </div>
       )}
@@ -69,7 +71,7 @@ export function IdeaReviewPrompt({
           }
         >
           {reviewPending.pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-          見直した
+          {t.idea.review.reviewed}
         </button>
         <button
           type="button"
@@ -81,7 +83,7 @@ export function IdeaReviewPrompt({
               : "ui-btn-secondary min-h-11 px-3 text-[13px]"
           }
         >
-          保留
+          {t.idea.review.hold}
         </button>
         {showNextStage && next ? (
           <button
@@ -95,7 +97,7 @@ export function IdeaReviewPrompt({
             }
           >
             {stagePending.pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-            {compact ? "次の段階へ" : `次の段階へ（${STAGE_LABEL[next]}）`}
+            {compact ? t.idea.nextStage : t.idea.nextStageTo(t.common.stage[next])}
           </button>
         ) : null}
       </div>
@@ -104,11 +106,12 @@ export function IdeaReviewPrompt({
 }
 
 export function ReviewStatusBadge({ idea }: { idea: MockIdea }) {
+  const t = useT();
   const status = idea.reviewStatus ?? "none";
   if (status === "none") return null;
   return (
     <span className="font-mono text-[11px] text-muted-foreground">
-      {REVIEW_STATUS_LABEL[status]}
+      {t.list.reviewStatus[status]}
     </span>
   );
 }
@@ -124,10 +127,11 @@ const BAND_BUTTON =
   "flex min-h-11 items-center gap-1.5 rounded-[7px] border border-[var(--warn-border)] bg-card px-3 text-[12.5px] font-semibold text-warn hover:bg-[var(--warn-bg)] disabled:opacity-50 md:h-8 md:min-h-8";
 
 /**
- * 見直しの帯 on detail. 捨てる is a small ritual: it asks archive or delete before acting,
- * so delete lives here instead of the ⋯ menu.
+ * The review band on detail. Letting go is a small ritual: it asks archive or delete
+ * before acting, so delete lives here instead of the ⋯ menu.
  */
 export function IdeaReviewBand({ idea }: { idea: MockIdea }) {
+  const t = useT();
   const reviewFetcher = useFetcher();
   const discardFetcher = useFetcher();
   const reviewPending = useInstantPending(reviewFetcher.state !== "idle");
@@ -157,7 +161,7 @@ export function IdeaReviewBand({ idea }: { idea: MockIdea }) {
   }
 
   function remove() {
-    if (!confirmIdeaDelete(idea.title)) return;
+    if (!confirmIdeaDelete(t, idea.title)) return;
     discardPending.hold();
     const data = new FormData();
     data.set("intent", "delete");
@@ -168,12 +172,10 @@ export function IdeaReviewBand({ idea }: { idea: MockIdea }) {
   return (
     <div className="mt-7 flex flex-col items-start gap-x-4 gap-y-2.5 rounded-[10px] md:flex-row md:items-center border border-[var(--warn-border)] bg-[var(--warn-bg)] px-4 py-3">
       <p className="min-w-0 text-[13px] leading-[1.7] text-warn md:flex-1">
-        {discarding
-          ? "アーカイブして棚から下ろすか、完全に削除するか選べます。"
-          : `${days}日寝かせました。いま読み返してどう見えますか。`}
+        {discarding ? t.idea.review.discardPrompt : t.idea.review.rested(days)}
         {!discarding && status !== "none" ? (
           <span className="ml-1.5 font-mono text-[11px] text-[var(--warn-deep)]">
-            {REVIEW_STATUS_LABEL[status]}
+            {t.list.reviewStatus[status]}
           </span>
         ) : null}
       </p>
@@ -187,7 +189,7 @@ export function IdeaReviewBand({ idea }: { idea: MockIdea }) {
               className={BAND_BUTTON}
             >
               {discardPending.pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-              アーカイブする
+              {t.idea.review.archive}
             </button>
             <button
               type="button"
@@ -195,14 +197,14 @@ export function IdeaReviewBand({ idea }: { idea: MockIdea }) {
               onClick={remove}
               className={`${BAND_BUTTON} text-danger`}
             >
-              削除する
+              {t.idea.review.delete}
             </button>
             <button
               type="button"
               onClick={() => setDiscarding(false)}
               className="flex min-h-11 items-center px-2 text-[12.5px] text-[var(--warn-deep)] md:h-8 md:min-h-8"
             >
-              やめる
+              {t.idea.review.cancel}
             </button>
           </>
         ) : (
@@ -214,7 +216,7 @@ export function IdeaReviewBand({ idea }: { idea: MockIdea }) {
               className={BAND_BUTTON}
             >
               {reviewPending.pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-              見直した
+              {t.idea.review.reviewed}
             </button>
             <button
               type="button"
@@ -222,14 +224,14 @@ export function IdeaReviewBand({ idea }: { idea: MockIdea }) {
               onClick={() => submitReview("hold")}
               className={`${BAND_BUTTON} font-medium`}
             >
-              保留
+              {t.idea.review.hold}
             </button>
             <button
               type="button"
               onClick={() => setDiscarding(true)}
               className={`${BAND_BUTTON} font-medium`}
             >
-              捨てる
+              {t.idea.review.discard}
             </button>
           </>
         )}

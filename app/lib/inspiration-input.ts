@@ -1,13 +1,27 @@
+import { dictionary, type Dictionary } from "../i18n/dictionary";
+
 export const INSPIRATION_TITLE_MAX = 200;
 export const INSPIRATION_MEMO_MAX = 4000;
 export const INSPIRATION_URL_MAX = 2000;
 
-export const INSPIRATION_EMPTY_MESSAGE = "入力してください";
-export const INSPIRATION_URL_FORMAT_MESSAGE = "URLの形式が正しくありません";
-export const INSPIRATION_URL_PROTOCOL_MESSAGE = "http または https のURLにしてください";
-export const INSPIRATION_TITLE_TOO_LONG_MESSAGE = "タイトルが長すぎます";
-export const INSPIRATION_MEMO_TOO_LONG_MESSAGE = "メモが長すぎます";
-export const INSPIRATION_URL_TOO_LONG_MESSAGE = "URLが長すぎます";
+const JA = dictionary("ja").inspiration;
+
+/**
+ * Japanese copies of the validation messages, for callers outside the request
+ * cycle (the MCP tools) that match on the message rather than render it.
+ */
+export const INSPIRATION_EMPTY_MESSAGE = JA.errors.empty;
+export const INSPIRATION_URL_FORMAT_MESSAGE = JA.errors.urlFormat;
+export const INSPIRATION_URL_PROTOCOL_MESSAGE = JA.errors.urlProtocol;
+export const INSPIRATION_TITLE_TOO_LONG_MESSAGE = JA.errors.titleTooLong;
+export const INSPIRATION_MEMO_TOO_LONG_MESSAGE = JA.errors.memoTooLong;
+export const INSPIRATION_URL_TOO_LONG_MESSAGE = JA.errors.urlTooLong;
+
+/**
+ * Stored placeholder title. It lands in the database, so it stays one value
+ * across locales; the UI shows `t.inspiration.untitled` in its place.
+ */
+export const INSPIRATION_UNTITLED = JA.untitled;
 
 const INVISIBLE_RE = /[\u200B-\u200D\uFEFF]/g;
 const CONTROL_RE = /[\u0000-\u001F\u007F]/g;
@@ -58,9 +72,9 @@ export function fallbackTitleFromUrl(raw: string): string {
       return slug.slice(0, INSPIRATION_TITLE_MAX);
     }
     const host = url.hostname.replace(/^www\./i, "");
-    return host.slice(0, INSPIRATION_TITLE_MAX) || "無題";
+    return host.slice(0, INSPIRATION_TITLE_MAX) || INSPIRATION_UNTITLED;
   } catch {
-    return "無題";
+    return INSPIRATION_UNTITLED;
   }
 }
 
@@ -68,14 +82,17 @@ export function fallbackTitleFromUrl(raw: string): string {
  * Accept http(s), trim mobile paste, and prepend https:// for a bare host/path.
  * Empty input is not an error — the URL field is optional.
  */
-export function normalizeInspirationInputUrl(raw: string): { url: string } | { error: string } {
+export function normalizeInspirationInputUrl(
+  t: Dictionary,
+  raw: string,
+): { url: string } | { error: string } {
   const cleaned = stripPastedUrl(raw);
   if (!cleaned) return { url: "" };
   if (cleaned.length > INSPIRATION_URL_MAX) {
-    return { error: INSPIRATION_URL_TOO_LONG_MESSAGE };
+    return { error: t.inspiration.errors.urlTooLong };
   }
   if (/\s/.test(cleaned)) {
-    return { error: INSPIRATION_URL_FORMAT_MESSAGE };
+    return { error: t.inspiration.errors.urlFormat };
   }
 
   let candidate = cleaned;
@@ -83,7 +100,7 @@ export function normalizeInspirationInputUrl(raw: string): { url: string } | { e
     candidate = `https:${candidate}`;
   } else if (!SCHEME_RE.test(candidate)) {
     if (!BARE_URL_RE.test(candidate)) {
-      return { error: INSPIRATION_URL_FORMAT_MESSAGE };
+      return { error: t.inspiration.errors.urlFormat };
     }
     candidate = `https://${candidate}`;
   }
@@ -92,35 +109,38 @@ export function normalizeInspirationInputUrl(raw: string): { url: string } | { e
   try {
     parsed = new URL(candidate);
   } catch {
-    return { error: INSPIRATION_URL_FORMAT_MESSAGE };
+    return { error: t.inspiration.errors.urlFormat };
   }
 
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    return { error: INSPIRATION_URL_PROTOCOL_MESSAGE };
+    return { error: t.inspiration.errors.urlProtocol };
   }
   if (!parsed.hostname) {
-    return { error: INSPIRATION_URL_FORMAT_MESSAGE };
+    return { error: t.inspiration.errors.urlFormat };
   }
   if (parsed.href.length > INSPIRATION_URL_MAX) {
-    return { error: INSPIRATION_URL_TOO_LONG_MESSAGE };
+    return { error: t.inspiration.errors.urlTooLong };
   }
   return { url: parsed.href };
 }
 
-function singleUrlToken(raw: string): string | null {
+function singleUrlToken(t: Dictionary, raw: string): string | null {
   const cleaned = stripPastedUrl(raw);
   if (!cleaned || /\s/.test(cleaned)) return null;
-  const normalized = normalizeInspirationInputUrl(cleaned);
+  const normalized = normalizeInspirationInputUrl(t, cleaned);
   if (!("url" in normalized) || !normalized.url) return null;
   return normalized.url;
 }
 
-export function prepareInspirationInput(input: {
-  title?: string | null;
-  url?: string | null;
-  memo?: string | null;
-  tags?: string[] | null;
-}): { ok: true; value: PreparedInspiration } | { ok: false; error: string } {
+export function prepareInspirationInput(
+  t: Dictionary,
+  input: {
+    title?: string | null;
+    url?: string | null;
+    memo?: string | null;
+    tags?: string[] | null;
+  },
+): { ok: true; value: PreparedInspiration } | { ok: false; error: string } {
   const memo = (input.memo ?? "").trim();
   const tags = (input.tags ?? [])
     .map((tag) => tag.trim())
@@ -129,39 +149,39 @@ export function prepareInspirationInput(input: {
   let titleRaw = (input.title ?? "").trim();
 
   if (titleRaw.length > INSPIRATION_TITLE_MAX) {
-    return { ok: false, error: INSPIRATION_TITLE_TOO_LONG_MESSAGE };
+    return { ok: false, error: t.inspiration.errors.titleTooLong };
   }
   if (memo.length > INSPIRATION_MEMO_MAX) {
-    return { ok: false, error: INSPIRATION_MEMO_TOO_LONG_MESSAGE };
+    return { ok: false, error: t.inspiration.errors.memoTooLong };
   }
 
-  const normalized = normalizeInspirationInputUrl(input.url ?? "");
+  const normalized = normalizeInspirationInputUrl(t, input.url ?? "");
   if ("error" in normalized) return { ok: false, error: normalized.error };
 
   let url = normalized.url || null;
   let titleFromUser = titleRaw.length > 0;
 
   if (!url && titleRaw) {
-    const promoted = singleUrlToken(titleRaw);
+    const promoted = singleUrlToken(t, titleRaw);
     if (promoted) {
       url = promoted;
       titleRaw = "";
       titleFromUser = false;
     }
-  } else if (url && titleFromUser && singleUrlToken(titleRaw) === url) {
+  } else if (url && titleFromUser && singleUrlToken(t, titleRaw) === url) {
     titleRaw = "";
     titleFromUser = false;
   }
 
   if (!titleRaw && !memo && !url) {
-    return { ok: false, error: INSPIRATION_EMPTY_MESSAGE };
+    return { ok: false, error: t.inspiration.errors.empty };
   }
 
   const title = titleFromUser
     ? titleRaw
     : url
       ? fallbackTitleFromUrl(url)
-      : memo.slice(0, INSPIRATION_TITLE_MAX) || "無題";
+      : memo.slice(0, INSPIRATION_TITLE_MAX) || INSPIRATION_UNTITLED;
 
   return {
     ok: true,
@@ -173,7 +193,7 @@ export function prepareInspirationInput(input: {
 export function isDerivedInspirationTitle(title: string, url: string | null | undefined): boolean {
   const trimmed = title.trim();
   const rawUrl = url?.trim() ?? "";
-  if (!trimmed || trimmed === "無題" || (rawUrl && trimmed === rawUrl)) return true;
+  if (!trimmed || trimmed === INSPIRATION_UNTITLED || (rawUrl && trimmed === rawUrl)) return true;
   if (!rawUrl) return false;
   return trimmed === fallbackTitleFromUrl(rawUrl);
 }

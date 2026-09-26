@@ -1,7 +1,7 @@
 import { useLayoutEffect } from "react";
 import { useLoaderData, useNavigate, type LoaderFunctionArgs } from "react-router";
 import { CaptureView } from "../../components/capture-view";
-import { COMPOSE_TITLE } from "../../lib/compose";
+import { dictionary } from "../../i18n/dictionary";
 import { createIdeaAction } from "../../lib/idea-action";
 import {
   isDesktopViewport,
@@ -9,16 +9,20 @@ import {
   LIST_PATH,
   prefersComposeHome,
 } from "../../lib/home-path";
+import type { Route } from "./+types/home";
 
 export { createIdeaAction as action };
 
-export function meta() {
-  return [{ title: `${COMPOSE_TITLE} — アイデアクラウド` }];
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").compose.metaTitle }];
 }
 
 /** Mobile UA stays on compose (スマホ=登録トップ) even before the viewport is known. */
-export function loader({ request }: LoaderFunctionArgs) {
-  return { mobileUa: isMobileUserAgent(request.headers.get("user-agent")) };
+export function loader({ context, request }: LoaderFunctionArgs) {
+  return {
+    mobileUa: isMobileUserAgent(request.headers.get("user-agent")),
+    locale: context.locale,
+  };
 }
 
 /**

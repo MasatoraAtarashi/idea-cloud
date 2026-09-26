@@ -1,6 +1,7 @@
 import { useLoaderData, useOutletContext, redirect, type LoaderFunctionArgs } from "react-router";
 import type { AppData } from "./layout";
 import { IdeaListView } from "../../components/idea-list-view";
+import { dictionary } from "../../i18n/dictionary";
 import { createDb } from "../../../db/client";
 import { listIdeaViews } from "../../../db/ideas";
 import { listSavedViews, savedViewJson } from "../../../db/saved-views";
@@ -11,11 +12,12 @@ import {
   omitSavedViewId,
   parseListViewSearch,
 } from "../../lib/list-view-search";
+import type { Route } from "./+types/board";
 
 export { listViewAction as action };
 
-export function meta() {
-  return [{ title: "アイデア — アイデアクラウド" }];
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").list.metaTitle }];
 }
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -29,7 +31,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       throw redirect(listViewHref({ ...match.filters, savedViewId: match.id }));
     }
   }
-  return { ideas, savedViews };
+  return { ideas, savedViews, locale: context.locale };
 }
 
 export default function IdeasPage() {

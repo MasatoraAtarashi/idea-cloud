@@ -2,6 +2,8 @@
 
 Idea Cloud runs as **one Cloudflare Worker**: React Router v7 SSR for the UI and Hono for `/api/*`, same isolate. Relational data is **D1** (SQLite at the edge) via Drizzle.
 
+The UI language is resolved in the Worker before the React Router handler runs and rides on `AppLoadContext.locale` ([i18n.md](./i18n.md)). `/` is the public landing page; signed in, it redirects to `/app`.
+
 Product **ideas** persist to D1. Auth is in-app Google OAuth: `/login` → `/api/auth/google` → callback sets a signed httpOnly session cookie; `/app/**` and `/api/*` require it (`server/auth/`, [oauth-swap.md](./oauth-swap.md)).
 
 ## Cloudflare Workers
@@ -14,6 +16,7 @@ Product **ideas** persist to D1. Auth is in-app Google OAuth: `/login` → `/api
 | Observability | `observability.enabled`, `head_sampling_rate: 1`  |
 | Source maps   | `upload_source_maps: true`                        |
 | UI routes     | `app/routes.ts` → `app/routes/*`                  |
+| UI language   | `app/i18n/` (ja / en / zh / ko, `lang` cookie)    |
 | API           | `server/api/` (`ideas` + template `todos`)        |
 | Auth on APIs  | `server/middleware/access-auth.ts`                |
 | Remote MCP    | `POST /mcp` (`server/mcp/`), bearer `MCP_API_KEY` |

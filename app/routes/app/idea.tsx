@@ -19,8 +19,9 @@ import { IdeaReviewBand } from "../../components/idea-review";
 import { IdeaHumanScore } from "../../components/idea-score";
 import { PopoverMenu } from "../../components/popover-menu";
 import { StageSelect } from "../../components/stage-select";
-import { STAGE_LABEL, nextStage } from "../../data/mock";
-import { formatAgedDays } from "../../lib/format";
+import { nextStage } from "../../data/mock";
+import { useT } from "../../i18n/context";
+import { dictionary } from "../../i18n/dictionary";
 import { LIST_PATH } from "../../lib/home-path";
 import { ideaDetailAction } from "../../lib/idea-detail-action";
 import {
@@ -38,11 +39,12 @@ import { getIdeaView } from "../../../db/ideas";
 import { IdeaCopyButton } from "../../components/idea-copy-button";
 import { IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
+import type { Route } from "./+types/idea";
 
 export { ideaDetailAction as action };
 
-export function meta() {
-  return [{ title: "アイデア — アイデアクラウド" }];
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").idea.metaTitle }];
 }
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
@@ -50,6 +52,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
   const idea = await getIdeaView(db, params.ideaId);
   if (!idea) {
     return {
+      locale: context.locale,
       premium: context.plan === "premium",
       idea: undefined,
       comments: [],
@@ -63,6 +66,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     listChatMessagesForIdea(db, Number(idea.id)),
   ]);
   return {
+    locale: context.locale,
     premium: context.plan === "premium",
     idea,
     comments: comments.map(toCommentView),
@@ -75,21 +79,22 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 }
 
 export default function IdeaPage() {
+  const t = useT();
   const { idea, comments, brainstorms, discussions, premium } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof ideaDetailAction>();
 
   if (!idea) {
     return (
       <div className="px-6 py-6">
-        <h1 className="ui-title text-[16px] tracking-tight">アイデア</h1>
+        <h1 className="ui-title text-[16px] tracking-tight">{t.idea.heading}</h1>
         <div className="mt-4">
-          <EmptyState title="まだありません" />
+          <EmptyState title={t.idea.empty} />
         </div>
         <Link
           to={LIST_PATH}
           className="mt-4 inline-block text-[13.5px] text-muted-foreground no-underline hover:text-foreground"
         >
-          一覧
+          {t.idea.listLink}
         </Link>
       </div>
     );
@@ -141,6 +146,7 @@ export default function IdeaPage() {
 type DetailSide = "idea" | "ai";
 
 function StageAdvanceButton({ idea, className = "" }: { idea: MockIdea; className?: string }) {
+  const t = useT();
   const fetcher = useFetcher();
   const next = nextStage(idea.stage);
   const busy = fetcher.state !== "idle";
@@ -155,21 +161,22 @@ function StageAdvanceButton({ idea, className = "" }: { idea: MockIdea; classNam
         disabled={pending || locked}
         title={
           idea.stage === "archived"
-            ? "アーカイブでは進められません"
+            ? t.idea.nextStageArchived
             : next
-              ? `次の段階へ（${STAGE_LABEL[next]}）`
-              : "最後の段階です"
+              ? t.idea.nextStageTo(t.common.stage[next])
+              : t.idea.nextStageLast
         }
         className="ui-btn w-full px-3.5"
       >
         {pending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-        {pending ? "更新中…" : "次の段階へ"}
+        {pending ? t.idea.updating : t.idea.nextStage}
       </button>
     </fetcher.Form>
   );
 }
 
 function MoreMenu({ idea }: { idea: MockIdea }) {
+  const t = useT();
   const stageFetcher = useFetcher();
   const archiveFetcher = useFetcher();
   const archivePending = useInstantPending(archiveFetcher.state !== "idle");
@@ -177,7 +184,7 @@ function MoreMenu({ idea }: { idea: MockIdea }) {
     "flex min-h-11 w-full items-center px-3 text-left text-[13px] text-secondary no-underline hover:bg-sunken md:min-h-9";
   return (
     <PopoverMenu
-      label="その他の操作"
+      label={t.idea.moreActions}
       trigger={
         <span className="flex h-full w-full items-center justify-center rounded-[7px] border border-border-control bg-card text-[14px] leading-none text-secondary">
           ⋯
@@ -187,7 +194,7 @@ function MoreMenu({ idea }: { idea: MockIdea }) {
       {(close) => (
         <>
           <div className="flex items-center justify-between gap-2 px-3 py-2">
-            <span className="text-[12px] text-muted-foreground">段階を変更</span>
+            <span className="text-[12px] text-muted-foreground">{t.idea.changeStage}</span>
             <stageFetcher.Form method="post">
               <input type="hidden" name="intent" value="stage" />
               <StageSelect defaultValue={idea.stage} autoSubmit />
@@ -195,7 +202,7 @@ function MoreMenu({ idea }: { idea: MockIdea }) {
           </div>
           <div className="my-1 border-t border-border" />
           <Link to={`/app/merge?from=${idea.id}`} role="menuitem" className={item}>
-            他のアイデアと融合
+            {t.idea.mergeWithOther}
           </Link>
           {idea.stage !== "archived" ? (
             <button
@@ -212,7 +219,7 @@ function MoreMenu({ idea }: { idea: MockIdea }) {
                 close();
               }}
             >
-              {archivePending.pending ? "更新中…" : "アーカイブ"}
+              {archivePending.pending ? t.idea.updating : t.idea.archive}
             </button>
           ) : null}
         </>
@@ -222,11 +229,12 @@ function MoreMenu({ idea }: { idea: MockIdea }) {
 }
 
 function IdeaHeaderMeta({ idea }: { idea: MockIdea }) {
+  const t = useT();
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <StagePill stage={idea.stage} />
       <span className="font-mono text-[12px] text-muted-foreground">
-        {formatAgedDays(idea.agedDays).replace(/日$/, "d")}
+        {t.idea.agedDaysShort(idea.agedDays)}
       </span>
       {idea.categoryName ? (
         <span className="truncate text-[12px] text-muted-foreground">{idea.categoryName}</span>
@@ -236,6 +244,7 @@ function IdeaHeaderMeta({ idea }: { idea: MockIdea }) {
 }
 
 function IdeaTags({ idea }: { idea: MockIdea }) {
+  const t = useT();
   if (idea.tags.length > 0) {
     return (
       <div className="mt-5 flex flex-wrap gap-1.5">
@@ -245,7 +254,7 @@ function IdeaTags({ idea }: { idea: MockIdea }) {
       </div>
     );
   }
-  return <p className="mt-5 text-[11.5px] text-muted-foreground">自動タグなし</p>;
+  return <p className="mt-5 text-[11.5px] text-muted-foreground">{t.idea.noAutoTags}</p>;
 }
 
 function SelfReview({
@@ -257,23 +266,24 @@ function SelfReview({
   scoreError?: string;
   reflectionError?: string;
 }) {
+  const t = useT();
   const summary = [
-    idea.humanScore ? `自分の点数 ${idea.humanScore}` : "",
-    idea.reflectionOutcome?.trim() ? "振り返りあり" : "",
+    idea.humanScore ? t.idea.selfReview.score(idea.humanScore) : "",
+    idea.reflectionOutcome?.trim() ? t.idea.selfReview.hasReflection : "",
   ]
     .filter(Boolean)
     .join(" · ");
   return (
     <details className="group mt-8 border-t border-border pt-4">
       <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-[13px] font-semibold md:min-h-8">
-        自分の評価と振り返り
+        {t.idea.selfReview.heading}
         {summary ? (
           <span className="font-mono text-[11.5px] font-normal text-muted-foreground">
             {summary}
           </span>
         ) : null}
         <span className="ml-auto text-[12px] font-normal text-muted-foreground group-open:hidden">
-          開く
+          {t.idea.selfReview.open}
         </span>
       </summary>
       <IdeaHumanScore idea={idea} error={scoreError} />
@@ -313,10 +323,11 @@ function IdeaDetail({
   reflectionError?: string;
   premium: boolean;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  // The URL hash is not sent to the server, so the first paint stays on 相談.
+  // The URL hash is not sent to the server, so the first paint stays on the discuss tab.
   const [hashReady, setHashReady] = useState(false);
   const [side, setSide] = useState<DetailSide>("idea");
   useEffect(() => {
@@ -340,7 +351,7 @@ function IdeaDetail({
         <div className="flex items-center gap-1">
           <Link
             to={LIST_PATH}
-            aria-label="一覧へ戻る"
+            aria-label={t.idea.backToList}
             className="flex h-11 w-11 shrink-0 items-center justify-center text-[18px] text-foreground no-underline"
           >
             ←
@@ -349,9 +360,9 @@ function IdeaDetail({
             <p className="idea-title-wrap line-clamp-1 text-[14.5px] font-semibold">{idea.title}</p>
             <p className="mt-0.5 flex items-center gap-1.5 text-[11.5px] text-warn">
               <StageDot stage={idea.stage} />
-              <span className="text-secondary">{STAGE_LABEL[idea.stage]}</span>
+              <span className="text-secondary">{t.common.stage[idea.stage]}</span>
               <span className="font-mono text-muted-foreground">
-                {formatAgedDays(idea.agedDays).replace(/日$/, "d")}
+                {t.idea.agedDaysShort(idea.agedDays)}
               </span>
             </p>
           </div>
@@ -360,7 +371,7 @@ function IdeaDetail({
             onClick={toggleEdit}
             className="flex min-h-11 min-w-11 items-center justify-center px-2 text-[13px] font-medium text-secondary"
           >
-            {editing ? "閉じる" : "編集"}
+            {editing ? t.common.close : t.idea.editButton}
           </button>
         </div>
         <div className="grid grid-cols-2 gap-1.5 px-2 pb-2.5" role="tablist">
@@ -377,7 +388,7 @@ function IdeaDetail({
                   : "bg-muted font-medium text-tertiary"
               }`}
             >
-              {value === "idea" ? "アイデア" : "AI 作業台"}
+              {value === "idea" ? t.idea.heading : t.idea.aiTab}
             </button>
           ))}
         </div>
@@ -391,7 +402,7 @@ function IdeaDetail({
           <IdeaHeaderMeta idea={idea} />
           <div className="flex shrink-0 items-center gap-2">
             <button type="button" onClick={toggleEdit} className="ui-btn-secondary px-3">
-              {editing ? "閉じる" : "編集"}
+              {editing ? t.common.close : t.idea.editButton}
             </button>
             <IdeaCopyButton idea={idea} className="ui-btn-secondary px-3" inline />
             <StageAdvanceButton idea={idea} />
@@ -439,10 +450,10 @@ function IdeaDetail({
         </div>
       </article>
 
-      {/* AI 作業台. */}
+      {/* AI workbench. */}
       <aside
         className={`${side === "ai" ? "flex" : "hidden"} min-h-0 flex-1 flex-col bg-sunken lg:flex lg:border-l lg:border-border`}
-        aria-label="AI 作業台"
+        aria-label={t.idea.aiTab}
       >
         <AiWorkbench
           idea={idea}

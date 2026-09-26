@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useOutletContext } from "react-router";
+import { Link, useOutletContext, type LoaderFunctionArgs } from "react-router";
 import { LOGOUT_PATH } from "../../auth/google-login";
 import type { AppData } from "./layout";
 import { MEMBERS, SESSION_USER } from "../../data/mock";
+import { LanguageSwitcher } from "../../components/language-switcher";
+import { useT } from "../../i18n/context";
+import { dictionary, type Dictionary } from "../../i18n/dictionary";
 import { initialsFromLabel } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
 import {
@@ -12,25 +15,35 @@ import {
   startBilling,
   type BillingStatus,
 } from "../../lib/billing";
+import type { Route } from "./+types/settings";
 
+/** Order and grouping only: the copy comes from `t.settings.sections`. */
 const SECTIONS = [
-  { id: "members", group: "ワークスペース", label: "メンバーとアクセス" },
-  { id: "general", group: "ワークスペース", label: "一般" },
-  { id: "team", group: "ワークスペース", label: "チーム" },
-  { id: "stages", group: "ワークスペース", label: "段階とラベル" },
-  { id: "profile", group: "個人", label: "プロフィール" },
-  { id: "notify", group: "個人", label: "通知と熟成リマインド" },
-  { id: "shortcuts", group: "個人", label: "ショートカット" },
-] as const;
+  { id: "members", group: "workspace" },
+  { id: "general", group: "workspace" },
+  { id: "team", group: "workspace" },
+  { id: "stages", group: "workspace" },
+  { id: "profile", group: "personal" },
+  { id: "notify", group: "personal" },
+  { id: "shortcuts", group: "personal" },
+] as const satisfies readonly {
+  id: keyof Dictionary["settings"]["sections"];
+  group: keyof Dictionary["settings"]["groups"];
+}[];
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-export function meta() {
-  return [{ title: "設定 — アイデアクラウド" }];
+export function loader({ context }: LoaderFunctionArgs) {
+  return { locale: context.locale };
+}
+
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").settings.metaTitle }];
 }
 
 export default function SettingsPage() {
   const { userEmail, premium } = useOutletContext<AppData>();
+  const t = useT();
   const [section, setSection] = useState<SectionId>("members");
 
   return (
@@ -40,13 +53,13 @@ export default function SettingsPage() {
           to={LIST_PATH}
           className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] font-medium text-foreground no-underline"
         >
-          戻る
+          {t.common.back}
         </Link>
-        <h1 className="text-[13.5px] font-semibold">設定</h1>
+        <h1 className="text-[13.5px] font-semibold">{t.settings.title}</h1>
         <span className="min-w-[3.5rem]" />
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
-        <p className="hidden px-2 text-[16px] font-semibold md:block">設定</p>
+        <p className="hidden px-2 text-[16px] font-semibold md:block">{t.settings.title}</p>
         <nav className="mt-3 flex gap-1 overflow-x-auto md:mt-4 md:flex-col">
           {SECTIONS.map((item, index) => {
             const prev = SECTIONS[index - 1];
@@ -55,7 +68,7 @@ export default function SettingsPage() {
               <div key={item.id} className="contents md:block">
                 {showGroup ? (
                   <p className="mb-1 mt-3 hidden px-2 font-mono text-[11px] text-muted-foreground first:mt-0 md:block">
-                    {item.group}
+                    {t.settings.groups[item.group]}
                   </p>
                 ) : null}
                 <button
@@ -67,7 +80,7 @@ export default function SettingsPage() {
                       : "font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
                   }`}
                 >
-                  {item.label}
+                  {t.settings.sections[item.id]}
                 </button>
               </div>
             );
@@ -88,11 +101,12 @@ export default function SettingsPage() {
 }
 
 function MembersPanel({ userEmail }: { userEmail: string | null }) {
+  const t = useT();
   const rows =
     MEMBERS.length === 0
       ? [
           {
-            name: userEmail ?? SESSION_USER.label,
+            name: userEmail ?? t.common.sessionUser,
             email: userEmail ?? "",
             role: SESSION_USER.role,
           },
@@ -103,22 +117,27 @@ function MembersPanel({ userEmail }: { userEmail: string | null }) {
     <div className="mx-auto max-w-3xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold">メンバーとアクセス</h2>
+          <h2 className="text-[16px] font-semibold">{t.settings.sections.members}</h2>
           <p className="mt-1 text-[12.5px] text-muted-foreground">
-            アイデアの閲覧・編集範囲はチーム単位で決まります。
+            {t.settings.members.description}
           </p>
         </div>
-        <button type="button" disabled className="ui-btn opacity-40" title="未配線">
-          メンバーを招待
+        <button
+          type="button"
+          disabled
+          className="ui-btn opacity-40"
+          title={t.settings.members.inviteDisabled}
+        >
+          {t.settings.members.invite}
         </button>
       </div>
       <div className="mt-4 overflow-hidden rounded-[10px] border border-border">
         <table className="ui-table">
           <thead>
             <tr>
-              <th>メンバー</th>
-              <th>権限</th>
-              <th>最終アクセス</th>
+              <th>{t.settings.members.columns.member}</th>
+              <th>{t.settings.members.columns.role}</th>
+              <th>{t.settings.members.columns.lastSeen}</th>
             </tr>
           </thead>
           <tbody>
@@ -140,43 +159,61 @@ function MembersPanel({ userEmail }: { userEmail: string | null }) {
                   </div>
                 </td>
                 <td className="text-[13px] text-muted-foreground">
-                  {member.role === "owner" ? "管理者" : "メンバー"}
+                  {member.role === "owner"
+                    ? t.settings.members.roles.owner
+                    : t.settings.members.roles.member}
                 </td>
-                <td className="font-mono text-[11.5px] text-muted-foreground">ログイン中</td>
+                <td className="font-mono text-[11.5px] text-muted-foreground">
+                  {t.settings.members.online}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <section className="mt-8">
-        <h3 className="text-[16px] font-semibold">既定の公開範囲</h3>
+        <h3 className="text-[16px] font-semibold">{t.settings.members.visibility.heading}</h3>
         <div className="mt-3 grid gap-2 md:grid-cols-3">
           <div className="rounded-[10px] border border-border-card bg-sunken p-3">
-            <p className="text-[13.5px] font-medium">チーム全体</p>
+            <p className="text-[13.5px] font-medium">{t.settings.members.visibility.team.title}</p>
             <p className="mt-1 text-[12px] text-muted-foreground">
-              同じチームの全員が閲覧・編集できる
+              {t.settings.members.visibility.team.body}
             </p>
           </div>
           <div className="rounded-[10px] border border-border p-3">
-            <p className="text-[13.5px] font-medium">起案者のみ</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">共有するまで本人だけに見える</p>
+            <p className="text-[13.5px] font-medium">
+              {t.settings.members.visibility.author.title}
+            </p>
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              {t.settings.members.visibility.author.body}
+            </p>
           </div>
           <div className="rounded-[10px] border border-border p-3">
-            <p className="text-[13.5px] font-medium">ワークスペース全体</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">全チームから横断で参照できる</p>
+            <p className="text-[13.5px] font-medium">
+              {t.settings.members.visibility.workspace.title}
+            </p>
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              {t.settings.members.visibility.workspace.body}
+            </p>
           </div>
         </div>
-        <p className="mt-2 text-[12px] text-muted-foreground">表示のみ。保存はまだありません。</p>
+        <p className="mt-2 text-[12px] text-muted-foreground">
+          {t.settings.members.visibility.note}
+        </p>
       </section>
     </div>
   );
 }
 
-function periodEndLabel(iso: string | null): string {
+function periodEndLabel(t: Dictionary, iso: string | null): string {
   if (!iso) return "";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+  return date.toLocaleDateString(t.settings.dateLocale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 /**
@@ -185,6 +222,7 @@ function periodEndLabel(iso: string | null): string {
  * every money action hands off to a Stripe-hosted page.
  */
 function BillingRow({ premium }: { premium: boolean }) {
+  const t = useT();
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -204,28 +242,29 @@ function BillingRow({ premium }: { premium: boolean }) {
 
   async function go(path: string) {
     setPending(true);
-    setError(await startBilling(path));
+    setError(await startBilling(t, path));
     setPending(false);
   }
 
   const isPremium = status ? status.plan === "premium" : premium;
-  const paidThrough = periodEndLabel(status?.currentPeriodEnd ?? null);
+  const paidThrough = periodEndLabel(t, status?.currentPeriodEnd ?? null);
 
   return (
     <>
-      <p className="mt-3 text-[12px] text-muted-foreground">プラン</p>
+      <p className="mt-3 text-[12px] text-muted-foreground">{t.settings.billing.plan}</p>
       <p className="mt-1 text-[13.5px] font-semibold">
-        {isPremium ? "プレミアム（AI機能あり）" : "フリー（AI機能なし）"}
+        {isPremium ? t.settings.billing.premium : t.settings.billing.free}
       </p>
       {status?.comped ? (
-        <p className="mt-1 text-[12px] text-muted-foreground">
-          管理者による付与のため、支払いはありません。
-        </p>
+        <p className="mt-1 text-[12px] text-muted-foreground">{t.settings.billing.comped}</p>
       ) : null}
       {paidThrough ? (
         <p className="mt-1 text-[12px] text-muted-foreground">
-          {status?.status === "canceled" ? "利用できるのは" : "次回更新"} {paidThrough}
-          {status?.status === "past_due" ? "（支払いを再試行中）" : ""}
+          {status?.status === "canceled"
+            ? t.settings.billing.canceledPrefix
+            : t.settings.billing.renewsPrefix}{" "}
+          {paidThrough}
+          {status?.status === "past_due" ? t.settings.billing.pastDueSuffix : ""}
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
@@ -236,7 +275,7 @@ function BillingRow({ premium }: { premium: boolean }) {
             onClick={() => go(BILLING_CHECKOUT_PATH)}
             className="ui-btn"
           >
-            プレミアムにする
+            {t.settings.billing.upgrade}
           </button>
         ) : null}
         {status?.manageable ? (
@@ -246,7 +285,7 @@ function BillingRow({ premium }: { premium: boolean }) {
             onClick={() => go(BILLING_PORTAL_PATH)}
             className="ui-btn-secondary px-3"
           >
-            支払い方法・解約
+            {t.settings.billing.manage}
           </button>
         ) : null}
       </div>
@@ -261,32 +300,40 @@ function BillingRow({ premium }: { premium: boolean }) {
 
 /** The signed-in Google account. Membership lives in ACCESS_ALLOWED_EMAILS, not in D1. */
 function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premium: boolean }) {
+  const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">プロフィール</h2>
+      <h2 className="text-[16px] font-semibold">{t.settings.sections.profile}</h2>
       <div className="mt-4 rounded-[10px] border border-border p-4">
-        <p className="text-[12px] text-muted-foreground">ログイン中の Google アカウント</p>
-        <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? "不明"}</p>
+        <p className="text-[12px] text-muted-foreground">{t.settings.profile.account}</p>
+        <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? t.settings.profile.unknown}</p>
         <BillingRow premium={premium} />
         <form method="post" action={LOGOUT_PATH} className="mt-4">
           <button type="submit" className="ui-btn">
-            ログアウト
+            {t.common.signOut}
           </button>
         </form>
       </div>
-      <p className="mt-3 text-[12px] text-muted-foreground">
-        名前とアイコンは Google の設定に従います。支払いは Stripe のページで完結します。
-      </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-border p-4">
+        <div>
+          <p className="text-[13.5px] font-medium">{t.settings.language.title}</p>
+          <p className="mt-1 text-[12px] text-muted-foreground">
+            {t.settings.language.description}
+          </p>
+        </div>
+        <LanguageSwitcher />
+      </div>
+      <p className="mt-3 text-[12px] text-muted-foreground">{t.settings.profile.note}</p>
     </div>
   );
 }
 
 function StubPanel({ section }: { section: SectionId }) {
-  const label = SECTIONS.find((item) => item.id === section)?.label ?? "設定";
+  const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{label}</h2>
-      <p className="mt-3 text-[13.5px] text-muted-foreground">まだありません。</p>
+      <h2 className="text-[16px] font-semibold">{t.settings.sections[section]}</h2>
+      <p className="mt-3 text-[13.5px] text-muted-foreground">{t.settings.stub}</p>
     </div>
   );
 }

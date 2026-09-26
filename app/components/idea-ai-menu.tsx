@@ -3,6 +3,7 @@ import { IdeaBrainstormControls } from "./idea-brainstorm";
 import { IdeaEvaluateControls } from "./idea-evaluate";
 import { IdeaResearchControls } from "./idea-research";
 import type { MockIdea } from "../data/mock";
+import { useT } from "../i18n/context";
 
 export function IdeaAiMenu({
   idea,
@@ -23,7 +24,8 @@ export function IdeaAiMenu({
   ariaLabel?: string;
   children?: ReactNode;
 }) {
-  const summaryLabel = ariaLabel ?? (typeof label === "string" ? label : "操作");
+  const t = useT();
+  const summaryLabel = ariaLabel ?? (typeof label === "string" ? label : t.ai.menu.actions);
   return (
     <details className="ui-menu relative">
       <summary

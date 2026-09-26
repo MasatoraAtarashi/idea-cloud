@@ -4,12 +4,13 @@ import type { IdeaChatMessageView } from "../../db/discussions";
 import type { MockIdea } from "../data/mock";
 import {
   IDEA_DETAIL_TAB_IDS,
-  IDEA_DETAIL_TAB_LABEL,
+  ideaDetailTabLabel,
   type IdeaDetailTab,
 } from "../lib/idea-detail-tabs";
+import { useT } from "../i18n/context";
 import {
   DEFAULT_DISCUSS_PRESET,
-  RESEARCH_PRESET_LABEL,
+  researchPresetLabel,
   RESEARCH_PRESETS,
   type ResearchPreset,
 } from "../lib/research-models";
@@ -24,7 +25,7 @@ import { IdeaDiscussComposer, IdeaDiscussThread } from "./idea-discuss";
 import { IdeaEvaluateControls, IdeaEvaluateNotes, IdeaScoreCard } from "./idea-evaluate";
 import { IdeaResearchControls, IdeaResearchNotes } from "./idea-research";
 
-const PRESETS = Object.keys(RESEARCH_PRESET_LABEL) as ResearchPreset[];
+const PRESETS = Object.keys(RESEARCH_PRESETS) as ResearchPreset[];
 
 const TAB_FETCHER_KEY: Partial<Record<IdeaDetailTab, string>> = {
   discuss: "discuss",
@@ -52,6 +53,7 @@ function TabButton({
   count: number | null;
   onTab: (tab: IdeaDetailTab) => void;
 }) {
+  const t = useT();
   const busy = useTabBusy(idea.id, tab);
   return (
     <button
@@ -64,12 +66,15 @@ function TabButton({
           : "border-border-control bg-card text-tertiary hover:text-foreground lg:bg-transparent"
       }`}
     >
-      {IDEA_DETAIL_TAB_LABEL[tab]}
+      {ideaDetailTabLabel(t, tab)}
       {count != null && count > 0 ? (
         <span className="font-mono text-[12px] font-normal">{count}</span>
       ) : null}
       {busy ? (
-        <span className="h-[6px] w-[6px] rounded-full bg-[#F79009]" aria-label="実行中" />
+        <span
+          className="h-[6px] w-[6px] rounded-full bg-[#F79009]"
+          aria-label={t.ai.workbench.running}
+        />
       ) : null}
     </button>
   );
@@ -98,6 +103,7 @@ export function AiWorkbench({
   discussError?: string;
   premium: boolean;
 }) {
+  const t = useT();
   const [preset, setPreset] = useState<ResearchPreset>(DEFAULT_DISCUSS_PRESET);
   const counts: Record<IdeaDetailTab, number | null> = {
     discuss: null,
@@ -114,7 +120,7 @@ export function AiWorkbench({
             className="hidden h-[7px] w-[7px] rounded-full bg-accent lg:block"
             aria-hidden="true"
           />
-          <h2 className="hidden text-[13.5px] font-semibold lg:block">AI 作業台</h2>
+          <h2 className="hidden text-[13.5px] font-semibold lg:block">{t.ai.workbench.title}</h2>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 lg:px-5">
           <PremiumUpsell />
@@ -130,7 +136,7 @@ export function AiWorkbench({
           className="hidden h-[7px] w-[7px] rounded-full bg-accent lg:block"
           aria-hidden="true"
         />
-        <h2 className="hidden text-[13.5px] font-semibold lg:block">AI 作業台</h2>
+        <h2 className="hidden text-[13.5px] font-semibold lg:block">{t.ai.workbench.title}</h2>
         <span
           className="ml-auto truncate font-mono text-[11.5px] text-muted-foreground"
           title={RESEARCH_PRESETS[preset]}
@@ -138,7 +144,7 @@ export function AiWorkbench({
           {shortModelName(RESEARCH_PRESETS[preset])}
         </span>
         <label className="relative shrink-0">
-          <span className="sr-only">プリセット</span>
+          <span className="sr-only">{t.ai.workbench.presetLabel}</span>
           <select
             value={preset}
             onChange={(event) => setPreset(event.target.value as ResearchPreset)}
@@ -146,7 +152,7 @@ export function AiWorkbench({
           >
             {PRESETS.map((item) => (
               <option key={item} value={item}>
-                {RESEARCH_PRESET_LABEL[item]}
+                {researchPresetLabel(t, item)}
               </option>
             ))}
           </select>
@@ -155,7 +161,7 @@ export function AiWorkbench({
 
       <nav
         className="flex shrink-0 gap-1.5 overflow-x-auto px-4 pb-3 lg:gap-1 lg:px-5"
-        aria-label="AI 作業台"
+        aria-label={t.ai.workbench.title}
       >
         {IDEA_DETAIL_TAB_IDS.map((id) => (
           <TabButton

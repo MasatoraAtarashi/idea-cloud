@@ -7,6 +7,7 @@ import {
   sortIdeas,
 } from "../app/lib/list-sort";
 import type { MockIdea } from "../app/data/mock";
+import { JA } from "../app/i18n/dictionary";
 
 function idea(partial: Partial<MockIdea> & Pick<MockIdea, "id" | "title" | "stage">): MockIdea {
   return {
@@ -92,6 +93,6 @@ describe("list sort helpers", () => {
       "2",
       "3",
     ]);
-    expect(listSortSummary({ key: "createdAt", dir: "desc" })).toBe("作成降順");
+    expect(listSortSummary(JA, { key: "createdAt", dir: "desc" })).toBe("作成降順");
   });
 });

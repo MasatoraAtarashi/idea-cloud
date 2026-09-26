@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { JA } from "../app/i18n/dictionary";
 import {
   inspirationGlyph,
   inspirationHeadline,
@@ -13,21 +14,21 @@ import {
 describe("inspiration display helpers", () => {
   it("prefers a human title, then og:title", () => {
     expect(
-      inspirationHeadline({
+      inspirationHeadline(JA, {
         title: "駅のポスター",
         url: "https://example.com/poster",
         ogTitle: "Ignored page title",
       }),
     ).toBe("駅のポスター");
     expect(
-      inspirationHeadline({
+      inspirationHeadline(JA, {
         title: "無題",
         url: "https://example.com/poster",
         ogTitle: "駅の光",
       }),
     ).toBe("駅の光");
     expect(
-      inspirationHeadline({
+      inspirationHeadline(JA, {
         title: "http://www.sc-runner.com/2013/10/kinovea-tutorial.html",
         url: "http://www.sc-runner.com/2013/10/kinovea-tutorial.html",
       }),
@@ -60,7 +61,7 @@ describe("inspiration display helpers", () => {
 
   it("prefills an idea from a card with memo and a 参考 line", () => {
     expect(
-      inspirationIdeaDraft({
+      inspirationIdeaDraft(JA, {
         title: "寿司職人の予約サイト",
         url: "https://omakase.in/",
         memo: "店ではなく職人から選ぶ導線。",
@@ -71,6 +72,8 @@ describe("inspiration display helpers", () => {
       body: "店ではなく職人から選ぶ導線。\n\n参考: https://omakase.in/",
       tags: ["寿司", "海外"],
     });
-    expect(inspirationIdeaDraft({ title: "メモ", url: null, memo: "", tags: [] }).body).toBe("");
+    expect(inspirationIdeaDraft(JA, { title: "メモ", url: null, memo: "", tags: [] }).body).toBe(
+      "",
+    );
   });
 });
