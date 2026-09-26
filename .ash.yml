@@ -45,6 +45,9 @@ global_settings:
     - path: test/premium.test.ts
       rule_id: SECRET-Secret-Keyword
       reason: Stripe webhook fixtures — the vitest `whsec_test` value and a deliberately wrong secret used to assert that a forged signature is rejected. Neither is a real credential.
+    - path: db/workspaces.ts
+      rule_id: SECRET-Secret-Keyword
+      reason: API_KEY_PREFIX is the literal "icw_" that workspace MCP keys start with, so a bearer can be routed to the key table. Keys are random per workspace and stored as SHA-256; no credential value is committed.
     - path: mobile/.metadata
       rule_id: SECRET-Hex-High-Entropy-String
       reason: Flutter writes the SDK git revision here. A commit SHA, not a credential.

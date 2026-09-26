@@ -3,7 +3,9 @@
  * everything under `/app` needs a session (docs/spec/oauth-swap.md step 4).
  * `/api` and `/mcp` have their own gates and never reach this.
  */
+import { createRootDb } from "../../db/client";
 import { isEmailAllowed } from "../security/allowlist";
+import { readWorkspaceCookie, resolveWorkspace, type CurrentWorkspace } from "../tenant/workspace";
 import { readSessionEmailFromRequest } from "./session";
 
 const PROTECTED_PREFIX = "/app";
@@ -20,16 +22,25 @@ export function loginRedirectUrl(requestUrl: string): string {
 }
 
 export type PageSession =
-  /** Allowed to render. `email` is null on public pages with no session. */
-  | { redirect: null; email: string | null }
+  /** Allowed to render. `email` / `workspace` are null on public pages with no session. */
+  | { redirect: null; email: string | null; workspace: CurrentWorkspace | null }
   /** Protected page without an allowed session. */
-  | { redirect: Response; email: null };
+  | { redirect: Response; email: null; workspace: null };
 
 export async function resolvePageSession(request: Request, env: Env): Promise<PageSession> {
   const { pathname } = new URL(request.url);
   const rawEmail = await readSessionEmailFromRequest(request, env);
   const email = rawEmail && isEmailAllowed(rawEmail, env.ACCESS_ALLOWED_EMAILS) ? rawEmail : null;
-  if (email || !isProtectedPagePath(pathname)) return { redirect: null, email };
+  if (email) {
+    const workspace = await resolveWorkspace(
+      createRootDb(env.DB),
+      email,
+      env,
+      readWorkspaceCookie(request.headers.get("cookie")),
+    );
+    return { redirect: null, email, workspace };
+  }
+  if (!isProtectedPagePath(pathname)) return { redirect: null, email: null, workspace: null };
   // Built by hand: Response.redirect() returns immutable headers, which the
   // security-headers middleware cannot then add to.
   return {
@@ -38,5 +49,6 @@ export async function resolvePageSession(request: Request, env: Env): Promise<Pa
       headers: { location: loginRedirectUrl(request.url) },
     }),
     email: null,
+    workspace: null,
   };
 }

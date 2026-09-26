@@ -20,8 +20,8 @@ import { inspirationHeadline } from "../../lib/inspiration";
 import { INSPIRATIONS_PATH, inspirationDetailAction } from "../../lib/inspiration-action";
 import { confirmInspirationDelete } from "../../lib/inspiration-delete";
 import { useInstantPending } from "../../lib/use-instant-pending";
-import { createDb } from "../../../db/client";
 import { getInspirationRow, inspirationView } from "../../../db/inspirations";
+import { appDb } from "../../lib/app-db";
 import type { Route } from "./+types/inspiration";
 
 export { inspirationDetailAction as action };
@@ -31,7 +31,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const numeric = Number(params.inspirationId);
   const locale = context.locale;
   if (!Number.isInteger(numeric) || numeric <= 0) {

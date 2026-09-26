@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
-import { Link, useOutletContext, type LoaderFunctionArgs } from "react-router";
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useOutletContext,
+  type LoaderFunctionArgs,
+} from "react-router";
 import { LOGOUT_PATH } from "../../auth/google-login";
 import type { AppData } from "./layout";
-import { MEMBERS, SESSION_USER } from "../../data/mock";
 import { LanguageSwitcher } from "../../components/language-switcher";
 import { useT } from "../../i18n/context";
 import { dictionary, type Dictionary } from "../../i18n/dictionary";
@@ -15,13 +22,25 @@ import {
   startBilling,
   type BillingStatus,
 } from "../../lib/billing";
+import { workspaceSettingsAction, type WorkspaceActionData } from "../../lib/workspace-action";
+import { createRootDb } from "../../../db/client";
+import {
+  INVITE_TTL_DAYS,
+  WORKSPACE_NAME_MAX,
+  listActiveInvites,
+  listApiKeys,
+  listMembers,
+  listMembershipsForEmail,
+} from "../../../db/workspaces";
 import type { Route } from "./+types/settings";
+
+export { workspaceSettingsAction as action };
 
 /** Order and grouping only: the copy comes from `t.settings.sections`. */
 const SECTIONS = [
   { id: "members", group: "workspace" },
   { id: "general", group: "workspace" },
-  { id: "team", group: "workspace" },
+  { id: "api", group: "workspace" },
   { id: "stages", group: "workspace" },
   { id: "profile", group: "personal" },
   { id: "notify", group: "personal" },
@@ -33,8 +52,46 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-export function loader({ context }: LoaderFunctionArgs) {
-  return { locale: context.locale };
+/** `{name}` placeholders in dictionary strings. */
+function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ""));
+}
+
+/**
+ * Members, invites and keys are read with the unscoped handle but always for
+ * `context.workspace.id`, which the page gate resolved from this session's
+ * membership. Owner-only lists are still returned empty to members.
+ */
+export async function loader({ context }: LoaderFunctionArgs) {
+  const workspace = context.workspace!;
+  const email = context.userEmail ?? "";
+  const db = createRootDb(context.cloudflare.env.DB);
+  const isOwner = workspace.role === "owner";
+  const [members, memberships, invites, keys] = await Promise.all([
+    listMembers(db, workspace.id),
+    listMembershipsForEmail(db, email),
+    isOwner ? listActiveInvites(db, workspace.id) : Promise.resolve([]),
+    isOwner ? listApiKeys(db, workspace.id) : Promise.resolve([]),
+  ]);
+  return {
+    locale: context.locale,
+    members: members.map((row) => ({ email: row.email, role: row.role, since: row.createdAt })),
+    memberships,
+    invites: invites.map((row) => ({
+      id: row.id,
+      role: row.role,
+      expiresAt: row.expiresAt,
+      uses: row.uses,
+      maxUses: row.maxUses,
+    })),
+    keys: keys.map((row) => ({
+      id: row.id,
+      name: row.name,
+      prefix: row.prefix,
+      createdAt: row.createdAt,
+      lastUsedAt: row.lastUsedAt,
+    })),
+  };
 }
 
 export function meta({ data }: Route.MetaArgs) {
@@ -42,9 +99,20 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export default function SettingsPage() {
-  const { userEmail, premium } = useOutletContext<AppData>();
+  const { userEmail, premium, workspace } = useOutletContext<AppData>();
+  const data = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof workspaceSettingsAction>() as
+    WorkspaceActionData | undefined;
   const t = useT();
   const [section, setSection] = useState<SectionId>("members");
+
+  useEffect(() => {
+    if (!actionData?.intent) return;
+    if (actionData.intent.startsWith("key-")) setSection("api");
+    else if (actionData.intent === "rename" || actionData.intent === "create-workspace") {
+      setSection("general");
+    }
+  }, [actionData]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
@@ -55,11 +123,14 @@ export default function SettingsPage() {
         >
           {t.common.back}
         </Link>
-        <h1 className="text-[13.5px] font-semibold">{t.settings.title}</h1>
+        <h1 className="text-[13.5px] font-medium">{t.settings.title}</h1>
         <span className="min-w-[3.5rem]" />
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
         <p className="hidden px-2 text-[16px] font-medium md:block">{t.settings.title}</p>
+        <p className="hidden truncate px-2 pt-1 text-[11.5px] text-muted-foreground md:block">
+          {workspace.name}
+        </p>
         <nav className="mt-3 flex gap-1 overflow-x-auto md:mt-4 md:flex-col">
           {SECTIONS.map((item, index) => {
             const prev = SECTIONS[index - 1];
@@ -76,7 +147,7 @@ export default function SettingsPage() {
                   onClick={() => setSection(item.id)}
                   className={`flex min-h-11 shrink-0 items-center rounded-md px-3 text-left text-[13px] md:min-h-0 md:px-2 md:py-1.5 ${
                     section === item.id
-                      ? "bg-muted font-semibold text-foreground"
+                      ? "bg-muted font-medium text-foreground"
                       : "font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
                   }`}
                 >
@@ -89,7 +160,25 @@ export default function SettingsPage() {
       </aside>
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
         {section === "members" ? (
-          <MembersPanel userEmail={userEmail} />
+          <MembersPanel
+            userEmail={userEmail}
+            isOwner={workspace.role === "owner"}
+            members={data.members}
+            invites={data.invites}
+            actionData={actionData}
+          />
+        ) : section === "general" ? (
+          <GeneralPanel
+            workspace={workspace}
+            memberships={data.memberships}
+            actionData={actionData}
+          />
+        ) : section === "api" ? (
+          <ApiKeysPanel
+            isOwner={workspace.role === "owner"}
+            keys={data.keys}
+            actionData={actionData}
+          />
         ) : section === "profile" ? (
           <ProfilePanel userEmail={userEmail} premium={premium} />
         ) : (
@@ -100,107 +189,349 @@ export default function SettingsPage() {
   );
 }
 
-function MembersPanel({ userEmail }: { userEmail: string | null }) {
-  const t = useT();
-  const rows =
-    MEMBERS.length === 0
-      ? [
-          {
-            name: userEmail ?? t.common.sessionUser,
-            email: userEmail ?? "",
-            role: SESSION_USER.role,
-          },
-        ]
-      : MEMBERS;
+function ActionNote({ data, intents }: { data?: WorkspaceActionData; intents: string[] }) {
+  if (!data || !intents.includes(data.intent) || !data.error) return null;
+  return (
+    <p role="alert" className="mt-2 text-[12.5px] text-danger">
+      {data.error}
+    </p>
+  );
+}
 
+function useBusy(intent: string): boolean {
+  const navigation = useNavigation();
+  return navigation.state !== "idle" && navigation.formData?.get("intent") === intent;
+}
+
+function CopyField({ value, label }: { value: string; label: string }) {
+  const t = useT();
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="mt-3 rounded-[10px] border border-border bg-sunken p-3">
+      <p className="text-[12px] text-muted-foreground">{label}</p>
+      <div className="mt-1 flex items-center gap-2">
+        <input
+          readOnly
+          value={value}
+          onFocus={(event) => event.currentTarget.select()}
+          className="ui-input min-w-0 flex-1 font-mono text-[12px]"
+        />
+        <button
+          type="button"
+          className="ui-btn-secondary shrink-0 px-3"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(value);
+              setCopied(true);
+            } catch {
+              setCopied(false);
+            }
+          }}
+        >
+          {copied ? t.settings.workspace.copied : t.settings.workspace.copy}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type LoaderData = Awaited<ReturnType<typeof loader>>;
+
+function roleLabel(t: Dictionary, role: string): string {
+  return role === "owner" ? t.settings.members.roles.owner : t.settings.members.roles.member;
+}
+
+function MembersPanel({
+  userEmail,
+  isOwner,
+  members,
+  invites,
+  actionData,
+}: {
+  userEmail: string | null;
+  isOwner: boolean;
+  members: LoaderData["members"];
+  invites: LoaderData["invites"];
+  actionData?: WorkspaceActionData;
+}) {
+  const t = useT();
+  const w = t.settings.workspace.members;
+  const inviting = useBusy("invite-create");
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-[16px] font-medium">{t.settings.sections.members}</h2>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">
-            {t.settings.members.description}
-          </p>
+          <p className="mt-1 text-[12.5px] text-muted-foreground">{w.description}</p>
         </div>
-        <button
-          type="button"
-          disabled
-          className="ui-btn opacity-40"
-          title={t.settings.members.inviteDisabled}
-        >
-          {t.settings.members.invite}
-        </button>
+        {isOwner ? (
+          <Form method="post">
+            <input type="hidden" name="intent" value="invite-create" />
+            <button type="submit" disabled={inviting} className="ui-btn">
+              {w.createInvite}
+            </button>
+          </Form>
+        ) : null}
       </div>
+      <ActionNote data={actionData} intents={["invite-create", "invite-revoke", "member-remove"]} />
+      {actionData?.intent === "invite-create" && actionData.inviteUrl ? (
+        <CopyField
+          value={actionData.inviteUrl}
+          label={fill(w.inviteLabel, { days: INVITE_TTL_DAYS })}
+        />
+      ) : null}
       <div className="mt-4 overflow-hidden rounded-[10px] border border-border">
         <table className="ui-table">
           <thead>
             <tr>
               <th>{t.settings.members.columns.member}</th>
               <th>{t.settings.members.columns.role}</th>
-              <th>{t.settings.members.columns.lastSeen}</th>
+              <th>{w.joined}</th>
+              {isOwner ? <th /> : null}
             </tr>
           </thead>
           <tbody>
-            {rows.map((member) => (
-              <tr key={member.name}>
-                <td>
-                  <div className="flex items-center gap-2.5 py-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] text-secondary">
-                      {initialsFromLabel(member.name)}
-                    </span>
-                    <span>
-                      <span className="block text-[13.5px] font-semibold">{member.name}</span>
-                      {member.email ? (
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          {member.email}
-                        </span>
+            {members.map((member) => {
+              const isSelf = userEmail?.toLowerCase() === member.email;
+              return (
+                <tr key={member.email}>
+                  <td>
+                    <div className="flex items-center gap-2.5 py-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] text-secondary">
+                        {initialsFromLabel(member.email)}
+                      </span>
+                      <span className="font-mono text-[12px]">
+                        {member.email}
+                        {isSelf ? (
+                          <span className="font-sans text-muted-foreground">{w.self}</span>
+                        ) : null}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="text-[13px] text-muted-foreground">{roleLabel(t, member.role)}</td>
+                  <td className="font-mono text-[11.5px] text-muted-foreground">
+                    {member.since.slice(0, 10)}
+                  </td>
+                  {isOwner ? (
+                    <td className="text-right">
+                      {!isSelf ? (
+                        <Form method="post">
+                          <input type="hidden" name="intent" value="member-remove" />
+                          <input type="hidden" name="email" value={member.email} />
+                          <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
+                            {w.remove}
+                          </button>
+                        </Form>
                       ) : null}
-                    </span>
-                  </div>
-                </td>
-                <td className="text-[13px] text-muted-foreground">
-                  {member.role === "owner"
-                    ? t.settings.members.roles.owner
-                    : t.settings.members.roles.member}
-                </td>
-                <td className="font-mono text-[11.5px] text-muted-foreground">
-                  {t.settings.members.online}
-                </td>
-              </tr>
-            ))}
+                    </td>
+                  ) : null}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+      {isOwner && invites.length > 0 ? (
+        <section className="mt-8">
+          <h3 className="text-[14px] font-medium">{w.activeInvites}</h3>
+          <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
+            {invites.map((invite) => (
+              <li key={invite.id} className="flex items-center gap-3 px-3 py-2 text-[12.5px]">
+                <span className="text-muted-foreground">
+                  {fill(w.inviteRow, {
+                    role: roleLabel(t, invite.role),
+                    uses: invite.uses,
+                    max: invite.maxUses,
+                    until: invite.expiresAt.slice(0, 10),
+                  })}
+                </span>
+                <Form method="post" className="ml-auto">
+                  <input type="hidden" name="intent" value="invite-revoke" />
+                  <input type="hidden" name="inviteId" value={invite.id} />
+                  <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
+                    {w.revoke}
+                  </button>
+                </Form>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[12px] text-muted-foreground">{w.inviteNote}</p>
+        </section>
+      ) : null}
       <section className="mt-8">
-        <h3 className="text-[16px] font-medium">{t.settings.members.visibility.heading}</h3>
-        <div className="mt-3 grid gap-2 md:grid-cols-3">
-          <div className="rounded-[10px] border border-border-card bg-sunken p-3">
-            <p className="text-[13.5px] font-medium">{t.settings.members.visibility.team.title}</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              {t.settings.members.visibility.team.body}
-            </p>
-          </div>
-          <div className="rounded-[10px] border border-border p-3">
-            <p className="text-[13.5px] font-medium">
-              {t.settings.members.visibility.author.title}
-            </p>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              {t.settings.members.visibility.author.body}
-            </p>
-          </div>
-          <div className="rounded-[10px] border border-border p-3">
-            <p className="text-[13.5px] font-medium">
-              {t.settings.members.visibility.workspace.title}
-            </p>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              {t.settings.members.visibility.workspace.body}
-            </p>
-          </div>
-        </div>
-        <p className="mt-2 text-[12px] text-muted-foreground">
-          {t.settings.members.visibility.note}
-        </p>
+        <h3 className="text-[14px] font-medium">{w.leaveTitle}</h3>
+        <p className="mt-1 text-[12px] text-muted-foreground">{w.leaveBody}</p>
+        <Form
+          method="post"
+          className="mt-2"
+          onSubmit={(event) => {
+            if (!confirm(w.leaveConfirm)) event.preventDefault();
+          }}
+        >
+          <input type="hidden" name="intent" value="leave" />
+          <button type="submit" className="ui-btn-danger px-3">
+            {w.leave}
+          </button>
+        </Form>
+        <ActionNote data={actionData} intents={["leave"]} />
       </section>
+    </div>
+  );
+}
+
+function GeneralPanel({
+  workspace,
+  memberships,
+  actionData,
+}: {
+  workspace: AppData["workspace"];
+  memberships: LoaderData["memberships"];
+  actionData?: WorkspaceActionData;
+}) {
+  const t = useT();
+  const g = t.settings.workspace.general;
+  const isOwner = workspace.role === "owner";
+  return (
+    <div className="mx-auto max-w-2xl">
+      <h2 className="text-[16px] font-medium">{t.settings.sections.general}</h2>
+      <section className="mt-4 rounded-[10px] border border-border p-4">
+        <p className="text-[12px] text-muted-foreground">{g.name}</p>
+        <Form method="post" className="mt-2 flex items-center gap-2">
+          <input type="hidden" name="intent" value="rename" />
+          <input
+            name="name"
+            defaultValue={workspace.name}
+            maxLength={WORKSPACE_NAME_MAX}
+            disabled={!isOwner}
+            className="ui-input min-w-0 flex-1"
+            aria-label={g.name}
+          />
+          <button type="submit" disabled={!isOwner} className="ui-btn-secondary px-3">
+            {t.common.save}
+          </button>
+        </Form>
+        {!isOwner ? <p className="mt-2 text-[12px] text-muted-foreground">{g.ownerOnly}</p> : null}
+        <ActionNote data={actionData} intents={["rename"]} />
+        {actionData?.intent === "rename" && actionData.ok ? (
+          <p className="mt-2 text-[12.5px] text-muted-foreground">{g.saved}</p>
+        ) : null}
+      </section>
+      <section className="mt-8">
+        <h3 className="text-[14px] font-medium">{g.mine}</h3>
+        <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
+          {memberships.map((membership) => {
+            const current = membership.workspaceId === workspace.id;
+            return (
+              <li key={membership.workspaceId} className="flex items-center gap-3 px-3 py-2">
+                <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">
+                  {membership.name}
+                </span>
+                <span className="text-[12px] text-muted-foreground">
+                  {roleLabel(t, membership.role)}
+                </span>
+                {current ? (
+                  <span className="rounded-[6px] bg-muted px-2 py-0.5 text-[11.5px] text-secondary">
+                    {g.current}
+                  </span>
+                ) : (
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="switch" />
+                    <input type="hidden" name="workspaceId" value={membership.workspaceId} />
+                    <button type="submit" className="ui-btn-secondary px-3 text-[12px]">
+                      {g.switch}
+                    </button>
+                  </Form>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <ActionNote data={actionData} intents={["switch"]} />
+      </section>
+      <section className="mt-8">
+        <h3 className="text-[14px] font-medium">{g.createTitle}</h3>
+        <Form method="post" className="mt-2 flex items-center gap-2">
+          <input type="hidden" name="intent" value="create-workspace" />
+          <input
+            name="name"
+            placeholder={g.createPlaceholder}
+            maxLength={WORKSPACE_NAME_MAX}
+            className="ui-input min-w-0 flex-1"
+            aria-label={g.createTitle}
+          />
+          <button type="submit" className="ui-btn px-3">
+            {g.create}
+          </button>
+        </Form>
+        <ActionNote data={actionData} intents={["create-workspace"]} />
+      </section>
+    </div>
+  );
+}
+
+function ApiKeysPanel({
+  isOwner,
+  keys,
+  actionData,
+}: {
+  isOwner: boolean;
+  keys: LoaderData["keys"];
+  actionData?: WorkspaceActionData;
+}) {
+  const t = useT();
+  const a = t.settings.workspace.api;
+  const creating = useBusy("key-create");
+  return (
+    <div className="mx-auto max-w-2xl">
+      <h2 className="text-[16px] font-medium">{a.title}</h2>
+      <p className="mt-1 text-[12.5px] text-muted-foreground">{a.description}</p>
+      {!isOwner ? (
+        <p className="mt-4 text-[13px] text-muted-foreground">{a.ownerOnly}</p>
+      ) : (
+        <>
+          <Form method="post" className="mt-4 flex items-center gap-2">
+            <input type="hidden" name="intent" value="key-create" />
+            <input
+              name="name"
+              placeholder={a.namePlaceholder}
+              maxLength={60}
+              className="ui-input min-w-0 flex-1"
+              aria-label={a.nameLabel}
+            />
+            <button type="submit" disabled={creating} className="ui-btn px-3">
+              {a.issue}
+            </button>
+          </Form>
+          <ActionNote data={actionData} intents={["key-create", "key-revoke"]} />
+          {actionData?.intent === "key-create" && actionData.createdKey ? (
+            <CopyField value={actionData.createdKey} label={a.createdLabel} />
+          ) : null}
+          <ul className="mt-4 divide-y divide-border rounded-[10px] border border-border">
+            {keys.length === 0 ? (
+              <li className="px-3 py-3 text-[12.5px] text-muted-foreground">{a.none}</li>
+            ) : (
+              keys.map((key) => (
+                <li key={key.id} className="flex items-center gap-3 px-3 py-2 text-[12.5px]">
+                  <span className="min-w-0 flex-1 truncate font-medium">{key.name}</span>
+                  <span className="font-mono text-muted-foreground">{key.prefix}…</span>
+                  <span className="text-muted-foreground">
+                    {key.lastUsedAt
+                      ? fill(a.lastUsed, { date: key.lastUsedAt.slice(0, 10) })
+                      : a.unused}
+                  </span>
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="key-revoke" />
+                    <input type="hidden" name="keyId" value={key.id} />
+                    <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
+                      {t.settings.workspace.members.revoke}
+                    </button>
+                  </Form>
+                </li>
+              ))
+            )}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
@@ -252,7 +583,7 @@ function BillingRow({ premium }: { premium: boolean }) {
   return (
     <>
       <p className="mt-3 text-[12px] text-muted-foreground">{t.settings.billing.plan}</p>
-      <p className="mt-1 text-[13.5px] font-semibold">
+      <p className="mt-1 text-[13.5px] font-medium">
         {isPremium ? t.settings.billing.premium : t.settings.billing.free}
       </p>
       {status?.comped ? (
@@ -298,7 +629,7 @@ function BillingRow({ premium }: { premium: boolean }) {
   );
 }
 
-/** The signed-in Google account. Membership lives in ACCESS_ALLOWED_EMAILS, not in D1. */
+/** The signed-in Google account. Membership lives in workspace_members (docs/spec/workspaces.md). */
 function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premium: boolean }) {
   const t = useT();
   return (

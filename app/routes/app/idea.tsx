@@ -31,7 +31,6 @@ import {
   type IdeaDetailTab,
 } from "../../lib/idea-detail-tabs";
 import { useInstantPending } from "../../lib/use-instant-pending";
-import { createDb } from "../../../db/client";
 import { listBrainstormsForIdea, toBrainstormView } from "../../../db/brainstorms";
 import { listCommentsForIdea, toCommentView } from "../../../db/comments";
 import { listChatMessagesForIdea, toChatMessageView } from "../../../db/discussions";
@@ -39,6 +38,7 @@ import { getIdeaView } from "../../../db/ideas";
 import { IdeaCopyButton } from "../../components/idea-copy-button";
 import { IconSpinner } from "../../components/icons";
 import type { MockIdea } from "../../data/mock";
+import { appDb } from "../../lib/app-db";
 import type { Route } from "./+types/idea";
 
 export { ideaDetailAction as action };
@@ -48,7 +48,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const idea = await getIdeaView(db, params.ideaId);
   if (!idea) {
     return {

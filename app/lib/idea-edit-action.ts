@@ -1,9 +1,9 @@
 import { type ActionFunctionArgs } from "react-router";
 import { resolveCategoryId } from "../../db/categories";
-import { createDb } from "../../db/client";
 import { getIdeaRow, IDEA_BODY_MAX, updateIdeaFields } from "../../db/ideas";
 import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
 import { STAGES, type Stage } from "../data/mock";
+import { appDb } from "./app-db";
 import { dictionary } from "../i18n/dictionary";
 
 export type EditIdeaActionData = {
@@ -49,7 +49,7 @@ export async function editIdeaAction({
   const categoryId = /^\d+$/.test(categoryIdRaw) ? Number(categoryIdRaw) : null;
   const categoryName = String(form.get("categoryName") ?? "");
 
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const category = await resolveCategoryId(db, { categoryId, categoryName });
   if ("error" in category) {
     return { error: category.error, intent: "edit" } satisfies EditIdeaActionData;

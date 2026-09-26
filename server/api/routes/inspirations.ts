@@ -1,7 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { createDb } from "../../../db/client";
+import { apiDb } from "../db";
 import { insertIdea } from "../../../db/ideas";
 import {
   INSPIRATION_MEMO_MAX,
@@ -67,7 +67,7 @@ const idParamSchema = z.object({
 
 export const inspirationsRoute = new Hono<AppEnv>()
   .get("/", async (c) => {
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const rows = await listInspirationRows(db);
     return c.json({ items: rows.map(inspirationJson) });
   })
@@ -77,13 +77,13 @@ export const inspirationsRoute = new Hono<AppEnv>()
     if (!prepared.ok) {
       return c.json({ error: prepared.error }, 400);
     }
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const created = await insertPreparedInspiration(db, prepared.value);
     return c.json({ item: inspirationJson(created) }, 201);
   })
   .get("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const row = await getInspirationRow(db, id);
     if (!row) {
       return c.json({ error: "Not Found" }, 404);
@@ -105,7 +105,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
         }
         url = normalized.url || null;
       }
-      const db = createDb(c.env.DB);
+      const db = apiDb(c);
       const existing = await getInspirationRow(db, id);
       if (!existing) {
         return c.json({ error: "Not Found" }, 404);
@@ -121,7 +121,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
   )
   .delete("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const deleted = await deleteInspiration(db, id);
     if (!deleted) {
       return c.json({ error: "Not Found" }, 404);
@@ -130,7 +130,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
   })
   .post("/:id/ogp", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const row = await getInspirationRow(db, id);
     if (!row) {
       return c.json({ error: "Not Found" }, 404);
@@ -141,7 +141,7 @@ export const inspirationsRoute = new Hono<AppEnv>()
   })
   .post("/:id/brainstorm", requirePremium, zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const row = await getInspirationRow(db, id);
     if (!row) {
       return c.json({ error: "Not Found" }, 404);

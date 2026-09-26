@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import {
   normalizeSavedViewFilters,
   parseSavedViewFilters,
@@ -25,16 +25,27 @@ export function savedViewJson(row: SavedView): SavedViewJson {
 }
 
 export async function listSavedViews(db: Db): Promise<SavedView[]> {
-  return db.select().from(savedViews).orderBy(desc(savedViews.id));
+  return db
+    .select()
+    .from(savedViews)
+    .where(eq(savedViews.workspaceId, db.workspaceId))
+    .orderBy(desc(savedViews.id));
 }
 
 export async function getSavedView(db: Db, id: number): Promise<SavedView | undefined> {
-  const [row] = await db.select().from(savedViews).where(eq(savedViews.id, id)).limit(1);
+  const [row] = await db
+    .select()
+    .from(savedViews)
+    .where(and(eq(savedViews.id, id), eq(savedViews.workspaceId, db.workspaceId)))
+    .limit(1);
   return row;
 }
 
 export async function countSavedViews(db: Db): Promise<number> {
-  const rows = await db.select({ id: savedViews.id }).from(savedViews);
+  const rows = await db
+    .select({ id: savedViews.id })
+    .from(savedViews)
+    .where(eq(savedViews.workspaceId, db.workspaceId));
   return rows.length;
 }
 
@@ -46,6 +57,7 @@ export async function insertSavedView(
   const [created] = await db
     .insert(savedViews)
     .values({
+      workspaceId: db.workspaceId,
       name,
       filters: JSON.stringify(normalizeSavedViewFilters(filters)),
     })
@@ -57,6 +69,9 @@ export async function insertSavedView(
 }
 
 export async function deleteSavedView(db: Db, id: number): Promise<SavedView | undefined> {
-  const [deleted] = await db.delete(savedViews).where(eq(savedViews.id, id)).returning();
+  const [deleted] = await db
+    .delete(savedViews)
+    .where(and(eq(savedViews.id, id), eq(savedViews.workspaceId, db.workspaceId)))
+    .returning();
   return deleted;
 }

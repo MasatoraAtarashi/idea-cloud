@@ -1,8 +1,8 @@
-import { desc } from "drizzle-orm";
+import { desc, inArray } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { inspirationHeadline, inspirationHostname } from "../app/lib/inspiration";
 import type { Db } from "./client";
-import { listIdeaViews } from "./ideas";
+import { ideaIdsInWorkspace, listIdeaViews } from "./ideas";
 import { listInspirationRows } from "./inspirations";
 import { ideaComments, type IdeaComment, type Inspiration } from "./schema";
 import { JA } from "../app/i18n/dictionary";
@@ -161,6 +161,7 @@ export async function searchWorkspaceDb(db: Db, rawQuery: string): Promise<Searc
     db
       .select({ id: ideaComments.id, ideaId: ideaComments.ideaId, body: ideaComments.body })
       .from(ideaComments)
+      .where(inArray(ideaComments.ideaId, ideaIdsInWorkspace(db)))
       .orderBy(desc(ideaComments.id)),
     listInspirationRows(db),
   ]);

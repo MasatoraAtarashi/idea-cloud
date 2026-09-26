@@ -40,6 +40,7 @@ app.all("*", async (c) => {
   return requestHandler(c.req.raw, {
     cloudflare: { env: c.env, ctx: c.executionCtx },
     userEmail: session.email,
+    workspace: session.workspace,
     locale: resolveLocale(c.req.raw),
     plan: await resolvePlanForEnv(session.email, c.env),
   });

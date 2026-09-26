@@ -1,8 +1,8 @@
 import { type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { COMMENT_BODY_MAX, insertIdeaComment } from "../../db/comments";
 import { getIdeaRow } from "../../db/ideas";
 import { resolveCommentAuthor } from "../data/mock";
+import { appDb } from "./app-db";
 import { dictionary } from "../i18n/dictionary";
 
 export type CommentIdeaActionData = {
@@ -31,7 +31,7 @@ export async function commentIdeaAction({
     return { error: t.idea.errors.tooLong, intent: "comment" } satisfies CommentIdeaActionData;
   }
 
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const idea = await getIdeaRow(db, ideaId);
   if (!idea) {
     return { error: t.idea.errors.notFound, intent: "comment" } satisfies CommentIdeaActionData;

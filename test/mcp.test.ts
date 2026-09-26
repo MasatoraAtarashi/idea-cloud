@@ -4,7 +4,7 @@ import { STAGES } from "../app/data/mock";
 import { createDb } from "../db/client";
 import { authorizeMcpRequest, mcpSharedSecret, timingSafeEqualString } from "../server/mcp/auth";
 import { parseToolJson } from "../server/mcp/result";
-import { authHeaders } from "./auth-helper";
+import { authHeaders, TEST_WORKSPACE_ID } from "./auth-helper";
 import {
   addComment,
   createIdea,
@@ -21,7 +21,7 @@ import { setTestOgpFetch } from "../server/ogp/fetch";
 const TOKEN = "test-mcp-key";
 
 function db() {
-  return createDb(env.DB);
+  return createDb(env.DB, TEST_WORKSPACE_ID);
 }
 
 function unique(label: string) {
@@ -79,7 +79,7 @@ describe("MCP auth", () => {
     expect(sessionOnly.status).toBe(401);
   });
 
-  it("accepts MCP_API_KEY and falls back to MCP_TOKEN only when the primary secret is empty", () => {
+  it("accepts MCP_API_KEY and falls back to MCP_TOKEN only when the primary secret is empty", async () => {
     expect(mcpSharedSecret({ MCP_API_KEY: " primary ", MCP_TOKEN: "other" } as Env)).toBe(
       "primary",
     );
@@ -88,13 +88,13 @@ describe("MCP auth", () => {
     expect(timingSafeEqualString("same", "same")).toBe(true);
     expect(timingSafeEqualString("same", "same!")).toBe(false);
 
-    const ok = authorizeMcpRequest(
+    const ok = await authorizeMcpRequest(
       new Request("https://example.com/mcp", { headers: { authorization: "Bearer secret" } }),
       { MCP_TOKEN: "secret" } as Env,
     );
-    expect(ok).toBeNull();
-    const denied = authorizeMcpRequest(new Request("https://example.com/mcp"), {} as Env);
-    expect(denied?.status).toBe(401);
+    expect(ok).toEqual({ workspaceId: 1, via: "legacy_secret" });
+    const denied = await authorizeMcpRequest(new Request("https://example.com/mcp"), {} as Env);
+    expect((denied as Response).status).toBe(401);
   });
 });
 

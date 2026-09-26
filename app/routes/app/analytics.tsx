@@ -11,10 +11,10 @@ import {
   type CreatedDayCount,
 } from "../../lib/analytics";
 import { STAGE_PILL_HEX } from "../../lib/tokens";
-import { createDb } from "../../../db/client";
 import { listIdeaViews } from "../../../db/ideas";
 import { SettingsIconLink } from "../../components/settings-link";
 import { MobileScreenHeader } from "../../components/mobile-header";
+import { appDb } from "../../lib/app-db";
 import type { Route } from "./+types/analytics";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -22,7 +22,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ context }: LoaderFunctionArgs) {
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const ideas = await listIdeaViews(db);
   return { analytics: summarizeIdeaAnalytics(ideas), locale: context.locale };
 }

@@ -12,6 +12,8 @@ import { newSessionPayload, SESSION_COOKIE, signSessionValue } from "../server/a
 export const testEnv = rawEnv as unknown as Env;
 
 export const TEST_USER_EMAIL = "test@example.com";
+/** Migration 0013 creates workspace 1; both test identities are allowlisted into it. */
+export const TEST_WORKSPACE_ID = 1;
 
 export async function sessionCookie(email = TEST_USER_EMAIL): Promise<string> {
   const value = await signSessionValue(newSessionPayload(email), testEnv.SESSION_SECRET!);

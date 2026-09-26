@@ -18,6 +18,7 @@ export default [
       route("inspirations", "routes/app/inspirations.tsx"),
       route("inspirations/:inspirationId", "routes/app/inspiration.tsx"),
       route("team", "routes/app/team.tsx"),
+      route("join/:token", "routes/app/join.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

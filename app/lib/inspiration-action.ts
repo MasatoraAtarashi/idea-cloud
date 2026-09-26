@@ -1,6 +1,5 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { resolveCategoryId } from "../../db/categories";
-import { createDb } from "../../db/client";
 import { IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
 import {
   deleteInspiration,
@@ -26,6 +25,7 @@ import {
   replaceDerivedTitleFromOgp,
   titleForInspirationUpdate,
 } from "./inspiration-save";
+import { appDb } from "./app-db";
 
 export const INSPIRATIONS_PATH = "/app/inspirations";
 
@@ -69,7 +69,7 @@ async function createIdeaFromInspiration(
   if (!text) return { error: t.inspiration.errors.empty, intent } satisfies InspirationActionData;
   if (text.length > IDEA_BODY_MAX) return { error: t.inspiration.errors.tooLong, intent };
   const env = context.cloudflare.env;
-  const db = createDb(env.DB);
+  const db = appDb(context);
   const source = await getInspirationRow(db, inspirationId);
   if (!source) {
     return { error: t.inspiration.errors.notFound, intent } satisfies InspirationActionData;
@@ -139,7 +139,7 @@ export async function createInspirationAction({
   if (!prepared.ok) {
     return { error: prepared.error, intent: "create" } satisfies InspirationActionData;
   }
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const created = await insertPreparedInspiration(db, prepared.value);
   return redirect(`${INSPIRATIONS_PATH}/${created.id}`);
 }
@@ -157,7 +157,7 @@ export async function inspirationDetailAction({
 
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "edit");
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
 
   if (intent === CREATE_IDEA_INTENT) {
     return createIdeaFromInspiration(form, context, inspirationId);

@@ -21,8 +21,8 @@ import { MobileScreenHeader } from "../../components/mobile-header";
 import { SettingsIconLink } from "../../components/settings-link";
 import { TagPill } from "../../components/ui";
 import { createInspirationAction } from "../../lib/inspiration-action";
-import { createDb } from "../../../db/client";
 import { inspirationView, listInspirationRows } from "../../../db/inspirations";
+import { appDb } from "../../lib/app-db";
 import type { Route } from "./+types/inspirations";
 
 export { createInspirationAction as action };
@@ -32,7 +32,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ context }: LoaderFunctionArgs) {
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const items = (await listInspirationRows(db)).map(inspirationView);
   return { items, locale: context.locale };
 }

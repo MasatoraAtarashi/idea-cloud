@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { categoryNameMap, resolveCategoryId } from "../../../db/categories";
-import { createDb } from "../../../db/client";
+import { apiDb } from "../db";
 import {
   COMMENT_BODY_MAX,
   commentCountsByIdeaIds,
@@ -136,7 +136,7 @@ async function readResearchInput(c: {
 
 export const ideasRoute = new Hono<AppEnv>()
   .get("/", async (c) => {
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const rows = await listIdeaRows(db);
     const counts = await commentCountsByIdeaIds(
       db,
@@ -154,7 +154,7 @@ export const ideasRoute = new Hono<AppEnv>()
   })
   .get("/:id/comments", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const row = await getIdeaRow(db, id);
     if (!row) {
       return c.json({ error: "Not Found" }, 404);
@@ -169,7 +169,7 @@ export const ideasRoute = new Hono<AppEnv>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { body } = c.req.valid("json");
-      const db = createDb(c.env.DB);
+      const db = apiDb(c);
       const row = await getIdeaRow(db, id);
       if (!row) {
         return c.json({ error: "Not Found" }, 404);
@@ -185,7 +185,7 @@ export const ideasRoute = new Hono<AppEnv>()
   )
   .delete("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const deleted = await deleteIdea(db, id);
     if (!deleted) {
       return c.json({ error: "Not Found" }, 404);
@@ -194,7 +194,7 @@ export const ideasRoute = new Hono<AppEnv>()
   })
   .get("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const row = await getIdeaRow(db, id);
     if (!row) {
       return c.json({ error: "Not Found" }, 404);
@@ -211,7 +211,7 @@ export const ideasRoute = new Hono<AppEnv>()
   .post("/", zValidator("json", createIdeaSchema), async (c) => {
     const { body, stage, tags, categoryId, categoryName } = c.req.valid("json");
     logCreatePrerequisites(c.env);
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const category = await resolveCategoryId(db, { categoryId, categoryName });
     if ("error" in category) {
       return c.json({ error: category.error }, 400);
@@ -253,7 +253,7 @@ export const ideasRoute = new Hono<AppEnv>()
     async (c) => {
       const { id } = c.req.valid("param");
       const patch = c.req.valid("json");
-      const db = createDb(c.env.DB);
+      const db = apiDb(c);
       if (patch.humanScore !== undefined) {
         const note = patch.humanScoreNote?.trim() ?? "";
         const scored = await saveHumanScore(db, id, { score: patch.humanScore, note });
@@ -343,7 +343,7 @@ export const ideasRoute = new Hono<AppEnv>()
     if ("error" in input) {
       return c.json({ error: input.error }, 400);
     }
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const result = await researchIdea({
       db,
       ai: bindResearchAi(c.env.AI),
@@ -360,7 +360,7 @@ export const ideasRoute = new Hono<AppEnv>()
   })
   .get("/:id/brainstorms", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const row = await getIdeaRow(db, id);
     if (!row) {
       return c.json({ error: "Not Found" }, 404);
@@ -374,7 +374,7 @@ export const ideasRoute = new Hono<AppEnv>()
     if ("error" in input) {
       return c.json({ error: input.error }, 400);
     }
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const result = await brainstormIdea({
       db,
       ai: bindResearchAi(c.env.AI),
@@ -401,7 +401,7 @@ export const ideasRoute = new Hono<AppEnv>()
   })
   .get("/:id/discussions", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const row = await getIdeaRow(db, id);
     if (!row) {
       return c.json({ error: "Not Found" }, 404);
@@ -421,7 +421,7 @@ export const ideasRoute = new Hono<AppEnv>()
     if (body.trim().length > DISCUSS_BODY_MAX) {
       return c.json({ error: "長すぎます" }, 400);
     }
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const result = await discussIdea({
       db,
       ai: bindResearchAi(c.env.AI),
@@ -442,7 +442,7 @@ export const ideasRoute = new Hono<AppEnv>()
     if ("error" in input) {
       return c.json({ error: input.error }, 400);
     }
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const result = await evaluateIdea({
       db,
       ai: bindResearchAi(c.env.AI),

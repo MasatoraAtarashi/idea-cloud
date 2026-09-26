@@ -1,4 +1,4 @@
-import { createDb, type Db } from "../../db/client";
+import { createRootDb, type RootDb } from "../../db/client";
 import { getEntitlement, isEntitlementActive } from "../../db/entitlements";
 import { parseAllowlist } from "../security/allowlist";
 import { isBillingLive } from "./stripe";
@@ -45,7 +45,7 @@ export function isCompedEmail(email: string | null | undefined, env: Env): boole
 }
 
 export async function resolvePlan(
-  db: Db,
+  db: RootDb,
   email: string | null | undefined,
   env: Env,
   now = new Date(),
@@ -57,7 +57,7 @@ export async function resolvePlan(
 }
 
 export async function isPremium(
-  db: Db,
+  db: RootDb,
   email: string | null | undefined,
   env: Env,
   now = new Date(),
@@ -74,5 +74,5 @@ export async function resolvePlanForEnv(
   if (!email?.trim()) return "free";
   if (isCompedEmail(email, env)) return "premium";
   if (!isBillingLive(env)) return "premium";
-  return resolvePlan(createDb(env.DB), email, env, now);
+  return resolvePlan(createRootDb(env.DB), email, env, now);
 }

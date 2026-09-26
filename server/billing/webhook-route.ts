@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createDb } from "../../db/client";
+import { createRootDb } from "../../db/client";
 import { logDiag } from "../diag";
 import type { AppEnv } from "../env";
 import { stripeConfig, verifyStripeSignature } from "./stripe";
@@ -33,7 +33,7 @@ export const billingWebhookRoute = new Hono<AppEnv>().post("/", async (c) => {
   }
 
   try {
-    const outcome = await applyStripeEvent(createDb(c.env.DB), event);
+    const outcome = await applyStripeEvent(createRootDb(c.env.DB), event);
     return c.json({ received: true, applied: outcome.applied });
   } catch {
     // 5xx makes Stripe retry, which is what we want for a transient D1 error.

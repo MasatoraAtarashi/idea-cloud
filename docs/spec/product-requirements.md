@@ -99,7 +99,7 @@ D1 `inspirations` (`title`, nullable `url`, `memo`, optional tags, plus cached O
 - In-app Google OAuth / sessions / allowlist / Access (login stays a mock continue into `/app`)
 - Merge / team features beyond empty shells
 - Browser Rendering, embeddings, merge AI
-- Per-user ownership (single shared workspace)
+- Per-user ownership inside a workspace (members of a workspace share everything; tenancy itself is done — [workspaces.md](./workspaces.md))
 - Field encryption on idea rows
 - Relation extraction, evolution suggestions
 - Image/file attachments (R2)

@@ -2,7 +2,6 @@ import { useLoaderData, useOutletContext, redirect, type LoaderFunctionArgs } fr
 import type { AppData } from "./layout";
 import { IdeaListView } from "../../components/idea-list-view";
 import { dictionary } from "../../i18n/dictionary";
-import { createDb } from "../../../db/client";
 import { listIdeaViews } from "../../../db/ideas";
 import { listSavedViews, savedViewJson } from "../../../db/saved-views";
 import { isPeekOnlyChange } from "../../lib/idea-peek";
@@ -13,6 +12,7 @@ import {
   omitSavedViewId,
   parseListViewSearch,
 } from "../../lib/list-view-search";
+import { appDb } from "../../lib/app-db";
 import type { Route } from "./+types/board";
 
 export { listViewAction as action };
@@ -22,7 +22,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const ideas = await listIdeaViews(db);
   const savedViews = (await listSavedViews(db)).map(savedViewJson);
   const parsed = parseListViewSearch(new URL(request.url).searchParams);

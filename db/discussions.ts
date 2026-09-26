@@ -1,5 +1,6 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { Db } from "./client";
+import { ideaIdsInWorkspace, ownIdea } from "./ideas";
 import { ideaChatMessages, ideas, type IdeaChatMessage } from "./schema";
 
 export type { IdeaChatMessage };
@@ -48,7 +49,12 @@ export async function listChatMessagesForIdea(db: Db, ideaId: number): Promise<I
   return db
     .select()
     .from(ideaChatMessages)
-    .where(eq(ideaChatMessages.ideaId, ideaId))
+    .where(
+      and(
+        eq(ideaChatMessages.ideaId, ideaId),
+        inArray(ideaChatMessages.ideaId, ideaIdsInWorkspace(db)),
+      ),
+    )
     .orderBy(asc(ideaChatMessages.createdAt), asc(ideaChatMessages.id));
 }
 
@@ -57,6 +63,12 @@ export async function insertIdeaChatMessage(
   ideaId: number,
   data: { role: IdeaChatRole; body: string; model?: string | null },
 ): Promise<IdeaChatMessage> {
+  const [touched] = await db
+    .update(ideas)
+    .set({ updatedAt: sql`(datetime('now'))` })
+    .where(ownIdea(db, ideaId))
+    .returning({ id: ideas.id });
+  if (!touched) throw new Error("Idea not found in workspace");
   const [created] = await db
     .insert(ideaChatMessages)
     .values({
@@ -69,9 +81,5 @@ export async function insertIdeaChatMessage(
   if (!created) {
     throw new Error("Failed to insert chat message");
   }
-  await db
-    .update(ideas)
-    .set({ updatedAt: sql`(datetime('now'))` })
-    .where(eq(ideas.id, ideaId));
   return created;
 }

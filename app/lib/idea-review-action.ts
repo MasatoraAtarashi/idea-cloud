@@ -1,8 +1,8 @@
 import { type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { saveIdeaReview } from "../../db/ideas";
 import { dictionary } from "../i18n/dictionary";
 import { parseReviewStatus } from "./review";
+import { appDb } from "./app-db";
 
 export type ReviewIdeaActionData = {
   error?: string;
@@ -30,7 +30,7 @@ export async function reviewIdeaAction({
     } satisfies ReviewIdeaActionData;
   }
 
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const updated = await saveIdeaReview(db, ideaId, status);
   if (!updated) {
     return { error: t.idea.errors.notFound, intent: "review" } satisfies ReviewIdeaActionData;
