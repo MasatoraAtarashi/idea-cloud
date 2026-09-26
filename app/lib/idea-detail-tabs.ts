@@ -1,13 +1,12 @@
-/** AI 作業台 tabs on idea detail. The thinking column (本文・コメント) has no tabs. */
+import type { Dictionary } from "../i18n/dictionary";
+
+/** AI workbench tabs on idea detail. The thinking column (body + comments) has no tabs. */
 export const IDEA_DETAIL_TAB_IDS = ["discuss", "evaluate", "research", "brainstorm"] as const;
 export type IdeaDetailTab = (typeof IDEA_DETAIL_TAB_IDS)[number];
 
-export const IDEA_DETAIL_TAB_LABEL: Record<IdeaDetailTab, string> = {
-  discuss: "相談",
-  evaluate: "評価",
-  research: "リサーチ",
-  brainstorm: "ブレスト",
-};
+export function ideaDetailTabLabel(t: Dictionary, tab: IdeaDetailTab): string {
+  return t.idea.tabs[tab];
+}
 
 const HASH_TO_TAB: Record<string, IdeaDetailTab> = {
   "": "discuss",
@@ -16,7 +15,7 @@ const HASH_TO_TAB: Record<string, IdeaDetailTab> = {
   evaluation: "evaluate",
   research: "research",
   brainstorm: "brainstorm",
-  // Older links: past runs now live in each tab, so the old 履歴 lands on 評価.
+  // Older links: past runs now live in each tab, so the old history hash lands on evaluate.
   history: "evaluate",
   overview: "discuss",
   ai: "evaluate",

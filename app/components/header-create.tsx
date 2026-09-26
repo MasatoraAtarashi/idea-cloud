@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useT } from "../i18n/context";
 import { useCompose } from "../lib/compose";
 import { NEW_IDEA_PATH } from "../lib/home-path";
 import { IconPlus } from "./icons";
@@ -9,19 +10,20 @@ const plusClass =
 /** Desktop: labelled primary button (opens the compose modal). Phone: 44px dark square. */
 export function IdeaHeaderCreateButton() {
   const { open } = useCompose();
+  const t = useT();
   return (
     <>
       <button
         type="button"
         onClick={open}
         className="ui-btn hidden gap-1 px-3.5 md:inline-flex"
-        aria-label="新規アイデア"
-        title="新規アイデア (⌘N)"
+        aria-label={t.compose.title}
+        title={t.compose.shortcutHint}
       >
         <span aria-hidden="true">＋</span>
-        新規アイデア
+        {t.compose.title}
       </button>
-      <Link to={NEW_IDEA_PATH} className={`${plusClass} md:hidden`} aria-label="新規アイデア">
+      <Link to={NEW_IDEA_PATH} className={`${plusClass} md:hidden`} aria-label={t.compose.title}>
         <IconPlus className="h-5 w-5" strokeWidth={2.2} />
       </Link>
     </>

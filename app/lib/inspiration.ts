@@ -1,5 +1,6 @@
 import { hostnameFromUrl } from "../../server/ogp/url";
-import { fallbackTitleFromUrl } from "./inspiration-input";
+import type { Dictionary } from "../i18n/dictionary";
+import { INSPIRATION_UNTITLED, fallbackTitleFromUrl } from "./inspiration-input";
 import { STAGE_PILL_HEX } from "./tokens";
 
 export type InspirationCardTone = {
@@ -24,22 +25,25 @@ export function inspirationSiteLabel(item: { url: string | null; ogSiteName?: st
   return inspirationHostname(item.url);
 }
 
-export function inspirationHeadline(item: {
-  title: string;
-  url: string | null;
-  ogTitle?: string;
-}): string {
+export function inspirationHeadline(
+  t: Dictionary,
+  item: {
+    title: string;
+    url: string | null;
+    ogTitle?: string;
+  },
+): string {
   const title = item.title.trim();
   const url = (item.url ?? "").trim();
   const ogTitle = item.ogTitle?.trim() ?? "";
-  const placeholder = !title || title === "無題" || title === url;
+  const placeholder = !title || title === INSPIRATION_UNTITLED || title === url;
   if (!placeholder) return title;
   if (ogTitle) return ogTitle;
   if (url) {
     const fallback = fallbackTitleFromUrl(url);
-    if (fallback && fallback !== "無題") return fallback;
+    if (fallback && fallback !== INSPIRATION_UNTITLED) return fallback;
   }
-  return title || "無題";
+  return t.inspiration.untitled;
 }
 
 export function inspirationSnippet(item: { memo: string; ogDescription?: string }): string {
@@ -77,19 +81,22 @@ export type InspirationIdeaDraft = {
   tags: string[];
 };
 
-/** Prefill for 「アイデアにする」: page title, memo + a mono 参考 line, the card's tags. */
-export function inspirationIdeaDraft(item: {
-  title: string;
-  url: string | null;
-  memo: string;
-  tags: string[];
-  ogTitle?: string;
-}): InspirationIdeaDraft {
+/** Prefill for 「アイデアにする」: page title, memo + a mono reference line, the card's tags. */
+export function inspirationIdeaDraft(
+  t: Dictionary,
+  item: {
+    title: string;
+    url: string | null;
+    memo: string;
+    tags: string[];
+    ogTitle?: string;
+  },
+): InspirationIdeaDraft {
   const url = item.url?.trim() ?? "";
   const memo = item.memo.trim();
-  const reference = url ? `参考: ${url}` : "";
+  const reference = url ? t.inspiration.reference(url) : "";
   return {
-    title: inspirationHeadline(item),
+    title: inspirationHeadline(t, item),
     body: [memo, reference].filter(Boolean).join("\n\n"),
     tags: item.tags,
   };

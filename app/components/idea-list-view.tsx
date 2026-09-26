@@ -6,29 +6,18 @@ import {
   filterIdeas,
   isReviewCandidate,
   isTriedIdea,
-  STAGE_LABEL,
   STAGE_PILL_CLASS,
   STAGES,
   type MockIdea,
   type Stage,
 } from "../data/mock";
+import { useT } from "../i18n/context";
 import { useCompose } from "../lib/compose";
 import { ideaExcerpt } from "../lib/format";
 import { NEW_IDEA_PATH } from "../lib/home-path";
-import {
-  compactAgedDays,
-  compactRelative,
-  LIST_GROUP_HINT,
-  LIST_GROUP_ORDER,
-} from "../lib/list-format";
+import { compactAgedDays, compactRelative, LIST_GROUP_ORDER } from "../lib/list-format";
 import type { ListTab, ListViewSearch, SavedViewItem } from "../lib/list-view-search";
-import {
-  LIST_SORT_KEYS,
-  LIST_SORT_LABEL,
-  nextListSort,
-  sortIdeas,
-  type ListSortKey,
-} from "../lib/list-sort";
+import { LIST_SORT_KEYS, nextListSort, sortIdeas, type ListSortKey } from "../lib/list-sort";
 import { CANDIDATE_DEFAULT_DAYS } from "../lib/review";
 import { useSearchPalette } from "../lib/search-palette";
 import { useListViewSearch } from "../lib/use-list-view-search";
@@ -43,20 +32,6 @@ import { IdeaSwipeRow } from "./idea-swipe-row";
 import { ListAiScore, ListCommentCount } from "./list-meta";
 import { ListSavedViews } from "./list-saved-views";
 import { StagePill, TagList } from "./ui";
-
-const LIST_TAB_LABEL: Record<ListTab, string> = {
-  all: "すべて",
-  "aging-shelf": "熟成中",
-  candidates: "見直し候補",
-  tried: "試した",
-};
-
-const MOBILE_LIST_TAB_LABEL: Record<ListTab, string> = {
-  all: "すべて",
-  "aging-shelf": "熟成中",
-  candidates: "見直し",
-  tried: "試した",
-};
 
 function toggleValue<T>(current: T[], value: T): T[] {
   return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
@@ -73,6 +48,7 @@ export function IdeaListView({
   savedViews?: SavedViewItem[];
   categories?: IdeaCategory[];
 }) {
+  const t = useT();
   const { open } = useCompose();
   const search = useSearchPalette();
   const listState = useListViewSearch();
@@ -168,17 +144,17 @@ export function IdeaListView({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="hidden shrink-0 items-center gap-3 border-b border-border bg-card px-7 pt-5 pb-4 md:flex">
         <h1 className="flex items-baseline gap-2.5 text-[20px] font-semibold tracking-[-0.01em] text-foreground">
-          アイデア
+          {t.list.title}
           <span className="font-mono text-[12px] font-normal tracking-normal text-muted-foreground">
-            {ideas.length} 件
+            {t.list.count(ideas.length)}
           </span>
         </h1>
         <div className="ml-auto flex items-center gap-2">
           <div className="flex h-8 overflow-hidden rounded-[7px] border border-border-control bg-card">
             {(
               [
-                ["table", "リスト"],
-                ["board", "ボード"],
+                ["table", t.list.layout.table],
+                ["board", t.list.layout.board],
               ] as const
             ).map(([item, label]) => (
               <Link
@@ -202,7 +178,7 @@ export function IdeaListView({
 
       <nav
         className="hidden shrink-0 items-center gap-[22px] border-b border-border bg-card px-7 md:flex"
-        aria-label="アイデアの絞り込みタブ"
+        aria-label={t.list.tabsLabel}
       >
         {tabItems.map(([item, count]) => (
           <Link
@@ -216,7 +192,7 @@ export function IdeaListView({
                 : "border-transparent text-tertiary hover:text-foreground"
             }`}
           >
-            {LIST_TAB_LABEL[item]}
+            {t.list.tab[item]}
             <span className="font-mono text-[11.5px] font-normal text-muted-foreground">
               {count}
             </span>
@@ -230,14 +206,14 @@ export function IdeaListView({
             }
             className="ml-auto text-[12.5px] text-muted-foreground hover:text-foreground"
           >
-            条件をクリア
+            {t.list.clearFilters}
             <span className="ml-1 font-mono text-[11px]">{activeFilterCount}</span>
           </button>
         ) : null}
       </nav>
 
       <MobileScreenHeader
-        title={<h1 className="text-[18px] font-semibold text-foreground">アイデア</h1>}
+        title={<h1 className="text-[18px] font-semibold text-foreground">{t.list.title}</h1>}
         trailing={
           <>
             <button
@@ -246,7 +222,7 @@ export function IdeaListView({
               aria-expanded={mobileFiltersOpen}
               className="flex min-h-11 items-center px-2 text-[13px] font-medium text-tertiary"
             >
-              絞り込み
+              {t.list.filters}
               {activeFilterCount > 0 ? (
                 <span className="ml-1 font-mono text-[11px]">{activeFilterCount}</span>
               ) : null}
@@ -254,7 +230,7 @@ export function IdeaListView({
             <button
               type="button"
               onClick={search.open}
-              aria-label="検索"
+              aria-label={t.list.search}
               className="flex h-11 w-11 items-center justify-center text-[18px] text-tertiary"
             >
               ⌕
@@ -263,7 +239,7 @@ export function IdeaListView({
           </>
         }
       >
-        <nav className="flex gap-5 overflow-x-auto px-4" aria-label="アイデアの絞り込みタブ">
+        <nav className="flex gap-5 overflow-x-auto px-4" aria-label={t.list.tabsLabel}>
           {tabItems.map(([item, count]) => (
             <Link
               key={item}
@@ -276,7 +252,7 @@ export function IdeaListView({
                   : "border-transparent text-tertiary"
               }`}
             >
-              {MOBILE_LIST_TAB_LABEL[item]}
+              {t.list.tabShort[item]}
               {item === "candidates" && count > 0 ? (
                 <span className="font-mono text-[13px] text-warn">{count}</span>
               ) : null}
@@ -299,9 +275,13 @@ export function IdeaListView({
             mobile
           />
           <div className="border-t border-border px-4 py-3">
-            <p className="mb-2 text-[11.5px] font-semibold text-muted-foreground">並び順</p>
+            <p className="mb-2 text-[11.5px] font-semibold text-muted-foreground">
+              {t.list.sortOrder}
+            </p>
             <SortButtons sortKey={sortKey} sortDir={sortDir} onSort={applySort} />
-            <p className="mt-3 mb-2 text-[11.5px] font-semibold text-muted-foreground">ビュー</p>
+            <p className="mt-3 mb-2 text-[11.5px] font-semibold text-muted-foreground">
+              {t.list.savedViews.label}
+            </p>
             <ListSavedViews
               views={savedViews}
               state={savedViewState}
@@ -317,10 +297,8 @@ export function IdeaListView({
             to={tabHref("candidates")}
             className="mb-3 flex min-h-11 items-center justify-between rounded-[10px] border border-[var(--warn-border)] bg-[var(--warn-bg)] px-3.5 text-[13px] text-warn no-underline"
           >
-            <span>
-              見直し時期が <span className="font-mono font-semibold">{candidateCount}</span> 件
-            </span>
-            <span className="font-semibold">見る</span>
+            <span>{t.list.candidateBanner(candidateCount)}</span>
+            <span className="font-semibold">{t.list.candidateBannerAction}</span>
           </Link>
         ) : null}
         {filtered.length === 0 ? (
@@ -373,17 +351,22 @@ export function IdeaListView({
   );
 }
 
-/** Columns shared by the header row and idea rows. */
+/**
+ * Columns shared by the header row and idea rows. The meta columns are sized
+ * for the longest header any locale ships, not just the Japanese one — at 48px
+ * the last column clipped English "Updated".
+ */
 const TABLE_GRID =
-  "grid grid-cols-[116px_minmax(0,1fr)_190px_48px_56px_52px_48px_24px] items-center gap-x-3.5 px-[18px]";
+  "grid grid-cols-[116px_minmax(0,1fr)_190px_48px_56px_52px_72px_24px] items-center gap-x-3.5 px-[18px]";
 
 function StageGroup({ stage, ideas }: { stage: Stage; ideas: MockIdea[] }) {
+  const t = useT();
   return (
-    <section aria-label={STAGE_LABEL[stage]} className="border-b border-border last:border-b-0">
+    <section aria-label={t.common.stage[stage]} className="border-b border-border last:border-b-0">
       <h2 className="flex items-baseline gap-2.5 border-b border-border bg-[var(--row-soft)] px-[18px] py-2">
-        <span className="text-[13px] font-semibold text-foreground">{STAGE_LABEL[stage]}</span>
+        <span className="text-[13px] font-semibold text-foreground">{t.common.stage[stage]}</span>
         <span className="font-mono text-[12px] text-muted-foreground">{ideas.length}</span>
-        <span className="text-[12px] text-muted-foreground">{LIST_GROUP_HINT[stage]}</span>
+        <span className="text-[12px] text-muted-foreground">{t.list.groupHint[stage]}</span>
       </h2>
       <ul>
         {ideas.map((idea) => (
@@ -396,6 +379,7 @@ function StageGroup({ stage, ideas }: { stage: Stage; ideas: MockIdea[] }) {
 
 /** One 40px line: pill | title + excerpt | tags | meta. The whole row opens the detail. */
 function IdeaRow({ idea }: { idea: MockIdea }) {
+  const t = useT();
   const excerpt = ideaExcerpt(idea) || (idea.body.trim() !== idea.title ? idea.body.trim() : "");
   return (
     <li
@@ -425,11 +409,17 @@ function IdeaRow({ idea }: { idea: MockIdea }) {
       <div className="flex justify-end">
         <ListCommentCount count={idea.commentCount} />
       </div>
-      <span className="text-right font-mono text-[11.5px] text-muted-foreground" title="熟成日数">
-        {compactAgedDays(idea.agedDays)}
+      <span
+        className="text-right font-mono text-[11.5px] text-muted-foreground"
+        title={t.list.agedDays}
+      >
+        {compactAgedDays(t, idea.agedDays)}
       </span>
-      <span className="text-right font-mono text-[11.5px] text-muted-foreground" title="更新">
-        {compactRelative(idea.updatedAt)}
+      <span
+        className="text-right font-mono text-[11.5px] text-muted-foreground"
+        title={t.list.column.updated}
+      >
+        {compactRelative(t, idea.updatedAt)}
       </span>
       <span className="relative z-[1] -mr-1.5 flex justify-end">
         <IdeaActionsMenu idea={idea} />
@@ -464,19 +454,20 @@ function ListTableHead({
   availableTags: string[];
   update: Update;
 }) {
+  const t = useT();
   return (
     <div
       role="row"
       className={`sticky top-0 z-10 h-[34px] rounded-t-[var(--radius)] border-b border-border bg-card text-[11.5px] font-semibold text-muted-foreground ${TABLE_GRID}`}
     >
       <HeadCell
-        label="段階"
+        label={t.list.column.stage}
         sortKey="stage"
         sort={sort}
         onSort={onSort}
         active={stages.length}
         filter={
-          <FilterSection label="段階">
+          <FilterSection label={t.list.column.stage}>
             {STAGES.map((stage) => (
               <button
                 key={stage}
@@ -487,14 +478,14 @@ function ListTableHead({
                   stages.includes(stage) ? "ring-1 ring-foreground" : "opacity-70 hover:opacity-100"
                 }`}
               >
-                {STAGE_LABEL[stage]}
+                {t.common.stage[stage]}
               </button>
             ))}
           </FilterSection>
         }
       />
       <HeadCell
-        label="アイデア"
+        label={t.list.column.idea}
         sortKey="title"
         sort={sort}
         onSort={onSort}
@@ -502,23 +493,23 @@ function ListTableHead({
         filter={
           <>
             <label className="block">
-              <span className="sr-only">キーワード</span>
+              <span className="sr-only">{t.list.keyword}</span>
               <input
                 type="search"
                 value={query}
                 onChange={(event) => update({ query: event.target.value }, { replace: true })}
-                placeholder="タイトル・本文・タグ"
+                placeholder={t.list.keywordPlaceholderShort}
                 className="ui-input text-[12.5px] md:h-8"
               />
             </label>
             {categories.length > 0 ? (
-              <FilterSection label="カテゴリ">
+              <FilterSection label={t.list.category}>
                 <button
                   type="button"
                   onClick={() => update({ categoryId: null })}
                   className={chipClass(categoryId == null)}
                 >
-                  すべて
+                  {t.list.allOption}
                 </button>
                 {categories.map((category) => (
                   <button
@@ -538,11 +529,11 @@ function ListTableHead({
         }
       />
       <HeadCell
-        label="タグ"
+        label={t.list.column.tags}
         active={tags.length}
         filter={
           availableTags.length > 0 ? (
-            <FilterSection label="タグ">
+            <FilterSection label={t.list.column.tags}>
               {availableTags.map((tag) => (
                 <button
                   key={tag}
@@ -556,29 +547,29 @@ function ListTableHead({
               ))}
             </FilterSection>
           ) : (
-            <p className="text-[12px] text-muted-foreground">まだタグがありません</p>
+            <p className="text-[12px] text-muted-foreground">{t.list.noTags}</p>
           )
         }
       />
-      <span className="text-right" title="AI 推し度">
-        推し度
+      <span className="text-right" title={t.list.aiScoreFull}>
+        {t.list.column.aiScore}
       </span>
-      <span className="text-right">コメント</span>
+      <span className="text-right">{t.list.column.comments}</span>
       <HeadCell
-        label="熟成"
+        label={t.list.column.aged}
         sortKey="createdAt"
         sort={sort}
         onSort={onSort}
         align="right"
         active={minDays > 0 ? 1 : 0}
         filter={
-          <FilterSection label="熟成日数">
+          <FilterSection label={t.list.agedDays}>
             <button
               type="button"
               onClick={() => update({ minDays: 0 })}
               className={chipClass(minDays === 0)}
             >
-              すべて
+              {t.list.allOption}
             </button>
             {AGED_DAY_PRESETS.map((days) => (
               <button
@@ -587,13 +578,19 @@ function ListTableHead({
                 onClick={() => update({ minDays: days })}
                 className={chipClass(minDays === days)}
               >
-                {days}日以上
+                {t.list.agedDaysAtLeast(days)}
               </button>
             ))}
           </FilterSection>
         }
       />
-      <HeadCell label="更新" sortKey="updatedAt" sort={sort} onSort={onSort} align="right" />
+      <HeadCell
+        label={t.list.column.updated}
+        sortKey="updatedAt"
+        sort={sort}
+        onSort={onSort}
+        align="right"
+      />
       <span />
     </div>
   );
@@ -616,8 +613,9 @@ function HeadCell({
   active?: number;
   align?: "left" | "right";
 }) {
+  const t = useT();
   const sorted = sortKey && sort?.key === sortKey;
-  // 熟成 sorts by created_at: newest-created = least aged.
+  // The aged column sorts by created_at: newest-created = least aged.
   const arrow = !sorted
     ? ""
     : sortKey === "createdAt"
@@ -637,7 +635,7 @@ function HeadCell({
         <button
           type="button"
           onClick={() => onSort(sortKey)}
-          title={`${label}で並べ替え`}
+          title={t.list.sortByLabel(label)}
           className={`flex items-center gap-1 whitespace-nowrap rounded px-1 py-0.5 -ml-1 hover:bg-sunken hover:text-foreground ${
             sorted ? "text-foreground" : ""
           }`}
@@ -651,8 +649,8 @@ function HeadCell({
       {filter ? (
         <details className="ui-menu relative">
           <summary
-            aria-label={`${label}で絞り込み`}
-            title={`${label}で絞り込み`}
+            aria-label={t.list.filterByLabel(label)}
+            title={t.list.filterByLabel(label)}
             className={`flex h-5 min-w-5 cursor-pointer items-center justify-center gap-0.5 rounded px-1 hover:bg-sunken hover:text-foreground ${
               active > 0 ? "bg-muted text-foreground" : ""
             }`}
@@ -674,6 +672,7 @@ function HeadCell({
 }
 
 function MobileIdeaCard({ idea, showReview }: { idea: MockIdea; showReview: boolean }) {
+  const t = useT();
   const excerpt = ideaExcerpt(idea) || (idea.body.trim() !== idea.title ? idea.body.trim() : "");
   return (
     <Link
@@ -684,7 +683,7 @@ function MobileIdeaCard({ idea, showReview }: { idea: MockIdea; showReview: bool
       <div className="flex items-center gap-2">
         <StagePill stage={idea.stage} />
         <span className="font-mono text-[12px] text-muted-foreground">
-          {compactAgedDays(idea.agedDays)}
+          {compactAgedDays(t, idea.agedDays)}
         </span>
         <span className="ml-auto">
           <ListAiScore score={idea.aiScore} />
@@ -732,20 +731,21 @@ function FilterPanel({
   update: Update;
   mobile?: boolean;
 }) {
+  const t = useT();
   const pad = mobile ? "px-4" : "px-3.5";
   return (
     <div className={`flex flex-col gap-3 py-3 ${pad}`}>
       <label className="block">
-        <span className="sr-only">キーワード</span>
+        <span className="sr-only">{t.list.keyword}</span>
         <input
           type="search"
           value={query}
           onChange={(event) => update({ query: event.target.value }, { replace: true })}
-          placeholder="タイトル・本文・タグで絞り込む"
+          placeholder={t.list.keywordPlaceholder}
           className="ui-input"
         />
       </label>
-      <FilterSection label="段階">
+      <FilterSection label={t.list.column.stage}>
         {STAGES.map((stage) => (
           <button
             key={stage}
@@ -756,18 +756,18 @@ function FilterPanel({
               stages.includes(stage) ? "ring-1 ring-foreground" : "opacity-70 hover:opacity-100"
             } ${mobile ? "min-h-9" : ""}`}
           >
-            {STAGE_LABEL[stage]}
+            {t.common.stage[stage]}
           </button>
         ))}
       </FilterSection>
       {categories.length > 0 ? (
-        <FilterSection label="カテゴリ">
+        <FilterSection label={t.list.category}>
           <button
             type="button"
             onClick={() => update({ categoryId: null })}
             className={chipClass(categoryId == null)}
           >
-            すべて
+            {t.list.allOption}
           </button>
           {categories.map((category) => (
             <button
@@ -784,7 +784,7 @@ function FilterPanel({
         </FilterSection>
       ) : null}
       {availableTags.length > 0 ? (
-        <FilterSection label="タグ">
+        <FilterSection label={t.list.column.tags}>
           {availableTags.map((tag) => (
             <button
               key={tag}
@@ -798,13 +798,13 @@ function FilterPanel({
           ))}
         </FilterSection>
       ) : null}
-      <FilterSection label="熟成日数">
+      <FilterSection label={t.list.agedDays}>
         <button
           type="button"
           onClick={() => update({ minDays: 0 })}
           className={chipClass(minDays === 0)}
         >
-          すべて
+          {t.list.allOption}
         </button>
         {AGED_DAY_PRESETS.map((days) => (
           <button
@@ -813,7 +813,7 @@ function FilterPanel({
             onClick={() => update({ minDays: days })}
             className={chipClass(minDays === days)}
           >
-            {days}日以上
+            {t.list.agedDaysAtLeast(days)}
           </button>
         ))}
         <form
@@ -826,7 +826,7 @@ function FilterPanel({
           }}
         >
           <label className="sr-only" htmlFor={mobile ? "aged-days-min-mobile" : "aged-days-min"}>
-            最小の熟成日数
+            {t.list.agedDaysMin}
           </label>
           <input
             id={mobile ? "aged-days-min-mobile" : "aged-days-min"}
@@ -835,7 +835,7 @@ function FilterPanel({
             min={1}
             inputMode="numeric"
             defaultValue={minDays > 0 ? minDays : ""}
-            placeholder="日以上"
+            placeholder={t.list.agedDaysMinPlaceholder}
             className="ui-input md:h-7 text-[12.5px]"
           />
         </form>
@@ -862,6 +862,7 @@ function SortButtons({
   sortDir: "asc" | "desc";
   onSort: (key: ListSortKey) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-wrap gap-1.5">
       {LIST_SORT_KEYS.map((key) => (
@@ -871,7 +872,7 @@ function SortButtons({
           onClick={() => onSort(key)}
           className={chipClass(sortKey === key)}
         >
-          {LIST_SORT_LABEL[key]}
+          {t.list.sort.key[key]}
           {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
         </button>
       ))}
@@ -880,22 +881,23 @@ function SortButtons({
 }
 
 function ListEmpty({ onCreate }: { onCreate: () => void }) {
+  const t = useT();
   return (
     <div className="flex flex-col items-center justify-center px-4 py-16 text-center md:py-20">
       <BrandMark className="h-10 w-10 opacity-70" />
-      <p className="ui-title mt-4 text-[16px]">まだアイデアがありません</p>
+      <p className="ui-title mt-4 text-[16px]">{t.list.empty.title}</p>
       <p className="mt-1.5 max-w-sm text-[13px] leading-relaxed text-muted-foreground">
-        思いついた時点の粗さを残します。預けて寝かせ、熟した頃に見返します。
+        {t.list.empty.body}
       </p>
       <Link to={NEW_IDEA_PATH} className="ui-btn-secondary mt-5 md:hidden">
-        最初のアイデアを作成
+        {t.list.empty.create}
       </Link>
       <button
         type="button"
         onClick={onCreate}
         className="ui-btn-secondary mt-5 hidden md:inline-flex"
       >
-        最初のアイデアを作成
+        {t.list.empty.create}
         <kbd className="ui-kbd ml-1.5">⌘N</kbd>
       </button>
     </div>

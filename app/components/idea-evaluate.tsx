@@ -1,9 +1,10 @@
 import { useFetcher } from "react-router";
 import type { MockIdea } from "../data/mock";
-import { canRunIdeaAi, EVALUATE_ARCHIVE_ERROR } from "../lib/idea-ai";
+import { useT } from "../i18n/context";
+import { canRunIdeaAi } from "../lib/idea-ai";
 import {
-  AI_SCORE_LABEL,
   aiScoreMeaning,
+  evaluationSectionLabel,
   parseEvaluationNotes,
   type EvaluationSectionLabel,
 } from "../lib/evaluation-notes";
@@ -41,6 +42,7 @@ export function IdeaEvaluateControls({
   label?: string;
   hint?: boolean;
 }) {
+  const t = useT();
   const fetcher = useEvaluateFetcher(idea.id);
   const busy = fetcher.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
@@ -53,7 +55,7 @@ export function IdeaEvaluateControls({
     return (
       <div>
         <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-          {EVALUATE_ARCHIVE_ERROR}
+          {t.ai.archive.evaluate}
         </p>
         {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
       </div>
@@ -76,11 +78,13 @@ export function IdeaEvaluateControls({
           ) : (
             <IconStar className="h-3.5 w-3.5" />
           )}
-          {pending ? "評価中…" : (label ?? (evaluated ? "もう一度AI評価" : "AI評価する"))}
+          {pending
+            ? t.ai.evaluate.running
+            : (label ?? (evaluated ? t.ai.evaluate.rerun : t.ai.evaluate.run))}
         </button>
         {hint ? (
           <p className="text-[11.5px] leading-snug text-muted-foreground">
-            強み・リスク・新規性・次の一手と、1–5 の{AI_SCORE_LABEL}。最新のみ残ります。
+            {t.ai.evaluate.hint(t.idea.evaluation.scoreLabel)}
           </p>
         ) : null}
       </div>
@@ -98,19 +102,22 @@ const SECTION_COLOR: Record<EvaluationSectionLabel, string> = {
 
 /** 推し度 card. Sits above every AI 作業台 tab. */
 export function IdeaScoreCard({ idea, preset }: { idea: MockIdea; preset?: ResearchPreset }) {
+  const t = useT();
   const fetcher = useEvaluateFetcher(idea.id);
   const pending = fetcher.state !== "idle";
   const parsed = idea.aiEvaluation?.trim() ? parseEvaluationNotes(idea.aiEvaluation) : null;
   const score = idea.aiScore ?? parsed?.score ?? null;
-  const meaning = aiScoreMeaning(score);
+  const meaning = aiScoreMeaning(t, score);
 
   if (score == null && !parsed) {
     return (
       <section className="rounded-[10px] border border-border bg-card px-4 py-3.5">
         <div className="flex items-baseline gap-2">
-          <span className="text-[12px] text-muted-foreground">{AI_SCORE_LABEL}</span>
+          <span className="text-[12px] text-muted-foreground">{t.idea.evaluation.scoreLabel}</span>
           <span className="font-mono text-[15px] font-semibold text-muted-foreground">—</span>
-          <span className="text-[12px] text-muted-foreground">/ 5 ・ まだ評価していません</span>
+          <span className="text-[12px] text-muted-foreground">
+            / 5 ・ {t.ai.evaluate.notScored}
+          </span>
         </div>
         <div className="mt-3">
           <IdeaEvaluateControls idea={idea} preset={preset} hint={false} />
@@ -125,7 +132,7 @@ export function IdeaScoreCard({ idea, preset }: { idea: MockIdea; preset?: Resea
       aria-busy={pending}
     >
       <div className="flex items-baseline gap-2">
-        <span className="text-[12px] text-muted-foreground">{AI_SCORE_LABEL}</span>
+        <span className="text-[12px] text-muted-foreground">{t.idea.evaluation.scoreLabel}</span>
         <span className="font-mono text-[24px] leading-none font-semibold tracking-[-0.02em]">
           {score ?? "—"}
         </span>
@@ -133,7 +140,7 @@ export function IdeaScoreCard({ idea, preset }: { idea: MockIdea; preset?: Resea
           / 5{meaning ? ` ・ ${meaning}` : ""}
         </span>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-          {pending ? "evaluating…" : shortAgo(idea.aiEvaluatedAt)}
+          {pending ? t.ai.evaluate.inProgress : shortAgo(idea.aiEvaluatedAt)}
         </span>
       </div>
       {parsed ? (
@@ -144,7 +151,7 @@ export function IdeaScoreCard({ idea, preset }: { idea: MockIdea; preset?: Resea
                 className="text-[11px] font-semibold"
                 style={{ color: SECTION_COLOR[section.label] }}
               >
-                {section.label}
+                {evaluationSectionLabel(t, section.label)}
               </h4>
               <p className="mt-1 line-clamp-4 whitespace-pre-wrap text-[12px] leading-[1.7] text-secondary">
                 {section.body}
@@ -168,16 +175,17 @@ export function IdeaEvaluationView({
   model?: string | null;
   at?: string | null;
 }) {
+  const t = useT();
   const parsed = notes.trim() ? parseEvaluationNotes(notes) : null;
   const shownScore = score ?? parsed?.score ?? null;
-  const meaning = aiScoreMeaning(shownScore);
-  const modelLabel = evaluationModelLabel(model);
+  const meaning = aiScoreMeaning(t, shownScore);
+  const modelLabel = evaluationModelLabel(t, model);
 
   return (
     <div>
       {shownScore ? (
         <p className="flex items-baseline gap-2">
-          <span className="text-[12px] text-muted-foreground">{AI_SCORE_LABEL}</span>
+          <span className="text-[12px] text-muted-foreground">{t.idea.evaluation.scoreLabel}</span>
           <span className="font-mono text-[18px] font-semibold">{shownScore}</span>
           <span className="text-[12px] text-muted-foreground">
             / 5{meaning ? ` ・ ${meaning}` : ""}
@@ -192,7 +200,7 @@ export function IdeaEvaluationView({
                 className="text-[11px] font-semibold"
                 style={{ color: SECTION_COLOR[section.label] }}
               >
-                {section.label}
+                {evaluationSectionLabel(t, section.label)}
               </h4>
               <p className="mt-1 whitespace-pre-wrap text-[12.5px] leading-[1.8] text-secondary">
                 {section.body}
@@ -207,11 +215,11 @@ export function IdeaEvaluationView({
           {notes}
         </p>
       ) : (
-        <p className="text-[12.5px] text-muted-foreground">本文はありません。</p>
+        <p className="text-[12.5px] text-muted-foreground">{t.ai.evaluate.noBody}</p>
       )}
       {modelLabel || at ? (
         <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-          {[modelLabel, at ? formatDateJa(at) : ""].filter(Boolean).join(" · ")}
+          {[modelLabel, at ? formatDateJa(t, at) : ""].filter(Boolean).join(" · ")}
         </p>
       ) : null}
     </div>
@@ -219,18 +227,17 @@ export function IdeaEvaluationView({
 }
 
 export function IdeaEvaluateNotes({ idea, id }: { idea: MockIdea; id?: string }) {
+  const t = useT();
   if (!idea.aiEvaluation) {
     return (
       <p id={id} className="mt-4 text-[12.5px] text-muted-foreground">
-        {canRunIdeaAi(idea.stage)
-          ? "まだ評価していません。"
-          : `評価はまだありません。${EVALUATE_ARCHIVE_ERROR}`}
+        {canRunIdeaAi(idea.stage) ? t.ai.evaluate.notRun : t.ai.evaluate.emptyArchived}
       </p>
     );
   }
   return (
     <section id={id} className="mt-4 rounded-[10px] border border-border bg-card px-4 py-3.5">
-      <h3 className="mb-2.5 text-[12.5px] font-semibold">評価の全文</h3>
+      <h3 className="mb-2.5 text-[12.5px] font-semibold">{t.ai.evaluate.fullTitle}</h3>
       <IdeaEvaluationView
         notes={idea.aiEvaluation}
         score={idea.aiScore}

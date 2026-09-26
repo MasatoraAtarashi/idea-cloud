@@ -1,4 +1,6 @@
 import { type ActionFunctionArgs } from "react-router";
+import { dictionary } from "../i18n/dictionary";
+import { aiErrorMessage } from "./idea-ai";
 import { bindResearchAi } from "../../server/ai/research";
 import { evaluateIdea } from "../../server/ai/evaluate";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
@@ -17,7 +19,10 @@ export async function evaluateIdeaAction({
 }: ActionFunctionArgs): Promise<EvaluateIdeaActionData> {
   const ideaId = Number(params.ideaId);
   if (!Number.isInteger(ideaId) || ideaId <= 0) {
-    return { error: "見つかりません", intent: "evaluate" } satisfies EvaluateIdeaActionData;
+    return {
+      error: dictionary(context.locale).ai.notFound,
+      intent: "evaluate",
+    } satisfies EvaluateIdeaActionData;
   }
 
   const form = await request.formData();
@@ -29,9 +34,13 @@ export async function evaluateIdeaAction({
     preset: String(form.get("preset") ?? ""),
     model: String(form.get("model") ?? ""),
     typesafeApiKey: typesafeApiKeyFromEnv(context.cloudflare.env),
+    locale: context.locale,
   });
   if (!result.ok) {
-    return { error: result.error, intent: "evaluate" } satisfies EvaluateIdeaActionData;
+    return {
+      error: aiErrorMessage(dictionary(context.locale), "evaluate", result.code),
+      intent: "evaluate",
+    } satisfies EvaluateIdeaActionData;
   }
   return { ok: true, intent: "evaluate" } satisfies EvaluateIdeaActionData;
 }

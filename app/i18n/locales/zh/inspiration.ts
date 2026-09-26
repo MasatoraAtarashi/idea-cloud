@@ -1,0 +1,70 @@
+import type { Dictionary } from "../../dictionary";
+
+export const inspiration: Dictionary["inspiration"] = {
+  metaTitle: "灵感 — 创意云",
+  title: "灵感",
+
+  untitled: "无标题",
+
+  pasteUrl: "粘贴链接",
+  pasteHint: "只有链接也能添加。取不到预览也会保存。",
+  urlLabel: "链接",
+  titleLabel: "标题（选填）",
+  titlePlaceholder: "标题（可留空）",
+  urlPlaceholder: "http:// 或 https://",
+  memoLabel: "备注",
+  memoPlaceholder: "想留下的话",
+  tagsLabel: "标签",
+  tagsPlaceholder: "标签（选填，逗号分隔）",
+  add: "添加",
+
+  noTags: "还没有标签",
+  clearFilter: "取消筛选",
+
+  emptyTitle: "架子上还空着",
+  emptyBody: "先存下链接或备注，之后再变成想法。",
+  makeIdea: "变成想法",
+  fetchFailedShort: "未取到",
+
+  notFound: "还没有内容",
+  toShelf: "回到架子",
+  edit: "编辑",
+  delete: "删除",
+  deleting: "删除中…",
+  noMemo: "还没有备注",
+  refetch: "重新获取",
+  refetching: "获取中…",
+  previewFailed: "预览没能取到，可以重新获取。",
+  deleteConfirm: (title: string) => `将删除「${title}」，此操作无法撤销。`,
+  timestamps: (created: string, updated: string) => `created ${created} · updated ${updated}`,
+  reference: (url: string) => `参考：${url}`,
+
+  dialog: {
+    title: "用这条灵感做想法",
+    viewSource: "查看原文",
+    fieldTitle: "标题",
+    fieldBody: "正文",
+    fieldCategory: "分类",
+    tags: "标签",
+    removeTag: (tag: string) => `移除${tag}`,
+    remove: "移除",
+    tagPlaceholder: "留空会自动添加",
+    autoTags: "取自原页面",
+    footerNote: "创建后会和这条灵感关联",
+    brainstormAndCreate: "先做 AI 头脑风暴",
+    brainstorming: "风暴中…",
+    create: "创建",
+  },
+
+  errors: {
+    empty: "请输入内容",
+    tooLong: "太长了",
+    notFound: "没有找到",
+    noUrl: "没有链接",
+    urlFormat: "链接格式不正确",
+    urlProtocol: "请使用 http 或 https 链接",
+    titleTooLong: "标题太长了",
+    memoTooLong: "备注太长了",
+    urlTooLong: "链接太长了",
+  },
+};

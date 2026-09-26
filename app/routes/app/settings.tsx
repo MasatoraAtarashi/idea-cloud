@@ -10,6 +10,9 @@ import {
 } from "react-router";
 import { LOGOUT_PATH } from "../../auth/google-login";
 import type { AppData } from "./layout";
+import { LanguageSwitcher } from "../../components/language-switcher";
+import { useT } from "../../i18n/context";
+import { dictionary, type Dictionary } from "../../i18n/dictionary";
 import { initialsFromLabel } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
 import {
@@ -29,23 +32,29 @@ import {
   listMembers,
   listMembershipsForEmail,
 } from "../../../db/workspaces";
+import type { Route } from "./+types/settings";
 
 export { workspaceSettingsAction as action };
 
+/** Order and grouping only: the copy comes from `t.settings.sections`. */
 const SECTIONS = [
-  { id: "members", group: "ワークスペース", label: "メンバーとアクセス" },
-  { id: "general", group: "ワークスペース", label: "一般" },
-  { id: "api", group: "ワークスペース", label: "API キー（MCP）" },
-  { id: "stages", group: "ワークスペース", label: "段階とラベル" },
-  { id: "profile", group: "個人", label: "プロフィール" },
-  { id: "notify", group: "個人", label: "通知と熟成リマインド" },
-  { id: "shortcuts", group: "個人", label: "ショートカット" },
-] as const;
+  { id: "members", group: "workspace" },
+  { id: "general", group: "workspace" },
+  { id: "api", group: "workspace" },
+  { id: "stages", group: "workspace" },
+  { id: "profile", group: "personal" },
+  { id: "notify", group: "personal" },
+  { id: "shortcuts", group: "personal" },
+] as const satisfies readonly {
+  id: keyof Dictionary["settings"]["sections"];
+  group: keyof Dictionary["settings"]["groups"];
+}[];
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-export function meta() {
-  return [{ title: "設定 — アイデアクラウド" }];
+/** `{name}` placeholders in dictionary strings. */
+function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ""));
 }
 
 /**
@@ -65,6 +74,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
     isOwner ? listApiKeys(db, workspace.id) : Promise.resolve([]),
   ]);
   return {
+    locale: context.locale,
     members: members.map((row) => ({ email: row.email, role: row.role, since: row.createdAt })),
     memberships,
     invites: invites.map((row) => ({
@@ -84,11 +94,16 @@ export async function loader({ context }: LoaderFunctionArgs) {
   };
 }
 
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").settings.metaTitle }];
+}
+
 export default function SettingsPage() {
   const { userEmail, premium, workspace } = useOutletContext<AppData>();
   const data = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof workspaceSettingsAction>() as
     WorkspaceActionData | undefined;
+  const t = useT();
   const [section, setSection] = useState<SectionId>("members");
 
   useEffect(() => {
@@ -106,13 +121,13 @@ export default function SettingsPage() {
           to={LIST_PATH}
           className="flex min-h-11 min-w-[3.5rem] items-center text-[13.5px] font-medium text-foreground no-underline"
         >
-          戻る
+          {t.common.back}
         </Link>
-        <h1 className="text-[13.5px] font-semibold">設定</h1>
+        <h1 className="text-[13.5px] font-semibold">{t.settings.title}</h1>
         <span className="min-w-[3.5rem]" />
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
-        <p className="hidden px-2 text-[16px] font-semibold md:block">設定</p>
+        <p className="hidden px-2 text-[16px] font-semibold md:block">{t.settings.title}</p>
         <p className="hidden truncate px-2 pt-1 text-[11.5px] text-muted-foreground md:block">
           {workspace.name}
         </p>
@@ -124,7 +139,7 @@ export default function SettingsPage() {
               <div key={item.id} className="contents md:block">
                 {showGroup ? (
                   <p className="mb-1 mt-3 hidden px-2 font-mono text-[11px] text-muted-foreground first:mt-0 md:block">
-                    {item.group}
+                    {t.settings.groups[item.group]}
                   </p>
                 ) : null}
                 <button
@@ -136,7 +151,7 @@ export default function SettingsPage() {
                       : "font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
                   }`}
                 >
-                  {item.label}
+                  {t.settings.sections[item.id]}
                 </button>
               </div>
             );
@@ -175,15 +190,12 @@ export default function SettingsPage() {
 }
 
 function ActionNote({ data, intents }: { data?: WorkspaceActionData; intents: string[] }) {
-  if (!data || !intents.includes(data.intent)) return null;
-  if (data.error) {
-    return (
-      <p role="alert" className="mt-2 text-[12.5px] text-danger">
-        {data.error}
-      </p>
-    );
-  }
-  return null;
+  if (!data || !intents.includes(data.intent) || !data.error) return null;
+  return (
+    <p role="alert" className="mt-2 text-[12.5px] text-danger">
+      {data.error}
+    </p>
+  );
 }
 
 function useBusy(intent: string): boolean {
@@ -192,6 +204,7 @@ function useBusy(intent: string): boolean {
 }
 
 function CopyField({ value, label }: { value: string; label: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
     <div className="mt-3 rounded-[10px] border border-border bg-sunken p-3">
@@ -215,7 +228,7 @@ function CopyField({ value, label }: { value: string; label: string }) {
             }
           }}
         >
-          {copied ? "コピー済み" : "コピー"}
+          {copied ? t.settings.workspace.copied : t.settings.workspace.copy}
         </button>
       </div>
     </div>
@@ -223,6 +236,10 @@ function CopyField({ value, label }: { value: string; label: string }) {
 }
 
 type LoaderData = Awaited<ReturnType<typeof loader>>;
+
+function roleLabel(t: Dictionary, role: string): string {
+  return role === "owner" ? t.settings.members.roles.owner : t.settings.members.roles.member;
+}
 
 function MembersPanel({
   userEmail,
@@ -237,21 +254,21 @@ function MembersPanel({
   invites: LoaderData["invites"];
   actionData?: WorkspaceActionData;
 }) {
+  const t = useT();
+  const w = t.settings.workspace.members;
   const inviting = useBusy("invite-create");
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold">メンバーとアクセス</h2>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">
-            このワークスペースのアイデアとインスピレーションは、メンバー全員が閲覧・編集できます。
-          </p>
+          <h2 className="text-[16px] font-semibold">{t.settings.sections.members}</h2>
+          <p className="mt-1 text-[12.5px] text-muted-foreground">{w.description}</p>
         </div>
         {isOwner ? (
           <Form method="post">
             <input type="hidden" name="intent" value="invite-create" />
             <button type="submit" disabled={inviting} className="ui-btn">
-              招待リンクを作る
+              {w.createInvite}
             </button>
           </Form>
         ) : null}
@@ -260,16 +277,16 @@ function MembersPanel({
       {actionData?.intent === "invite-create" && actionData.inviteUrl ? (
         <CopyField
           value={actionData.inviteUrl}
-          label={`招待リンク（${INVITE_TTL_DAYS}日間有効・Google でログインした人が参加できます）`}
+          label={fill(w.inviteLabel, { days: INVITE_TTL_DAYS })}
         />
       ) : null}
       <div className="mt-4 overflow-hidden rounded-[10px] border border-border">
         <table className="ui-table">
           <thead>
             <tr>
-              <th>メンバー</th>
-              <th>権限</th>
-              <th>参加</th>
+              <th>{t.settings.members.columns.member}</th>
+              <th>{t.settings.members.columns.role}</th>
+              <th>{w.joined}</th>
               {isOwner ? <th /> : null}
             </tr>
           </thead>
@@ -286,14 +303,12 @@ function MembersPanel({
                       <span className="font-mono text-[12px]">
                         {member.email}
                         {isSelf ? (
-                          <span className="font-sans text-muted-foreground">（自分）</span>
+                          <span className="font-sans text-muted-foreground">{w.self}</span>
                         ) : null}
                       </span>
                     </div>
                   </td>
-                  <td className="text-[13px] text-muted-foreground">
-                    {member.role === "owner" ? "管理者" : "メンバー"}
-                  </td>
+                  <td className="text-[13px] text-muted-foreground">{roleLabel(t, member.role)}</td>
                   <td className="font-mono text-[11.5px] text-muted-foreground">
                     {member.since.slice(0, 10)}
                   </td>
@@ -304,7 +319,7 @@ function MembersPanel({
                           <input type="hidden" name="intent" value="member-remove" />
                           <input type="hidden" name="email" value={member.email} />
                           <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
-                            削除
+                            {w.remove}
                           </button>
                         </Form>
                       ) : null}
@@ -318,44 +333,44 @@ function MembersPanel({
       </div>
       {isOwner && invites.length > 0 ? (
         <section className="mt-8">
-          <h3 className="text-[14px] font-semibold">有効な招待リンク</h3>
+          <h3 className="text-[14px] font-semibold">{w.activeInvites}</h3>
           <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
             {invites.map((invite) => (
               <li key={invite.id} className="flex items-center gap-3 px-3 py-2 text-[12.5px]">
                 <span className="text-muted-foreground">
-                  {invite.role === "owner" ? "管理者として" : "メンバーとして"}参加 · {invite.uses}/
-                  {invite.maxUses} 回使用 · {invite.expiresAt.slice(0, 10)} まで
+                  {fill(w.inviteRow, {
+                    role: roleLabel(t, invite.role),
+                    uses: invite.uses,
+                    max: invite.maxUses,
+                    until: invite.expiresAt.slice(0, 10),
+                  })}
                 </span>
                 <Form method="post" className="ml-auto">
                   <input type="hidden" name="intent" value="invite-revoke" />
                   <input type="hidden" name="inviteId" value={invite.id} />
                   <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
-                    無効化
+                    {w.revoke}
                   </button>
                 </Form>
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-[12px] text-muted-foreground">
-            リンクの本文は保存していないため、再表示はできません。必要なら作り直してください。
-          </p>
+          <p className="mt-2 text-[12px] text-muted-foreground">{w.inviteNote}</p>
         </section>
       ) : null}
       <section className="mt-8">
-        <h3 className="text-[14px] font-semibold">このワークスペースから離脱</h3>
-        <p className="mt-1 text-[12px] text-muted-foreground">
-          離脱後は別のワークスペースに切り替わります。最後の管理者は離脱できません。
-        </p>
+        <h3 className="text-[14px] font-semibold">{w.leaveTitle}</h3>
+        <p className="mt-1 text-[12px] text-muted-foreground">{w.leaveBody}</p>
         <Form
           method="post"
           className="mt-2"
           onSubmit={(event) => {
-            if (!confirm("このワークスペースから離脱しますか？")) event.preventDefault();
+            if (!confirm(w.leaveConfirm)) event.preventDefault();
           }}
         >
           <input type="hidden" name="intent" value="leave" />
           <button type="submit" className="ui-btn-danger px-3">
-            離脱する
+            {w.leave}
           </button>
         </Form>
         <ActionNote data={actionData} intents={["leave"]} />
@@ -373,12 +388,14 @@ function GeneralPanel({
   memberships: LoaderData["memberships"];
   actionData?: WorkspaceActionData;
 }) {
+  const t = useT();
+  const g = t.settings.workspace.general;
   const isOwner = workspace.role === "owner";
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">一般</h2>
+      <h2 className="text-[16px] font-semibold">{t.settings.sections.general}</h2>
       <section className="mt-4 rounded-[10px] border border-border p-4">
-        <p className="text-[12px] text-muted-foreground">ワークスペース名</p>
+        <p className="text-[12px] text-muted-foreground">{g.name}</p>
         <Form method="post" className="mt-2 flex items-center gap-2">
           <input type="hidden" name="intent" value="rename" />
           <input
@@ -387,22 +404,20 @@ function GeneralPanel({
             maxLength={WORKSPACE_NAME_MAX}
             disabled={!isOwner}
             className="ui-input min-w-0 flex-1"
-            aria-label="ワークスペース名"
+            aria-label={g.name}
           />
           <button type="submit" disabled={!isOwner} className="ui-btn-secondary px-3">
-            保存
+            {t.common.save}
           </button>
         </Form>
-        {!isOwner ? (
-          <p className="mt-2 text-[12px] text-muted-foreground">名前の変更は管理者のみできます。</p>
-        ) : null}
+        {!isOwner ? <p className="mt-2 text-[12px] text-muted-foreground">{g.ownerOnly}</p> : null}
         <ActionNote data={actionData} intents={["rename"]} />
         {actionData?.intent === "rename" && actionData.ok ? (
-          <p className="mt-2 text-[12.5px] text-muted-foreground">保存しました。</p>
+          <p className="mt-2 text-[12.5px] text-muted-foreground">{g.saved}</p>
         ) : null}
       </section>
       <section className="mt-8">
-        <h3 className="text-[14px] font-semibold">参加しているワークスペース</h3>
+        <h3 className="text-[14px] font-semibold">{g.mine}</h3>
         <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
           {memberships.map((membership) => {
             const current = membership.workspaceId === workspace.id;
@@ -412,18 +427,18 @@ function GeneralPanel({
                   {membership.name}
                 </span>
                 <span className="text-[12px] text-muted-foreground">
-                  {membership.role === "owner" ? "管理者" : "メンバー"}
+                  {roleLabel(t, membership.role)}
                 </span>
                 {current ? (
                   <span className="rounded-[6px] bg-muted px-2 py-0.5 text-[11.5px] text-secondary">
-                    現在
+                    {g.current}
                   </span>
                 ) : (
                   <Form method="post">
                     <input type="hidden" name="intent" value="switch" />
                     <input type="hidden" name="workspaceId" value={membership.workspaceId} />
                     <button type="submit" className="ui-btn-secondary px-3 text-[12px]">
-                      切り替え
+                      {g.switch}
                     </button>
                   </Form>
                 )}
@@ -434,18 +449,18 @@ function GeneralPanel({
         <ActionNote data={actionData} intents={["switch"]} />
       </section>
       <section className="mt-8">
-        <h3 className="text-[14px] font-semibold">新しいワークスペースを作る</h3>
+        <h3 className="text-[14px] font-semibold">{g.createTitle}</h3>
         <Form method="post" className="mt-2 flex items-center gap-2">
           <input type="hidden" name="intent" value="create-workspace" />
           <input
             name="name"
-            placeholder="チーム名やプロジェクト名"
+            placeholder={g.createPlaceholder}
             maxLength={WORKSPACE_NAME_MAX}
             className="ui-input min-w-0 flex-1"
-            aria-label="新しいワークスペース名"
+            aria-label={g.createTitle}
           />
           <button type="submit" className="ui-btn px-3">
-            作成
+            {g.create}
           </button>
         </Form>
         <ActionNote data={actionData} intents={["create-workspace"]} />
@@ -463,59 +478,52 @@ function ApiKeysPanel({
   keys: LoaderData["keys"];
   actionData?: WorkspaceActionData;
 }) {
+  const t = useT();
+  const a = t.settings.workspace.api;
   const creating = useBusy("key-create");
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">API キー（MCP）</h2>
-      <p className="mt-1 text-[12.5px] text-muted-foreground">
-        Cursor や Claude Desktop などのエージェントが <code className="ui-kbd">/mcp</code>{" "}
-        へ接続するときの <code className="ui-kbd">Authorization: Bearer</code>{" "}
-        です。キーはこのワークスペースのデータだけを読み書きできます。
-      </p>
+      <h2 className="text-[16px] font-semibold">{a.title}</h2>
+      <p className="mt-1 text-[12.5px] text-muted-foreground">{a.description}</p>
       {!isOwner ? (
-        <p className="mt-4 text-[13px] text-muted-foreground">
-          キーの発行と管理は管理者のみできます。
-        </p>
+        <p className="mt-4 text-[13px] text-muted-foreground">{a.ownerOnly}</p>
       ) : (
         <>
           <Form method="post" className="mt-4 flex items-center gap-2">
             <input type="hidden" name="intent" value="key-create" />
             <input
               name="name"
-              placeholder="用途（例: Cursor）"
+              placeholder={a.namePlaceholder}
               maxLength={60}
               className="ui-input min-w-0 flex-1"
-              aria-label="キーの名前"
+              aria-label={a.nameLabel}
             />
             <button type="submit" disabled={creating} className="ui-btn px-3">
-              発行
+              {a.issue}
             </button>
           </Form>
           <ActionNote data={actionData} intents={["key-create", "key-revoke"]} />
           {actionData?.intent === "key-create" && actionData.createdKey ? (
-            <CopyField
-              value={actionData.createdKey}
-              label="新しいキー。今だけ表示されます。閉じると二度と見られません。"
-            />
+            <CopyField value={actionData.createdKey} label={a.createdLabel} />
           ) : null}
           <ul className="mt-4 divide-y divide-border rounded-[10px] border border-border">
             {keys.length === 0 ? (
-              <li className="px-3 py-3 text-[12.5px] text-muted-foreground">
-                まだキーはありません。
-              </li>
+              <li className="px-3 py-3 text-[12.5px] text-muted-foreground">{a.none}</li>
             ) : (
               keys.map((key) => (
                 <li key={key.id} className="flex items-center gap-3 px-3 py-2 text-[12.5px]">
                   <span className="min-w-0 flex-1 truncate font-medium">{key.name}</span>
                   <span className="font-mono text-muted-foreground">{key.prefix}…</span>
                   <span className="text-muted-foreground">
-                    {key.lastUsedAt ? `最終使用 ${key.lastUsedAt.slice(0, 10)}` : "未使用"}
+                    {key.lastUsedAt
+                      ? fill(a.lastUsed, { date: key.lastUsedAt.slice(0, 10) })
+                      : a.unused}
                   </span>
                   <Form method="post">
                     <input type="hidden" name="intent" value="key-revoke" />
                     <input type="hidden" name="keyId" value={key.id} />
                     <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
-                      無効化
+                      {t.settings.workspace.members.revoke}
                     </button>
                   </Form>
                 </li>
@@ -528,11 +536,15 @@ function ApiKeysPanel({
   );
 }
 
-function periodEndLabel(iso: string | null): string {
+function periodEndLabel(t: Dictionary, iso: string | null): string {
   if (!iso) return "";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+  return date.toLocaleDateString(t.settings.dateLocale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 /**
@@ -541,6 +553,7 @@ function periodEndLabel(iso: string | null): string {
  * every money action hands off to a Stripe-hosted page.
  */
 function BillingRow({ premium }: { premium: boolean }) {
+  const t = useT();
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -560,28 +573,29 @@ function BillingRow({ premium }: { premium: boolean }) {
 
   async function go(path: string) {
     setPending(true);
-    setError(await startBilling(path));
+    setError(await startBilling(t, path));
     setPending(false);
   }
 
   const isPremium = status ? status.plan === "premium" : premium;
-  const paidThrough = periodEndLabel(status?.currentPeriodEnd ?? null);
+  const paidThrough = periodEndLabel(t, status?.currentPeriodEnd ?? null);
 
   return (
     <>
-      <p className="mt-3 text-[12px] text-muted-foreground">プラン</p>
+      <p className="mt-3 text-[12px] text-muted-foreground">{t.settings.billing.plan}</p>
       <p className="mt-1 text-[13.5px] font-semibold">
-        {isPremium ? "プレミアム（AI機能あり）" : "フリー（AI機能なし）"}
+        {isPremium ? t.settings.billing.premium : t.settings.billing.free}
       </p>
       {status?.comped ? (
-        <p className="mt-1 text-[12px] text-muted-foreground">
-          管理者による付与のため、支払いはありません。
-        </p>
+        <p className="mt-1 text-[12px] text-muted-foreground">{t.settings.billing.comped}</p>
       ) : null}
       {paidThrough ? (
         <p className="mt-1 text-[12px] text-muted-foreground">
-          {status?.status === "canceled" ? "利用できるのは" : "次回更新"} {paidThrough}
-          {status?.status === "past_due" ? "（支払いを再試行中）" : ""}
+          {status?.status === "canceled"
+            ? t.settings.billing.canceledPrefix
+            : t.settings.billing.renewsPrefix}{" "}
+          {paidThrough}
+          {status?.status === "past_due" ? t.settings.billing.pastDueSuffix : ""}
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
@@ -592,7 +606,7 @@ function BillingRow({ premium }: { premium: boolean }) {
             onClick={() => go(BILLING_CHECKOUT_PATH)}
             className="ui-btn"
           >
-            プレミアムにする
+            {t.settings.billing.upgrade}
           </button>
         ) : null}
         {status?.manageable ? (
@@ -602,7 +616,7 @@ function BillingRow({ premium }: { premium: boolean }) {
             onClick={() => go(BILLING_PORTAL_PATH)}
             className="ui-btn-secondary px-3"
           >
-            支払い方法・解約
+            {t.settings.billing.manage}
           </button>
         ) : null}
       </div>
@@ -615,34 +629,42 @@ function BillingRow({ premium }: { premium: boolean }) {
   );
 }
 
-/** The signed-in Google account. Membership lives in workspace_members, not here. */
+/** The signed-in Google account. Membership lives in workspace_members (docs/spec/workspaces.md). */
 function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premium: boolean }) {
+  const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">プロフィール</h2>
+      <h2 className="text-[16px] font-semibold">{t.settings.sections.profile}</h2>
       <div className="mt-4 rounded-[10px] border border-border p-4">
-        <p className="text-[12px] text-muted-foreground">ログイン中の Google アカウント</p>
-        <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? "不明"}</p>
+        <p className="text-[12px] text-muted-foreground">{t.settings.profile.account}</p>
+        <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? t.settings.profile.unknown}</p>
         <BillingRow premium={premium} />
         <form method="post" action={LOGOUT_PATH} className="mt-4">
           <button type="submit" className="ui-btn">
-            ログアウト
+            {t.common.signOut}
           </button>
         </form>
       </div>
-      <p className="mt-3 text-[12px] text-muted-foreground">
-        名前とアイコンは Google の設定に従います。支払いは Stripe のページで完結します。
-      </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-border p-4">
+        <div>
+          <p className="text-[13.5px] font-medium">{t.settings.language.title}</p>
+          <p className="mt-1 text-[12px] text-muted-foreground">
+            {t.settings.language.description}
+          </p>
+        </div>
+        <LanguageSwitcher />
+      </div>
+      <p className="mt-3 text-[12px] text-muted-foreground">{t.settings.profile.note}</p>
     </div>
   );
 }
 
 function StubPanel({ section }: { section: SectionId }) {
-  const label = SECTIONS.find((item) => item.id === section)?.label ?? "設定";
+  const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{label}</h2>
-      <p className="mt-3 text-[13.5px] text-muted-foreground">まだありません。</p>
+      <h2 className="text-[16px] font-semibold">{t.settings.sections[section]}</h2>
+      <p className="mt-3 text-[13.5px] text-muted-foreground">{t.settings.stub}</p>
     </div>
   );
 }

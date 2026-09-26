@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useT } from "../i18n/context";
 import {
   inspirationGlyph,
   inspirationHeadline,
@@ -45,7 +46,8 @@ export function InspirationCardMedia({
   item: InspirationPreviewItem;
   className?: string;
 }) {
-  const headline = inspirationHeadline(item);
+  const t = useT();
+  const headline = inspirationHeadline(t, item);
   const [imageFailed, setImageFailed] = useState(false);
   if (item.ogImageUrl && !imageFailed) {
     return (
@@ -66,7 +68,8 @@ export function InspirationCardMedia({
 }
 
 export function InspirationDetailPreview({ item }: { item: InspirationPreviewItem }) {
-  const headline = inspirationHeadline(item);
+  const t = useT();
+  const headline = inspirationHeadline(t, item);
   const site = inspirationSiteLabel(item);
   const snippet = item.ogDescription.trim();
   const [imageFailed, setImageFailed] = useState(false);

@@ -11,6 +11,7 @@ import {
   type JevEvaluateAxes,
 } from "../server/ai/jev-evaluate";
 import type { ScoreAnswer } from "../server/ai/typesafe";
+import { JA } from "../app/i18n/dictionary";
 
 function scoreAnswer(value: number, legend: Record<string, string>): ScoreAnswer {
   return {
@@ -70,12 +71,37 @@ describe("Jev evaluation mapping", () => {
     expect(formatJevEvaluationNotes(axes, 4)).toContain("スコア: 4");
   });
 
+  it("writes the note in the reader's language, keeping the headings as storage keys", () => {
+    const en = formatJevEvaluationNotes(axes, 4, "en");
+    // Headings and the score line are parsed back out, so they stay Japanese.
+    for (const heading of ["強み", "リスク", "新規性", "次の一手"]) {
+      expect(en).toContain(heading);
+    }
+    expect(en).toContain("スコア: 4");
+    expect(parseAiScore(en)).toBe(4);
+    // Everything under them follows the reader.
+    expect(en).not.toContain("進める価値: 高め");
+    expect(en).not.toContain("リサーチで仮説を検証する");
+    expect(en).toMatch(/[A-Za-z]{4,}/);
+    // And it is a real translation, not the Japanese note.
+    expect(en).not.toBe(formatJevEvaluationNotes(axes, 4, "ja"));
+    for (const locale of ["zh", "ko"] as const) {
+      const note = formatJevEvaluationNotes(axes, 4, locale);
+      expect(note, locale).toContain("スコア: 4");
+      expect(note, locale).not.toBe(formatJevEvaluationNotes(axes, 4, "ja"));
+    }
+  });
+
+  it("still defaults to Japanese when no locale is given", () => {
+    expect(formatJevEvaluationNotes(axes, 4)).toBe(formatJevEvaluationNotes(axes, 4, "ja"));
+  });
+
   it("requires every axis", () => {
     expect(() => parseJevEvaluationAnswers({ novelty: { type: "noul" } })).toThrow(/novelty/);
   });
 
   it("labels Jev in the UI helper", () => {
-    expect(evaluationModelLabel(JEV_MODEL)).toBe(JEV_MODEL_LABEL);
-    expect(evaluationModelLabel("@cf/qwen/qwen3-30b-a3b-fp8")).toBe("標準");
+    expect(evaluationModelLabel(JA, JEV_MODEL)).toBe(JEV_MODEL_LABEL);
+    expect(evaluationModelLabel(JA, "@cf/qwen/qwen3-30b-a3b-fp8")).toBe("標準");
   });
 });

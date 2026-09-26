@@ -1,13 +1,21 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, type LoaderFunctionArgs } from "react-router";
 import { EmptyState, StagePill } from "../../components/ui";
 import { IDEAS } from "../../data/mock";
+import { useT } from "../../i18n/context";
+import { dictionary } from "../../i18n/dictionary";
+import type { Route } from "./+types/merge";
 
-export function meta() {
-  return [{ title: "融合 — アイデアクラウド" }];
+export function loader({ context }: LoaderFunctionArgs) {
+  return { locale: context.locale };
+}
+
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").idea.merge.metaTitle }];
 }
 
 export default function MergePage() {
+  const t = useT();
   const [selected, setSelected] = useState<string[]>([]);
   const [merged, setMerged] = useState<string | null>(null);
 
@@ -24,15 +32,15 @@ export default function MergePage() {
   function merge() {
     if (chosen.length < 2) return;
     const titles = chosen.map((idea) => idea.title).join(" × ");
-    setMerged(`${titles} をひとつに重ねます。`);
+    setMerged(t.idea.merge.result(titles));
   }
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-6">
-      <h1 className="ui-title text-[16px] tracking-tight">融合</h1>
+      <h1 className="ui-title text-[16px] tracking-tight">{t.idea.merge.heading}</h1>
       {pool.length === 0 ? (
         <div className="mt-6">
-          <EmptyState title="まだありません" />
+          <EmptyState title={t.idea.empty} />
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-[1fr_18rem]">
@@ -59,7 +67,7 @@ export default function MergePage() {
                           className="text-[11px] text-muted-foreground no-underline hover:text-foreground"
                           onClick={(event) => event.stopPropagation()}
                         >
-                          詳細
+                          {t.idea.merge.detail}
                         </Link>
                       </span>
                     </span>
@@ -69,20 +77,20 @@ export default function MergePage() {
             })}
           </ul>
           <aside className="ui-panel h-fit p-4">
-            <p className="text-xs text-muted-foreground">選択中 {chosen.length} 件</p>
+            <p className="text-xs text-muted-foreground">{t.idea.merge.selected(chosen.length)}</p>
             <button
               type="button"
               onClick={merge}
               disabled={chosen.length < 2}
               className="ui-btn mt-3 w-full"
             >
-              融合する
+              {t.idea.merge.submit}
             </button>
             {merged ? (
               <p className="mt-3 text-sm leading-relaxed text-foreground">{merged}</p>
             ) : (
               <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                2 件以上選ぶと、重ねた一文がここに出ます。
+                {t.idea.merge.hint}
               </p>
             )}
           </aside>

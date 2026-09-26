@@ -5,6 +5,7 @@ import type { Db } from "./client";
 import { ideaIdsInWorkspace, listIdeaViews } from "./ideas";
 import { listInspirationRows } from "./inspirations";
 import { ideaComments, type IdeaComment, type Inspiration } from "./schema";
+import { JA } from "../app/i18n/dictionary";
 
 /** Per-group cap for the ⌘K palette. */
 export const SEARCH_GROUP_LIMIT = 8;
@@ -126,7 +127,7 @@ export function searchWorkspace(
     }
     inspirations.push({
       id: String(row.id),
-      title: inspirationHeadline(row),
+      title: inspirationHeadline(JA, row),
       domain: inspirationHostname(row.url).replace(/^www\./, ""),
       ogImageUrl: row.ogImageUrl,
     });

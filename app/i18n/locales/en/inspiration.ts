@@ -1,0 +1,70 @@
+import type { Dictionary } from "../../dictionary";
+
+export const inspiration: Dictionary["inspiration"] = {
+  metaTitle: "Inspiration — Idea Cloud",
+  title: "Inspiration",
+
+  untitled: "Untitled",
+
+  pasteUrl: "Paste a URL",
+  pasteHint: "A URL on its own is enough. It saves even if no preview comes back.",
+  urlLabel: "URL",
+  titleLabel: "Title (optional)",
+  titlePlaceholder: "Title (optional)",
+  urlPlaceholder: "http:// or https://",
+  memoLabel: "Note",
+  memoPlaceholder: "What you want to keep",
+  tagsLabel: "Tags",
+  tagsPlaceholder: "Tags (optional, comma separated)",
+  add: "Add",
+
+  noTags: "No tags yet",
+  clearFilter: "Clear filter",
+
+  emptyTitle: "Nothing on the shelf yet",
+  emptyBody: "Keep a URL or a note, and turn it into an idea later.",
+  makeIdea: "Make an idea",
+  fetchFailedShort: "no preview",
+
+  notFound: "Nothing here",
+  toShelf: "To the shelf",
+  edit: "Edit",
+  delete: "Delete",
+  deleting: "Deleting…",
+  noMemo: "No note yet",
+  refetch: "Fetch again",
+  refetching: "Fetching…",
+  previewFailed: "The preview could not be fetched. You can try again.",
+  deleteConfirm: (title: string) => `Delete “${title}”. This cannot be undone.`,
+  timestamps: (created: string, updated: string) => `created ${created} · updated ${updated}`,
+  reference: (url: string) => `Source: ${url}`,
+
+  dialog: {
+    title: "Make an idea from this",
+    viewSource: "Open source",
+    fieldTitle: "Title",
+    fieldBody: "Body",
+    fieldCategory: "Category",
+    tags: "Tags",
+    removeTag: (tag: string) => `Remove ${tag}`,
+    remove: "Remove",
+    tagPlaceholder: "Leave empty to tag automatically",
+    autoTags: "From the page",
+    footerNote: "The new idea stays linked to this card",
+    brainstormAndCreate: "Brainstorm, then create",
+    brainstorming: "Brainstorming…",
+    create: "Create",
+  },
+
+  errors: {
+    empty: "Enter something",
+    tooLong: "Too long",
+    notFound: "Not found",
+    noUrl: "No URL on this card",
+    urlFormat: "That URL is not valid",
+    urlProtocol: "Use an http or https URL",
+    titleTooLong: "The title is too long",
+    memoTooLong: "The note is too long",
+    urlTooLong: "The URL is too long",
+  },
+};

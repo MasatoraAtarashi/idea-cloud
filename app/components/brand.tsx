@@ -1,3 +1,5 @@
+import { useT } from "../i18n/context";
+
 type MarkProps = {
   className?: string;
 };
@@ -21,7 +23,8 @@ export function BrandMark({ className = "h-6 w-6" }: MarkProps) {
 export function BrandWordmark({
   className = "text-[13px] font-semibold tracking-tight",
 }: MarkProps) {
-  return <span className={className}>アイデアクラウド</span>;
+  const t = useT();
+  return <span className={className}>{t.common.appName}</span>;
 }
 
 export function Brand({

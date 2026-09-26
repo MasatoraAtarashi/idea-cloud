@@ -3,19 +3,13 @@ import { Link, useFetcher } from "react-router";
 import type { IdeaChatMessageView } from "../../db/discussions";
 import { DISCUSS_BODY_MAX } from "../../db/discussions";
 import type { MockIdea } from "../data/mock";
-import { canRunIdeaAi, DISCUSS_ARCHIVE_ERROR } from "../lib/idea-ai";
+import { useT } from "../i18n/context";
+import { canRunIdeaAi } from "../lib/idea-ai";
 import { formatDateJa } from "../lib/format";
 import type { ResearchPreset } from "../lib/research-models";
 import { useInstantPending } from "../lib/use-instant-pending";
 import type { DiscussIdeaActionData } from "../lib/idea-discuss-action";
 import { shortModelName } from "./ai-format";
-
-export const DISCUSS_STARTERS = [
-  { label: "LPにするなら", body: "これLP作るとしたらどういう感じが良い？" },
-  { label: "法的リスクは？", body: "これ法的リスクないかな？" },
-  { label: "次の一手は？", body: "次の一手は？" },
-  { label: "競合との差別化", body: "競合との差別化は？" },
-] as const;
 
 export function isDiscussSubmitting(formData: FormData | undefined) {
   return formData?.get("intent") === "discuss";
@@ -27,12 +21,13 @@ function useDiscussFetcher(ideaId: string) {
 }
 
 export function IdeaDiscussLink({ ideaId, className }: { ideaId: string; className?: string }) {
+  const t = useT();
   return (
     <Link
       to={`/app/ideas/${ideaId}#discuss`}
       className={className ?? "ui-btn-secondary w-full justify-start px-3 text-[13px]"}
     >
-      AIと話す
+      {t.ai.discuss.link}
     </Link>
   );
 }
@@ -46,6 +41,7 @@ export function IdeaDiscussThread({
   messages: IdeaChatMessageView[];
   error?: string;
 }) {
+  const t = useT();
   const fetcher = useDiscussFetcher(idea.id);
   const pending = fetcher.state !== "idle" && isDiscussSubmitting(fetcher.formData);
   const pendingBody = pending ? String(fetcher.formData?.get("body") ?? "").trim() : "";
@@ -62,9 +58,7 @@ export function IdeaDiscussThread({
   return (
     <section id="discuss" className="mt-4">
       {messages.length === 0 && !pendingBody ? (
-        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-          このアイデアについて質問できます。法律の判断はしません。下の質問から始められます。
-        </p>
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground">{t.ai.discuss.intro}</p>
       ) : (
         <ol className="space-y-3">
           {messages.map((message) => (
@@ -90,7 +84,7 @@ export function IdeaDiscussThread({
             <span className="h-[6px] w-[6px] rounded-full bg-[#17B26A]" aria-hidden="true" />
             saved
             <span aria-hidden="true">·</span>
-            <span className="font-sans">相談は保存されます</span>
+            <span className="font-sans">{t.ai.discuss.saved}</span>
           </>
         ) : null}
       </p>
@@ -101,6 +95,7 @@ export function IdeaDiscussThread({
 }
 
 export function IdeaDiscussComposer({ idea, preset }: { idea: MockIdea; preset: ResearchPreset }) {
+  const t = useT();
   const fetcher = useDiscussFetcher(idea.id);
   const busy = fetcher.state !== "idle" && isDiscussSubmitting(fetcher.formData);
   const { pending, hold } = useInstantPending(busy);
@@ -132,7 +127,7 @@ export function IdeaDiscussComposer({ idea, preset }: { idea: MockIdea; preset: 
   if (!ready) {
     return (
       <p className="rounded-[10px] border border-border bg-card px-3.5 py-3 text-[12.5px] text-muted-foreground">
-        {DISCUSS_ARCHIVE_ERROR}
+        {t.ai.archive.discuss}
       </p>
     );
   }
@@ -151,7 +146,7 @@ export function IdeaDiscussComposer({ idea, preset }: { idea: MockIdea; preset: 
   return (
     <div>
       <div className="flex gap-1.5 overflow-x-auto pb-2.5">
-        {DISCUSS_STARTERS.map((starter) => (
+        {t.ai.discuss.starters.map((starter) => (
           <button
             key={starter.label}
             type="button"
@@ -178,7 +173,7 @@ export function IdeaDiscussComposer({ idea, preset }: { idea: MockIdea; preset: 
         <input type="hidden" name="intent" value="discuss" />
         <input type="hidden" name="preset" value={preset} />
         <label htmlFor="idea-discuss" className="sr-only">
-          AIへの質問
+          {t.ai.discuss.inputLabel}
         </label>
         <textarea
           ref={inputRef}
@@ -194,7 +189,7 @@ export function IdeaDiscussComposer({ idea, preset }: { idea: MockIdea; preset: 
             if (!body.trim() || pending) return;
             event.currentTarget.form?.requestSubmit();
           }}
-          placeholder="このアイデアについて聞く"
+          placeholder={t.ai.discuss.placeholder}
           readOnly={pending}
           autoComplete="off"
           enterKeyHint="send"
@@ -204,13 +199,15 @@ export function IdeaDiscussComposer({ idea, preset }: { idea: MockIdea; preset: 
           type="submit"
           disabled={pending || body.trim().length === 0}
           aria-busy={pending}
-          aria-label="送信"
+          aria-label={t.ai.discuss.send}
           className="ui-btn-ai h-11 w-11 shrink-0 px-0 text-[16px] md:h-8 md:min-h-8 md:w-auto md:px-3 md:text-[12.5px]"
         >
           <span className="md:hidden" aria-hidden="true">
             ↑
           </span>
-          <span className="hidden md:inline">{pending ? "送信中…" : "送信"}</span>
+          <span className="hidden md:inline">
+            {pending ? t.ai.discuss.sending : t.ai.discuss.send}
+          </span>
         </button>
       </fetcher.Form>
     </div>
@@ -218,13 +215,14 @@ export function IdeaDiscussComposer({ idea, preset }: { idea: MockIdea; preset: 
 }
 
 function ChatBubble({ message }: { message: IdeaChatMessageView }) {
+  const t = useT();
   const mine = message.role === "user";
   const model = shortModelName(message.model);
   return (
     <li className={mine ? "flex justify-end" : "flex justify-start"}>
       <div className={mine ? "max-w-[88%]" : "max-w-[92%]"}>
         <p
-          title={formatDateJa(message.createdAt)}
+          title={formatDateJa(t, message.createdAt)}
           className={
             mine
               ? "rounded-[12px_12px_4px_12px] bg-foreground px-3.5 py-2.5 text-[13px] leading-[1.8] whitespace-pre-wrap text-white"

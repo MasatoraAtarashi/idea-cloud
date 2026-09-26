@@ -9,12 +9,14 @@ import {
   urlsDiffer,
 } from "../../db/inspirations";
 import { brainstormIdea } from "../../server/ai/brainstorm";
+import { aiErrorMessage } from "./idea-ai";
 import { scheduleCreateEvaluation } from "../../server/ai/evaluate";
 import { bindResearchAi } from "../../server/ai/research";
 import { resolveCreateTags, sanitizeTags, USER_TAG_MAX } from "../../server/ai/tags";
 import { PREMIUM_REQUIRED_MESSAGE } from "../../server/billing/plan";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
 import { enrichInspirationOgp } from "../../server/ogp/enrich";
+import { dictionary, type Dictionary } from "../i18n/dictionary";
 import { composeBodyFromForm } from "./idea-action";
 import { prepareInspirationInput } from "./inspiration-input";
 import {
@@ -41,8 +43,8 @@ function parseTags(raw: string): string[] {
     .slice(0, 8);
 }
 
-function readInspirationForm(form: FormData) {
-  return prepareInspirationInput({
+function readInspirationForm(t: Dictionary, form: FormData) {
+  return prepareInspirationInput(t, {
     title: String(form.get("title") ?? ""),
     url: String(form.get("url") ?? ""),
     memo: String(form.get("memo") ?? ""),
@@ -61,21 +63,24 @@ async function createIdeaFromInspiration(
   context: ActionFunctionArgs["context"],
   inspirationId: number,
 ): Promise<Response | InspirationActionData> {
+  const t = dictionary(context.locale);
   const intent = CREATE_IDEA_INTENT;
   const { text, tags, categoryId, categoryName } = composeBodyFromForm(form);
-  if (!text) return { error: "入力してください", intent } satisfies InspirationActionData;
-  if (text.length > IDEA_BODY_MAX) return { error: "長すぎます", intent };
+  if (!text) return { error: t.inspiration.errors.empty, intent } satisfies InspirationActionData;
+  if (text.length > IDEA_BODY_MAX) return { error: t.inspiration.errors.tooLong, intent };
   const env = context.cloudflare.env;
   const db = appDb(context);
   const source = await getInspirationRow(db, inspirationId);
-  if (!source) return { error: "見つかりません", intent } satisfies InspirationActionData;
+  if (!source) {
+    return { error: t.inspiration.errors.notFound, intent } satisfies InspirationActionData;
+  }
   const category = await resolveCategoryId(db, { categoryId, categoryName });
   if ("error" in category) return { error: category.error, intent };
   const ai = bindResearchAi(env.AI);
   const typesafeApiKey = typesafeApiKeyFromEnv(env);
   const premium = context.plan === "premium";
   const resolvedTags = premium
-    ? await resolveCreateTags({ ai, text, tags, typesafeApiKey })
+    ? await resolveCreateTags({ ai, text, tags, typesafeApiKey, locale: context.locale })
     : sanitizeTags(tags, USER_TAG_MAX);
   const created = await insertIdea(db, text, {
     tags: resolvedTags,
@@ -90,14 +95,26 @@ async function createIdeaFromInspiration(
       ideaId: created.id,
       stage: created.stage,
       typesafeApiKey,
+      locale: context.locale,
     });
   }
   if (!premium || String(form.get("brainstorm") ?? "") !== "1") {
     return redirect(`/app/ideas/${created.id}`);
   }
-  const result = await brainstormIdea({ db, ai, ideaId: created.id, preset: "", model: "" });
+  const result = await brainstormIdea({
+    db,
+    ai,
+    ideaId: created.id,
+    preset: "",
+    model: "",
+    locale: context.locale,
+  });
   if (!result.ok) {
-    return redirect(`/app/ideas/${created.id}?brainstormError=${encodeURIComponent(result.error)}`);
+    return redirect(
+      `/app/ideas/${created.id}?brainstormError=${encodeURIComponent(
+        aiErrorMessage(dictionary(context.locale), "brainstorm", result.code),
+      )}`,
+    );
   }
   return redirect(`/app/ideas/${created.id}#brainstorm`);
 }
@@ -111,13 +128,14 @@ export async function createInspirationAction({
   request,
   context,
 }: ActionFunctionArgs): Promise<Response | InspirationActionData> {
+  const t = dictionary(context.locale);
   const form = await request.formData();
   if (String(form.get("intent") ?? "") === CREATE_IDEA_INTENT) {
     const id = inspirationIdFrom(form.get("inspirationId"));
-    if (!id) return { error: "見つかりません", intent: CREATE_IDEA_INTENT };
+    if (!id) return { error: t.inspiration.errors.notFound, intent: CREATE_IDEA_INTENT };
     return createIdeaFromInspiration(form, context, id);
   }
-  const prepared = readInspirationForm(form);
+  const prepared = readInspirationForm(t, form);
   if (!prepared.ok) {
     return { error: prepared.error, intent: "create" } satisfies InspirationActionData;
   }
@@ -131,9 +149,10 @@ export async function inspirationDetailAction({
   params,
   context,
 }: ActionFunctionArgs): Promise<Response | InspirationActionData> {
+  const t = dictionary(context.locale);
   const inspirationId = Number(params.inspirationId);
   if (!Number.isInteger(inspirationId) || inspirationId <= 0) {
-    return { error: "見つかりません", intent: "edit" } satisfies InspirationActionData;
+    return { error: t.inspiration.errors.notFound, intent: "edit" } satisfies InspirationActionData;
   }
 
   const form = await request.formData();
@@ -147,7 +166,10 @@ export async function inspirationDetailAction({
   if (intent === "delete") {
     const deleted = await deleteInspiration(db, inspirationId);
     if (!deleted) {
-      return { error: "見つかりません", intent: "delete" } satisfies InspirationActionData;
+      return {
+        error: t.inspiration.errors.notFound,
+        intent: "delete",
+      } satisfies InspirationActionData;
     }
     return redirect(INSPIRATIONS_PATH);
   }
@@ -155,10 +177,16 @@ export async function inspirationDetailAction({
   if (intent === "refresh-ogp") {
     const row = await getInspirationRow(db, inspirationId);
     if (!row) {
-      return { error: "見つかりません", intent: "refresh-ogp" } satisfies InspirationActionData;
+      return {
+        error: t.inspiration.errors.notFound,
+        intent: "refresh-ogp",
+      } satisfies InspirationActionData;
     }
     if (!row.url?.trim()) {
-      return { error: "URLがありません", intent: "refresh-ogp" } satisfies InspirationActionData;
+      return {
+        error: t.inspiration.errors.noUrl,
+        intent: "refresh-ogp",
+      } satisfies InspirationActionData;
     }
     const enriched = await enrichInspirationOgp(db, row);
     await replaceDerivedTitleFromOgp(db, enriched);
@@ -174,7 +202,10 @@ export async function inspirationDetailAction({
     }
     const row = await getInspirationRow(db, inspirationId);
     if (!row) {
-      return { error: "見つかりません", intent: "brainstorm" } satisfies InspirationActionData;
+      return {
+        error: t.inspiration.errors.notFound,
+        intent: "brainstorm",
+      } satisfies InspirationActionData;
     }
     const created = await insertIdea(db, ideaTextFromInspiration(row), {
       tags: [],
@@ -185,22 +216,25 @@ export async function inspirationDetailAction({
       ideaId: created.id,
       preset: String(form.get("preset") ?? ""),
       model: String(form.get("model") ?? ""),
+      locale: context.locale,
     });
     if (!result.ok) {
       return redirect(
-        `/app/ideas/${created.id}?brainstormError=${encodeURIComponent(result.error)}`,
+        `/app/ideas/${created.id}?brainstormError=${encodeURIComponent(
+          aiErrorMessage(dictionary(context.locale), "brainstorm", result.code),
+        )}`,
       );
     }
     return redirect(`/app/ideas/${created.id}#brainstorm`);
   }
 
-  const prepared = readInspirationForm(form);
+  const prepared = readInspirationForm(t, form);
   if (!prepared.ok) {
     return { error: prepared.error, intent: "edit" } satisfies InspirationActionData;
   }
   const existing = await getInspirationRow(db, inspirationId);
   if (!existing) {
-    return { error: "見つかりません", intent: "edit" } satisfies InspirationActionData;
+    return { error: t.inspiration.errors.notFound, intent: "edit" } satisfies InspirationActionData;
   }
   const urlChanged = urlsDiffer(existing.url, prepared.value.url);
   const updated = await updateInspiration(db, inspirationId, {
@@ -210,7 +244,7 @@ export async function inspirationDetailAction({
     tags: prepared.value.tags,
   });
   if (!updated) {
-    return { error: "見つかりません", intent: "edit" } satisfies InspirationActionData;
+    return { error: t.inspiration.errors.notFound, intent: "edit" } satisfies InspirationActionData;
   }
   if (urlChanged) {
     await applyFetchedTitle(db, updated, prepared.value.titleFromUser);

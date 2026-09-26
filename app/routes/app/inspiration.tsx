@@ -9,6 +9,8 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import type { AppData } from "./layout";
+import { useT } from "../../i18n/context";
+import { dictionary } from "../../i18n/dictionary";
 import { EmptyState, TagList } from "../../components/ui";
 import { IconSpinner } from "../../components/icons";
 import { InspirationIdeaDialog } from "../../components/inspiration-idea-dialog";
@@ -20,24 +22,27 @@ import { confirmInspirationDelete } from "../../lib/inspiration-delete";
 import { useInstantPending } from "../../lib/use-instant-pending";
 import { getInspirationRow, inspirationView } from "../../../db/inspirations";
 import { appDb } from "../../lib/app-db";
+import type { Route } from "./+types/inspiration";
 
 export { inspirationDetailAction as action };
 
-export function meta() {
-  return [{ title: "インスピレーション — アイデアクラウド" }];
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").inspiration.metaTitle }];
 }
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
   const db = appDb(context);
   const numeric = Number(params.inspirationId);
+  const locale = context.locale;
   if (!Number.isInteger(numeric) || numeric <= 0) {
-    return { item: undefined };
+    return { item: undefined, locale };
   }
   const row = await getInspirationRow(db, numeric);
-  return { item: row ? inspirationView(row) : undefined };
+  return { item: row ? inspirationView(row) : undefined, locale };
 }
 
 export default function InspirationPage() {
+  const t = useT();
   const { item } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof inspirationDetailAction>();
   const error = actionData && "error" in actionData ? actionData.error : undefined;
@@ -45,12 +50,12 @@ export default function InspirationPage() {
   if (!item) {
     return (
       <div className="px-6 py-6">
-        <EmptyState title="まだありません" />
+        <EmptyState title={t.inspiration.notFound} />
         <Link
           to={INSPIRATIONS_PATH}
           className="mt-4 inline-block text-[13.5px] text-muted-foreground no-underline"
         >
-          棚へ
+          {t.inspiration.toShelf}
         </Link>
       </div>
     );
@@ -66,6 +71,7 @@ function InspirationDetail({
   item: NonNullable<Awaited<ReturnType<typeof loader>>["item"]>;
   error?: string;
 }) {
+  const t = useT();
   const { categories } = useOutletContext<AppData>();
   const [editing, setEditing] = useState(false);
   const [making, setMaking] = useState(false);
@@ -77,7 +83,7 @@ function InspirationDetail({
   const { pending: deletePending, hold: holdDelete } = useInstantPending(deleting);
 
   function handleDelete() {
-    if (!confirmInspirationDelete(inspirationHeadline(item))) return;
+    if (!confirmInspirationDelete(t, inspirationHeadline(t, item))) return;
     holdDelete();
     const data = new FormData();
     data.set("intent", "delete");
@@ -93,10 +99,10 @@ function InspirationDetail({
             className="flex min-h-11 items-center gap-1.5 pr-2 text-[13px] text-muted-foreground no-underline hover:text-foreground"
           >
             <span aria-hidden="true">←</span>
-            <span className="hidden md:inline">インスピレーション</span>
+            <span className="hidden md:inline">{t.inspiration.title}</span>
           </Link>
           <h1 className="min-w-0 flex-1 truncate text-center text-[14.5px] font-semibold md:hidden">
-            {inspirationHeadline(item)}
+            {inspirationHeadline(t, item)}
           </h1>
           <div className="flex items-center gap-2 md:ml-auto">
             <button
@@ -104,10 +110,10 @@ function InspirationDetail({
               onClick={() => setEditing((open) => !open)}
               className="ui-btn-secondary px-3"
             >
-              {editing ? "閉じる" : "編集"}
+              {editing ? t.common.close : t.inspiration.edit}
             </button>
             <button type="button" onClick={() => setMaking(true)} className="ui-btn px-3">
-              ＋ アイデアにする
+              ＋ {t.inspiration.makeIdea}
             </button>
             <button
               type="button"
@@ -115,7 +121,7 @@ function InspirationDetail({
               disabled={deletePending}
               className="ui-btn-secondary px-3 text-danger"
             >
-              {deletePending ? "削除中…" : "削除"}
+              {deletePending ? t.inspiration.deleting : t.inspiration.delete}
             </button>
           </div>
         </div>
@@ -127,7 +133,7 @@ function InspirationDetail({
             <input
               name="title"
               defaultValue={item.title}
-              placeholder="タイトル（空でも可）"
+              placeholder={t.inspiration.titlePlaceholder}
               className="ui-input"
             />
             <input
@@ -138,7 +144,7 @@ function InspirationDetail({
               autoCorrect="off"
               spellCheck={false}
               autoComplete="off"
-              placeholder="http:// または https://"
+              placeholder={t.inspiration.urlPlaceholder}
               defaultValue={item.url ?? ""}
               className="ui-input"
             />
@@ -150,14 +156,14 @@ function InspirationDetail({
             />
             <input name="tags" defaultValue={item.tags.join("、")} className="ui-input" />
             <button type="submit" className="ui-btn">
-              保存
+              {t.common.save}
             </button>
           </Form>
         ) : (
           <>
             <InspirationDetailPreview item={item} />
             <h1 className="mt-5 hidden text-[24px] leading-[1.45] font-semibold tracking-[-0.02em] md:block">
-              {inspirationHeadline(item)}
+              {inspirationHeadline(t, item)}
             </h1>
             {item.url ? (
               <a
@@ -174,7 +180,7 @@ function InspirationDetail({
                 {item.memo}
               </p>
             ) : (
-              <p className="mt-3 text-[13px] text-muted-foreground">メモはまだありません</p>
+              <p className="mt-3 text-[13px] text-muted-foreground">{t.inspiration.noMemo}</p>
             )}
             <div className="mt-3">
               <TagList tags={item.tags} emptyLabel="" />
@@ -187,18 +193,21 @@ function InspirationDetail({
             <input type="hidden" name="intent" value="refresh-ogp" />
             <button type="submit" disabled={refreshPending} className="ui-btn-secondary px-3">
               {refreshPending ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-              {refreshPending ? "取得中…" : "再取得"}
+              {refreshPending ? t.inspiration.refetching : t.inspiration.refetch}
             </button>
             {item.ogStatus === "failed" ? (
               <p className="mt-2 text-[12px] text-muted-foreground">
-                プレビューを取得できませんでした。再取得できます。
+                {t.inspiration.previewFailed}
               </p>
             ) : null}
           </refresh.Form>
         ) : null}
 
         <p className="mt-6 font-mono text-[11.5px] text-muted-foreground">
-          created {formatDateJa(item.createdAt)} · updated {formatDateJa(item.updatedAt)}
+          {t.inspiration.timestamps(
+            formatDateJa(t, item.createdAt),
+            formatDateJa(t, item.updatedAt),
+          )}
         </p>
 
         {error ? <p className="mt-2 text-[12.5px] text-danger">{error}</p> : null}

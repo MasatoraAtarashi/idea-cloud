@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { useLoaderData, type LoaderFunctionArgs } from "react-router";
-import { STAGE_LABEL, tagPillStyle } from "../../data/mock";
+import { tagPillStyle } from "../../data/mock";
+import { useT } from "../../i18n/context";
+import { dictionary } from "../../i18n/dictionary";
 import {
   createdBarTone,
   createdDayLabel,
@@ -13,15 +15,16 @@ import { listIdeaViews } from "../../../db/ideas";
 import { SettingsIconLink } from "../../components/settings-link";
 import { MobileScreenHeader } from "../../components/mobile-header";
 import { appDb } from "../../lib/app-db";
+import type { Route } from "./+types/analytics";
 
-export function meta() {
-  return [{ title: "アナリティクス — アイデアクラウド" }];
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").analytics.metaTitle }];
 }
 
 export async function loader({ context }: LoaderFunctionArgs) {
   const db = appDb(context);
   const ideas = await listIdeaViews(db);
-  return { analytics: summarizeIdeaAnalytics(ideas) };
+  return { analytics: summarizeIdeaAnalytics(ideas), locale: context.locale };
 }
 
 const BAR_FILL: Record<CreatedBarTone, string> = {
@@ -52,6 +55,7 @@ function Section({
 }
 
 export default function AnalyticsPage() {
+  const t = useT();
   const { analytics } = useLoaderData<typeof loader>();
   const [span, setSpan] = useState<7 | 30>(7);
   const createdRows = span === 7 ? analytics.createdByDay7 : analytics.createdByDay30;
@@ -62,14 +66,14 @@ export default function AnalyticsPage() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="hidden shrink-0 items-baseline gap-2.5 border-b border-border bg-card px-7 py-[18px] md:flex">
         <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-foreground">
-          アナリティクス
+          {t.analytics.title}
         </h1>
         <span className="font-mono text-[12px] text-muted-foreground">last 30d</span>
       </header>
       <MobileScreenHeader
         title={
           <div className="flex items-baseline gap-2 px-1">
-            <h1 className="text-[18px] font-semibold text-foreground">アナリティクス</h1>
+            <h1 className="text-[18px] font-semibold text-foreground">{t.analytics.title}</h1>
             <span className="font-mono text-[11.5px] text-muted-foreground">last 30d</span>
           </div>
         }
@@ -77,24 +81,26 @@ export default function AnalyticsPage() {
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-7 md:py-[22px]">
         <dl className="grid max-w-[960px] grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label="アイデア総数" value={analytics.total} />
+          <Stat label={t.analytics.statTotal} value={analytics.total} />
           <Stat
-            label="平均熟成日数"
+            label={t.analytics.statAverageAging}
             value={analytics.averageAgedDays ?? "—"}
             unit={analytics.averageAgedDays == null ? undefined : "d"}
           />
-          <Stat label="AI評価済" value={analytics.withAiScore} />
-          <Stat label="試した" value={analytics.tried} />
+          <Stat label={t.analytics.statAiScored} value={analytics.withAiScore} />
+          <Stat label={t.analytics.statTried} value={analytics.tried} />
         </dl>
 
         <div className="max-w-[960px]">
-          <Section title="段階の分布">
+          <Section title={t.analytics.stageDistribution}>
             <div
               className="flex h-3 w-full gap-[2px] overflow-hidden rounded-[4px] bg-muted"
               role="img"
-              aria-label={stageRows
-                .map((row) => `${STAGE_LABEL[row.stage]} ${row.count}`)
-                .join("、")}
+              aria-label={t.analytics.stageChartLabel(
+                stageRows.map((row) =>
+                  t.analytics.stageChartEntry(t.common.stage[row.stage], row.count),
+                ),
+              )}
             >
               {stageTotal > 0
                 ? stageRows
@@ -123,7 +129,7 @@ export default function AnalyticsPage() {
                     className="h-[7px] w-[7px] rounded-full"
                     style={{ background: STAGE_PILL_HEX[row.stage].dot }}
                   />
-                  {STAGE_LABEL[row.stage]}
+                  {t.common.stage[row.stage]}
                   <span className="font-mono text-[12px] font-medium text-secondary">
                     {row.count}
                   </span>
@@ -133,7 +139,7 @@ export default function AnalyticsPage() {
           </Section>
 
           <Section
-            title="1日あたりの着想"
+            title={t.analytics.perDay}
             trailing={
               <div className="flex rounded-[7px] border border-border-control bg-card p-0.5">
                 {([7, 30] as const).map((value) => (
@@ -157,9 +163,9 @@ export default function AnalyticsPage() {
             <CreatedBars rows={createdRows} span={span} />
           </Section>
 
-          <Section title="よく出るタグ">
+          <Section title={t.analytics.topTags}>
             {analytics.topTags.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground">まだタグがありません</p>
+              <p className="text-[13px] text-muted-foreground">{t.analytics.noTags}</p>
             ) : (
               <ul className="flex flex-wrap gap-2">
                 {analytics.topTags.map((row) => (
@@ -182,6 +188,7 @@ export default function AnalyticsPage() {
 }
 
 function CreatedBars({ rows, span }: { rows: CreatedDayCount[]; span: number }) {
+  const t = useT();
   const max = Math.max(1, ...rows.map((row) => row.count));
   const dense = rows.length > 7;
   return (
@@ -194,7 +201,10 @@ function CreatedBars({ rows, span }: { rows: CreatedDayCount[]; span: number }) 
         const showLabel = !dense || isToday || index % 5 === 0;
         return (
           <div key={row.day} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-            <div className="flex h-[120px] w-full items-end" title={`${row.day}: ${row.count}件`}>
+            <div
+              className="flex h-[120px] w-full items-end"
+              title={t.analytics.dayCount(row.day, row.count)}
+            >
               <div
                 className="w-full rounded-[3px]"
                 style={{

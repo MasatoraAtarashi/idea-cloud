@@ -2,6 +2,7 @@ import { redirect, type ActionFunctionArgs } from "react-router";
 import { appDb } from "./app-db";
 import { asStage, updateIdeaStage } from "../../db/ideas";
 import { STAGES } from "../data/mock";
+import { dictionary } from "../i18n/dictionary";
 import { commentIdeaAction } from "./idea-comment-action";
 import { discussIdeaAction } from "./idea-discuss-action";
 import { brainstormIdeaAction } from "./idea-brainstorm-action";
@@ -22,6 +23,7 @@ export type IdeaDetailActionData = {
 const PREMIUM_INTENTS = new Set(["brainstorm", "evaluate", "discuss", "research"]);
 
 export async function ideaDetailAction(args: ActionFunctionArgs) {
+  const t = dictionary(args.context.locale);
   const form = await args.request.clone().formData();
   const intent = String(form.get("intent") ?? "research");
   if (PREMIUM_INTENTS.has(intent) && args.context.plan !== "premium") {
@@ -30,16 +32,16 @@ export async function ideaDetailAction(args: ActionFunctionArgs) {
   if (intent === "stage") {
     const ideaId = Number(args.params.ideaId);
     if (!Number.isInteger(ideaId) || ideaId <= 0) {
-      return { error: "見つかりません" } satisfies IdeaDetailActionData;
+      return { error: t.idea.errors.notFound } satisfies IdeaDetailActionData;
     }
     const stageRaw = String(form.get("stage") ?? "");
     if (!(STAGES as readonly string[]).includes(stageRaw)) {
-      return { error: "段階が不正です" } satisfies IdeaDetailActionData;
+      return { error: t.idea.errors.invalidStage } satisfies IdeaDetailActionData;
     }
     const db = appDb(args.context);
     const updated = await updateIdeaStage(db, ideaId, asStage(stageRaw));
     if (!updated) {
-      return { error: "見つかりません" } satisfies IdeaDetailActionData;
+      return { error: t.idea.errors.notFound } satisfies IdeaDetailActionData;
     }
     const redirectTo = String(form.get("redirectTo") ?? "").trim();
     if (redirectTo.startsWith("/app")) {

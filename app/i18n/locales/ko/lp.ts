@@ -1,0 +1,130 @@
+import type { Dictionary } from "../../dictionary";
+
+export const lp: Dictionary["lp"] = {
+  metaTitle: "아이디어 클라우드 — 묵혀서 익히는 아이디어 선반",
+  metaDescription:
+    "떠오른 순간에 붙잡고, 일부러 잊고, 익었을 때 다시 봅니다. 『사고의 정리학』의 숙성법을 그대로 도구로 만든 팀 워크스페이스입니다.",
+  skipToContent: "본문으로 건너뛰기",
+
+  hero: {
+    eyebrow: "숙성법을, 그대로 도구로",
+    title: "좋은 아이디어는\n묵혀 둔 뒤에야 보입니다.",
+    body: "떠오르면 그 자리에서 붙잡습니다. 그다음에는 일부러 건드리지 않습니다. 익었을 때만 다시 올라오고, 그때 진행할지·합칠지·버릴지 정합니다.",
+    note: "신용카드가 필요 없습니다. Google 계정으로 시작하세요.",
+  },
+
+  /** Copy for the product shot in the hero. Not real data — a staged shelf. */
+  preview: {
+    nav: { ideas: "아이디어", inspiration: "영감", analytics: "분석" },
+    search: "검색",
+    filter: "익음",
+    columns: { idea: "아이디어", stage: "단계", score: "추천도", updated: "업데이트" },
+    rows: [
+      { title: "회의 음성을 회의록으로 자동 정리", stage: "ripe", score: "82", updated: "2일 전" },
+      {
+        title: "상점가의 빈 점포를 하루만 빌려주기",
+        stage: "aging",
+        score: "—",
+        updated: "3주 전",
+      },
+      {
+        title: "다 읽은 책을 다음 사람에게 넘기는 선반",
+        stage: "spark",
+        score: "—",
+        updated: "오늘",
+      },
+      { title: "자주 가는 곳만 담은 지도", stage: "selected", score: "91", updated: "지난주" },
+    ],
+    ai: {
+      title: "AI 평가",
+      axes: [
+        { label: "새로움", value: 78 },
+        { label: "임팩트", value: 86 },
+        { label: "실현성", value: 64 },
+      ],
+      verdictLabel: "추천도",
+      verdict: "추진할 가치 있음",
+      nextLabel: "다음 한 수",
+      next: "비슷한 경쟁 서비스 3곳의 가격만 확인",
+    },
+  },
+  ritual: {
+    title: "동작은 셋뿐",
+    body: "쓰는 곳이 아니라 시간의 선반입니다. 여기서 늘리는 것은 기능이 아니라 묵히는 시간입니다.",
+    steps: [
+      {
+        step: "01",
+        title: "붙잡기",
+        body: "휴대폰을 열면 바로 입력란입니다. 태그는 비워 둬도 됩니다. AI가 나중에 붙입니다.",
+      },
+      {
+        step: "02",
+        title: "묵히기",
+        body: "착상은 그대로 숙성 중으로. 다듬고 싶은 충동을 의지가 아니라 구조로 막습니다.",
+      },
+      {
+        step: "03",
+        title: "되돌아보기",
+        body: "익은 것이 알아서 올라옵니다. 진행·융합·폐기를 한 번에 정합니다.",
+      },
+    ],
+  },
+
+  features: {
+    title: "묵힌 다음을, 혼자 두지 않습니다",
+    body: "되돌아볼 때만 AI가 함께합니다. 쓰는 동안에는 끼어들지 않습니다.",
+    items: [
+      {
+        title: "AI 평가",
+        body: "참신성·임팩트·실현성을 보고, 추천도와 다음 한 수를 한 화면에 돌려줍니다.",
+      },
+      {
+        title: "리서치",
+        body: "웹에서 선행 사례를 찾습니다. 못 찾으면 지어내지 않고 그렇다고 말합니다.",
+      },
+      {
+        title: "브레인스토밍",
+        body: "관점·대안·다음 질문을 펼칩니다. 막힌 아이디어의 탈출구가 됩니다.",
+      },
+      {
+        title: "상담",
+        body: "그 아이디어 하나만 맥락으로 삼는 대화. 전체를 다시 설명할 필요가 없습니다.",
+      },
+      {
+        title: "인스피레이션",
+        body: "눈에 띈 글이나 이미지를 붙여 두면 아이디어의 씨앗으로 늘어섭니다.",
+      },
+      {
+        title: "애널리틱스",
+        body: "얼마나 붙잡았고 얼마나 익었는지. 노력이 아니라 쌓인 것을 봅니다.",
+      },
+    ],
+  },
+
+  stages: {
+    title: "다섯 단계",
+    body: "진척이 아니라 시간의 상태입니다.",
+    items: [
+      { label: "착상", body: "막 붙잡은 상태. 다듬지 않습니다." },
+      { label: "숙성 중", body: "쉬게 둡니다. 잊어도 됩니다." },
+      { label: "익음", body: "되돌아볼 신호." },
+      { label: "채택", body: "움직이기로 정한 것." },
+      { label: "보관", body: "기록으로 남깁니다." },
+    ],
+  },
+
+  team: {
+    title: "혼자서도, 팀으로도",
+    body: "개인의 선반으로 쓰다가 그대로 팀과 공유할 수 있습니다. 댓글은 Zenn 스크랩처럼 시간순으로 쌓입니다.",
+  },
+
+  cta: {
+    title: "오늘의 떠오름을\n반년 뒤의 나에게.",
+    body: "Google 계정으로 로그인하면 바로 첫 한 건을 올릴 수 있습니다.",
+  },
+
+  footer: {
+    tagline: "아이디어를 묵혀 익히는 워크스페이스",
+    copyright: (year: number) => `© ${year} Idea Cloud`,
+  },
+};

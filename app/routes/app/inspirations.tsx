@@ -8,6 +8,8 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import type { AppData } from "./layout";
+import { useT } from "../../i18n/context";
+import { dictionary } from "../../i18n/dictionary";
 import { HeaderPlusButton } from "../../components/header-create";
 import { IconSpinner } from "../../components/icons";
 import {
@@ -21,20 +23,22 @@ import { TagPill } from "../../components/ui";
 import { createInspirationAction } from "../../lib/inspiration-action";
 import { inspirationView, listInspirationRows } from "../../../db/inspirations";
 import { appDb } from "../../lib/app-db";
+import type { Route } from "./+types/inspirations";
 
 export { createInspirationAction as action };
 
-export function meta() {
-  return [{ title: "インスピレーション — アイデアクラウド" }];
+export function meta({ data }: Route.MetaArgs) {
+  return [{ title: dictionary(data?.locale ?? "ja").inspiration.metaTitle }];
 }
 
 export async function loader({ context }: LoaderFunctionArgs) {
   const db = appDb(context);
   const items = (await listInspirationRows(db)).map(inspirationView);
-  return { items };
+  return { items, locale: context.locale };
 }
 
 function PasteUrlForm({ error }: { error?: string }) {
+  const t = useT();
   const urlRef = useRef<HTMLInputElement>(null);
   const navigation = useNavigation();
   const saving = navigation.state !== "idle" && navigation.formData?.get("intent") == null;
@@ -44,11 +48,9 @@ function PasteUrlForm({ error }: { error?: string }) {
 
   return (
     <Form method="post" className="space-y-2.5 px-[18px] py-4">
-      <p className="text-[12px] leading-relaxed text-muted-foreground">
-        URLだけでも追加できます。プレビューが取れなくても保存されます。
-      </p>
+      <p className="text-[12px] leading-relaxed text-muted-foreground">{t.inspiration.pasteHint}</p>
       <label className="sr-only" htmlFor="inspiration-url">
-        URL
+        {t.inspiration.urlLabel}
       </label>
       <input
         id="inspiration-url"
@@ -64,39 +66,39 @@ function PasteUrlForm({ error }: { error?: string }) {
         ref={urlRef}
       />
       <label className="sr-only" htmlFor="inspiration-title">
-        タイトル（任意）
+        {t.inspiration.titleLabel}
       </label>
       <input
         id="inspiration-title"
         name="title"
-        placeholder="タイトル（空でも可）"
+        placeholder={t.inspiration.titlePlaceholder}
         autoComplete="off"
         className="ui-input md:h-10"
       />
       <label className="sr-only" htmlFor="inspiration-memo">
-        メモ
+        {t.inspiration.memoLabel}
       </label>
       <textarea
         id="inspiration-memo"
         name="memo"
         rows={3}
-        placeholder="残したいこと"
+        placeholder={t.inspiration.memoPlaceholder}
         className="ui-input h-auto min-h-[5rem] py-2"
       />
       <label className="sr-only" htmlFor="inspiration-tags">
-        タグ
+        {t.inspiration.tagsLabel}
       </label>
       <input
         id="inspiration-tags"
         name="tags"
-        placeholder="タグ（任意・読点区切り）"
+        placeholder={t.inspiration.tagsPlaceholder}
         className="ui-input md:h-10"
       />
       <div className="flex items-center justify-end gap-2 pt-1">
         {error ? <p className="mr-auto text-[12.5px] text-danger">{error}</p> : null}
         <button type="submit" disabled={saving} className="ui-btn px-4 md:h-9 md:min-h-9">
           {saving ? <IconSpinner className="h-3.5 w-3.5 animate-spin" /> : null}
-          追加
+          {t.inspiration.add}
         </button>
       </div>
     </Form>
@@ -112,6 +114,7 @@ function TagFilter({
   selected: string | null;
   onChange: (tag: string | null) => void;
 }) {
+  const t = useT();
   const ref = useRef<HTMLDetailsElement>(null);
   function pick(tag: string | null) {
     onChange(tag);
@@ -122,15 +125,15 @@ function TagFilter({
       <summary className="ui-btn-secondary cursor-pointer px-3 md:h-9 md:min-h-9">
         {selected ? (
           <>
-            タグ <TagPill label={selected} />
+            {t.inspiration.tagsLabel} <TagPill label={selected} />
           </>
         ) : (
-          "タグ"
+          t.inspiration.tagsLabel
         )}
       </summary>
       <div className="ui-float absolute right-0 z-20 mt-1 w-56 p-2">
         {tags.length === 0 ? (
-          <p className="px-1 py-1 text-[12px] text-muted-foreground">まだタグがありません</p>
+          <p className="px-1 py-1 text-[12px] text-muted-foreground">{t.inspiration.noTags}</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag) => (
@@ -152,7 +155,7 @@ function TagFilter({
             onClick={() => pick(null)}
             className="mt-2 w-full rounded-[6px] px-2 py-1.5 text-left text-[12.5px] text-muted-foreground hover:bg-sunken"
           >
-            絞り込みを外す
+            {t.inspiration.clearFilter}
           </button>
         ) : null}
       </div>
@@ -161,6 +164,7 @@ function TagFilter({
 }
 
 export default function InspirationsPage() {
+  const t = useT();
   const { items } = useLoaderData<typeof loader>();
   const { categories } = useOutletContext<AppData>();
   const actionData = useActionData<typeof createInspirationAction>();
@@ -185,7 +189,7 @@ export default function InspirationsPage() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="hidden shrink-0 items-center gap-2.5 border-b border-border bg-card px-7 py-4 md:flex">
         <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-foreground">
-          インスピレーション
+          {t.inspiration.title}
         </h1>
         <span className="font-mono text-[12px] text-muted-foreground">{items.length}</span>
         <div className="ml-auto flex items-center gap-2">
@@ -195,7 +199,7 @@ export default function InspirationsPage() {
             onClick={() => setPasteOpen(true)}
             className="ui-btn px-3.5 md:h-9 md:min-h-9"
           >
-            ＋ URLを貼る
+            ＋ {t.inspiration.pasteUrl}
           </button>
         </div>
       </header>
@@ -203,7 +207,7 @@ export default function InspirationsPage() {
         title={
           <div className="flex min-w-0 items-baseline gap-2 px-1">
             <h1 className="truncate text-[18px] font-semibold text-foreground">
-              インスピレーション
+              {t.inspiration.title}
             </h1>
             <span className="font-mono text-[11.5px] text-muted-foreground">{items.length}</span>
           </div>
@@ -212,7 +216,7 @@ export default function InspirationsPage() {
           <>
             <TagFilter tags={allTags} selected={tag} onChange={setTag} />
             <SettingsIconLink />
-            <HeaderPlusButton label="URLを貼る" onClick={() => setPasteOpen(true)} />
+            <HeaderPlusButton label={t.inspiration.pasteUrl} onClick={() => setPasteOpen(true)} />
           </>
         }
       />
@@ -220,7 +224,11 @@ export default function InspirationsPage() {
         <InspirationGallery items={shown} onMakeIdea={setIdeaFrom} />
       </div>
       {pasteOpen ? (
-        <InspirationModal title="URLを貼る" width={480} onClose={() => setPasteOpen(false)}>
+        <InspirationModal
+          title={t.inspiration.pasteUrl}
+          width={480}
+          onClose={() => setPasteOpen(false)}
+        >
           <PasteUrlForm error={error} />
         </InspirationModal>
       ) : null}

@@ -3,8 +3,9 @@ import {
   hashForIdeaDetailTab,
   hashTargetsAi,
   ideaDetailTabFromHash,
-  IDEA_DETAIL_TAB_LABEL,
+  ideaDetailTabLabel,
 } from "../app/lib/idea-detail-tabs";
+import { dictionary } from "../app/i18n/dictionary";
 
 describe("idea detail tabs", () => {
   it("maps hashes onto the AI 作業台 tabs 相談 / 評価 / リサーチ / ブレスト", () => {
@@ -15,8 +16,9 @@ describe("idea detail tabs", () => {
     expect(ideaDetailTabFromHash("brainstorm")).toBe("brainstorm");
     expect(ideaDetailTabFromHash("#history")).toBe("evaluate");
     expect(ideaDetailTabFromHash("#nope")).toBe("discuss");
-    expect(IDEA_DETAIL_TAB_LABEL.discuss).toBe("相談");
-    expect(IDEA_DETAIL_TAB_LABEL.evaluate).toBe("評価");
+    expect(ideaDetailTabLabel(dictionary("ja"), "discuss")).toBe("相談");
+    expect(ideaDetailTabLabel(dictionary("ja"), "evaluate")).toBe("評価");
+    expect(ideaDetailTabLabel(dictionary("en"), "discuss")).not.toBe("相談");
     expect(hashForIdeaDetailTab("discuss")).toBe("discuss");
   });
 

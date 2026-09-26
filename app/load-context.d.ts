@@ -1,4 +1,5 @@
 import type { AppLoadContext } from "react-router";
+import type { Locale } from "./i18n/locale";
 import type { Plan } from "../server/billing/plan";
 import type { CurrentWorkspace } from "../server/tenant/workspace";
 
@@ -18,6 +19,8 @@ declare module "react-router" {
     workspace: CurrentWorkspace | null;
     /** Entitlement for the signed-in email. "free" on public pages. */
     plan: Plan;
+    /** UI language: `lang` cookie, else `Accept-Language`, else Japanese. */
+    locale: Locale;
   }
 }
 

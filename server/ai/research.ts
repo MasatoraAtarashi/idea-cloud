@@ -14,15 +14,25 @@ import { asStage, getIdeaRow, saveIdeaResearch, type Idea } from "../../db/ideas
 import type { Db } from "../../db/client";
 import { errorClass, logDiag } from "../diag";
 import { searchApiKeyFromEnv, searchWebSources } from "./web-search";
+import { writeInLanguage } from "./language";
+import { aiFailure, type AiFailure } from "./errors";
+import type { Locale } from "../../app/i18n/locale";
 
 export const RESEARCH_FAIL_MESSAGE = "リサーチに失敗しました。時間をおいて再度お試しください。";
 
-export const RESEARCH_SYSTEM_PROMPT = [
-  "あなたはアイデアのリサーチ助手です。",
-  "与えられたアイデア本文とウェブ検索結果だけを読み、日本語で短く箇条書きにしてください。",
-  "見出しは「観点」「リスク」「次の一手」の3つ。前置きや締めの文は不要です。",
-  "検索結果に含まれるタイトルとURL以外の出典を作ってはいけません。URLが無いときはURLを書かないでください。",
-].join("");
+/** Research notes are displayed as stored, so the whole note follows the reader. */
+export function researchSystemPrompt(locale?: Locale): string {
+  return [
+    "あなたはアイデアのリサーチ助手です。",
+    "与えられたアイデア本文とウェブ検索結果だけを読み、短く箇条書きにしてください。",
+    "見出しは「観点」「リスク」「次の一手」にあたる3つ。前置きや締めの文は不要です。",
+    "検索結果に含まれるタイトルとURL以外の出典を作ってはいけません。URLが無いときはURLを書かないでください。",
+    writeInLanguage(locale),
+  ].join("");
+}
+
+/** Japanese wording, kept for the tests and callers that pin it. */
+export const RESEARCH_SYSTEM_PROMPT = researchSystemPrompt("ja");
 
 export type ResearchAiInputs = {
   messages: { role: "system" | "user" | "assistant"; content: string }[];
@@ -64,11 +74,12 @@ export async function generateResearchNotes(
   model: ResearchModelId,
   ideaText: string,
   sources?: ResearchSources | null,
+  locale?: Locale,
 ): Promise<string> {
   const run = resolveAiRun(ai);
   const result = await run(model, {
     messages: [
-      { role: "system", content: RESEARCH_SYSTEM_PROMPT },
+      { role: "system", content: researchSystemPrompt(locale) },
       { role: "user", content: formatResearchUserText(ideaText, sources) },
     ],
     max_tokens: 512,
@@ -80,8 +91,7 @@ export async function generateResearchNotes(
   return text;
 }
 
-export type ResearchIdeaResult =
-  { ok: true; idea: Idea } | { ok: false; status: 400 | 404 | 409 | 502; error: string };
+export type ResearchIdeaResult = { ok: true; idea: Idea } | AiFailure;
 
 export async function researchIdea(opts: {
   db: Db;
@@ -90,15 +100,17 @@ export async function researchIdea(opts: {
   preset?: string | null;
   model?: string | null;
   searchApiKey?: string | null;
+  /** Language the notes are written in. Defaults to Japanese. */
+  locale?: Locale;
 }): Promise<ResearchIdeaResult> {
   const resolved = resolveResearchModel({ preset: opts.preset, model: opts.model });
   if (!resolved.ok) {
-    return { ok: false, status: 400, error: resolved.error };
+    return aiFailure(400, "badRequest", resolved.error);
   }
 
   const idea = await getIdeaRow(opts.db, opts.ideaId);
   if (!idea) {
-    return { ok: false, status: 404, error: "見つかりません" };
+    return aiFailure(404, "notFound", "見つかりません");
   }
   if (!canRunIdeaAi(asStage(idea.stage))) {
     logDiag("info", "ai research", {
@@ -108,7 +120,7 @@ export async function researchIdea(opts: {
       ideaId: idea.id,
       status: 409,
     });
-    return { ok: false, status: 409, error: RESEARCH_ARCHIVE_ERROR };
+    return aiFailure(409, "archived", RESEARCH_ARCHIVE_ERROR);
   }
 
   const hasSearchApiKey = Boolean(opts.searchApiKey?.trim());
@@ -128,7 +140,7 @@ export async function researchIdea(opts: {
 
   let notes: string;
   try {
-    notes = await generateResearchNotes(opts.ai, resolved.model, ideaText, sources);
+    notes = await generateResearchNotes(opts.ai, resolved.model, ideaText, sources, opts.locale);
   } catch (error) {
     logDiag("warn", "workers ai call", {
       step: "research",
@@ -138,7 +150,7 @@ export async function researchIdea(opts: {
       model: resolved.model,
       error: errorClass(error),
     });
-    return { ok: false, status: 502, error: RESEARCH_FAIL_MESSAGE };
+    return aiFailure(502, "failed", RESEARCH_FAIL_MESSAGE);
   }
 
   const saved = await saveIdeaResearch(opts.db, idea.id, {

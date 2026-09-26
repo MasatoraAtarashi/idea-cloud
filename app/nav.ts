@@ -1,10 +1,17 @@
-export const WORKSPACE_NAV = [
-  { to: "/app/list", label: "アイデア", end: true, icon: "list" },
-  { to: "/app/inspirations", label: "インスピレーション", end: false, icon: "pin" },
-  { to: "/app/analytics", label: "アナリティクス", end: false, icon: "chart" },
-] as const;
+import type { Dictionary } from "./i18n/dictionary";
 
-export const SETTINGS_NAV = [{ to: "/app/settings", label: "設定", icon: "settings" }] as const;
+/** Key into `t.nav.items`. The copy lives in the per-locale `nav` dictionaries. */
+export type NavLabelKey = keyof Dictionary["nav"]["items"];
+
+export const WORKSPACE_NAV = [
+  { to: "/app/list", labelKey: "ideas", end: true, icon: "list" },
+  { to: "/app/inspirations", labelKey: "inspirations", end: false, icon: "pin" },
+  { to: "/app/analytics", labelKey: "analytics", end: false, icon: "chart" },
+] as const satisfies readonly { to: string; labelKey: NavLabelKey; end: boolean; icon: string }[];
+
+export const SETTINGS_NAV = [
+  { to: "/app/settings", labelKey: "settings", icon: "settings" },
+] as const satisfies readonly { to: string; labelKey: NavLabelKey; icon: string }[];
 
 /**
  * Mobile day-to-day destinations. Compose is a header + (cold-start still `/app`).
@@ -13,26 +20,32 @@ export const SETTINGS_NAV = [{ to: "/app/settings", label: "設定", icon: "sett
 export const MOBILE_NAV = [
   {
     to: "/app/list",
-    label: "一覧",
+    labelKey: "ideasShort",
     end: true,
     icon: "list",
-    ariaLabel: "一覧",
+    ariaLabelKey: "ideasShort",
   },
   {
     to: "/app/inspirations",
-    label: "インスピ",
+    labelKey: "inspirationsShort",
     end: false,
     icon: "pin",
-    ariaLabel: "インスピレーション",
+    ariaLabelKey: "inspirations",
   },
   {
     to: "/app/analytics",
-    label: "分析",
+    labelKey: "analyticsShort",
     end: false,
     icon: "chart",
-    ariaLabel: "アナリティクス",
+    ariaLabelKey: "analytics",
   },
-] as const;
+] as const satisfies readonly {
+  to: string;
+  labelKey: NavLabelKey;
+  end: boolean;
+  icon: string;
+  ariaLabelKey: NavLabelKey;
+}[];
 
 export type WorkspaceNavItem = (typeof WORKSPACE_NAV)[number];
 export type SettingsNavItem = (typeof SETTINGS_NAV)[number];

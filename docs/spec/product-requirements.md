@@ -4,7 +4,7 @@ Inspired by Toyama Shigehiko’s _The Science of Thought Organization_ (思考�
 
 **Audience:** Masatora Atarashi and a small closed team (Atarashi Lab). Solo-usable, team-default.
 
-**Language:** Japanese product UI. English engineering docs (`docs/spec/`, README).
+**Language:** the product UI ships in Japanese, English, Simplified Chinese and Korean; Japanese is the source of truth for copy. English engineering docs (`docs/spec/`, README). See [i18n.md](./i18n.md).
 
 ## Problem
 
@@ -12,7 +12,7 @@ Most note apps optimize for capture _and_ immediate polishing. That kills the fo
 
 ## Goals (this first pass)
 
-1. Public surface is a quiet Japanese **login gate** only (`/` and `/login`). No landing page.
+1. Public surface is a marketing **landing page** at `/` plus the quiet **login gate** at `/login`. Signed in, `/` redirects to `/app` instead of rendering a second home (the Money Forward pattern). The gate itself is unchanged: `/app/**` needs a session, everything else is public.
 2. Clickable UI shell plus **minimal D1 idea persistence** so create/list/detail use real rows. Empty list still shows view chrome; empty copy is **まだアイデアがありません**. **作成** may auto-tag via TypeSafe Jev when `TYPESAFE_API_KEY` is set, otherwise Workers AI (fast 8B), when the user did not supply tags; empty tags show **自動タグなし** rather than a blank cell. Each idea has a Zenn-scrap-style **コメント** stream. Non-archive ideas can run **リサーチ**, **ブレスト**, **AI評価**, and a per-idea **相談** chat from the detail rail, a mobile detail swipe (AI action), and the list ⋯ menu. **リサーチ** folds a few live web results into **先行事例** (fail-soft **Web検索未取得**). Detail **リサーチ** tab and **AI/履歴** list those stored outputs. AI評価 prefers Jev scores when the TypeSafe key is present; the detail panel and history show that score as **推し度** with labeled 強み / リスク / 新規性 / 次の一手 sections. **相談** (`#discuss`) is a Workers AI thread about one idea. Named list **ビュー** persist stage/tag/search/aged-days filters. List rows show tags, stage, relative updated, aging, comment count, research, and compact human/AI scores. Detail has **編集** for title/body/tags/stage and an optional **カテゴリ**.
 3. Visual direction: quiet light console — Linear IA × LiteLLM-thin chrome × Ideation Cloud pastel stages (see [ui-ia.md](./ui-ia.md)). Not Relic’s logo or blue marketing LP.
 4. Security stubs that match the intended posture: in-app Google OAuth later, allowlist, AES-GCM helper (see [security.md](./security.md)). Login is a Google-looking mock into `/app` on mobile (compose-first) and `/app/list` on desktop. Auth is still mock — no Google OAuth / allowlist / Access work this pass.

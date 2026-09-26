@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { STAGE_LABEL, STAGE_PILL_CLASS, tagPillStyle, type Stage } from "../data/mock";
+import { STAGE_PILL_CLASS, tagPillStyle, type Stage } from "../data/mock";
+import { useT } from "../i18n/context";
 import { STAGE_PILL_HEX } from "../lib/tokens";
 
 export function PageHeader({
@@ -50,7 +51,8 @@ export function EmptyState({
 }
 
 export function StagePill({ stage }: { stage: Stage }) {
-  return <span className={`stage-pill ${STAGE_PILL_CLASS[stage]}`}>{STAGE_LABEL[stage]}</span>;
+  const t = useT();
+  return <span className={`stage-pill ${STAGE_PILL_CLASS[stage]}`}>{t.common.stage[stage]}</span>;
 }
 
 export function StageDot({ stage, size = 6 }: { stage: Stage; size?: number }) {
@@ -77,15 +79,18 @@ export function TagPill({ label, large = false }: { label: string; large?: boole
 
 export function TagList({
   tags,
-  emptyLabel = "自動タグなし",
+  emptyLabel,
   limit = 3,
   nowrap = false,
 }: {
   tags: string[];
+  /** Defaults to the "no auto tags" copy; pass `""` to render nothing. */
   emptyLabel?: string;
   limit?: number;
   nowrap?: boolean;
 }) {
+  const t = useT();
+  emptyLabel = emptyLabel ?? t.common.autoTagsNone;
   if (tags.length === 0) {
     return emptyLabel ? (
       <span className="text-[11.5px] text-muted-foreground">{emptyLabel}</span>

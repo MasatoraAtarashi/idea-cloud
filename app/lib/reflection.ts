@@ -1,12 +1,11 @@
+import type { Dictionary } from "../i18n/dictionary";
+
 export const REFLECTION_STATUSES = ["none", "tried", "hold", "dropped"] as const;
 export type ReflectionStatus = (typeof REFLECTION_STATUSES)[number];
 
-export const REFLECTION_STATUS_LABEL: Record<ReflectionStatus, string> = {
-  none: "未記入",
-  tried: "試した",
-  hold: "保留",
-  dropped: "やめた",
-};
+export function reflectionStatusLabel(t: Dictionary, status: ReflectionStatus): string {
+  return t.idea.reflection.status[status];
+}
 
 export const REFLECTION_OUTCOME_MAX = 200;
 export const REFLECTION_NOTES_MAX = 2000;

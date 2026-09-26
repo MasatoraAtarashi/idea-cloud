@@ -1,14 +1,16 @@
 import { useFetcher } from "react-router";
 import type { MockIdea } from "../data/mock";
-import { BRAINSTORM_ARCHIVE_ERROR, canRunIdeaAi } from "../lib/idea-ai";
+import { useT } from "../i18n/context";
+import { canRunIdeaAi } from "../lib/idea-ai";
 import { formatDateJa } from "../lib/format";
 import { useInstantPending } from "../lib/use-instant-pending";
 import {
   DEFAULT_BRAINSTORM_PRESET,
-  RESEARCH_PRESET_LABEL,
+  researchPresetLabel,
   type ResearchPreset,
   presetFromModel,
 } from "../lib/research-models";
+import type { Dictionary } from "../i18n/dictionary";
 import type { BrainstormIdeaActionData } from "../lib/idea-brainstorm-action";
 import { IconBrainstorm, IconSpinner } from "./icons";
 
@@ -33,6 +35,7 @@ export function IdeaBrainstormControls({
   /** Chosen in the AI 作業台 header. Falls back to the last brainstorm model. */
   preset?: ResearchPreset;
 }) {
+  const t = useT();
   const fetcher = useFetcher<BrainstormIdeaActionData>({ key: `brainstorm-${idea.id}` });
   const busy = fetcher.state !== "idle";
   const { pending, hold } = useInstantPending(busy);
@@ -44,7 +47,7 @@ export function IdeaBrainstormControls({
     return (
       <div>
         <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-          {BRAINSTORM_ARCHIVE_ERROR}
+          {t.ai.archive.brainstorm}
         </p>
         {fail ? <p className="mt-1.5 text-[12.5px] text-danger">{fail}</p> : null}
       </div>
@@ -67,20 +70,18 @@ export function IdeaBrainstormControls({
           ) : (
             <IconBrainstorm className="h-3.5 w-3.5" />
           )}
-          {pending ? "実行中…" : "ブレスト"}
+          {pending ? t.ai.brainstorm.running : t.ai.brainstorm.run}
         </button>
-        <p className="text-[11.5px] leading-snug text-muted-foreground">
-          切り口・別案・次の問いを広げます。毎回残ります。
-        </p>
+        <p className="text-[11.5px] leading-snug text-muted-foreground">{t.ai.brainstorm.hint}</p>
       </div>
       {fail ? <p className="text-[12.5px] text-danger">{fail}</p> : null}
     </fetcher.Form>
   );
 }
 
-function modelLabelFor(model: string | null | undefined): string {
+function modelLabelFor(t: Dictionary, model: string | null | undefined): string {
   const preset = presetFromModel(model);
-  return preset ? RESEARCH_PRESET_LABEL[preset] : (model ?? "");
+  return preset ? researchPresetLabel(t, preset) : (model ?? "");
 }
 
 /** Every brainstorm run, newest first. Falls back to the idea's latest notes. */
@@ -93,6 +94,7 @@ export function IdeaBrainstormNotes({
   entries?: BrainstormEntry[];
   id?: string;
 }) {
+  const t = useT();
   const rows: BrainstormEntry[] =
     entries.length > 0
       ? [...entries].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -110,9 +112,7 @@ export function IdeaBrainstormNotes({
   if (rows.length === 0) {
     return (
       <p id={id} className="mt-4 text-[12.5px] text-muted-foreground">
-        {canRunIdeaAi(idea.stage)
-          ? "まだ実行していません。"
-          : `展開はまだありません。${BRAINSTORM_ARCHIVE_ERROR}`}
+        {canRunIdeaAi(idea.stage) ? t.ai.brainstorm.notRun : t.ai.brainstorm.emptyArchived}
       </p>
     );
   }
@@ -122,9 +122,11 @@ export function IdeaBrainstormNotes({
       {rows.map((row, index) => (
         <li key={row.id} className="rounded-[10px] border border-border bg-card px-4 py-3.5">
           <div className="flex items-baseline justify-between gap-3">
-            <h3 className="text-[12.5px] font-semibold">{index === 0 ? "最新" : "以前"}</h3>
+            <h3 className="text-[12.5px] font-semibold">
+              {index === 0 ? t.ai.brainstorm.latest : t.ai.brainstorm.previous}
+            </h3>
             <p className="font-mono text-[11px] text-muted-foreground">
-              {[modelLabelFor(row.model), row.createdAt ? formatDateJa(row.createdAt) : ""]
+              {[modelLabelFor(t, row.model), row.createdAt ? formatDateJa(t, row.createdAt) : ""]
                 .filter(Boolean)
                 .join(" · ")}
             </p>

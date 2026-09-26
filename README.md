@@ -5,7 +5,7 @@ Team workspace for capturing ideas, leaving them alone, and reviewing them after
 ## Language
 
 - **Documentation** (this README, `docs/spec/`, design notes): English.
-- **Product UI copy**: Japanese.
+- **Product UI copy**: Japanese, English, Simplified Chinese and Korean. Japanese is the source of truth; `lang` cookie → `Accept-Language` → ja. See [docs/spec/i18n.md](docs/spec/i18n.md).
 
 Quiet login gate plus a working create/list/detail loop. Ideas persist to D1. Login is **real in-app Google OAuth** (authorization code + PKCE, signed session cookie). No landing page. No dummy seed data.
 
@@ -38,8 +38,11 @@ http://localhost:5173/app is new-idea compose on a phone (viewport or mobile UA)
 
 Playwright (localhost dev sign-in, local D1): `pnpm test:e2e`. A `setup` project signs in once and shares the session. See [docs/spec/e2e.md](docs/spec/e2e.md).
 
-| Path                | Screen (Japanese UI)                                                                                                                                            |
+| Path                | Screen (default Japanese UI)                                                                                                                                    |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                 | Public landing page. Signed in, redirects to `/app`                                                                                                             |
+| `/login`            | Google sign-in gate                                                                                                                                             |
+| `/lang`             | `POST` from the language switcher; sets the `lang` cookie and returns                                                                                           |
 | `/app`              | Mobile home: 新規アイデア. Desktop → `/app/list`                                                                                                                |
 | `/app/capture`      | Compose alias (desktop opens the list modal)                                                                                                                    |
 | `/app/list`         | Idea list (desktop home; mobile 一覧). Views: `?tab=aging`, `?tab=candidates`, `?tab=tried`, `?view=board`, `?stage=`, `?tag=`, `?q=`, `?v=`, `?sort=`, `?dir=` |

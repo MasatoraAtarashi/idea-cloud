@@ -6,6 +6,7 @@ import {
 } from "../app/lib/evaluation-notes";
 import { formatJevEvaluationNotes, type JevEvaluateAxes } from "../server/ai/jev-evaluate";
 import type { ScoreAnswer } from "../server/ai/typesafe";
+import { JA } from "../app/i18n/dictionary";
 
 function scoreAnswer(value: number, legend: Record<string, string>): ScoreAnswer {
   return {
@@ -45,7 +46,7 @@ describe("evaluation note presentation", () => {
       "次の一手",
     ]);
     expect(parsed?.sections[0]?.body).toContain("早い");
-    expect(aiScoreMeaning(4)).toBe("進めてよさそう");
+    expect(aiScoreMeaning(JA, 4)).toBe("進めてよさそう");
   });
 
   it("hides Jev axis decimals while keeping plain labels", () => {
