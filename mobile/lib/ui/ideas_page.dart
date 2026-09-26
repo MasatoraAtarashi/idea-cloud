@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
 import '../api/idea_source.dart';
-import '../api/auth.dart';
 import '../models/idea.dart';
 import '../models/stage.dart';
 import 'capture_sheet.dart';
 import 'idea_detail_page.dart';
-import 'sign_in_page.dart';
 import 'tokens.dart';
 
 /// 一覧。ステージで絞り込み、下に引いて再読み込み、右下から新規作成。
 class IdeasPage extends StatefulWidget {
-  const IdeasPage({super.key, required this.api, required this.auth});
+  const IdeasPage({super.key, required this.api, required this.onAuthFailure});
 
   final IdeaSource api;
-  final GoogleAuth auth;
+
+  /// 401 を受けたときにサインイン画面を出す。AppShell が握っている。
+  final Future<void> Function() onAuthFailure;
 
   @override
   State<IdeasPage> createState() => _IdeasPageState();
@@ -30,26 +30,7 @@ class _IdeasPageState extends State<IdeasPage> {
   @override
   void initState() {
     super.initState();
-    _bootstrap();
-  }
-
-  Future<void> _bootstrap() async {
-    try {
-      // モックはサーバを見ないのでサインインを飛ばす。
-      if (!widget.api.isMock && await widget.auth.restoreSession() == null) {
-        await _openSignIn();
-        return;
-      }
-    } on Object catch (error) {
-      // Google 側が応答しないときに黙って回り続けないよう、理由を出す。
-      if (!mounted) return;
-      setState(() {
-        _error = 'サインインの状態を確認できませんでした: $error';
-        _loading = false;
-      });
-      return;
-    }
-    await _reload();
+    _reload();
   }
 
   Future<void> _reload() async {
@@ -70,7 +51,10 @@ class _IdeasPageState extends State<IdeasPage> {
         _error = error.message;
         _loading = false;
       });
-      if (error.isAuthFailure) await _openSignIn();
+      if (error.isAuthFailure) {
+        await widget.onAuthFailure();
+        if (mounted) await _reload();
+      }
     } on Object catch (error) {
       // 想定外（Keychain、JSON の崩れなど）でもスピナーのまま固まらせない。
       if (!mounted) return;
@@ -79,20 +63,6 @@ class _IdeasPageState extends State<IdeasPage> {
         _loading = false;
       });
     }
-  }
-
-  Future<void> _openSignIn() async {
-    final signedIn = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => SignInPage(auth: widget.auth)),
-    );
-    if (signedIn ?? false) await _reload();
-  }
-
-  Future<void> _signOut() async {
-    await widget.auth.signOut();
-    if (!mounted) return;
-    setState(() => _ideas = const []);
-    await _openSignIn();
   }
 
   Future<void> _capture() async {
@@ -134,19 +104,12 @@ class _IdeasPageState extends State<IdeasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('アイデアクラウド'),
+        title: const Text('一覧'),
         actions: [
           if (widget.api.isMock)
             const Padding(
               padding: EdgeInsets.only(right: 4),
               child: Center(child: _MockBadge()),
-            ),
-          if (!widget.api.isMock)
-            IconButton(
-              onPressed: _signOut,
-              icon: const Icon(Icons.logout_outlined, size: 20),
-              color: Tokens.textTertiary,
-              tooltip: 'サインアウト',
             ),
           const SizedBox(width: 4),
         ],

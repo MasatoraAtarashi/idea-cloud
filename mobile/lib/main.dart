@@ -4,7 +4,7 @@ import 'api/api_client.dart';
 import 'api/auth.dart';
 import 'api/idea_source.dart';
 import 'api/mock_source.dart';
-import 'ui/ideas_page.dart';
+import 'ui/app_shell.dart';
 import 'ui/theme.dart';
 
 /// サーバなしで画面だけ見たいときは --dart-define=MOCK=true で起動する。
@@ -29,7 +29,7 @@ class IdeaCloudApp extends StatelessWidget {
       title: 'アイデアクラウド',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
-      home: IdeasPage(api: api, auth: auth),
+      home: AppShell(api: api, auth: auth),
     );
   }
 }
