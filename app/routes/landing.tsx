@@ -120,15 +120,14 @@ export default function LandingPage() {
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-3">
             <span className="inline-flex min-w-0 items-center gap-2">
               <BrandMark className="h-6 w-6 shrink-0" />
-              <span className="truncate text-[14.5px] font-semibold tracking-[-0.01em]">
+              {/* Phones give the row to the language switcher and the CTA; the
+                  mark alone still says whose page this is. */}
+              <span className="hidden truncate text-[14.5px] font-semibold tracking-[-0.01em] sm:inline">
                 {t.common.appName}
               </span>
             </span>
             <div className="flex shrink-0 items-center gap-2">
-              {/* Narrow screens have no room for it here; the footer keeps one. */}
-              <span className="hidden sm:inline-flex">
-                <LanguageSwitcher />
-              </span>
+              <LanguageSwitcher />
               <Link
                 to="/login"
                 className="hidden h-8 items-center rounded-[8px] px-2.5 text-[13px] text-white/75 no-underline hover:bg-white/10 hover:text-white sm:inline-flex"
