@@ -199,7 +199,9 @@ a {
   }
 
   .ui-title {
-    font-weight: 600;
+    /* 500, not 600: at UI sizes IBM Plex Sans JP 600 reads as shouting. The
+       landing page pins itself back to 600 where it wants display weight. */
+    font-weight: 500;
     letter-spacing: -0.02em;
     overflow-wrap: anywhere;
     color: var(--foreground);

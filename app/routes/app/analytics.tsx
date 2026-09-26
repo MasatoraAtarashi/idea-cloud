@@ -65,7 +65,7 @@ export default function AnalyticsPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="hidden shrink-0 items-baseline gap-2.5 border-b border-border bg-card px-7 py-[18px] md:flex">
-        <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-foreground">
+        <h1 className="text-[18px] font-medium tracking-[-0.01em] text-foreground">
           {t.analytics.title}
         </h1>
         <span className="font-mono text-[12px] text-muted-foreground">last 30d</span>
@@ -73,7 +73,7 @@ export default function AnalyticsPage() {
       <MobileScreenHeader
         title={
           <div className="flex items-baseline gap-2 px-1">
-            <h1 className="text-[18px] font-semibold text-foreground">{t.analytics.title}</h1>
+            <h1 className="text-[18px] font-medium text-foreground">{t.analytics.title}</h1>
             <span className="font-mono text-[11.5px] text-muted-foreground">last 30d</span>
           </div>
         }

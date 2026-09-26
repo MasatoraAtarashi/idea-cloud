@@ -61,7 +61,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
           </Link>
         </div>
 
-        <h1 className="mt-4 text-[23px] leading-[1.4] font-semibold tracking-[-0.02em] text-foreground">
+        <h1 className="mt-4 text-[23px] leading-[1.4] font-medium tracking-[-0.02em] text-foreground">
           {t.compose.heading}
         </h1>
         <p className="mt-1.5 text-[13px] text-muted-foreground">{t.compose.subheading}</p>
@@ -78,7 +78,7 @@ export function CaptureView({ autofocus = false }: { autofocus?: boolean }) {
           autoFocus={autofocus}
           autoComplete="off"
           placeholder={t.compose.titlePlaceholder}
-          className="mt-6 w-full border-0 bg-transparent pb-3 text-[19px] leading-snug font-semibold text-foreground outline-none placeholder:text-muted-foreground"
+          className="mt-6 w-full border-0 bg-transparent pb-3 text-[19px] leading-snug font-medium text-foreground outline-none placeholder:text-muted-foreground"
         />
         <div className="h-px bg-border" />
         <label htmlFor="idea-mobile" className="sr-only">

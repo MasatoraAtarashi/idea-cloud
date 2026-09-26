@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import {
   AGED_DAY_PRESETS,
@@ -19,6 +19,7 @@ import { compactAgedDays, compactRelative, LIST_GROUP_ORDER } from "../lib/list-
 import type { ListTab, ListViewSearch, SavedViewItem } from "../lib/list-view-search";
 import { LIST_SORT_KEYS, nextListSort, sortIdeas, type ListSortKey } from "../lib/list-sort";
 import { CANDIDATE_DEFAULT_DAYS } from "../lib/review";
+import { PeekProvider, usePeekControls, usePeekLink } from "../lib/idea-peek";
 import { useSearchPalette } from "../lib/search-palette";
 import { useListViewSearch } from "../lib/use-list-view-search";
 import type { IdeaCategory } from "../lib/category";
@@ -27,6 +28,7 @@ import { IdeaHeaderCreateButton } from "./header-create";
 import { MobileScreenHeader } from "./mobile-header";
 import { IdeaActionsMenu } from "./idea-actions";
 import { IdeaBoard } from "./idea-board";
+import { IdeaPeekDrawer } from "./idea-peek-drawer";
 import { IdeaReviewPrompt } from "./idea-review";
 import { IdeaSwipeRow } from "./idea-swipe-row";
 import { ListAiScore, ListCommentCount } from "./list-meta";
@@ -98,6 +100,44 @@ export function IdeaListView({
       })).filter((group) => group.ideas.length > 0),
     [filtered],
   );
+  /**
+   * List order, once. The table groups by stage, so `filtered` (sorted, not
+   * grouped) is not what the reader sees — walking that with ↑/↓ would jump
+   * between groups. `LIST_GROUP_ORDER` covers every stage, so this is a
+   * reordering of `filtered`, never a smaller set.
+   */
+  const ordered = useMemo(() => groups.flatMap((group) => group.ideas), [groups]);
+
+  const peek = usePeekControls();
+  const peekIndex = peek.peekId ? ordered.findIndex((idea) => idea.id === peek.peekId) : -1;
+  const peeked = peekIndex >= 0 ? ordered[peekIndex] : null;
+  const orderedIds = useMemo(() => ordered.map((idea) => idea.id), [ordered]);
+
+  /**
+   * Hand focus back to the row before the drawer goes, so a keyboard reader
+   * lands where they were rather than at the top of the page. Done here, while
+   * the row is still the element it was, rather than hunting for it afterwards.
+   */
+  const closePeek = useCallback(() => {
+    const open = peek.peekId;
+    if (open) {
+      for (const row of document.querySelectorAll<HTMLElement>(
+        `a[href="/app/ideas/${CSS.escape(open)}"]`,
+      )) {
+        if (row.offsetParent !== null) {
+          row.focus();
+          break;
+        }
+      }
+    }
+    peek.closePeek();
+  }, [peek]);
+
+  const stepPeek = useCallback(
+    (delta: number) => peek.movePeek(orderedIds, delta),
+    [orderedIds, peek],
+  );
+
   const agingCount = ideas.filter((idea) => idea.stage === "aging" || idea.stage === "ripe").length;
   const candidateCount = ideas.filter((idea) => isReviewCandidate(idea, candidateDays)).length;
   const triedCount = ideas.filter((idea) => isTriedIdea(idea)).length;
@@ -141,213 +181,225 @@ export function IdeaListView({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="hidden shrink-0 items-center gap-3 border-b border-border bg-card px-7 pt-5 pb-4 md:flex">
-        <h1 className="flex items-baseline gap-2.5 text-[20px] font-semibold tracking-[-0.01em] text-foreground">
-          {t.list.title}
-          <span className="font-mono text-[12px] font-normal tracking-normal text-muted-foreground">
-            {t.list.count(ideas.length)}
-          </span>
-        </h1>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="flex h-8 overflow-hidden rounded-[7px] border border-border-control bg-card">
-            {(
-              [
-                ["table", t.list.layout.table],
-                ["board", t.list.layout.board],
-              ] as const
-            ).map(([item, label]) => (
-              <Link
-                key={item}
-                to={hrefFor({ view: item })}
-                preventScrollReset
-                aria-current={view === item ? "page" : undefined}
-                className={`flex items-center px-3 text-[12.5px] font-semibold no-underline ${
-                  view === item
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-          <IdeaHeaderCreateButton />
-        </div>
-      </header>
-
-      <nav
-        className="hidden shrink-0 items-center gap-[22px] border-b border-border bg-card px-7 md:flex"
-        aria-label={t.list.tabsLabel}
-      >
-        {tabItems.map(([item, count]) => (
-          <Link
-            key={item}
-            to={tabHref(item)}
-            preventScrollReset
-            aria-current={tab === item ? "page" : undefined}
-            className={`-mb-px flex items-baseline gap-1.5 border-b-2 py-3 text-[13.5px] no-underline ${
-              tab === item
-                ? "border-foreground font-semibold text-foreground"
-                : "border-transparent text-tertiary hover:text-foreground"
-            }`}
-          >
-            {t.list.tab[item]}
-            <span className="font-mono text-[11.5px] font-normal text-muted-foreground">
-              {count}
+    <PeekProvider controls={peek}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <header className="hidden shrink-0 items-center gap-3 border-b border-border bg-card px-7 pt-5 pb-4 md:flex">
+          <h1 className="flex items-baseline gap-2.5 text-[20px] font-medium tracking-[-0.01em] text-foreground">
+            {t.list.title}
+            <span className="font-mono text-[12px] font-normal tracking-normal text-muted-foreground">
+              {t.list.count(ideas.length)}
             </span>
-          </Link>
-        ))}
-        {activeFilterCount > 0 ? (
-          <button
-            type="button"
-            onClick={() =>
-              update({ query: "", stages: [], tags: [], categoryId: null, minDays: 0 })
-            }
-            className="ml-auto text-[12.5px] text-muted-foreground hover:text-foreground"
-          >
-            {t.list.clearFilters}
-            <span className="ml-1 font-mono text-[11px]">{activeFilterCount}</span>
-          </button>
-        ) : null}
-      </nav>
-
-      <MobileScreenHeader
-        title={<h1 className="text-[18px] font-semibold text-foreground">{t.list.title}</h1>}
-        trailing={
-          <>
-            <button
-              type="button"
-              onClick={() => setMobileFiltersOpen((openState) => !openState)}
-              aria-expanded={mobileFiltersOpen}
-              className="flex min-h-11 items-center px-2 text-[13px] font-medium text-tertiary"
-            >
-              {t.list.filters}
-              {activeFilterCount > 0 ? (
-                <span className="ml-1 font-mono text-[11px]">{activeFilterCount}</span>
-              ) : null}
-            </button>
-            <button
-              type="button"
-              onClick={search.open}
-              aria-label={t.list.search}
-              className="flex h-11 w-11 items-center justify-center text-[18px] text-tertiary"
-            >
-              ⌕
-            </button>
+          </h1>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex h-8 overflow-hidden rounded-[7px] border border-border-control bg-card">
+              {(
+                [
+                  ["table", t.list.layout.table],
+                  ["board", t.list.layout.board],
+                ] as const
+              ).map(([item, label]) => (
+                <Link
+                  key={item}
+                  to={hrefFor({ view: item })}
+                  preventScrollReset
+                  aria-current={view === item ? "page" : undefined}
+                  className={`flex items-center px-3 text-[12.5px] font-semibold no-underline ${
+                    view === item
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
             <IdeaHeaderCreateButton />
-          </>
-        }
-      >
-        <nav className="flex gap-5 overflow-x-auto px-4" aria-label={t.list.tabsLabel}>
+          </div>
+        </header>
+
+        <nav
+          className="hidden shrink-0 items-center gap-[22px] border-b border-border bg-card px-7 md:flex"
+          aria-label={t.list.tabsLabel}
+        >
           {tabItems.map(([item, count]) => (
             <Link
               key={item}
               to={tabHref(item)}
               preventScrollReset
               aria-current={tab === item ? "page" : undefined}
-              className={`-mb-px flex min-h-11 shrink-0 items-center gap-1 border-b-2 text-[14px] no-underline ${
+              className={`-mb-px flex items-baseline gap-1.5 border-b-2 py-3 text-[13.5px] no-underline ${
                 tab === item
                   ? "border-foreground font-semibold text-foreground"
-                  : "border-transparent text-tertiary"
+                  : "border-transparent text-tertiary hover:text-foreground"
               }`}
             >
-              {t.list.tabShort[item]}
-              {item === "candidates" && count > 0 ? (
-                <span className="font-mono text-[13px] text-warn">{count}</span>
-              ) : null}
+              {t.list.tab[item]}
+              <span className="font-mono text-[11.5px] font-normal text-muted-foreground">
+                {count}
+              </span>
             </Link>
           ))}
+          {activeFilterCount > 0 ? (
+            <button
+              type="button"
+              onClick={() =>
+                update({ query: "", stages: [], tags: [], categoryId: null, minDays: 0 })
+              }
+              className="ml-auto text-[12.5px] text-muted-foreground hover:text-foreground"
+            >
+              {t.list.clearFilters}
+              <span className="ml-1 font-mono text-[11px]">{activeFilterCount}</span>
+            </button>
+          ) : null}
         </nav>
-      </MobileScreenHeader>
 
-      {mobileFiltersOpen ? (
-        <div className="max-h-[60dvh] overflow-y-auto border-b border-border bg-card md:hidden">
-          <FilterPanel
-            query={query}
-            stages={stages}
-            tags={tags}
-            minDays={minDays}
-            categoryId={categoryId}
-            categories={categories}
-            availableTags={availableTags}
-            update={update}
-            mobile
-          />
-          <div className="border-t border-border px-4 py-3">
-            <p className="mb-2 text-[11.5px] font-semibold text-muted-foreground">
-              {t.list.sortOrder}
-            </p>
-            <SortButtons sortKey={sortKey} sortDir={sortDir} onSort={applySort} />
-            <p className="mt-3 mb-2 text-[11.5px] font-semibold text-muted-foreground">
-              {t.list.savedViews.label}
-            </p>
-            <ListSavedViews
-              views={savedViews}
-              state={savedViewState}
-              nameFieldId="saved-view-name-mobile"
-            />
-          </div>
-        </div>
-      ) : null}
-
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-6 md:hidden">
-        {candidateCount > 0 && tab !== "candidates" ? (
-          <Link
-            to={tabHref("candidates")}
-            className="mb-3 flex min-h-11 items-center justify-between rounded-[10px] border border-[var(--warn-border)] bg-[var(--warn-bg)] px-3.5 text-[13px] text-warn no-underline"
-          >
-            <span>{t.list.candidateBanner(candidateCount)}</span>
-            <span className="font-semibold">{t.list.candidateBannerAction}</span>
-          </Link>
-        ) : null}
-        {filtered.length === 0 ? (
-          <ListEmpty onCreate={open} />
-        ) : (
-          <ul className="flex flex-col gap-2.5">
-            {filtered.map((idea) => (
-              <li key={idea.id}>
-                <IdeaSwipeRow idea={idea}>
-                  <MobileIdeaCard idea={idea} showReview={tab === "candidates"} />
-                </IdeaSwipeRow>
-              </li>
+        <MobileScreenHeader
+          title={<h1 className="text-[18px] font-medium text-foreground">{t.list.title}</h1>}
+          trailing={
+            <>
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen((openState) => !openState)}
+                aria-expanded={mobileFiltersOpen}
+                className="flex min-h-11 items-center px-2 text-[13px] font-medium text-tertiary"
+              >
+                {t.list.filters}
+                {activeFilterCount > 0 ? (
+                  <span className="ml-1 font-mono text-[11px]">{activeFilterCount}</span>
+                ) : null}
+              </button>
+              <button
+                type="button"
+                onClick={search.open}
+                aria-label={t.list.search}
+                className="flex h-11 w-11 items-center justify-center text-[18px] text-tertiary"
+              >
+                ⌕
+              </button>
+              <IdeaHeaderCreateButton />
+            </>
+          }
+        >
+          <nav className="flex gap-5 overflow-x-auto px-4" aria-label={t.list.tabsLabel}>
+            {tabItems.map(([item, count]) => (
+              <Link
+                key={item}
+                to={tabHref(item)}
+                preventScrollReset
+                aria-current={tab === item ? "page" : undefined}
+                className={`-mb-px flex min-h-11 shrink-0 items-center gap-1 border-b-2 text-[14px] no-underline ${
+                  tab === item
+                    ? "border-foreground font-semibold text-foreground"
+                    : "border-transparent text-tertiary"
+                }`}
+              >
+                {t.list.tabShort[item]}
+                {item === "candidates" && count > 0 ? (
+                  <span className="font-mono text-[13px] text-warn">{count}</span>
+                ) : null}
+              </Link>
             ))}
-          </ul>
-        )}
-      </div>
+          </nav>
+        </MobileScreenHeader>
 
-      <div className="hidden min-h-0 flex-1 flex-col overflow-hidden md:flex">
-        {view === "table" ? (
-          filtered.length === 0 && activeFilterCount === 0 ? (
-            <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto">
-              <ListEmpty onCreate={open} />
+        {mobileFiltersOpen ? (
+          <div className="max-h-[60dvh] overflow-y-auto border-b border-border bg-card md:hidden">
+            <FilterPanel
+              query={query}
+              stages={stages}
+              tags={tags}
+              minDays={minDays}
+              categoryId={categoryId}
+              categories={categories}
+              availableTags={availableTags}
+              update={update}
+              mobile
+            />
+            <div className="border-t border-border px-4 py-3">
+              <p className="mb-2 text-[11.5px] font-semibold text-muted-foreground">
+                {t.list.sortOrder}
+              </p>
+              <SortButtons sortKey={sortKey} sortDir={sortDir} onSort={applySort} />
+              <p className="mt-3 mb-2 text-[11.5px] font-semibold text-muted-foreground">
+                {t.list.savedViews.label}
+              </p>
+              <ListSavedViews
+                views={savedViews}
+                state={savedViewState}
+                nameFieldId="saved-view-name-mobile"
+              />
             </div>
+          </div>
+        ) : null}
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-6 md:hidden">
+          {candidateCount > 0 && tab !== "candidates" ? (
+            <Link
+              to={tabHref("candidates")}
+              className="mb-3 flex min-h-11 items-center justify-between rounded-[10px] border border-[var(--warn-border)] bg-[var(--warn-bg)] px-3.5 text-[13px] text-warn no-underline"
+            >
+              <span>{t.list.candidateBanner(candidateCount)}</span>
+              <span className="font-semibold">{t.list.candidateBannerAction}</span>
+            </Link>
+          ) : null}
+          {filtered.length === 0 ? (
+            <ListEmpty onCreate={open} />
           ) : (
-            <div className="min-h-0 flex-1 overflow-y-auto px-7 py-[22px]">
-              <div className="rounded-[var(--radius)] border border-border-card bg-card">
-                <ListTableHead
-                  sort={sort}
-                  onSort={applySort}
-                  query={query}
-                  stages={stages}
-                  tags={tags}
-                  minDays={tab === "candidates" ? 0 : minDays}
-                  categoryId={categoryId}
-                  categories={categories}
-                  availableTags={availableTags}
-                  update={update}
-                />
-                {groups.map((group) => (
-                  <StageGroup key={group.stage} stage={group.stage} ideas={group.ideas} />
-                ))}
+            <ul className="flex flex-col gap-2.5">
+              {filtered.map((idea) => (
+                <li key={idea.id}>
+                  <IdeaSwipeRow idea={idea}>
+                    <MobileIdeaCard idea={idea} showReview={tab === "candidates"} />
+                  </IdeaSwipeRow>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="hidden min-h-0 flex-1 flex-col overflow-hidden md:flex">
+          {view === "table" ? (
+            filtered.length === 0 && activeFilterCount === 0 ? (
+              <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto">
+                <ListEmpty onCreate={open} />
               </div>
-            </div>
-          )
-        ) : (
-          <IdeaBoard ideas={filtered} showReview={tab === "candidates"} />
-        )}
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto px-7 py-[22px]">
+                <div className="rounded-[var(--radius)] border border-border-card bg-card">
+                  <ListTableHead
+                    sort={sort}
+                    onSort={applySort}
+                    query={query}
+                    stages={stages}
+                    tags={tags}
+                    minDays={tab === "candidates" ? 0 : minDays}
+                    categoryId={categoryId}
+                    categories={categories}
+                    availableTags={availableTags}
+                    update={update}
+                  />
+                  {groups.map((group) => (
+                    <StageGroup key={group.stage} stage={group.stage} ideas={group.ideas} />
+                  ))}
+                </div>
+              </div>
+            )
+          ) : (
+            <IdeaBoard ideas={filtered} showReview={tab === "candidates"} />
+          )}
+        </div>
       </div>
-    </div>
+      {peeked ? (
+        <IdeaPeekDrawer
+          idea={peeked}
+          index={peekIndex + 1}
+          total={ordered.length}
+          onPrev={peekIndex > 0 ? () => stepPeek(-1) : null}
+          onNext={peekIndex < ordered.length - 1 ? () => stepPeek(1) : null}
+          onClose={closePeek}
+        />
+      ) : null}
+    </PeekProvider>
   );
 }
 
@@ -380,6 +432,7 @@ function StageGroup({ stage, ideas }: { stage: Stage; ideas: MockIdea[] }) {
 /** One 40px line: pill | title + excerpt | tags | meta. The whole row opens the detail. */
 function IdeaRow({ idea }: { idea: MockIdea }) {
   const t = useT();
+  const peek = usePeekLink(idea.id);
   const excerpt = ideaExcerpt(idea) || (idea.body.trim() !== idea.title ? idea.body.trim() : "");
   return (
     <li
@@ -391,9 +444,10 @@ function IdeaRow({ idea }: { idea: MockIdea }) {
       <Link
         to={`/app/ideas/${idea.id}`}
         prefetch="intent"
+        {...peek}
         className="flex min-w-0 items-baseline gap-2.5 overflow-hidden whitespace-nowrap no-underline after:absolute after:inset-0 after:content-['']"
       >
-        <span className="max-w-full shrink-0 truncate text-[15.5px] leading-[1.5] font-semibold tracking-[-0.01em] text-foreground">
+        <span className="max-w-full shrink-0 truncate text-[15.5px] leading-[1.5] font-medium tracking-[-0.01em] text-foreground">
           {idea.title}
         </span>
         {excerpt ? (
@@ -673,11 +727,13 @@ function HeadCell({
 
 function MobileIdeaCard({ idea, showReview }: { idea: MockIdea; showReview: boolean }) {
   const t = useT();
+  const peek = usePeekLink(idea.id);
   const excerpt = ideaExcerpt(idea) || (idea.body.trim() !== idea.title ? idea.body.trim() : "");
   return (
     <Link
       to={`/app/ideas/${idea.id}`}
       prefetch="intent"
+      {...peek}
       className="block rounded-[10px] border border-border-card bg-card px-[15px] py-[14px] no-underline"
     >
       <div className="flex items-center gap-2">

@@ -123,11 +123,11 @@ export default function SettingsPage() {
         >
           {t.common.back}
         </Link>
-        <h1 className="text-[13.5px] font-semibold">{t.settings.title}</h1>
+        <h1 className="text-[13.5px] font-medium">{t.settings.title}</h1>
         <span className="min-w-[3.5rem]" />
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
-        <p className="hidden px-2 text-[16px] font-semibold md:block">{t.settings.title}</p>
+        <p className="hidden px-2 text-[16px] font-medium md:block">{t.settings.title}</p>
         <p className="hidden truncate px-2 pt-1 text-[11.5px] text-muted-foreground md:block">
           {workspace.name}
         </p>
@@ -147,7 +147,7 @@ export default function SettingsPage() {
                   onClick={() => setSection(item.id)}
                   className={`flex min-h-11 shrink-0 items-center rounded-md px-3 text-left text-[13px] md:min-h-0 md:px-2 md:py-1.5 ${
                     section === item.id
-                      ? "bg-muted font-semibold text-foreground"
+                      ? "bg-muted font-medium text-foreground"
                       : "font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
                   }`}
                 >
@@ -261,7 +261,7 @@ function MembersPanel({
     <div className="mx-auto max-w-3xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold">{t.settings.sections.members}</h2>
+          <h2 className="text-[16px] font-medium">{t.settings.sections.members}</h2>
           <p className="mt-1 text-[12.5px] text-muted-foreground">{w.description}</p>
         </div>
         {isOwner ? (
@@ -333,7 +333,7 @@ function MembersPanel({
       </div>
       {isOwner && invites.length > 0 ? (
         <section className="mt-8">
-          <h3 className="text-[14px] font-semibold">{w.activeInvites}</h3>
+          <h3 className="text-[14px] font-medium">{w.activeInvites}</h3>
           <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
             {invites.map((invite) => (
               <li key={invite.id} className="flex items-center gap-3 px-3 py-2 text-[12.5px]">
@@ -359,7 +359,7 @@ function MembersPanel({
         </section>
       ) : null}
       <section className="mt-8">
-        <h3 className="text-[14px] font-semibold">{w.leaveTitle}</h3>
+        <h3 className="text-[14px] font-medium">{w.leaveTitle}</h3>
         <p className="mt-1 text-[12px] text-muted-foreground">{w.leaveBody}</p>
         <Form
           method="post"
@@ -393,7 +393,7 @@ function GeneralPanel({
   const isOwner = workspace.role === "owner";
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{t.settings.sections.general}</h2>
+      <h2 className="text-[16px] font-medium">{t.settings.sections.general}</h2>
       <section className="mt-4 rounded-[10px] border border-border p-4">
         <p className="text-[12px] text-muted-foreground">{g.name}</p>
         <Form method="post" className="mt-2 flex items-center gap-2">
@@ -417,7 +417,7 @@ function GeneralPanel({
         ) : null}
       </section>
       <section className="mt-8">
-        <h3 className="text-[14px] font-semibold">{g.mine}</h3>
+        <h3 className="text-[14px] font-medium">{g.mine}</h3>
         <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
           {memberships.map((membership) => {
             const current = membership.workspaceId === workspace.id;
@@ -449,7 +449,7 @@ function GeneralPanel({
         <ActionNote data={actionData} intents={["switch"]} />
       </section>
       <section className="mt-8">
-        <h3 className="text-[14px] font-semibold">{g.createTitle}</h3>
+        <h3 className="text-[14px] font-medium">{g.createTitle}</h3>
         <Form method="post" className="mt-2 flex items-center gap-2">
           <input type="hidden" name="intent" value="create-workspace" />
           <input
@@ -483,7 +483,7 @@ function ApiKeysPanel({
   const creating = useBusy("key-create");
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{a.title}</h2>
+      <h2 className="text-[16px] font-medium">{a.title}</h2>
       <p className="mt-1 text-[12.5px] text-muted-foreground">{a.description}</p>
       {!isOwner ? (
         <p className="mt-4 text-[13px] text-muted-foreground">{a.ownerOnly}</p>
@@ -583,7 +583,7 @@ function BillingRow({ premium }: { premium: boolean }) {
   return (
     <>
       <p className="mt-3 text-[12px] text-muted-foreground">{t.settings.billing.plan}</p>
-      <p className="mt-1 text-[13.5px] font-semibold">
+      <p className="mt-1 text-[13.5px] font-medium">
         {isPremium ? t.settings.billing.premium : t.settings.billing.free}
       </p>
       {status?.comped ? (
@@ -634,7 +634,7 @@ function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premiu
   const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{t.settings.sections.profile}</h2>
+      <h2 className="text-[16px] font-medium">{t.settings.sections.profile}</h2>
       <div className="mt-4 rounded-[10px] border border-border p-4">
         <p className="text-[12px] text-muted-foreground">{t.settings.profile.account}</p>
         <p className="mt-1 font-mono text-[13.5px]">{userEmail ?? t.settings.profile.unknown}</p>
@@ -663,7 +663,7 @@ function StubPanel({ section }: { section: SectionId }) {
   const t = useT();
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-[16px] font-semibold">{t.settings.sections[section]}</h2>
+      <h2 className="text-[16px] font-medium">{t.settings.sections[section]}</h2>
       <p className="mt-3 text-[13.5px] text-muted-foreground">{t.settings.stub}</p>
     </div>
   );

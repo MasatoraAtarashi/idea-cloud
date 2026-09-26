@@ -188,7 +188,7 @@ export default function InspirationsPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <header className="hidden shrink-0 items-center gap-2.5 border-b border-border bg-card px-7 py-4 md:flex">
-        <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-foreground">
+        <h1 className="text-[18px] font-medium tracking-[-0.01em] text-foreground">
           {t.inspiration.title}
         </h1>
         <span className="font-mono text-[12px] text-muted-foreground">{items.length}</span>
@@ -206,7 +206,7 @@ export default function InspirationsPage() {
       <MobileScreenHeader
         title={
           <div className="flex min-w-0 items-baseline gap-2 px-1">
-            <h1 className="truncate text-[18px] font-semibold text-foreground">
+            <h1 className="truncate text-[18px] font-medium text-foreground">
               {t.inspiration.title}
             </h1>
             <span className="font-mono text-[11.5px] text-muted-foreground">{items.length}</span>
