@@ -5,7 +5,7 @@ import { SESSION_USER, type Stage } from "../data/mock";
 import { LOGOUT_PATH } from "../auth/google-login";
 import { initialsFromLabel } from "../lib/format";
 import { ComposeProvider, useCompose } from "../lib/compose";
-import { isDesktopViewport, LIST_PATH } from "../lib/home-path";
+import { isDesktopViewport, LIST_PATH, SETTINGS_PATH } from "../lib/home-path";
 import { listViewHref, SAVED_VIEW_NAME_MAX, type SavedViewItem } from "../lib/list-view-search";
 import { CANDIDATE_DEFAULT_DAYS } from "../lib/review";
 import { isSearchShortcut, SearchPaletteProvider, useSearchPalette } from "../lib/search-palette";
@@ -33,6 +33,8 @@ export type ShellNav = {
   ideas: SidebarIdea[];
   /** Signed-in Google email. `null` only if the page gate was bypassed. */
   userEmail: string | null;
+  /** Current workspace; 設定 → 一般 switches it. */
+  workspaceName: string;
 };
 
 function navCount(to: string, nav: ShellNav): number | null {
@@ -241,31 +243,40 @@ function Sidebar({ nav }: { nav: ShellNav }) {
             {item.label}
           </NavLink>
         ))}
-        <AccountRow email={nav.userEmail} />
+        <AccountRow email={nav.userEmail} workspaceName={nav.workspaceName} />
       </div>
     </aside>
   );
 }
 
-/** Signed-in account plus sign-out. Plain form: /api/auth/logout is a Worker route. */
-function AccountRow({ email }: { email: string | null }) {
+/** Current workspace, signed-in account, sign-out. Plain form: /api/auth/logout is a Worker route. */
+function AccountRow({ email, workspaceName }: { email: string | null; workspaceName: string }) {
   const label = email ?? SESSION_USER.label;
   return (
-    <div className="flex items-center gap-2 px-2.5 py-1.5">
-      <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] font-medium text-secondary">
-        {initialsFromLabel(label)}
-      </span>
-      <span className="min-w-0 flex-1 truncate text-[13px] text-secondary" title={label}>
-        {label}
-      </span>
-      <form method="post" action={LOGOUT_PATH}>
-        <button
-          type="submit"
-          className="shrink-0 rounded-[6px] px-1.5 py-1 text-[11.5px] font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
-        >
-          ログアウト
-        </button>
-      </form>
+    <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+      <Link
+        to={SETTINGS_PATH}
+        className="truncate text-[11.5px] font-medium text-muted-foreground no-underline hover:text-foreground"
+        title={`ワークスペース: ${workspaceName}`}
+      >
+        {workspaceName}
+      </Link>
+      <div className="flex items-center gap-2">
+        <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] font-medium text-secondary">
+          {initialsFromLabel(label)}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[13px] text-secondary" title={label}>
+          {label}
+        </span>
+        <form method="post" action={LOGOUT_PATH}>
+          <button
+            type="submit"
+            className="shrink-0 rounded-[6px] px-1.5 py-1 text-[11.5px] font-medium text-muted-foreground hover:bg-row-hover hover:text-foreground"
+          >
+            ログアウト
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

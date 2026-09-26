@@ -1,4 +1,4 @@
-import { desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import {
   excerptAroundUrl,
   extractHttpUrls,
@@ -18,6 +18,11 @@ export {
 } from "../app/lib/inspiration-input";
 
 export type OgStatus = "none" | "ok" | "failed";
+
+/** `id` match restricted to the handle's workspace. */
+function ownInspiration(db: Db, id: number) {
+  return and(eq(inspirations.id, id), eq(inspirations.workspaceId, db.workspaceId));
+}
 
 export type InspirationOgpPatch = {
   ogTitle: string;
@@ -98,11 +103,15 @@ export function ideaTextFromInspiration(
 }
 
 export async function listInspirationRows(db: Db): Promise<Inspiration[]> {
-  return db.select().from(inspirations).orderBy(desc(inspirations.id));
+  return db
+    .select()
+    .from(inspirations)
+    .where(eq(inspirations.workspaceId, db.workspaceId))
+    .orderBy(desc(inspirations.id));
 }
 
 export async function getInspirationRow(db: Db, id: number): Promise<Inspiration | undefined> {
-  const [row] = await db.select().from(inspirations).where(eq(inspirations.id, id)).limit(1);
+  const [row] = await db.select().from(inspirations).where(ownInspiration(db, id)).limit(1);
   return row;
 }
 
@@ -113,6 +122,7 @@ export async function insertInspiration(
   const [created] = await db
     .insert(inspirations)
     .values({
+      workspaceId: db.workspaceId,
       title: data.title.trim() || "無題",
       url: data.url?.trim() || null,
       memo: data.memo?.trim() ?? "",
@@ -139,7 +149,7 @@ export async function updateInspiration(
       ...(data.tags !== undefined ? { tags: JSON.stringify(data.tags) } : {}),
       updatedAt: sql`(datetime('now'))`,
     })
-    .where(eq(inspirations.id, id))
+    .where(ownInspiration(db, id))
     .returning();
   return updated;
 }
@@ -159,13 +169,13 @@ export async function updateInspirationOgp(
       ogFetchedAt: data.ogFetchedAt,
       ogStatus: data.ogStatus,
     })
-    .where(eq(inspirations.id, id))
+    .where(ownInspiration(db, id))
     .returning();
   return updated;
 }
 
 export async function deleteInspiration(db: Db, id: number): Promise<Inspiration | undefined> {
-  const [deleted] = await db.delete(inspirations).where(eq(inspirations.id, id)).returning();
+  const [deleted] = await db.delete(inspirations).where(ownInspiration(db, id)).returning();
   return deleted;
 }
 
@@ -179,7 +189,10 @@ export function urlsDiffer(
 export async function findInspirationByUrl(db: Db, url: string): Promise<Inspiration | undefined> {
   const target = normalizeInspirationUrl(url);
   if (!target) return undefined;
-  const rows = await db.select().from(inspirations).where(isNotNull(inspirations.url));
+  const rows = await db
+    .select()
+    .from(inspirations)
+    .where(and(isNotNull(inspirations.url), eq(inspirations.workspaceId, db.workspaceId)));
   return rows.find((row) => row.url && normalizeInspirationUrl(row.url) === target);
 }
 
@@ -187,7 +200,10 @@ export async function findInspirationByUrl(db: Db, url: string): Promise<Inspira
 export async function upsertInspirationsFromIdeaText(db: Db, text: string): Promise<number> {
   const urls = extractHttpUrls(text);
   if (urls.length === 0) return 0;
-  const existing = await db.select().from(inspirations).where(isNotNull(inspirations.url));
+  const existing = await db
+    .select()
+    .from(inspirations)
+    .where(and(isNotNull(inspirations.url), eq(inspirations.workspaceId, db.workspaceId)));
   const seen = new Set(
     existing
       .map((row) => (row.url ? normalizeInspirationUrl(row.url) : ""))

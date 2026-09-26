@@ -1,6 +1,5 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { resolveCategoryId } from "../../db/categories";
-import { createDb } from "../../db/client";
 import { asStage, IDEA_BODY_MAX, insertIdea } from "../../db/ideas";
 import { safeUpsertInspirationsFromIdeaText } from "../../db/inspirations";
 import { logCreatePrerequisites } from "../../server/diag";
@@ -10,6 +9,7 @@ import { resolveCreateTags, sanitizeTags, USER_TAG_MAX } from "../../server/ai/t
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
 import { STAGES, type Stage } from "../data/mock";
 import { LIST_PATH } from "./home-path";
+import { appDb } from "./app-db";
 
 export type CreateIdeaActionData = {
   error: string;
@@ -68,7 +68,7 @@ export async function createIdeaAction({ request, context }: ActionFunctionArgs)
   if (text.length > IDEA_BODY_MAX) {
     return { error: "長すぎます", title, body: bodyField } satisfies CreateIdeaActionData;
   }
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const category = await resolveCategoryId(db, { categoryId, categoryName });
   if ("error" in category) {
     return { error: category.error, title, body: bodyField } satisfies CreateIdeaActionData;

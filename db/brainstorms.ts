@@ -1,5 +1,6 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Db } from "./client";
+import { ideaIdsInWorkspace, ownIdea } from "./ideas";
 import { ideaBrainstorms, ideas, type IdeaBrainstorm } from "./schema";
 
 export type { IdeaBrainstorm };
@@ -36,7 +37,7 @@ export async function listBrainstormsForIdea(db: Db, ideaId: number): Promise<Id
   return db
     .select()
     .from(ideaBrainstorms)
-    .where(eq(ideaBrainstorms.ideaId, ideaId))
+    .where(inWorkspace(db, ideaId))
     .orderBy(desc(ideaBrainstorms.createdAt), desc(ideaBrainstorms.id));
 }
 
@@ -47,7 +48,7 @@ export async function getLatestBrainstorm(
   const [row] = await db
     .select()
     .from(ideaBrainstorms)
-    .where(eq(ideaBrainstorms.ideaId, ideaId))
+    .where(inWorkspace(db, ideaId))
     .orderBy(desc(ideaBrainstorms.createdAt), desc(ideaBrainstorms.id))
     .limit(1);
   return row;
@@ -58,6 +59,12 @@ export async function insertIdeaBrainstorm(
   ideaId: number,
   data: { notes: string; model: string },
 ): Promise<IdeaBrainstorm> {
+  const [touched] = await db
+    .update(ideas)
+    .set({ updatedAt: sql`(datetime('now'))` })
+    .where(ownIdea(db, ideaId))
+    .returning({ id: ideas.id });
+  if (!touched) throw new Error("Idea not found in workspace");
   const [created] = await db
     .insert(ideaBrainstorms)
     .values({
@@ -69,9 +76,12 @@ export async function insertIdeaBrainstorm(
   if (!created) {
     throw new Error("Failed to insert brainstorm");
   }
-  await db
-    .update(ideas)
-    .set({ updatedAt: sql`(datetime('now'))` })
-    .where(eq(ideas.id, ideaId));
   return created;
+}
+
+function inWorkspace(db: Db, ideaId: number) {
+  return and(
+    eq(ideaBrainstorms.ideaId, ideaId),
+    inArray(ideaBrainstorms.ideaId, ideaIdsInWorkspace(db)),
+  );
 }

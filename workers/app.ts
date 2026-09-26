@@ -39,6 +39,7 @@ app.all("*", async (c) => {
   return requestHandler(c.req.raw, {
     cloudflare: { env: c.env, ctx: c.executionCtx },
     userEmail: session.email,
+    workspace: session.workspace,
     plan: await resolvePlanForEnv(session.email, c.env),
   });
 });

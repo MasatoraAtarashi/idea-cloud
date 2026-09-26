@@ -1,8 +1,8 @@
 import { type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { bindResearchAi } from "../../server/ai/research";
 import { evaluateIdea } from "../../server/ai/evaluate";
 import { typesafeApiKeyFromEnv } from "../../server/ai/typesafe";
+import { appDb } from "./app-db";
 
 export type EvaluateIdeaActionData = {
   error?: string;
@@ -21,7 +21,7 @@ export async function evaluateIdeaAction({
   }
 
   const form = await request.formData();
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const result = await evaluateIdea({
     db,
     ai: bindResearchAi(context.cloudflare.env.AI),

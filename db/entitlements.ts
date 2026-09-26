@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { Db } from "./client";
+import type { RootDb } from "./client";
 import { billingEvents, entitlements, type Entitlement } from "./schema";
 
 export type { Entitlement };
@@ -20,7 +20,7 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-export async function getEntitlement(db: Db, email: string): Promise<Entitlement | undefined> {
+export async function getEntitlement(db: RootDb, email: string): Promise<Entitlement | undefined> {
   const [row] = await db
     .select()
     .from(entitlements)
@@ -30,7 +30,7 @@ export async function getEntitlement(db: Db, email: string): Promise<Entitlement
 }
 
 export async function getEntitlementByCustomer(
-  db: Db,
+  db: RootDb,
   stripeCustomerId: string,
 ): Promise<Entitlement | undefined> {
   const [row] = await db
@@ -62,7 +62,10 @@ export type EntitlementUpdate = {
 };
 
 /** Upsert by email. Fields left out keep their stored value. */
-export async function upsertEntitlement(db: Db, update: EntitlementUpdate): Promise<Entitlement> {
+export async function upsertEntitlement(
+  db: RootDb,
+  update: EntitlementUpdate,
+): Promise<Entitlement> {
   const email = normalizeEmail(update.email);
   const existing = await getEntitlement(db, email);
   const row = {
@@ -95,7 +98,7 @@ export async function upsertEntitlement(db: Db, update: EntitlementUpdate): Prom
  * Records a Stripe event id. Returns false when it was already recorded, which
  * is how a retried delivery is skipped instead of applied twice.
  */
-export async function claimBillingEvent(db: Db, id: string, type: string): Promise<boolean> {
+export async function claimBillingEvent(db: RootDb, id: string, type: string): Promise<boolean> {
   try {
     await db.insert(billingEvents).values({ id, type, receivedAt: nowIso() });
     return true;

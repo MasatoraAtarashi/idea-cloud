@@ -29,7 +29,7 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 | `CLOUDFLARE_API_TOKEN`  | Wrangler deploy. Least privilege: Workers Scripts **Edit**, plus D1 **Edit** so CI can apply migrations |
 | `CLOUDFLARE_ACCOUNT_ID` | Account for that token                                                                                  |
 
-Required before sign-in works in production: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET` (`openssl rand -hex 32`), `ACCESS_ALLOWED_EMAILS`. Optional later: `APP_API_TOKEN` (+ `APP_API_TOKEN_EMAIL`) for the native app, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (required before agents can call `/mcp`; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; without it HTML fallbacks often return nothing from Workers).
+Required before sign-in works in production: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET` (`openssl rand -hex 32`), `ACCESS_ALLOWED_EMAILS`. Optional later: `APP_API_TOKEN` (+ `APP_API_TOKEN_EMAIL`) for the native app, `FIELD_ENCRYPTION_KEY` (not needed until those features are wired in production), `TYPESAFE_API_KEY` (Jev auto-tags + AI評価; falls back to Workers AI when unset), `MCP_API_KEY` (legacy shared secret for `/mcp`, workspace 1 only — mint per-workspace keys in 設定 instead; see [mcp.md](./mcp.md)), `SEARCH_API_KEY` (optional Brave Search for リサーチ 先行事例; without it HTML fallbacks often return nothing from Workers).
 Do not invent or commit these values. Production: GitHub Actions secrets for deploy; `wrangler secret put` for Worker runtime secrets.
 
 ## D1

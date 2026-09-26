@@ -1,4 +1,4 @@
-import type { Db } from "../../db/client";
+import type { RootDb } from "../../db/client";
 import {
   claimBillingEvent,
   getEntitlementByCustomer,
@@ -57,7 +57,7 @@ function emailFromCheckout(session: Json): string | null {
 /** Premium while Stripe says the subscription is live; `past_due` keeps access to period end. */
 const PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
 
-async function emailForSubscription(db: Db, subscription: Json): Promise<string | null> {
+async function emailForSubscription(db: RootDb, subscription: Json): Promise<string | null> {
   const metadata = subscription.metadata as Json | undefined;
   const fromMetadata = str(metadata?.email);
   if (fromMetadata) return fromMetadata;
@@ -76,7 +76,7 @@ function periodEnd(subscription: Json): string | null {
   return isoFromUnix(data[0]?.current_period_end);
 }
 
-export async function applyStripeEvent(db: Db, event: Json): Promise<WebhookOutcome> {
+export async function applyStripeEvent(db: RootDb, event: Json): Promise<WebhookOutcome> {
   const id = str(event.id);
   const type = str(event.type) ?? "unknown";
   if (!id) return { applied: false, reason: "ignored" };

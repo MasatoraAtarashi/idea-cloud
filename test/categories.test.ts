@@ -4,7 +4,7 @@ import { filterIdeas, type MockIdea } from "../app/data/mock";
 import { DEFAULT_CATEGORY_NAMES } from "../app/lib/category";
 import { createDb } from "../db/client";
 import { listCategories } from "../db/categories";
-import { authHeaders } from "./auth-helper";
+import { authHeaders, TEST_WORKSPACE_ID } from "./auth-helper";
 
 async function api(path: string, init?: RequestInit) {
   return exports.default.fetch(`https://example.com/api${path}`, {
@@ -22,7 +22,7 @@ type IdeaItem = {
 
 describe("categories", () => {
   it("seeds 執筆 / 事業 / 組織改善", async () => {
-    const rows = await listCategories(createDb(env.DB));
+    const rows = await listCategories(createDb(env.DB, TEST_WORKSPACE_ID));
     const names = rows.map((row) => row.name);
     for (const name of DEFAULT_CATEGORY_NAMES) {
       expect(names).toContain(name);
@@ -30,7 +30,7 @@ describe("categories", () => {
   });
 
   it("stores an optional category on create and can add a new name", async () => {
-    const rows = await listCategories(createDb(env.DB));
+    const rows = await listCategories(createDb(env.DB, TEST_WORKSPACE_ID));
     const writing = rows.find((row) => row.name === "執筆アイデア");
     expect(writing).toBeTruthy();
 

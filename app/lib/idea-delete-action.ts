@@ -1,7 +1,7 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { deleteIdea } from "../../db/ideas";
 import { LIST_PATH } from "./home-path";
+import { appDb } from "./app-db";
 
 export type DeleteIdeaActionData = {
   error: string;
@@ -18,7 +18,7 @@ export async function deleteIdeaAction({
     return { error: "見つかりません", intent: "delete" };
   }
   const form = await request.clone().formData();
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const deleted = await deleteIdea(db, ideaId);
   if (!deleted) {
     return { error: "見つかりません", intent: "delete" };

@@ -36,6 +36,7 @@ function createActionArgs(fields: Record<string, string>): ActionFunctionArgs {
         env,
         ctx: { waitUntil() {} },
       },
+      workspace: { id: 1, name: "test", role: "owner" },
       plan: "premium",
     },
   } as unknown as ActionFunctionArgs;

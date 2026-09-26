@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { STAGES } from "../../../app/data/mock";
 import { normalizeSavedViewFilters } from "../../../app/lib/list-view-search";
-import { createDb } from "../../../db/client";
+import { apiDb } from "../db";
 import {
   countSavedViews,
   deleteSavedView,
@@ -36,13 +36,13 @@ const idParamSchema = z.object({
 
 export const savedViewsRoute = new Hono<AppEnv>()
   .get("/", async (c) => {
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const rows = await listSavedViews(db);
     return c.json({ items: rows.map(savedViewJson) });
   })
   .post("/", zValidator("json", createSavedViewSchema), async (c) => {
     const { name, filters } = c.req.valid("json");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     if ((await countSavedViews(db)) >= SAVED_VIEW_MAX) {
       return c.json({ error: "ビューが多すぎます" }, 400);
     }
@@ -51,7 +51,7 @@ export const savedViewsRoute = new Hono<AppEnv>()
   })
   .delete("/:id", zValidator("param", idParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const deleted = await deleteSavedView(db, id);
     if (!deleted) {
       return c.json({ error: "Not Found" }, 404);

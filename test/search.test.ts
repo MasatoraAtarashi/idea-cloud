@@ -28,6 +28,7 @@ function inspiration(
   partial: Partial<Inspiration> & Pick<Inspiration, "id" | "title">,
 ): Inspiration {
   return {
+    workspaceId: 1,
     url: null,
     memo: "",
     tags: "[]",

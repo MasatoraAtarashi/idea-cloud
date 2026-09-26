@@ -52,6 +52,7 @@ function detailActionArgs(ideaId: number, fields: Record<string, string>): Actio
         env,
         ctx: { waitUntil() {} },
       },
+      workspace: { id: 1, name: "test", role: "owner" },
       plan: "premium",
     },
   } as unknown as ActionFunctionArgs;

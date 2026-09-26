@@ -1,8 +1,8 @@
 import { type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { COMMENT_BODY_MAX, insertIdeaComment } from "../../db/comments";
 import { getIdeaRow } from "../../db/ideas";
 import { resolveCommentAuthor } from "../data/mock";
+import { appDb } from "./app-db";
 
 export type CommentIdeaActionData = {
   error?: string;
@@ -29,7 +29,7 @@ export async function commentIdeaAction({
     return { error: "長すぎます", intent: "comment" } satisfies CommentIdeaActionData;
   }
 
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const idea = await getIdeaRow(db, ideaId);
   if (!idea) {
     return { error: "見つかりません", intent: "comment" } satisfies CommentIdeaActionData;

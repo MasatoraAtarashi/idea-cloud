@@ -1,7 +1,7 @@
 import { type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { bindResearchAi } from "../../server/ai/research";
 import { brainstormIdea } from "../../server/ai/brainstorm";
+import { appDb } from "./app-db";
 
 export type BrainstormIdeaActionData = {
   error?: string;
@@ -20,7 +20,7 @@ export async function brainstormIdeaAction({
   }
 
   const form = await request.formData();
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const result = await brainstormIdea({
     db,
     ai: bindResearchAi(context.cloudflare.env.AI),

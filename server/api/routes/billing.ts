@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createDb } from "../../../db/client";
+import { apiDb } from "../db";
 import { getEntitlement, isEntitlementActive } from "../../../db/entitlements";
 import { isCompedEmail, resolvePlan } from "../../billing/plan";
 import {
@@ -25,7 +25,7 @@ function appUrl(requestUrl: string, path: string): string {
 
 export const billingRoute = new Hono<AppEnv>()
   .get("/", async (c) => {
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     const email = c.get("userEmail");
     const row = await getEntitlement(db, email);
     return c.json({
@@ -41,7 +41,7 @@ export const billingRoute = new Hono<AppEnv>()
     const config = stripeConfig(c.env);
     if (!config) return c.json({ error: "課金は準備中です。" }, 503);
     const email = c.get("userEmail");
-    const db = createDb(c.env.DB);
+    const db = apiDb(c);
     if (isEntitlementActive(await getEntitlement(db, email))) {
       return c.json({ error: "すでにプレミアムです。" }, 409);
     }
@@ -63,7 +63,7 @@ export const billingRoute = new Hono<AppEnv>()
   .post("/portal", async (c) => {
     const config = stripeConfig(c.env);
     if (!config) return c.json({ error: "課金は準備中です。" }, 503);
-    const row = await getEntitlement(createDb(c.env.DB), c.get("userEmail"));
+    const row = await getEntitlement(apiDb(c), c.get("userEmail"));
     if (!row?.stripeCustomerId) {
       return c.json({ error: "契約が見つかりません。" }, 409);
     }

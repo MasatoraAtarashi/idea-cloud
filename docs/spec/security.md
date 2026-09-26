@@ -1,6 +1,6 @@
 # Security posture
 
-Closed team. Least privilege. No secrets in git.
+Least privilege. No secrets in git. Tenancy (who sees which ideas) is a fourth layer on top of identity, allowlist and entitlement: [workspaces.md](./workspaces.md).
 
 **Primary gate: in-app Google OAuth** (implemented — [oauth-swap.md](./oauth-swap.md)). Second layer: email allowlist. The template Cloudflare Access middleware has been removed.
 
@@ -8,12 +8,13 @@ Closed team. Least privilege. No secrets in git.
 
 Two layers. Do not treat them as the same feature.
 
-| Layer                            | Mechanism                                                                                                          | Status                                                                               |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| **In-app Google OAuth**          | Authorization code + PKCE on the Worker; signed httpOnly `ic_session` cookie. `/login` starts it.                  | **Primary, implemented.** `server/auth/`                                             |
-| **Allowlist**                    | `ACCESS_ALLOWED_EMAILS` (comma-separated, lowercase). Empty = Google identity only. Set = identity plus app `403`. | **Wired** on pages and APIs, re-checked per request (`server/security/allowlist.ts`) |
-| **App token**                    | `Authorization: Bearer <APP_API_TOKEN>` for the native app / scripts, attributed to `APP_API_TOKEN_EMAIL`.         | **Wired** (`server/auth/principal.ts`). Optional — unset means cookie-only           |
-| **Cloudflare Access** (template) | `Cf-Access-Authenticated-User-Email` middleware from `personal-fullstack`.                                         | **Removed.** A native client cannot hold an Access session, so it is not the gate.   |
+| Layer                            | Mechanism                                                                                                                                  | Status                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| **In-app Google OAuth**          | Authorization code + PKCE on the Worker; signed httpOnly `ic_session` cookie. `/login` starts it.                                          | **Primary, implemented.** `server/auth/`                                             |
+| **Allowlist**                    | `ACCESS_ALLOWED_EMAILS` (comma-separated, lowercase). Empty = Google identity only (public deploy). Set = identity plus app `403`.         | **Wired** on pages and APIs, re-checked per request (`server/security/allowlist.ts`) |
+| **Workspace**                    | Membership row in `workspace_members`; every tenant query filters by the request's workspace. `ic_ws` cookie only picks among memberships. | **Wired** (`server/tenant/workspace.ts`, `db/client.ts` `Db.workspaceId`)            |
+| **App token**                    | `Authorization: Bearer <APP_API_TOKEN>` for the native app / scripts, attributed to `APP_API_TOKEN_EMAIL`.                                 | **Wired** (`server/auth/principal.ts`). Optional — unset means cookie-only           |
+| **Cloudflare Access** (template) | `Cf-Access-Authenticated-User-Email` middleware from `personal-fullstack`.                                                                 | **Removed.** A native client cannot hold an Access session, so it is not the gate.   |
 
 Local bypass: `LOCAL_DEV_USER_EMAIL` on `localhost` / `127.0.0.1` only, and only while no Google client is configured (dev + Playwright). Unreachable on a real hostname. Missing credential on `/api/*` → `401`; identity outside the allowlist → `403` with no session set.
 
@@ -23,21 +24,21 @@ Entitlement is a third, separate layer: a member without the premium plan still 
 
 Sessions are self-contained cookies with no `sessions` table: rotate `SESSION_SECRET` to revoke everything at once. Per-device sign-out is not built.
 
-Team settings show the allowlist in a **disabled** textarea so the UI cannot pretend to write secrets.
+Settings never show or edit env secrets. Members, invites and MCP keys are D1 rows managed in 設定; owner-only writes are re-checked on the server.
 
 Do not invent OAuth client secrets. Production: `wrangler secret` / GitHub secrets only. Do not log `TYPESAFE_API_KEY`, `MCP_API_KEY`, or `SEARCH_API_KEY`.
 
 ## Remote MCP
 
-`/mcp` is a shared-secret API for agents. See [mcp.md](./mcp.md).
+`/mcp` authenticates with a per-workspace key (`icw_…`, stored as SHA-256, revocable in 設定) and is scoped to that workspace. The env shared secret is legacy and opens workspace 1 only. See [mcp.md](./mcp.md).
 
-| Item             | Rule                                                                                                                                          |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Secret           | `MCP_API_KEY` (`MCP_TOKEN` only when the first is unset). `.dev.vars` locally, `wrangler secret put MCP_API_KEY` in production. Never in git. |
-| Request          | `Authorization: Bearer <secret>`. Missing, blank, or wrong token → `401`. Unset secret → `401` for every call.                                |
-| Not a substitute | A browser session cookie does not authorize `/mcp`, and `MCP_API_KEY` does not authorize `/api/*`.                                            |
-| Access in front  | If Zero Trust covers the hostname, bypass `/mcp` or clients never reach the bearer check.                                                     |
-| Logging          | Do not log the token or `Authorization`.                                                                                                      |
+| Item             | Rule                                                                                                                                                     |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Credential       | Workspace key from 設定 → API キー（MCP）, hashed at rest. Legacy: `MCP_API_KEY` (`MCP_TOKEN` only when the first is unset) → workspace 1. Never in git. |
+| Request          | `Authorization: Bearer <secret>`. Missing, blank, or wrong token → `401`. Unset secret → `401` for every call.                                           |
+| Not a substitute | A browser session cookie does not authorize `/mcp`, and `MCP_API_KEY` does not authorize `/api/*`.                                                       |
+| Access in front  | If Zero Trust covers the hostname, bypass `/mcp` or clients never reach the bearer check.                                                                |
+| Logging          | Do not log the token or `Authorization`.                                                                                                                 |
 
 ## Field encryption
 

@@ -33,6 +33,11 @@ beforeAll(async () => {
   await env.DB.exec("DELETE FROM inspirations;");
   await env.DB.exec("DELETE FROM todos;");
   await env.DB.exec("DELETE FROM ideas;");
+  await env.DB.exec("DELETE FROM workspace_api_keys;");
+  await env.DB.exec("DELETE FROM workspace_invites;");
+  await env.DB.exec("DELETE FROM workspace_members;");
+  await env.DB.exec("DELETE FROM workspaces WHERE id <> 1;");
+  await env.DB.exec("DELETE FROM categories WHERE workspace_id <> 1;");
 });
 
 beforeEach(() => {

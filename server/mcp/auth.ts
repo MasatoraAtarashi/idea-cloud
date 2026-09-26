@@ -1,6 +1,14 @@
+import { createRootDb } from "../../db/client";
+import { looksLikeWorkspaceApiKey, resolveApiKey } from "../../db/workspaces";
 import { logDiag } from "../diag";
+import { LEGACY_WORKSPACE_ID } from "../tenant/workspace";
 
-/** Shared-secret bearer gate for `/mcp`. Not OAuth and not the mock Google session. */
+/**
+ * Bearer gate for `/mcp`. The supported credential is a per-workspace key
+ * (`icw_…`, minted in 設定 → API キー, stored hashed). The env shared secret
+ * (MCP_API_KEY / MCP_TOKEN) is legacy and only ever opens workspace 1.
+ * Not OAuth and not the browser session.
+ */
 
 const REALM = "idea-cloud";
 
@@ -40,24 +48,37 @@ export function timingSafeEqualString(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** `null` when the bearer matches the configured secret. Otherwise a 401 response. */
-export function authorizeMcpRequest(request: Request, env: Env): Response | null {
-  const hasMcpApiKey = Boolean(env.MCP_API_KEY?.trim());
-  const hasMcpToken = Boolean(env.MCP_TOKEN?.trim());
-  const secret = mcpSharedSecret(env);
+export type McpAuthorization = { workspaceId: number; via: "workspace_key" | "legacy_secret" };
+
+function deny(error: string, env: Env): Response {
+  logDiag("warn", "mcp auth", {
+    step: "mcp",
+    provider: "mcp",
+    outcome: "fail",
+    error,
+    status: 401,
+    hasMcpApiKey: Boolean(env.MCP_API_KEY?.trim()),
+    hasMcpToken: Boolean(env.MCP_TOKEN?.trim()),
+  });
+  return unauthorizedMcpResponse();
+}
+
+/** The workspace the bearer opens, or a 401 response. */
+export async function authorizeMcpRequest(
+  request: Request,
+  env: Env,
+): Promise<McpAuthorization | Response> {
   const token = bearerToken(request.headers.get("authorization"));
-  if (!secret || token == null || !timingSafeEqualString(token, secret)) {
-    const error = !secret ? "missing_key" : token == null ? "missing_bearer" : "mismatch";
-    logDiag("warn", "mcp auth", {
-      step: "mcp",
-      provider: "mcp",
-      outcome: "fail",
-      error,
-      status: 401,
-      hasMcpApiKey,
-      hasMcpToken,
-    });
-    return unauthorizedMcpResponse();
+  if (token == null) return deny("missing_bearer", env);
+
+  if (looksLikeWorkspaceApiKey(token)) {
+    const resolved = await resolveApiKey(createRootDb(env.DB), token);
+    if (!resolved) return deny("unknown_key", env);
+    return { workspaceId: resolved.workspaceId, via: "workspace_key" };
   }
-  return null;
+
+  const secret = mcpSharedSecret(env);
+  if (!secret) return deny("missing_key", env);
+  if (!timingSafeEqualString(token, secret)) return deny("mismatch", env);
+  return { workspaceId: LEGACY_WORKSPACE_ID, via: "legacy_secret" };
 }

@@ -142,13 +142,13 @@ describe("diagnostic logs", () => {
     const warned = vi.spyOn(console, "warn").mockImplementation(() => {});
     const ogp = await fetchOpenGraph("http://127.0.0.1/secret");
     expect(ogp.status).toBe("failed");
-    const denied = authorizeMcpRequest(new Request("https://example.com/mcp"), {} as Env);
-    expect(denied?.status).toBe(401);
-    const mismatch = authorizeMcpRequest(
+    const denied = await authorizeMcpRequest(new Request("https://example.com/mcp"), {} as Env);
+    expect((denied as Response).status).toBe(401);
+    const mismatch = await authorizeMcpRequest(
       new Request("https://example.com/mcp", { headers: { authorization: "Bearer other" } }),
       { MCP_API_KEY: " primary " } as Env,
     );
-    expect(mismatch?.status).toBe(401);
+    expect((mismatch as Response).status).toBe(401);
     const warnings = jsonLogs(warned);
     expect(warnings).toEqual(
       expect.arrayContaining([
@@ -161,7 +161,7 @@ describe("diagnostic logs", () => {
         expect.objectContaining({
           msg: "mcp auth",
           outcome: "fail",
-          error: "missing_key",
+          error: "missing_bearer",
           hasMcpApiKey: false,
           status: 401,
         }),

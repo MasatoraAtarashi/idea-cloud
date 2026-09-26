@@ -1,6 +1,8 @@
 import { createMiddleware } from "hono/factory";
+import { createRootDb } from "../../db/client";
 import { isPrincipalAllowed, resolvePrincipal } from "../auth/principal";
 import type { AppEnv } from "../env";
+import { readWorkspaceCookie, resolveWorkspace } from "../tenant/workspace";
 
 /**
  * Primary gate for `/api/*`. Accepts the Google OAuth session cookie (web) or
@@ -19,5 +21,15 @@ export const sessionAuth = createMiddleware<AppEnv>(async (c, next) => {
     return c.json({ error: "Forbidden" }, 403);
   }
   c.set("userEmail", principal.email);
+  // Workspace: membership is re-read per request; the ic_ws cookie only picks among them.
+  c.set(
+    "workspace",
+    await resolveWorkspace(
+      createRootDb(c.env.DB),
+      principal.email,
+      c.env,
+      readWorkspaceCookie(c.req.header("cookie")),
+    ),
+  );
   await next();
 });

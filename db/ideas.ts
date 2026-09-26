@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { MockIdea, Stage } from "../app/data/mock";
 import { STAGES } from "../app/data/mock";
 import { parseReflectionStatus, type ReflectionStatus } from "../app/lib/reflection";
@@ -13,6 +13,16 @@ import { ideaBrainstorms, ideaChatMessages, ideaComments, ideas, type Idea } fro
 export type { Idea };
 
 export const IDEA_BODY_MAX = 8000;
+
+/** `id` match restricted to the handle's workspace. Every single-row query uses it. */
+export function ownIdea(db: Db, id: number) {
+  return and(eq(ideas.id, id), eq(ideas.workspaceId, db.workspaceId));
+}
+
+/** Subquery of idea ids in the handle's workspace, for tables keyed by idea_id. */
+export function ideaIdsInWorkspace(db: Db) {
+  return db.select({ id: ideas.id }).from(ideas).where(eq(ideas.workspaceId, db.workspaceId));
+}
 
 export function parseTags(raw: string): string[] {
   try {
@@ -141,7 +151,11 @@ export async function ideaJsonWithCategory(
 }
 
 export async function listIdeaRows(db: Db): Promise<Idea[]> {
-  return db.select().from(ideas).orderBy(desc(ideas.id));
+  return db
+    .select()
+    .from(ideas)
+    .where(eq(ideas.workspaceId, db.workspaceId))
+    .orderBy(desc(ideas.id));
 }
 
 export async function listIdeaViews(db: Db): Promise<MockIdea[]> {
@@ -162,7 +176,7 @@ export async function listIdeaViews(db: Db): Promise<MockIdea[]> {
 }
 
 export async function getIdeaRow(db: Db, id: number): Promise<Idea | undefined> {
-  const [row] = await db.select().from(ideas).where(eq(ideas.id, id)).limit(1);
+  const [row] = await db.select().from(ideas).where(ownIdea(db, id)).limit(1);
   return row;
 }
 
@@ -198,6 +212,7 @@ export async function insertIdeaRow(
   const [created] = await db
     .insert(ideas)
     .values({
+      workspaceId: db.workspaceId,
       title,
       body,
       stage,
@@ -237,7 +252,7 @@ export async function updateIdeaStage(db: Db, id: number, stage: Stage): Promise
   const [updated] = await db
     .update(ideas)
     .set({ stage, updatedAt: sql`(datetime('now'))` })
-    .where(eq(ideas.id, id))
+    .where(ownIdea(db, id))
     .returning();
   return updated;
 }
@@ -256,7 +271,7 @@ export async function saveIdeaResearch(
       researchSources: data.sources ?? null,
       updatedAt: sql`(datetime('now'))`,
     })
-    .where(eq(ideas.id, id))
+    .where(ownIdea(db, id))
     .returning();
   if (!updated) {
     throw new Error("Failed to save research");
@@ -285,7 +300,7 @@ export async function updateIdeaFields(
       ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
       updatedAt: sql`(datetime('now'))`,
     })
-    .where(eq(ideas.id, id))
+    .where(ownIdea(db, id))
     .returning();
   return updated;
 }
@@ -303,7 +318,7 @@ export async function saveHumanScore(
       humanScoredAt: sql`(datetime('now'))`,
       updatedAt: sql`(datetime('now'))`,
     })
-    .where(eq(ideas.id, id))
+    .where(ownIdea(db, id))
     .returning();
   return updated;
 }
@@ -322,7 +337,7 @@ export async function saveAiEvaluation(
       aiEvaluatedAt: sql`(datetime('now'))`,
       updatedAt: sql`(datetime('now'))`,
     })
-    .where(eq(ideas.id, id))
+    .where(ownIdea(db, id))
     .returning();
   if (!updated) {
     throw new Error("Failed to save evaluation");
@@ -342,7 +357,7 @@ export async function saveIdeaReview(
       lastReviewedAt: sql`(datetime('now'))`,
       updatedAt: sql`(datetime('now'))`,
     })
-    .where(eq(ideas.id, id))
+    .where(ownIdea(db, id))
     .returning();
   return updated;
 }
@@ -353,7 +368,7 @@ export async function deleteIdea(db: Db, id: number): Promise<boolean> {
   await db.delete(ideaComments).where(eq(ideaComments.ideaId, id));
   await db.delete(ideaBrainstorms).where(eq(ideaBrainstorms.ideaId, id));
   await db.delete(ideaChatMessages).where(eq(ideaChatMessages.ideaId, id));
-  await db.delete(ideas).where(eq(ideas.id, id));
+  await db.delete(ideas).where(ownIdea(db, id));
   return true;
 }
 
@@ -370,7 +385,7 @@ export async function saveIdeaReflection(
       reflectionNotes: data.notes,
       updatedAt: sql`(datetime('now'))`,
     })
-    .where(eq(ideas.id, id))
+    .where(ownIdea(db, id))
     .returning();
   return updated;
 }

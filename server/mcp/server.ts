@@ -31,11 +31,8 @@ const cursorSchema = z.string().trim().max(20);
 const STAGE_HELP =
   "Idea stage: spark (着想), aging (熟成中), ripe (熟した), selected (採用), archived (アーカイブ).";
 
-function dbFor(env: Env) {
-  return createDb(env.DB);
-}
-
-export function createIdeaCloudMcpServer(env: Env): McpServer {
+export function createIdeaCloudMcpServer(env: Env, workspaceId: number): McpServer {
+  const dbFor = (bindings: Env) => createDb(bindings.DB, workspaceId);
   const server = new McpServer({ name: "idea-cloud", version: "1.0.0" });
 
   server.registerTool(
@@ -43,7 +40,7 @@ export function createIdeaCloudMcpServer(env: Env): McpServer {
     {
       title: "List ideas",
       description:
-        "List ideas in the shared Idea Cloud workspace. Returns short records: id, title, stage, tags, updated_at. Filter by stage (status is an alias), tags (match any), and keyword (title, body, and tags). Paginate with limit (default 20, max 100) plus offset or cursor (the next_cursor string from the previous page; cursor wins when both are set). " +
+        "List ideas in the Idea Cloud workspace this key belongs to. Returns short records: id, title, stage, tags, updated_at. Filter by stage (status is an alias), tags (match any), and keyword (title, body, and tags). Paginate with limit (default 20, max 100) plus offset or cursor (the next_cursor string from the previous page; cursor wins when both are set). " +
         STAGE_HELP,
       inputSchema: z.object({
         stage: stageSchema.optional().describe(STAGE_HELP),

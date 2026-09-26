@@ -15,8 +15,8 @@ LOCAL_DEV_USER_EMAIL=you@example.com
 # On localhost a fixed dev key is used when this is unset.
 # SESSION_SECRET=
 
-# Who may use the app (comma-separated). Empty = any verified Google account.
-# Keep at least one entry in production.
+# Who may sign in (comma-separated). Empty = any verified Google account, each in
+# their own workspace (public deploy). Listed emails all join workspace 1 as owners.
 # ACCESS_ALLOWED_EMAILS=you@example.com
 
 # Native app sign-in: the iOS app sends the Google `id_token` it got on-device
@@ -47,8 +47,8 @@ LOCAL_DEV_USER_EMAIL=you@example.com
 # over Workers AI. Production: `wrangler secret put TYPESAFE_API_KEY`. Never commit a real key.
 TYPESAFE_API_KEY=
 
-# Remote MCP at /mcp. Shared bearer for Cursor, Claude Desktop, and other agents.
-# Production: `wrangler secret put MCP_API_KEY`. MCP_TOKEN is used only when MCP_API_KEY is unset.
+# Remote MCP at /mcp. Legacy shared bearer, scoped to workspace 1 only. Prefer a
+# per-workspace key from 設定 → API キー（MCP）. MCP_TOKEN is used only when MCP_API_KEY is unset.
 # Never commit a real key. See docs/spec/mcp.md.
 MCP_API_KEY=
 

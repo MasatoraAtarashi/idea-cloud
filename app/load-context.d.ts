@@ -1,5 +1,6 @@
 import type { AppLoadContext } from "react-router";
 import type { Plan } from "../server/billing/plan";
+import type { CurrentWorkspace } from "../server/tenant/workspace";
 
 declare module "react-router" {
   interface AppLoadContext {
@@ -13,6 +14,8 @@ declare module "react-router" {
     };
     /** Signed-in email from the session cookie. `null` on public pages (/login). */
     userEmail: string | null;
+    /** Workspace the request acts in. Non-null under /app (the page gate resolves it). */
+    workspace: CurrentWorkspace | null;
     /** Entitlement for the signed-in email. "free" on public pages. */
     plan: Plan;
   }

@@ -1,9 +1,13 @@
+import type { CurrentWorkspace } from "./tenant/workspace";
+
 // Hono アプリの環境型（Bindings は worker-configuration.d.ts の Env を使用）
 export type AppEnv = {
   Bindings: Env;
   Variables: {
     requestId: string;
     userEmail: string;
+    /** Set by sessionAuth: the workspace this `/api` request acts in. */
+    workspace: CurrentWorkspace;
   };
 };
 
@@ -49,9 +53,12 @@ declare global {
     FIELD_ENCRYPTION_KEY?: string;
     /** TypeSafe Jev (System One). When set, auto-tags and AI評価 prefer Jev. */
     TYPESAFE_API_KEY?: string;
-    /** Shared secret for `Authorization: Bearer` on `/mcp`. Prefer this over MCP_TOKEN. */
+    /**
+     * Legacy shared secret for `/mcp`, scoped to workspace 1 only. Per-workspace
+     * keys minted in 設定 → API キー are the supported path. Prefer this over MCP_TOKEN.
+     */
     MCP_API_KEY?: string;
-    /** Accepted only when MCP_API_KEY is unset. */
+    /** Accepted only when MCP_API_KEY is unset. Same scope as MCP_API_KEY. */
     MCP_TOKEN?: string;
     /** Optional Brave Search API key. HTML scrapers are the fallback and often return nothing from Workers. */
     SEARCH_API_KEY?: string;

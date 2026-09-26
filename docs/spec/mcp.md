@@ -1,6 +1,6 @@
 # Remote MCP
 
-AI clients (Cursor, Claude Desktop, and anything else that speaks [Model Context Protocol](https://modelcontextprotocol.io)) can read and write the shared idea shelf. The server is the existing Cloudflare Worker and the existing D1 database. There is no second database and no Durable Object.
+AI clients (Cursor, Claude Desktop, and anything else that speaks [Model Context Protocol](https://modelcontextprotocol.io)) can read and write one workspace's idea shelf. The server is the existing Cloudflare Worker and the existing D1 database. There is no second database and no Durable Object.
 
 Discussion stays in the client. MCP exposes data tools only. It does not summarize, brainstorm, discuss, auto-tag, research, evaluate, or delete. Per-idea chat is the detail **相談** tab, not an MCP tool.
 
@@ -25,7 +25,9 @@ Every `/mcp` request needs:
 Authorization: Bearer <secret>
 ```
 
-The Worker reads `MCP_API_KEY`. If that is unset or blank, it reads `MCP_TOKEN`. If both are unset, every request is rejected. A missing or wrong token is `401` with `WWW-Authenticate: Bearer`. The Access email header and the mock Google login do not authenticate MCP.
+The supported `<secret>` is a **workspace API key**: an owner mints it in 設定 → API キー（MCP）, it looks like `icw_<48 hex>`, it is shown once and stored as SHA-256, and every tool call it makes is scoped to that workspace. Revoke it in the same screen. See [workspaces.md](./workspaces.md).
+
+Legacy: when the bearer is not an `icw_` key, the Worker compares it to `MCP_API_KEY` (or `MCP_TOKEN` when that is unset) and, on match, opens **workspace 1 only**. Unset both on a multi-tenant deploy. A missing or wrong token is `401` with `WWW-Authenticate: Bearer`. The browser session cookie does not authenticate MCP.
 
 The secret is a long random string (`openssl rand -hex 32`). Do not commit it.
 
@@ -33,7 +35,7 @@ Local (`.dev.vars`, gitignored):
 
 ```bash
 cp .dev.vars.example .dev.vars
-# set MCP_API_KEY=... in .dev.vars
+# sign in at http://127.0.0.1:5173/app/settings and mint a key, or set the legacy MCP_API_KEY=... in .dev.vars
 pnpm db:migrate:local
 pnpm dev
 ```
@@ -41,6 +43,7 @@ pnpm dev
 Production and preview:
 
 ```bash
+# legacy only; prefer a workspace key from 設定
 wrangler secret put MCP_API_KEY
 ```
 
@@ -78,7 +81,7 @@ Tool results are JSON text (`content[].text`) and the same object as `structured
     "idea-cloud": {
       "url": "https://idea-cloud.<account>.workers.dev/mcp",
       "headers": {
-        "Authorization": "Bearer <MCP_API_KEY>"
+        "Authorization": "Bearer icw_..."
       }
     }
   }
@@ -102,7 +105,7 @@ Claude Desktop speaks stdio. [`mcp-remote`](https://www.npmjs.com/package/mcp-re
         "Authorization:${IDEA_CLOUD_AUTHORIZATION}"
       ],
       "env": {
-        "IDEA_CLOUD_AUTHORIZATION": "Bearer <MCP_API_KEY>"
+        "IDEA_CLOUD_AUTHORIZATION": "Bearer icw_..."
       }
     }
   }

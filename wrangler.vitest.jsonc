@@ -28,6 +28,8 @@
     "SESSION_SECRET": "test-session-secret",
     "APP_API_TOKEN": "test-app-token",
     "APP_API_TOKEN_EMAIL": "app@example.com",
+    // Both test identities land in the legacy workspace (see server/tenant/workspace.ts).
+    "ACCESS_ALLOWED_EMAILS": "test@example.com,app@example.com",
     // Billing is "live" in tests so the Stripe paths are exercised; the two test
     // identities are comped so the rest of the suite is not a paying customer.
     "PREMIUM_EMAILS": "test@example.com,app@example.com",

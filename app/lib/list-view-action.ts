@@ -1,5 +1,4 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import {
   countSavedViews,
   deleteSavedView,
@@ -8,6 +7,7 @@ import {
   SAVED_VIEW_NAME_MAX,
 } from "../../db/saved-views";
 import { listViewHref, omitSavedViewId, parseListViewSearch } from "./list-view-search";
+import { appDb } from "./app-db";
 
 export type ListViewActionData = {
   error: string;
@@ -20,7 +20,7 @@ export async function listViewAction({
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
   const current = parseListViewSearch(new URL(request.url).searchParams);
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
 
   if (intent === "save-view") {
     const name = String(form.get("name") ?? "").trim();

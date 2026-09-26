@@ -1,6 +1,7 @@
-import { asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import type { CommentAuthor } from "../app/data/mock";
 import type { Db } from "./client";
+import { ideaIdsInWorkspace, ownIdea } from "./ideas";
 import { ideaComments, ideas, type IdeaComment } from "./schema";
 
 export type { IdeaComment };
@@ -42,7 +43,9 @@ export async function listCommentsForIdea(db: Db, ideaId: number): Promise<IdeaC
   return db
     .select()
     .from(ideaComments)
-    .where(eq(ideaComments.ideaId, ideaId))
+    .where(
+      and(eq(ideaComments.ideaId, ideaId), inArray(ideaComments.ideaId, ideaIdsInWorkspace(db))),
+    )
     .orderBy(asc(ideaComments.createdAt), asc(ideaComments.id));
 }
 
@@ -58,7 +61,12 @@ export async function commentCountsByIdeaIds(
       count: sql<number>`count(*)`,
     })
     .from(ideaComments)
-    .where(inArray(ideaComments.ideaId, ideaIds))
+    .where(
+      and(
+        inArray(ideaComments.ideaId, ideaIds),
+        inArray(ideaComments.ideaId, ideaIdsInWorkspace(db)),
+      ),
+    )
     .groupBy(ideaComments.ideaId);
   for (const row of rows) {
     counts.set(row.ideaId, Number(row.count) || 0);
@@ -72,6 +80,7 @@ export async function insertIdeaComment(
   body: string,
   author: CommentAuthor,
 ): Promise<IdeaComment> {
+  await touchOwnIdea(db, ideaId);
   const [created] = await db
     .insert(ideaComments)
     .values({
@@ -84,9 +93,15 @@ export async function insertIdeaComment(
   if (!created) {
     throw new Error("Failed to insert comment");
   }
-  await db
+  return created;
+}
+
+/** Bumps updated_at and, as a side effect, proves the idea is in this workspace. */
+async function touchOwnIdea(db: Db, ideaId: number): Promise<void> {
+  const [touched] = await db
     .update(ideas)
     .set({ updatedAt: sql`(datetime('now'))` })
-    .where(eq(ideas.id, ideaId));
-  return created;
+    .where(ownIdea(db, ideaId))
+    .returning({ id: ideas.id });
+  if (!touched) throw new Error("Idea not found in workspace");
 }

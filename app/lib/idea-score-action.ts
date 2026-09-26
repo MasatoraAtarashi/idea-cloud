@@ -1,7 +1,7 @@
 import { type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { saveHumanScore } from "../../db/ideas";
 import { HUMAN_SCORE_NOTE_MAX, parseScore } from "./scores";
+import { appDb } from "./app-db";
 
 export type HumanScoreActionData = {
   error?: string;
@@ -32,7 +32,7 @@ export async function humanScoreIdeaAction({
     return { error: "メモが長すぎます", intent: "human-score" } satisfies HumanScoreActionData;
   }
 
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const updated = await saveHumanScore(db, ideaId, { score, note });
   if (!updated) {
     return { error: "見つかりません", intent: "human-score" } satisfies HumanScoreActionData;

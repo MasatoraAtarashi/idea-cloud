@@ -19,13 +19,13 @@ import {
   verifyStripeSignature,
 } from "../server/billing/stripe";
 import { applyStripeEvent } from "../server/billing/webhook";
-import { authHeaders, testEnv, TEST_USER_EMAIL } from "./auth-helper";
+import { authHeaders, testEnv, TEST_USER_EMAIL, TEST_WORKSPACE_ID } from "./auth-helper";
 
 const COMPED = testEnv.PREMIUM_EMAILS!;
 const PAYING = "payer@example.com";
 
 function db() {
-  return createDb(env.DB);
+  return createDb(env.DB, TEST_WORKSPACE_ID);
 }
 
 async function api(path: string, init?: RequestInit) {

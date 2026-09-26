@@ -21,6 +21,7 @@ Quiet login gate plus a working create/list/detail loop. Ideas persist to D1. Lo
 | [docs/spec/deploy-and-access.md](docs/spec/deploy-and-access.md)       | First deploy, live D1 id, Access deferred until URL           |
 | [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md)                     | Auth: Google OAuth, session cookie, app token, gates          |
 | [docs/spec/mcp.md](docs/spec/mcp.md)                                   | Remote MCP for agents (`/mcp`, bearer token, nine data tools) |
+| [docs/spec/workspaces.md](docs/spec/workspaces.md)                     | Tenancy: workspaces, members, invites, per-workspace MCP keys |
 
 UI previews (desktop ~1280px / mobile ~390px): [docs/ui-previews/](docs/ui-previews/).
 
@@ -47,7 +48,8 @@ Playwright (localhost dev sign-in, local D1): `pnpm test:e2e`. A `setup` project
 | `/app/analytics`    | Light counts from D1 idea rows (stage + created per day). First-class nav (mobile 分析 tab)                                                                     |
 | `/app/merge`        | Merge deep link (not in primary nav)                                                                                                                            |
 | `/app/research`     | Research deep link (redirects `from` to idea detail)                                                                                                            |
-| `/app/settings`     | Settings (team / access)                                                                                                                                        |
+| `/app/settings`     | Settings: workspace members / invites, name / switch, MCP keys, profile / plan                                                                                  |
+| `/app/join/:token`  | Accept a workspace invite (signs in first)                                                                                                                      |
 | `/app/team`         | Redirects to settings                                                                                                                                           |
 
 ## What was copied from the template
@@ -66,7 +68,8 @@ Included:
 ## Stubs / not wired
 
 - **Login:** `/login` starts Google OAuth on the Worker (`/api/auth/google`), and the callback sets a signed httpOnly session cookie. `/app/**` redirects to `/login?next=…` without one. `/app` is new-idea compose; desktop replaces to `/app/list`. Details: [docs/spec/oauth-swap.md](docs/spec/oauth-swap.md).
-- **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Second layer after Google identity, re-checked on every request. Settings shows a stub, not a working editor. There is no user table — membership is env config.
+- **Allowlist:** `ACCESS_ALLOWED_EMAILS` (comma-separated). Who may sign in at all; re-checked on every request. Leave it empty for a public deploy.
+- **Workspaces:** every idea / inspiration / category / saved view belongs to one workspace; members see only theirs. First sign-in claims the legacy workspace (allowlisted emails) or gets a personal one. Invites and per-workspace MCP keys live in 設定. See [docs/spec/workspaces.md](docs/spec/workspaces.md).
 - **Ideas:** D1 `ideas` table. **作成** inserts a row; `/app/list` and `/app/ideas/:id` load from D1. Shared workspace; no owner column; no field encryption. Detail **コメント** persist in `idea_comments` (author = signed-in email). List rows show tags, stage, updated, aging, comment count, and research. Named **ビュー** persist in `saved_views`.
 - **Plans / 課金:** AI（相談・評価・リサーチ・ブレスト）と作成時の自動タグは premium 限定。支払いは **Stripe のホスト型 Checkout / Billing Portal**（カードデータはこの Worker を通らない）。署名検証つき Webhook が D1 の `entitlements` を更新し、`resolvePlan` がそれを読む。`PREMIUM_EMAILS` はオーナー／無償付与の上書き。`STRIPE_*` 3 つが未設定の間は課金が動かず全員 premium。`/api` の AI エンドポイントは未課金メンバーに **402**。詳細: [docs/spec/billing.md](docs/spec/billing.md)。
 - **Field encryption:** AES-GCM helper in `server/security/field-crypto.ts`. Not applied to idea rows.
@@ -86,7 +89,7 @@ Env template: `.dev.vars.example`. Do not commit secret values. Production: `wra
 
 ## Remote MCP
 
-Agents read and write the same D1 ideas over `POST /mcp` (Streamable HTTP). Set `MCP_API_KEY` in `.dev.vars` locally and with `wrangler secret put MCP_API_KEY` in production. The web session cookie does not authorize `/mcp`. Tools and client config: [docs/spec/mcp.md](docs/spec/mcp.md).
+Agents read and write one workspace over `POST /mcp` (Streamable HTTP) with a key minted in 設定 → API キー（MCP）. The env `MCP_API_KEY` is legacy and only opens workspace 1. The web session cookie does not authorize `/mcp`. Tools and client config: [docs/spec/mcp.md](docs/spec/mcp.md).
 
 ## Deploy
 

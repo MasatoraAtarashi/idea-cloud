@@ -1,5 +1,5 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
+import { appDb } from "./app-db";
 import { asStage, updateIdeaStage } from "../../db/ideas";
 import { STAGES } from "../data/mock";
 import { commentIdeaAction } from "./idea-comment-action";
@@ -36,7 +36,7 @@ export async function ideaDetailAction(args: ActionFunctionArgs) {
     if (!(STAGES as readonly string[]).includes(stageRaw)) {
       return { error: "段階が不正です" } satisfies IdeaDetailActionData;
     }
-    const db = createDb(args.context.cloudflare.env.DB);
+    const db = appDb(args.context);
     const updated = await updateIdeaStage(db, ideaId, asStage(stageRaw));
     if (!updated) {
       return { error: "見つかりません" } satisfies IdeaDetailActionData;

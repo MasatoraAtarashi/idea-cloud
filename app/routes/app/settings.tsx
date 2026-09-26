@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
-import { Link, useOutletContext } from "react-router";
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useOutletContext,
+  type LoaderFunctionArgs,
+} from "react-router";
 import { LOGOUT_PATH } from "../../auth/google-login";
 import type { AppData } from "./layout";
-import { MEMBERS, SESSION_USER } from "../../data/mock";
 import { initialsFromLabel } from "../../lib/format";
 import { LIST_PATH } from "../../lib/home-path";
 import {
@@ -12,11 +19,23 @@ import {
   startBilling,
   type BillingStatus,
 } from "../../lib/billing";
+import { workspaceSettingsAction, type WorkspaceActionData } from "../../lib/workspace-action";
+import { createRootDb } from "../../../db/client";
+import {
+  INVITE_TTL_DAYS,
+  WORKSPACE_NAME_MAX,
+  listActiveInvites,
+  listApiKeys,
+  listMembers,
+  listMembershipsForEmail,
+} from "../../../db/workspaces";
+
+export { workspaceSettingsAction as action };
 
 const SECTIONS = [
   { id: "members", group: "ワークスペース", label: "メンバーとアクセス" },
   { id: "general", group: "ワークスペース", label: "一般" },
-  { id: "team", group: "ワークスペース", label: "チーム" },
+  { id: "api", group: "ワークスペース", label: "API キー（MCP）" },
   { id: "stages", group: "ワークスペース", label: "段階とラベル" },
   { id: "profile", group: "個人", label: "プロフィール" },
   { id: "notify", group: "個人", label: "通知と熟成リマインド" },
@@ -29,9 +48,56 @@ export function meta() {
   return [{ title: "設定 — アイデアクラウド" }];
 }
 
+/**
+ * Members, invites and keys are read with the unscoped handle but always for
+ * `context.workspace.id`, which the page gate resolved from this session's
+ * membership. Owner-only lists are still returned empty to members.
+ */
+export async function loader({ context }: LoaderFunctionArgs) {
+  const workspace = context.workspace!;
+  const email = context.userEmail ?? "";
+  const db = createRootDb(context.cloudflare.env.DB);
+  const isOwner = workspace.role === "owner";
+  const [members, memberships, invites, keys] = await Promise.all([
+    listMembers(db, workspace.id),
+    listMembershipsForEmail(db, email),
+    isOwner ? listActiveInvites(db, workspace.id) : Promise.resolve([]),
+    isOwner ? listApiKeys(db, workspace.id) : Promise.resolve([]),
+  ]);
+  return {
+    members: members.map((row) => ({ email: row.email, role: row.role, since: row.createdAt })),
+    memberships,
+    invites: invites.map((row) => ({
+      id: row.id,
+      role: row.role,
+      expiresAt: row.expiresAt,
+      uses: row.uses,
+      maxUses: row.maxUses,
+    })),
+    keys: keys.map((row) => ({
+      id: row.id,
+      name: row.name,
+      prefix: row.prefix,
+      createdAt: row.createdAt,
+      lastUsedAt: row.lastUsedAt,
+    })),
+  };
+}
+
 export default function SettingsPage() {
-  const { userEmail, premium } = useOutletContext<AppData>();
+  const { userEmail, premium, workspace } = useOutletContext<AppData>();
+  const data = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof workspaceSettingsAction>() as
+    WorkspaceActionData | undefined;
   const [section, setSection] = useState<SectionId>("members");
+
+  useEffect(() => {
+    if (!actionData?.intent) return;
+    if (actionData.intent.startsWith("key-")) setSection("api");
+    else if (actionData.intent === "rename" || actionData.intent === "create-workspace") {
+      setSection("general");
+    }
+  }, [actionData]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
@@ -47,6 +113,9 @@ export default function SettingsPage() {
       </header>
       <aside className="w-full shrink-0 border-b border-border px-3 py-4 md:w-52 md:border-b-0 md:border-r">
         <p className="hidden px-2 text-[16px] font-semibold md:block">設定</p>
+        <p className="hidden truncate px-2 pt-1 text-[11.5px] text-muted-foreground md:block">
+          {workspace.name}
+        </p>
         <nav className="mt-3 flex gap-1 overflow-x-auto md:mt-4 md:flex-col">
           {SECTIONS.map((item, index) => {
             const prev = SECTIONS[index - 1];
@@ -76,7 +145,25 @@ export default function SettingsPage() {
       </aside>
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6">
         {section === "members" ? (
-          <MembersPanel userEmail={userEmail} />
+          <MembersPanel
+            userEmail={userEmail}
+            isOwner={workspace.role === "owner"}
+            members={data.members}
+            invites={data.invites}
+            actionData={actionData}
+          />
+        ) : section === "general" ? (
+          <GeneralPanel
+            workspace={workspace}
+            memberships={data.memberships}
+            actionData={actionData}
+          />
+        ) : section === "api" ? (
+          <ApiKeysPanel
+            isOwner={workspace.role === "owner"}
+            keys={data.keys}
+            actionData={actionData}
+          />
         ) : section === "profile" ? (
           <ProfilePanel userEmail={userEmail} premium={premium} />
         ) : (
@@ -87,87 +174,356 @@ export default function SettingsPage() {
   );
 }
 
-function MembersPanel({ userEmail }: { userEmail: string | null }) {
-  const rows =
-    MEMBERS.length === 0
-      ? [
-          {
-            name: userEmail ?? SESSION_USER.label,
-            email: userEmail ?? "",
-            role: SESSION_USER.role,
-          },
-        ]
-      : MEMBERS;
+function ActionNote({ data, intents }: { data?: WorkspaceActionData; intents: string[] }) {
+  if (!data || !intents.includes(data.intent)) return null;
+  if (data.error) {
+    return (
+      <p role="alert" className="mt-2 text-[12.5px] text-danger">
+        {data.error}
+      </p>
+    );
+  }
+  return null;
+}
 
+function useBusy(intent: string): boolean {
+  const navigation = useNavigation();
+  return navigation.state !== "idle" && navigation.formData?.get("intent") === intent;
+}
+
+function CopyField({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="mt-3 rounded-[10px] border border-border bg-sunken p-3">
+      <p className="text-[12px] text-muted-foreground">{label}</p>
+      <div className="mt-1 flex items-center gap-2">
+        <input
+          readOnly
+          value={value}
+          onFocus={(event) => event.currentTarget.select()}
+          className="ui-input min-w-0 flex-1 font-mono text-[12px]"
+        />
+        <button
+          type="button"
+          className="ui-btn-secondary shrink-0 px-3"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(value);
+              setCopied(true);
+            } catch {
+              setCopied(false);
+            }
+          }}
+        >
+          {copied ? "コピー済み" : "コピー"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type LoaderData = Awaited<ReturnType<typeof loader>>;
+
+function MembersPanel({
+  userEmail,
+  isOwner,
+  members,
+  invites,
+  actionData,
+}: {
+  userEmail: string | null;
+  isOwner: boolean;
+  members: LoaderData["members"];
+  invites: LoaderData["invites"];
+  actionData?: WorkspaceActionData;
+}) {
+  const inviting = useBusy("invite-create");
   return (
     <div className="mx-auto max-w-3xl">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-[16px] font-semibold">メンバーとアクセス</h2>
           <p className="mt-1 text-[12.5px] text-muted-foreground">
-            アイデアの閲覧・編集範囲はチーム単位で決まります。
+            このワークスペースのアイデアとインスピレーションは、メンバー全員が閲覧・編集できます。
           </p>
         </div>
-        <button type="button" disabled className="ui-btn opacity-40" title="未配線">
-          メンバーを招待
-        </button>
+        {isOwner ? (
+          <Form method="post">
+            <input type="hidden" name="intent" value="invite-create" />
+            <button type="submit" disabled={inviting} className="ui-btn">
+              招待リンクを作る
+            </button>
+          </Form>
+        ) : null}
       </div>
+      <ActionNote data={actionData} intents={["invite-create", "invite-revoke", "member-remove"]} />
+      {actionData?.intent === "invite-create" && actionData.inviteUrl ? (
+        <CopyField
+          value={actionData.inviteUrl}
+          label={`招待リンク（${INVITE_TTL_DAYS}日間有効・Google でログインした人が参加できます）`}
+        />
+      ) : null}
       <div className="mt-4 overflow-hidden rounded-[10px] border border-border">
         <table className="ui-table">
           <thead>
             <tr>
               <th>メンバー</th>
               <th>権限</th>
-              <th>最終アクセス</th>
+              <th>参加</th>
+              {isOwner ? <th /> : null}
             </tr>
           </thead>
           <tbody>
-            {rows.map((member) => (
-              <tr key={member.name}>
-                <td>
-                  <div className="flex items-center gap-2.5 py-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] text-secondary">
-                      {initialsFromLabel(member.name)}
-                    </span>
-                    <span>
-                      <span className="block text-[13.5px] font-semibold">{member.name}</span>
-                      {member.email ? (
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          {member.email}
-                        </span>
+            {members.map((member) => {
+              const isSelf = userEmail?.toLowerCase() === member.email;
+              return (
+                <tr key={member.email}>
+                  <td>
+                    <div className="flex items-center gap-2.5 py-2">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-muted font-mono text-[11px] text-secondary">
+                        {initialsFromLabel(member.email)}
+                      </span>
+                      <span className="font-mono text-[12px]">
+                        {member.email}
+                        {isSelf ? (
+                          <span className="font-sans text-muted-foreground">（自分）</span>
+                        ) : null}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="text-[13px] text-muted-foreground">
+                    {member.role === "owner" ? "管理者" : "メンバー"}
+                  </td>
+                  <td className="font-mono text-[11.5px] text-muted-foreground">
+                    {member.since.slice(0, 10)}
+                  </td>
+                  {isOwner ? (
+                    <td className="text-right">
+                      {!isSelf ? (
+                        <Form method="post">
+                          <input type="hidden" name="intent" value="member-remove" />
+                          <input type="hidden" name="email" value={member.email} />
+                          <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
+                            削除
+                          </button>
+                        </Form>
                       ) : null}
-                    </span>
-                  </div>
-                </td>
-                <td className="text-[13px] text-muted-foreground">
-                  {member.role === "owner" ? "管理者" : "メンバー"}
-                </td>
-                <td className="font-mono text-[11.5px] text-muted-foreground">ログイン中</td>
-              </tr>
-            ))}
+                    </td>
+                  ) : null}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+      {isOwner && invites.length > 0 ? (
+        <section className="mt-8">
+          <h3 className="text-[14px] font-semibold">有効な招待リンク</h3>
+          <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
+            {invites.map((invite) => (
+              <li key={invite.id} className="flex items-center gap-3 px-3 py-2 text-[12.5px]">
+                <span className="text-muted-foreground">
+                  {invite.role === "owner" ? "管理者として" : "メンバーとして"}参加 · {invite.uses}/
+                  {invite.maxUses} 回使用 · {invite.expiresAt.slice(0, 10)} まで
+                </span>
+                <Form method="post" className="ml-auto">
+                  <input type="hidden" name="intent" value="invite-revoke" />
+                  <input type="hidden" name="inviteId" value={invite.id} />
+                  <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
+                    無効化
+                  </button>
+                </Form>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[12px] text-muted-foreground">
+            リンクの本文は保存していないため、再表示はできません。必要なら作り直してください。
+          </p>
+        </section>
+      ) : null}
       <section className="mt-8">
-        <h3 className="text-[16px] font-semibold">既定の公開範囲</h3>
-        <div className="mt-3 grid gap-2 md:grid-cols-3">
-          <div className="rounded-[10px] border border-border-card bg-sunken p-3">
-            <p className="text-[13.5px] font-medium">チーム全体</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              同じチームの全員が閲覧・編集できる
-            </p>
-          </div>
-          <div className="rounded-[10px] border border-border p-3">
-            <p className="text-[13.5px] font-medium">起案者のみ</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">共有するまで本人だけに見える</p>
-          </div>
-          <div className="rounded-[10px] border border-border p-3">
-            <p className="text-[13.5px] font-medium">ワークスペース全体</p>
-            <p className="mt-1 text-[12px] text-muted-foreground">全チームから横断で参照できる</p>
-          </div>
-        </div>
-        <p className="mt-2 text-[12px] text-muted-foreground">表示のみ。保存はまだありません。</p>
+        <h3 className="text-[14px] font-semibold">このワークスペースから離脱</h3>
+        <p className="mt-1 text-[12px] text-muted-foreground">
+          離脱後は別のワークスペースに切り替わります。最後の管理者は離脱できません。
+        </p>
+        <Form
+          method="post"
+          className="mt-2"
+          onSubmit={(event) => {
+            if (!confirm("このワークスペースから離脱しますか？")) event.preventDefault();
+          }}
+        >
+          <input type="hidden" name="intent" value="leave" />
+          <button type="submit" className="ui-btn-danger px-3">
+            離脱する
+          </button>
+        </Form>
+        <ActionNote data={actionData} intents={["leave"]} />
       </section>
+    </div>
+  );
+}
+
+function GeneralPanel({
+  workspace,
+  memberships,
+  actionData,
+}: {
+  workspace: AppData["workspace"];
+  memberships: LoaderData["memberships"];
+  actionData?: WorkspaceActionData;
+}) {
+  const isOwner = workspace.role === "owner";
+  return (
+    <div className="mx-auto max-w-2xl">
+      <h2 className="text-[16px] font-semibold">一般</h2>
+      <section className="mt-4 rounded-[10px] border border-border p-4">
+        <p className="text-[12px] text-muted-foreground">ワークスペース名</p>
+        <Form method="post" className="mt-2 flex items-center gap-2">
+          <input type="hidden" name="intent" value="rename" />
+          <input
+            name="name"
+            defaultValue={workspace.name}
+            maxLength={WORKSPACE_NAME_MAX}
+            disabled={!isOwner}
+            className="ui-input min-w-0 flex-1"
+            aria-label="ワークスペース名"
+          />
+          <button type="submit" disabled={!isOwner} className="ui-btn-secondary px-3">
+            保存
+          </button>
+        </Form>
+        {!isOwner ? (
+          <p className="mt-2 text-[12px] text-muted-foreground">名前の変更は管理者のみできます。</p>
+        ) : null}
+        <ActionNote data={actionData} intents={["rename"]} />
+        {actionData?.intent === "rename" && actionData.ok ? (
+          <p className="mt-2 text-[12.5px] text-muted-foreground">保存しました。</p>
+        ) : null}
+      </section>
+      <section className="mt-8">
+        <h3 className="text-[14px] font-semibold">参加しているワークスペース</h3>
+        <ul className="mt-2 divide-y divide-border rounded-[10px] border border-border">
+          {memberships.map((membership) => {
+            const current = membership.workspaceId === workspace.id;
+            return (
+              <li key={membership.workspaceId} className="flex items-center gap-3 px-3 py-2">
+                <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">
+                  {membership.name}
+                </span>
+                <span className="text-[12px] text-muted-foreground">
+                  {membership.role === "owner" ? "管理者" : "メンバー"}
+                </span>
+                {current ? (
+                  <span className="rounded-[6px] bg-muted px-2 py-0.5 text-[11.5px] text-secondary">
+                    現在
+                  </span>
+                ) : (
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="switch" />
+                    <input type="hidden" name="workspaceId" value={membership.workspaceId} />
+                    <button type="submit" className="ui-btn-secondary px-3 text-[12px]">
+                      切り替え
+                    </button>
+                  </Form>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <ActionNote data={actionData} intents={["switch"]} />
+      </section>
+      <section className="mt-8">
+        <h3 className="text-[14px] font-semibold">新しいワークスペースを作る</h3>
+        <Form method="post" className="mt-2 flex items-center gap-2">
+          <input type="hidden" name="intent" value="create-workspace" />
+          <input
+            name="name"
+            placeholder="チーム名やプロジェクト名"
+            maxLength={WORKSPACE_NAME_MAX}
+            className="ui-input min-w-0 flex-1"
+            aria-label="新しいワークスペース名"
+          />
+          <button type="submit" className="ui-btn px-3">
+            作成
+          </button>
+        </Form>
+        <ActionNote data={actionData} intents={["create-workspace"]} />
+      </section>
+    </div>
+  );
+}
+
+function ApiKeysPanel({
+  isOwner,
+  keys,
+  actionData,
+}: {
+  isOwner: boolean;
+  keys: LoaderData["keys"];
+  actionData?: WorkspaceActionData;
+}) {
+  const creating = useBusy("key-create");
+  return (
+    <div className="mx-auto max-w-2xl">
+      <h2 className="text-[16px] font-semibold">API キー（MCP）</h2>
+      <p className="mt-1 text-[12.5px] text-muted-foreground">
+        Cursor や Claude Desktop などのエージェントが <code className="ui-kbd">/mcp</code>{" "}
+        へ接続するときの <code className="ui-kbd">Authorization: Bearer</code>{" "}
+        です。キーはこのワークスペースのデータだけを読み書きできます。
+      </p>
+      {!isOwner ? (
+        <p className="mt-4 text-[13px] text-muted-foreground">
+          キーの発行と管理は管理者のみできます。
+        </p>
+      ) : (
+        <>
+          <Form method="post" className="mt-4 flex items-center gap-2">
+            <input type="hidden" name="intent" value="key-create" />
+            <input
+              name="name"
+              placeholder="用途（例: Cursor）"
+              maxLength={60}
+              className="ui-input min-w-0 flex-1"
+              aria-label="キーの名前"
+            />
+            <button type="submit" disabled={creating} className="ui-btn px-3">
+              発行
+            </button>
+          </Form>
+          <ActionNote data={actionData} intents={["key-create", "key-revoke"]} />
+          {actionData?.intent === "key-create" && actionData.createdKey ? (
+            <CopyField
+              value={actionData.createdKey}
+              label="新しいキー。今だけ表示されます。閉じると二度と見られません。"
+            />
+          ) : null}
+          <ul className="mt-4 divide-y divide-border rounded-[10px] border border-border">
+            {keys.length === 0 ? (
+              <li className="px-3 py-3 text-[12.5px] text-muted-foreground">
+                まだキーはありません。
+              </li>
+            ) : (
+              keys.map((key) => (
+                <li key={key.id} className="flex items-center gap-3 px-3 py-2 text-[12.5px]">
+                  <span className="min-w-0 flex-1 truncate font-medium">{key.name}</span>
+                  <span className="font-mono text-muted-foreground">{key.prefix}…</span>
+                  <span className="text-muted-foreground">
+                    {key.lastUsedAt ? `最終使用 ${key.lastUsedAt.slice(0, 10)}` : "未使用"}
+                  </span>
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="key-revoke" />
+                    <input type="hidden" name="keyId" value={key.id} />
+                    <button type="submit" className="ui-btn-ghost px-2 text-[12px]">
+                      無効化
+                    </button>
+                  </Form>
+                </li>
+              ))
+            )}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
@@ -259,7 +615,7 @@ function BillingRow({ premium }: { premium: boolean }) {
   );
 }
 
-/** The signed-in Google account. Membership lives in ACCESS_ALLOWED_EMAILS, not in D1. */
+/** The signed-in Google account. Membership lives in workspace_members, not here. */
 function ProfilePanel({ userEmail, premium }: { userEmail: string | null; premium: boolean }) {
   return (
     <div className="mx-auto max-w-2xl">

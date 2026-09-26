@@ -1,7 +1,7 @@
 import { type ActionFunctionArgs } from "react-router";
-import { createDb } from "../../db/client";
 import { discussIdea } from "../../server/ai/discuss";
 import { bindResearchAi } from "../../server/ai/research";
+import { appDb } from "./app-db";
 
 export type DiscussIdeaActionData = {
   error?: string;
@@ -20,7 +20,7 @@ export async function discussIdeaAction({
   }
 
   const form = await request.formData();
-  const db = createDb(context.cloudflare.env.DB);
+  const db = appDb(context);
   const result = await discussIdea({
     db,
     ai: bindResearchAi(context.cloudflare.env.AI),
