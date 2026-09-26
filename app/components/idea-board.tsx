@@ -1,11 +1,28 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { STAGES, type MockIdea } from "../data/mock";
 import { useT } from "../i18n/context";
+import { usePeekLink } from "../lib/idea-peek";
 import { compactAgedDays, compactRelative } from "../lib/list-format";
 import { IdeaActionsMenu } from "./idea-actions";
 import { IdeaReviewPrompt } from "./idea-review";
 import { CountBadge, StagePill, TagList } from "./ui";
 import { ListAiScore, ListCommentCount } from "./list-meta";
+
+/** The card body is the peek trigger; the href keeps ⌘-click going to detail. */
+function BoardCardLink({ idea, children }: { idea: MockIdea; children: ReactNode }) {
+  const peek = usePeekLink(idea.id);
+  return (
+    <Link
+      to={`/app/ideas/${idea.id}`}
+      prefetch="intent"
+      {...peek}
+      className="min-w-0 flex-1 no-underline"
+    >
+      {children}
+    </Link>
+  );
+}
 
 export function IdeaBoard({
   ideas,
@@ -46,11 +63,7 @@ export function IdeaBoard({
                       className="rounded-[10px] border border-border-card bg-card px-3 py-2.5 hover:border-border-control hover:shadow-[var(--shadow-hover)]"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <Link
-                          to={`/app/ideas/${idea.id}`}
-                          prefetch="intent"
-                          className="min-w-0 flex-1 no-underline"
-                        >
+                        <BoardCardLink idea={idea}>
                           <p className="idea-title-wrap ui-title line-clamp-3 text-[13.5px] leading-[1.5] text-foreground">
                             {idea.title}
                           </p>
@@ -64,7 +77,7 @@ export function IdeaBoard({
                             <span>{compactRelative(t, idea.updatedAt)}</span>
                           </p>
                           {showReview ? <IdeaReviewPrompt idea={idea} compact /> : null}
-                        </Link>
+                        </BoardCardLink>
                         <IdeaActionsMenu idea={idea} />
                       </div>
                     </div>

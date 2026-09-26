@@ -140,4 +140,16 @@ export const list: Dictionary["list"] = {
     days: (n: number) => `${n}d`,
     weeks: (n: number) => `${n}w`,
   },
+
+  /** Quick peek drawer opened from a row. */
+  peek: {
+    heading: "Quick look",
+    prev: "Previous idea",
+    next: "Next idea",
+    position: (index: number, total: number) => `${index} / ${total}`,
+    keyHint: "↑↓ to move",
+    openDetail: "Open detail",
+    detailHint: "Research, brainstorm and discuss live on the detail page.",
+    noBody: "No body",
+  },
 };

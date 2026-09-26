@@ -93,10 +93,21 @@ List view state is in the URL so Back/Forward and deep links work:
 | `sort`     | `updatedAt`, `createdAt`, `stage`, `title`                              | `updatedAt`       |
 | `dir`      | `asc`, `desc`                                                           | `desc`            |
 | `v`        | saved view id                                                           | none              |
+| `peek`     | idea id open in the quick-look drawer                                   | none              |
 
 Examples: `/app/list?tab=aging`, `/app/list?view=board&stage=ripe`, `/app/list?q=通勤`, `/app/list?v=3&stage=spark`. Tab / stage / view / tag / named-view changes push history; search typing uses `replace` so keystrokes do not stack. **ビューを保存** writes `saved_views` and sets `v`. Changing filters clears `v` unless the patch is applying a named view.
 
 The desktop list is one table grouped by stage (熟成中 → 熟した → 着想 → 採用 → アーカイブ). Sorting and filtering live in the sticky column header: click 段階 / アイデア / 熟成 / 更新 to sort (again to flip), and ▾ on 段階 / アイデア (keyword + カテゴリ) / タグ / 熟成 to filter that column. 「条件をクリア」 appears on the tab row while filters are active. Rows are one 40px line (pill, title + excerpt, up to 3 tags, 推し度, comments, aging, updated, ⋯). Row menu (⋯) is **次の段階へ** / **コピー** / **アーカイブ** / **削除** only — no AI items. Mobile keeps cards, a 絞り込み drawer, and swipe (left 次の段階へ, right アーカイブ).
+
+### Quick peek drawer
+
+Clicking a row opens a drawer instead of leaving the list, so a shelf can be skimmed: stage, aged days, updated, comments, title, body, tags and the 推し度 card. Evaluated ideas show their score and the four sections; unevaluated ones show **AI評価する** in place of them, and archived ones say why they cannot run. Everything else — リサーチ / ブレスト / 相談 — stays on the detail page, one **詳細を開く** away.
+
+The open idea is `?peek=<id>`, so a reload keeps it open, the link can be sent, and Back (or the phone's back gesture) closes it. `shouldRevalidate` in `app/routes/app/board.tsx` skips the loader when only `peek` changed: the drawer renders from the list payload, which already carries `aiScore` and `aiEvaluation`, so flipping costs no query.
+
+↑/↓ (or j/k) and the header arrows move to the neighbouring idea, in the order the list is **displayed** — grouped by stage, not the raw sort — and `replace` history, so Back leaves the list rather than walking every stop. A burst of keypresses resolves against the pending target, not the URL, so three taps move three ideas. Escape, the backdrop and ✕ close it and hand focus back to the row.
+
+Rows stay `<a href="/app/ideas/:id">`; the drawer is a plain-left-click interception. ⌘/Ctrl/middle-click still opens the detail page, and anything reading the list by its links keeps working. Right-hand drawer on `sm` and up, bottom sheet below. The evaluate form is aimed at `/app/ideas/:id` — an action-less post from the list would reach the board's action, which knows no `evaluate` intent.
 
 Detail (desktop) is the thinking column (title, body, tags, 見直し band with 見直した / 保留 / 捨てる, コメント, collapsible 自分の評価と振り返り) plus the **AI 作業台** on the right. The 作業台 has a preset (**速い・安い** / **標準** / **じっくり**) used by every run, an always-on 推し度 card, and tabs **相談 | 評価 | リサーチ | ブレスト** (`#discuss` / `#evaluate` / `#research` / `#brainstorm`). Each tab shows its own past output; there is no separate 履歴 tab (old `#history` / `#ai` links open 評価). Mobile detail switches アイデア | AI 作業台 with a segment. Archive locks all AI (**アーカイブでは相談できません** etc.) and 次の段階へ.
 

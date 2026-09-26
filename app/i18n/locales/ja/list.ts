@@ -148,4 +148,16 @@ export const list = {
     days: (n: number) => `${n}d`,
     weeks: (n: number) => `${n}w`,
   },
+
+  /** Quick peek drawer opened from a row. */
+  peek: {
+    heading: "クイックビュー",
+    prev: "前のアイデア",
+    next: "次のアイデア",
+    position: (index: number, total: number) => `${index} / ${total}`,
+    keyHint: "↑↓ で送る",
+    openDetail: "詳細を開く",
+    detailHint: "リサーチ・ブレスト・相談は詳細画面で。",
+    noBody: "本文なし",
+  },
 };
