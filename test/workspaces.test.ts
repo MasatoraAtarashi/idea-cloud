@@ -198,7 +198,9 @@ describe("workspace API keys on /mcp", () => {
       testEnv,
     );
     expect(authorized).toEqual({ workspaceId: ws.id, via: "workspace_key" });
-    expect(await resolveApiKey(root(), key.slice(0, -1) + "0")).toBeNull();
+    expect(
+      await resolveApiKey(root(), key.slice(0, -1) + (key.endsWith("0") ? "1" : "0")),
+    ).toBeNull();
 
     const hidden = await insertIdea(createDb(env.DB, TEST_WORKSPACE_ID), unique("legacy-only"));
     const listed = await exports.default.fetch("https://example.com/mcp", {
