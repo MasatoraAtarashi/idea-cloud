@@ -16,9 +16,13 @@
     "head_sampling_rate": 1,
   },
   "upload_source_maps": true,
+  // Must stay `true` and explicit: adding `routes` turns the *.workers.dev
+  // hostname OFF unless it is set here, and the shipped mobile client defaults
+  // to it (mobile/lib/api/config.dart). Installed builds cannot be fixed by a
+  // deploy, so this host has to keep answering.
+  "workers_dev": true,
   // Custom domain. The zone is in this same Cloudflare account, so deploying
-  // creates the DNS record and the certificate; the *.workers.dev hostname
-  // keeps serving alongside it.
+  // creates the DNS record and the certificate.
   //
   // Google sign-in builds its redirect_uri from the request's own origin
   // (server/auth/google-oauth.ts), so every hostname that serves the app needs
