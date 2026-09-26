@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
 import '../api/idea_source.dart';
+import '../models/ai_notes.dart';
 import '../models/comment.dart';
 import '../models/idea.dart';
 import '../models/stage.dart';
@@ -24,6 +25,12 @@ class _IdeaDetailPageState extends State<IdeaDetailPage> {
   List<IdeaComment> _comments = const [];
   bool _loading = true;
   bool _evaluating = false;
+  bool _researching = false;
+  bool _brainstorming = false;
+  bool _discussing = false;
+  List<Brainstorm> _brainstorms = const [];
+  List<ChatMessage> _discussions = const [];
+  final _discussController = TextEditingController();
   String? _error;
 
   @override
@@ -35,6 +42,7 @@ class _IdeaDetailPageState extends State<IdeaDetailPage> {
   @override
   void dispose() {
     _commentController.dispose();
+    _discussController.dispose();
     super.dispose();
   }
 
@@ -50,6 +58,7 @@ class _IdeaDetailPageState extends State<IdeaDetailPage> {
         _loading = false;
         _error = null;
       });
+      await _loadAiSideData();
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -174,10 +183,186 @@ class _IdeaDetailPageState extends State<IdeaDetailPage> {
                       const SizedBox(height: 10),
                       _buildEvaluationCard(idea),
                       const SizedBox(height: 10),
+                      _buildBrainstormCard(),
+                      const SizedBox(height: 10),
+                      _buildDiscussCard(),
+                      const SizedBox(height: 10),
                       _buildCommentsCard(),
                     ],
                   ),
                 ),
+    );
+  }
+
+  /// AI 三種は本体より遅い。失敗しても本文は出したいので、別に読む。
+  Future<void> _loadAiSideData() async {
+    try {
+      final brainstorms = await widget.api.listBrainstorms(widget.ideaId);
+      final discussions = await widget.api.listDiscussions(widget.ideaId);
+      if (!mounted) return;
+      setState(() {
+        _brainstorms = brainstorms;
+        _discussions = discussions;
+      });
+    } on Object {
+      // 読めなくても各カードのボタンからやり直せる。
+    }
+  }
+
+  Future<void> _research() async {
+    setState(() => _researching = true);
+    try {
+      final updated = await widget.api.research(widget.ideaId);
+      if (!mounted) return;
+      setState(() {
+        _idea = updated;
+        _researching = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _researching = false);
+      _showApiError(error);
+    }
+  }
+
+  Future<void> _brainstorm() async {
+    setState(() => _brainstorming = true);
+    try {
+      await widget.api.brainstorm(widget.ideaId);
+      final items = await widget.api.listBrainstorms(widget.ideaId);
+      if (!mounted) return;
+      setState(() {
+        _brainstorms = items;
+        _brainstorming = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _brainstorming = false);
+      _showApiError(error);
+    }
+  }
+
+  Future<void> _discuss() async {
+    final body = _discussController.text.trim();
+    if (body.isEmpty) return;
+    setState(() => _discussing = true);
+    try {
+      await widget.api.discuss(widget.ideaId, body);
+      final items = await widget.api.listDiscussions(widget.ideaId);
+      if (!mounted) return;
+      _discussController.clear();
+      setState(() {
+        _discussions = items;
+        _discussing = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _discussing = false);
+      _showApiError(error);
+    }
+  }
+
+  /// 402 はプレミアム限定。何が足りないかを言う。
+  void _showApiError(ApiException error) {
+    _showError(
+      error.statusCode == 402
+          ? 'AI 機能はプレミアムのみです。「その他」から切り替えられます。'
+          : error.message,
+    );
+  }
+
+  Widget _buildBrainstormCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionLabel('ブレスト'),
+          const SizedBox(height: 10),
+          if (_brainstorms.isEmpty)
+            const Text(
+              'まだありません',
+              style: TextStyle(fontSize: 13, color: Tokens.mutedForeground),
+            )
+          else
+            for (final item in _brainstorms)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: SelectableText(
+                  item.notes,
+                  style: const TextStyle(fontSize: 13, height: 1.9, color: Tokens.textSecondary),
+                ),
+              ),
+          const SizedBox(height: 4),
+          _SecondaryButton(
+            label: _brainstorming ? '考え中…' : (_brainstorms.isEmpty ? 'ブレストする' : 'もう一度'),
+            onPressed: _brainstorming ? null : _brainstorm,
+            busy: _brainstorming,
+          ),
+          const SizedBox(height: 8),
+          _SecondaryButton(
+            label: _researching ? '調べ中…' : 'Web で調べる',
+            onPressed: _researching ? null : _research,
+            busy: _researching,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiscussCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionLabel('壁打ち'),
+          const SizedBox(height: 10),
+          if (_discussions.isEmpty)
+            const Text(
+              'まだありません',
+              style: TextStyle(fontSize: 13, color: Tokens.mutedForeground),
+            )
+          else
+            for (final message in _discussions)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Align(
+                  alignment:
+                      message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: message.isUser ? Tokens.muted : Tokens.background,
+                      borderRadius: BorderRadius.circular(Tokens.radius),
+                      border: Border.all(color: Tokens.border),
+                    ),
+                    child: SelectableText(
+                      message.body,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.75,
+                        color: Tokens.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: _discussController,
+            minLines: 1,
+            maxLines: 4,
+            enabled: !_discussing,
+            decoration: const InputDecoration(hintText: '聞いてみる'),
+          ),
+          const SizedBox(height: 10),
+          _SecondaryButton(
+            label: _discussing ? '考え中…' : '送る',
+            onPressed: _discussing ? null : _discuss,
+            busy: _discussing,
+          ),
+        ],
+      ),
     );
   }
 

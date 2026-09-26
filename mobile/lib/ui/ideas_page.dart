@@ -18,10 +18,10 @@ class IdeasPage extends StatefulWidget {
   final Future<void> Function() onAuthFailure;
 
   @override
-  State<IdeasPage> createState() => _IdeasPageState();
+  State<IdeasPage> createState() => IdeasPageState();
 }
 
-class _IdeasPageState extends State<IdeasPage> {
+class IdeasPageState extends State<IdeasPage> {
   List<Idea> _ideas = const [];
   Stage? _filter;
   bool _loading = true;
@@ -32,6 +32,9 @@ class _IdeasPageState extends State<IdeasPage> {
     super.initState();
     _reload();
   }
+
+  /// AppShell から、預けた直後に呼ばれる。
+  Future<void> reload() => _reload();
 
   Future<void> _reload() async {
     setState(() {

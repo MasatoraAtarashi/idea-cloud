@@ -2,8 +2,13 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/ai_notes.dart';
+import '../models/analytics.dart';
+import '../models/billing.dart';
 import '../models/comment.dart';
+import '../models/inspiration.dart';
 import '../models/idea.dart';
+import '../models/search.dart';
 import '../models/stage.dart';
 import 'auth.dart';
 import 'config.dart';
@@ -98,6 +103,101 @@ class ApiClient implements IdeaSource {
   Future<Idea> evaluate(int ideaId) async {
     final json = await _send('POST', '/api/ideas/$ideaId/evaluate', timeout: const Duration(seconds: 120));
     return Idea.fromJson(json['item'] as Map<String, dynamic>);
+  }
+
+  /// AI の生成は Workers 側で走るので、評価と同じく長めに待つ。
+  static const _aiTimeout = Duration(seconds: 120);
+
+  @override
+  Future<List<Brainstorm>> listBrainstorms(int ideaId) async {
+    final json = await _send('GET', '/api/ideas/$ideaId/brainstorms');
+    return _items(json, Brainstorm.fromJson);
+  }
+
+  @override
+  Future<void> brainstorm(int ideaId) =>
+      _send('POST', '/api/ideas/$ideaId/brainstorm', timeout: _aiTimeout);
+
+  @override
+  Future<List<ChatMessage>> listDiscussions(int ideaId) async {
+    final json = await _send('GET', '/api/ideas/$ideaId/discussions');
+    return _items(json, ChatMessage.fromJson);
+  }
+
+  @override
+  Future<void> discuss(int ideaId, String body) => _send(
+        'POST',
+        '/api/ideas/$ideaId/discuss',
+        body: {'body': body},
+        timeout: _aiTimeout,
+      );
+
+  @override
+  Future<Idea> research(int ideaId) async {
+    final json = await _send('POST', '/api/ideas/$ideaId/research', timeout: _aiTimeout);
+    return Idea.fromJson(json['item'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<List<Inspiration>> listInspirations() async {
+    final json = await _send('GET', '/api/inspirations');
+    return _items(json, Inspiration.fromJson);
+  }
+
+  @override
+  Future<Inspiration> getInspiration(int id) async {
+    final json = await _send('GET', '/api/inspirations/$id');
+    return Inspiration.fromJson(json['item'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<Inspiration> createInspiration({
+    String? title,
+    String? url,
+    String? memo,
+    List<String>? tags,
+  }) async {
+    final json = await _send('POST', '/api/inspirations', body: {
+      if (title != null && title.isNotEmpty) 'title': title,
+      if (url != null && url.isNotEmpty) 'url': url,
+      if (memo != null && memo.isNotEmpty) 'memo': memo,
+      if (tags != null && tags.isNotEmpty) 'tags': tags,
+    });
+    return Inspiration.fromJson(json['item'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> deleteInspiration(int id) => _send('DELETE', '/api/inspirations/$id');
+
+  @override
+  Future<Analytics> analytics() async {
+    final json = await _send('GET', '/api/analytics');
+    return Analytics.fromJson(json['analytics'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<Billing> billing() async {
+    return Billing.fromJson(await _send('GET', '/api/billing'));
+  }
+
+  @override
+  Future<String> billingUrl({required bool manage}) async {
+    final json = await _send('POST', manage ? '/api/billing/portal' : '/api/billing/checkout');
+    final url = json['url'] as String?;
+    if (url == null || url.isEmpty) throw ApiException('決済ページを開けませんでした。');
+    return url;
+  }
+
+  @override
+  Future<SearchResults> search(String query) async {
+    if (query.trim().isEmpty) return SearchResults.empty;
+    final json = await _send('GET', '/api/search?q=${Uri.encodeQueryComponent(query.trim())}');
+    return SearchResults.fromJson(json);
+  }
+
+  static List<T> _items<T>(Map<String, dynamic> json, T Function(Map<String, dynamic>) read) {
+    final items = json['items'] as List<dynamic>? ?? const [];
+    return items.whereType<Map<String, dynamic>>().map(read).toList(growable: false);
   }
 
   Future<Map<String, dynamic>> _send(

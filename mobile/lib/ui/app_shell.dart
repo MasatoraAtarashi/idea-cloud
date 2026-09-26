@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../api/auth.dart';
 import '../api/idea_source.dart';
-import 'account_page.dart';
+import 'analytics_page.dart';
+import 'capture_page.dart';
 import 'ideas_page.dart';
+import 'inspirations_page.dart';
+import 'settings_page.dart';
 import 'sign_in_page.dart';
 import 'tokens.dart';
 
@@ -21,6 +24,9 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _tab = 0;
+
+  /// 一覧タブを外から読み直させるための鍵。預けた直後に効かせる。
+  final _ideasKey = GlobalKey<IdeasPageState>();
   bool _checking = true;
   String? _error;
 
@@ -92,8 +98,20 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(
         index: _tab,
         children: [
-          IdeasPage(api: widget.api, onAuthFailure: _openSignIn),
-          AccountPage(auth: widget.auth, isMock: widget.api.isMock, onSignOut: _signOut),
+          CapturePage(
+            api: widget.api,
+            onCreated: () => _ideasKey.currentState?.reload(),
+            onAuthFailure: _openSignIn,
+          ),
+          IdeasPage(key: _ideasKey, api: widget.api, onAuthFailure: _openSignIn),
+          InspirationsPage(api: widget.api, onAuthFailure: _openSignIn),
+          AnalyticsPage(api: widget.api, onAuthFailure: _openSignIn),
+          SettingsPage(
+            api: widget.api,
+            auth: widget.auth,
+            onSignOut: _signOut,
+            onAuthFailure: _openSignIn,
+          ),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -101,9 +119,24 @@ class _AppShellState extends State<AppShell> {
         onDestinationSelected: (index) => setState(() => _tab = index),
         destinations: const [
           NavigationDestination(
+            icon: Icon(Icons.edit_outlined),
+            selectedIcon: Icon(Icons.edit),
+            label: '預ける',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.lightbulb_outline),
             selectedIcon: Icon(Icons.lightbulb),
             label: '一覧',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.auto_awesome_outlined),
+            selectedIcon: Icon(Icons.auto_awesome),
+            label: 'ひらめき',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.insights_outlined),
+            selectedIcon: Icon(Icons.insights),
+            label: '分析',
           ),
           NavigationDestination(
             icon: Icon(Icons.more_horiz_outlined),

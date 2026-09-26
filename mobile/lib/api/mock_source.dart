@@ -1,5 +1,10 @@
+import '../models/ai_notes.dart';
+import '../models/analytics.dart';
+import '../models/billing.dart';
 import '../models/comment.dart';
+import '../models/inspiration.dart';
 import '../models/idea.dart';
+import '../models/search.dart';
 import '../models/stage.dart';
 import 'idea_source.dart';
 
@@ -255,5 +260,260 @@ class MockSource implements IdeaSource {
     );
     _ideas[index] = updated;
     return updated;
+  }
+
+  // ---- ひらめき・AI・分析・検索 -------------------------------------------
+
+  final List<Inspiration> _inspirations = _seedInspirations();
+  final Map<int, List<Brainstorm>> _brainstorms = {};
+  final Map<int, List<ChatMessage>> _discussions = {};
+
+  static List<Inspiration> _seedInspirations() {
+    final now = DateTime.now().toUtc();
+    return [
+      Inspiration(
+        id: 11,
+        title: '紙のノートに戻る人たち',
+        url: 'https://example.com/paper-notes',
+        memo: 'デジタルに全部移した人が一部だけ紙に戻す話。境目がどこかを知りたい。',
+        tags: const ['道具', '習慣'],
+        createdAt: now.subtract(const Duration(days: 3)),
+        ogTitle: 'Why people go back to paper',
+        ogDescription: '完全移行ではなく併用に落ち着く理由を、16 人への聞き取りからまとめた。',
+        ogImageUrl: '',
+        ogSiteName: 'Example',
+      ),
+      Inspiration(
+        id: 12,
+        title: '熟成という言い方',
+        url: null,
+        memo: 'アイデアを「寝かせる」と言うとき、何が変わるのを待っているのか。',
+        tags: const ['言葉'],
+        createdAt: now.subtract(const Duration(days: 9)),
+        ogTitle: '',
+        ogDescription: '',
+        ogImageUrl: '',
+        ogSiteName: '',
+      ),
+    ];
+  }
+
+  @override
+  Future<List<Brainstorm>> listBrainstorms(int ideaId) async {
+    await _delay(250);
+    return List.unmodifiable(_brainstorms[ideaId] ?? const []);
+  }
+
+  @override
+  Future<void> brainstorm(int ideaId) async {
+    await _delay(2200);
+    _brainstorms.putIfAbsent(ideaId, () => []).insert(
+          0,
+          Brainstorm(
+            id: _nextId++,
+            notes: 'これはモックのブレスト結果です。\n\n'
+                '・似た不便を持つ人が他にどこにいるか\n'
+                '・すでにある道具で代用できてしまわないか\n'
+                '・最初の一歩を今週のうちに踏めるか',
+            model: 'mock',
+            createdAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<List<ChatMessage>> listDiscussions(int ideaId) async {
+    await _delay(250);
+    return List.unmodifiable(_discussions[ideaId] ?? const []);
+  }
+
+  @override
+  Future<void> discuss(int ideaId, String body) async {
+    final thread = _discussions.putIfAbsent(ideaId, () => []);
+    thread.add(ChatMessage(
+      id: _nextId++,
+      role: 'user',
+      body: body,
+      createdAt: DateTime.now().toUtc(),
+    ));
+    await _delay(1800);
+    thread.add(ChatMessage(
+      id: _nextId++,
+      role: 'assistant',
+      body: 'これはモックの返答です。実際は Workers AI が答えます。',
+      createdAt: DateTime.now().toUtc(),
+    ));
+  }
+
+  @override
+  Future<Idea> research(int ideaId) async {
+    await _delay(2400);
+    final index = _indexOf(ideaId);
+    final updated = _copy(
+      _ideas[index],
+      aiEvaluation: 'これはモックのリサーチ結果です。実際は Web 検索の結果を添えて返ります。',
+    );
+    _ideas[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<List<Inspiration>> listInspirations() async {
+    await _delay();
+    return List.unmodifiable(_inspirations);
+  }
+
+  @override
+  Future<Inspiration> getInspiration(int id) async {
+    await _delay(200);
+    return _inspirations.firstWhere((item) => item.id == id);
+  }
+
+  @override
+  Future<Inspiration> createInspiration({
+    String? title,
+    String? url,
+    String? memo,
+    List<String>? tags,
+  }) async {
+    await _delay(300);
+    final created = Inspiration(
+      id: _nextId++,
+      title: (title?.trim().isNotEmpty ?? false) ? title!.trim() : '無題',
+      url: (url?.trim().isNotEmpty ?? false) ? url!.trim() : null,
+      memo: memo ?? '',
+      tags: tags ?? const [],
+      createdAt: DateTime.now().toUtc(),
+      ogTitle: '',
+      ogDescription: '',
+      ogImageUrl: '',
+      ogSiteName: '',
+    );
+    _inspirations.insert(0, created);
+    return created;
+  }
+
+  @override
+  Future<void> deleteInspiration(int id) async {
+    await _delay(200);
+    _inspirations.removeWhere((item) => item.id == id);
+  }
+
+  @override
+  Future<Analytics> analytics() async {
+    await _delay();
+    final now = DateTime.now().toUtc();
+    List<DayCount> days(int span) => [
+          for (var offset = span - 1; offset >= 0; offset--)
+            DayCount(
+              day: now
+                  .subtract(Duration(days: offset))
+                  .toIso8601String()
+                  .substring(0, 10),
+              count: _ideas
+                  .where((idea) => idea.agedDays == offset)
+                  .length,
+            ),
+        ];
+    final tagCounts = <String, int>{};
+    for (final idea in _ideas) {
+      for (final tag in idea.tags) {
+        tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+      }
+    }
+    final topTags = tagCounts.entries.map((e) => TagCount(tag: e.key, count: e.value)).toList()
+      ..sort((a, b) => b.count.compareTo(a.count));
+    final aged = _ideas.map((idea) => idea.agedDays).toList()..sort();
+
+    return Analytics(
+      total: _ideas.length,
+      byStage: [
+        for (final stage in Stage.values)
+          StageCount(
+            stage: stage,
+            count: _ideas.where((idea) => idea.stage == stage).length,
+          ),
+      ],
+      averageAgedDays: aged.isEmpty
+          ? null
+          : aged.reduce((a, b) => a + b) / aged.length,
+      medianAgedDays: aged.isEmpty ? null : aged[aged.length ~/ 2].toDouble(),
+      withHumanScore: _ideas.where((idea) => idea.humanScore != null).length,
+      withAiScore: _ideas.where((idea) => idea.aiScore != null).length,
+      withReflection: 0,
+      tried: _ideas.where((idea) => idea.stage == Stage.selected).length,
+      topTags: topTags.take(8).toList(growable: false),
+      createdLast7: _ideas.where((idea) => idea.agedDays < 7).length,
+      createdLast30: _ideas.where((idea) => idea.agedDays < 30).length,
+      createdByDay7: days(7),
+      createdByDay30: days(30),
+    );
+  }
+
+  @override
+  Future<Billing> billing() async {
+    await _delay(200);
+    return const Billing(
+      plan: 'free',
+      status: 'none',
+      currentPeriodEnd: null,
+      comped: false,
+      billingLive: false,
+      manageable: false,
+    );
+  }
+
+  @override
+  Future<String> billingUrl({required bool manage}) async {
+    throw UnsupportedError('モックでは課金ページを開けません。');
+  }
+
+  @override
+  Future<SearchResults> search(String query) async {
+    await _delay(200);
+    final needle = query.trim().toLowerCase();
+    if (needle.isEmpty) return SearchResults.empty;
+    return SearchResults(
+      query: query,
+      ideas: [
+        for (final idea in _ideas)
+          if (idea.title.toLowerCase().contains(needle) ||
+              idea.body.toLowerCase().contains(needle))
+            SearchIdeaHit(
+              id: idea.id,
+              title: idea.title,
+              stage: idea.stage,
+              tags: idea.tags,
+              agedDays: idea.agedDays,
+              matchedIn: idea.title.toLowerCase().contains(needle) ? null : '本文に一致',
+            ),
+      ],
+      comments: const [],
+      inspirations: [
+        for (final item in _inspirations)
+          if (item.title.toLowerCase().contains(needle))
+            SearchInspirationHit(
+              id: item.id,
+              title: item.title,
+              domain: item.source,
+              ogImageUrl: item.ogImageUrl,
+            ),
+      ],
+      tags: [
+        for (final entry in tagCountsOf(_ideas).entries)
+          if (entry.key.toLowerCase().contains(needle))
+            SearchTagHit(tag: entry.key, count: entry.value),
+      ],
+    );
+  }
+
+  static Map<String, int> tagCountsOf(List<Idea> ideas) {
+    final counts = <String, int>{};
+    for (final idea in ideas) {
+      for (final tag in idea.tags) {
+        counts[tag] = (counts[tag] ?? 0) + 1;
+      }
+    }
+    return counts;
   }
 }
