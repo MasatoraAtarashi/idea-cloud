@@ -12,7 +12,8 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 | Migrations in git now                                          | `0001`–`0008` add `ideas`, comments, brainstorms, saved views, inspirations (including OGP), and `research_sources`. `deploy.yml` applies them remotely before deploy. Do not create a second database of the same name.        |
 | Members table                                                  | **Not created** (no migration)                                                                                                                                                                                                  |
 | Worker script `idea-cloud`                                     | **Exists** on the account                                                                                                                                                                                                       |
-| Confirmed `*.workers.dev` URL in this runbook                  | **Not recorded yet** — copy it from a successful `deploy.yml` log or the dashboard. Do not invent a hostname.                                                                                                                   |
+| Confirmed `*.workers.dev` URL in this runbook                  | `https://idea-cloud.kaito-technology.workers.dev` — read from the `deploy.yml` log on 2026-09-26. Still serves after the custom domain was added.                                                                               |
+| Custom domain                                                  | `ideacloud.polarissea.com`. Zone `polarissea.com` is active in the same account (`bf71c6a7…`), so `wrangler deploy` creates the DNS record and the certificate from the `routes` entry in `wrangler.jsonc`.                     |
 | Cloudflare Access (Zero Trust)                                 | **Deferred** until that URL is confirmed                                                                                                                                                                                        |
 | `wrangler.vitest.jsonc` `database_id`                          | Dummy `00000000-0000-0000-0000-000000000000` on purpose for vitest-pool-workers. Do not copy it into `wrangler.jsonc`.                                                                                                          |
 
@@ -21,6 +22,8 @@ First production deploy of Idea Cloud. **Do not invent Cloudflare or Google cred
 - **In-app Google OAuth is the gate** and it is implemented ([oauth-swap.md](./oauth-swap.md)). The template Access middleware has been removed.
 - **Cloudflare Access is optional and secondary.** A native app cannot hold an Access session, so if Zero Trust is ever attached it must cover pages only and bypass `/api` and `/mcp`.
 - Before the first real sign-in, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, and `ACCESS_ALLOWED_EMAILS` as Worker secrets, and add `https://<host>/api/auth/google/callback` to the Google OAuth client.
+- **Every hostname needs its own callback.** `redirectUri` is built from the request's own origin (`server/auth/google-oauth.ts`), so adding a hostname without registering its callback gives `redirect_uri_mismatch` on that host while the others keep working. Registered so far: `https://idea-cloud.kaito-technology.workers.dev/api/auth/google/callback` and `https://ideacloud.polarissea.com/api/auth/google/callback`.
+- The deploy token needs **Zone → Read** and **Workers Routes → Edit** on top of Workers Scripts/D1 Edit, or `wrangler deploy` cannot attach the custom domain.
 
 ## GitHub secrets required
 

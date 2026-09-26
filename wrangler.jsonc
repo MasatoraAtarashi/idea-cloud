@@ -16,6 +16,20 @@
     "head_sampling_rate": 1,
   },
   "upload_source_maps": true,
+  // Custom domain. The zone is in this same Cloudflare account, so deploying
+  // creates the DNS record and the certificate; the *.workers.dev hostname
+  // keeps serving alongside it.
+  //
+  // Google sign-in builds its redirect_uri from the request's own origin
+  // (server/auth/google-oauth.ts), so every hostname that serves the app needs
+  // its own callback registered in the Google Cloud console, or sign-in there
+  // fails with redirect_uri_mismatch. See docs/spec/deploy-and-access.md.
+  "routes": [
+    {
+      "pattern": "ideacloud.polarissea.com",
+      "custom_domain": true,
+    },
+  ],
   "d1_databases": [
     {
       "binding": "DB",
