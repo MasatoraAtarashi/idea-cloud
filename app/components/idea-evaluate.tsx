@@ -34,6 +34,7 @@ export function IdeaEvaluateControls({
   preset,
   label,
   hint = true,
+  action,
 }: {
   idea: MockIdea;
   error?: EvaluateIdeaActionData["error"];
@@ -41,6 +42,12 @@ export function IdeaEvaluateControls({
   preset?: ResearchPreset;
   label?: string;
   hint?: boolean;
+  /**
+   * Where to post. Only needed away from the idea's own route — from the list
+   * an action-less form would reach the board's action, which knows no
+   * `evaluate` intent.
+   */
+  action?: string;
 }) {
   const t = useT();
   const fetcher = useEvaluateFetcher(idea.id);
@@ -63,7 +70,7 @@ export function IdeaEvaluateControls({
   }
 
   return (
-    <fetcher.Form method="post" className="flex flex-col gap-1.5" onSubmit={hold}>
+    <fetcher.Form action={action} method="post" className="flex flex-col gap-1.5" onSubmit={hold}>
       <input type="hidden" name="intent" value="evaluate" />
       <input type="hidden" name="preset" value={chosen} />
       <div className="flex items-center gap-3">
@@ -101,7 +108,16 @@ const SECTION_COLOR: Record<EvaluationSectionLabel, string> = {
 };
 
 /** 推し度 card. Sits above every AI 作業台 tab. */
-export function IdeaScoreCard({ idea, preset }: { idea: MockIdea; preset?: ResearchPreset }) {
+export function IdeaScoreCard({
+  idea,
+  preset,
+  action,
+}: {
+  idea: MockIdea;
+  preset?: ResearchPreset;
+  /** Passed through to the evaluate form; see `IdeaEvaluateControls`. */
+  action?: string;
+}) {
   const t = useT();
   const fetcher = useEvaluateFetcher(idea.id);
   const pending = fetcher.state !== "idle";
@@ -120,7 +136,7 @@ export function IdeaScoreCard({ idea, preset }: { idea: MockIdea; preset?: Resea
           </span>
         </div>
         <div className="mt-3">
-          <IdeaEvaluateControls idea={idea} preset={preset} hint={false} />
+          <IdeaEvaluateControls idea={idea} preset={preset} hint={false} action={action} />
         </div>
       </section>
     );

@@ -140,4 +140,16 @@ export const list: Dictionary["list"] = {
     days: (n: number) => `${n}d`,
     weeks: (n: number) => `${n}w`,
   },
+
+  /** Quick peek drawer opened from a row. */
+  peek: {
+    heading: "빠르게 보기",
+    prev: "이전 아이디어",
+    next: "다음 아이디어",
+    position: (index: number, total: number) => `${index} / ${total}`,
+    keyHint: "↑↓ 로 이동",
+    openDetail: "상세 열기",
+    detailHint: "리서치·브레인스토밍·상담은 상세 화면에서.",
+    noBody: "본문 없음",
+  },
 };
